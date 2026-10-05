@@ -21,7 +21,7 @@ export interface RouteInfo {
 export interface AircraftState {
   icao24: string;
   cs: string; // trimmed callsign, e.g. "THY1"
-  t: number; // unix s (time_position, falling back to last_contact)
+  t: number; // unix s (response.now − seen_pos)
   lat: number;
   lon: number;
   alt100: number | null; // altitude / 100 ft, rounded

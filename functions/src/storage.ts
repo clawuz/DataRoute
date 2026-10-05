@@ -28,6 +28,7 @@ export function gcsStore(bucket: Bucket): JsonStore {
       try {
         await bucket.file(path).save(JSON.stringify(data), {
           gzip: true,
+          resumable: false,
           contentType: "application/json",
           metadata: { cacheControl: opts.cacheControl ?? "no-store" },
           ...(opts.ifGeneration !== undefined

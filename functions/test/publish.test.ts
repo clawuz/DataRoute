@@ -64,6 +64,6 @@ describe("buildDayFile", () => {
 
   it("passes through delayed status", () => {
     const d = buildDayFile(state, NOW, { state: "delayed", lastSuccessAt: NOW - 600, error: "x" }, SRC);
-    expect(d.status).toEqual({ state: "delayed", lastSuccessAt: NOW - 600, error: "x" }, SRC);
+    expect(d.status).toEqual({ state: "delayed", lastSuccessAt: NOW - 600, error: "x" });
   });
 });
