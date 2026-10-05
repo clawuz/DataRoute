@@ -1,6 +1,6 @@
 import type { Firestore } from "firebase-admin/firestore";
 import type { Airport, RouteInfo } from "./day-schema.js";
-import type { FetchFn } from "./opensky.js";
+import type { FetchFn } from "./adsb.js";
 
 export const ADSBDB_URL = "https://api.adsbdb.com/v0/callsign/";
 export const ROUTE_TTL = 7 * 86400;

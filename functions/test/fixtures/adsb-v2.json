@@ -1,0 +1,13 @@
+{
+  "now": 1791208214001,
+  "total": 6,
+  "msg": "No error",
+  "ac": [
+    { "hex": "4baa53", "flight": "THY2JE  ", "r": "TC-JRS", "t": "A321", "lat": 53.054535, "lon": 16.67099, "alt_baro": 32975, "alt_geom": 34100, "gs": 475.5, "track": 142.26, "seen_pos": 0.0, "seen": 0.0 },
+    { "hex": "4baa89", "flight": "THY7KC  ", "lat": 41.26, "lon": 28.75, "alt_baro": "ground", "gs": 5.2, "track": 90, "seen_pos": 3.2, "seen": 1.0 },
+    { "hex": "4baa8b", "flight": "THY2020 ", "lat": 40.0, "lon": 30.0, "alt_geom": 10000, "gs": 300, "seen_pos": 12.6, "seen": 2.0 },
+    { "hex": "4bd8cf", "flight": "TKJ8VB  ", "lat": 40.86, "lon": 29.25, "alt_baro": 950, "gs": 74, "track": 64.5, "seen_pos": 0.5 },
+    { "hex": "4baa79", "flight": "THY55   ", "alt_baro": 9000, "gs": 230, "track": 10, "seen": 0.3 },
+    { "hex": "4baa86", "lat": 40.0, "lon": 20.0, "alt_baro": 9000, "gs": 230, "track": 10, "seen_pos": 0.2 }
+  ]
+}
