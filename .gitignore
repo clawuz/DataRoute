@@ -5,3 +5,5 @@ font/
 functions/lib/
 *.log
 .firebase/
+web/public/fonts/
+web/dist/

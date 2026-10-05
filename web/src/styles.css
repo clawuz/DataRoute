@@ -1,0 +1,26 @@
+@font-face { font-family: "TK Display Condensed"; src: url("/fonts/TKDisplayCondensed-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "TK Display Condensed"; src: url("/fonts/TKDisplayCondensed-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "TK Text Wide"; src: url("/fonts/TKTextWide-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "TK Text"; src: url("/fonts/TKText-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "TK Text"; src: url("/fonts/TKText-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+
+:root {
+  --bg: #03040a;
+  --ink: #e9edf5;
+  --ink-dim: rgba(233, 237, 245, 0.55);
+  --ink-faint: rgba(233, 237, 245, 0.28);
+  --line: rgba(233, 237, 245, 0.16);
+  --line-strong: rgba(233, 237, 245, 0.4);
+  --thy: #e30a17;
+  --amber: #f5a524;
+  --display: "TK Display Condensed", "Arial Narrow", system-ui, sans-serif;
+  --label: "TK Text Wide", system-ui, sans-serif;
+  --text: "TK Text", system-ui, sans-serif;
+  --u: 1vmin;
+  color-scheme: dark;
+}
+
+html, body, #root { margin: 0; height: 100%; background: var(--bg); color: var(--ink); overflow: hidden; }
+body { font-family: var(--text); -webkit-font-smoothing: antialiased; }
+.stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+.num { font-variant-numeric: tabular-nums; }
