@@ -51,8 +51,8 @@ day.json ──► web (Vite + React + TS + Three.js + D3, Firebase Hosting)
 
 ```
 DataRoute/
-  shared/day-schema.ts          day.json tipleri (functions ve web ortak kullanır)
   functions/src/
+    day-schema.ts               day.json + tracker tipleri (web bunu `import type` ile kullanır; Firebase deploy yalnızca functions/ klasörünü paketlediği için burada)
     opensky.ts                  OAuth2 token + /states/all
     routes.ts                   adsbdb sorgusu + Firestore cache
     regions.ts                  ülke → bölge, Istanbul hub mantığı
@@ -74,7 +74,7 @@ DataRoute/
 
 ### 4.1 Collector
 
-- **Tetikleme:** Cloud Scheduler, 2 dakikada bir. `maxInstances: 1`, timeout 60 sn, 256 MB.
+- **Tetikleme:** Cloud Scheduler, 2 dakikada bir. `maxInstances: 1`, timeout 90 sn, 512 MB. Bölge `europe-west1`.
 - **OpenSky:**
   - OAuth2 client credentials ile token alınır; token cache'lenir.
   - Global `/states/all` çağrısı 4 kredi tutar. Günde 720 çağrı = 2.880 kredi, kota 4.000.
