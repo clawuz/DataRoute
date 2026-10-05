@@ -20,7 +20,7 @@ Bu iki sahnenin üzerinde, tüm rakamları gerçek veriden gelen bir "enstrüman
 ## 2. Hedefler / Hedef dışı
 
 **Hedefler**
-- OpenSky'dan canlı ADS-B verisi gelir ve 24 saatlik birikim, makine kapalı olsa bile bulutta devam eder.
+- Topluluk ADS-B agregatöründen (adsb.fi; airplanes.live'a geçişe hazır) canlı veri gelir ve 24 saatlik birikim, makine kapalı olsa bile bulutta devam eder.
 - ~2.000 uçuşla 1080p–4K arası çözünürlükte 60 fps.
 - Deneyim girdi olmadan sonsuza kadar döner. Fare ve klavye girdisi anında tepki alır.
 - HUD'daki her sayı ölçülmüş veriden gelir.
@@ -35,8 +35,8 @@ Bu iki sahnenin üzerinde, tüm rakamları gerçek veriden gelen bir "enstrüman
 ## 3. Mimari
 
 ```
-OpenSky /states/all ──┐
-                      ├─► collector (Cloud Function, 2 dk) ──► Storage: state/tracker.json (iç durum)
+tar1090-db (haftalık) ─┐
+adsb.fi /v2/hex ──────┼─► collector (Cloud Function, 2 dk) ──► Storage: state/tracker.json (iç durum)
 adsbdb /callsign ─────┘        │                         └──► Storage: public/day.json (public, cache 60 sn)
                                └─► Firestore: routes/{callsign} (7 gün cache)
 
@@ -53,7 +53,8 @@ day.json ──► web (Vite + React + TS + Three.js + D3, Firebase Hosting)
 DataRoute/
   functions/src/
     day-schema.ts               day.json + tracker tipleri (web bunu `import type` ile kullanır; Firebase deploy yalnızca functions/ klasörünü paketlediği için burada)
-    opensky.ts                  OAuth2 token + /states/all
+    fleet.ts                    TC- yolcu jeti filo listesi (tar1090-db, haftalık cache)
+    adsb.ts                     ADSBexchange-v2 uyumlu istemci (adsb.fi / airplanes.live)
     routes.ts                   adsbdb sorgusu + Firestore cache
     regions.ts                  ülke → bölge, Istanbul hub mantığı
     tracker.ts                  uçuş segmentasyonu, örnekleme, budama (saf fonksiyonlar)
@@ -75,17 +76,18 @@ DataRoute/
 ### 4.1 Collector
 
 - **Tetikleme:** Cloud Scheduler, 2 dakikada bir. `maxInstances: 1`, timeout 90 sn, 512 MB. Bölge `europe-west1`.
-- **OpenSky:**
-  - OAuth2 client credentials ile token alınır; token cache'lenir.
-  - Global `/states/all` çağrısı 4 kredi tutar. Günde 720 çağrı = 2.880 kredi, kota 4.000.
-  - Kimlik bilgileri Secret Manager'da durur.
-- **Filtre:** callsign `^THY` ile başlayanlar (yolcu + Turkish Cargo).
+- **Neden OpenSky değil:** Aşama 0'da OpenSky'ın Google Cloud IP'lerini engellediği doğrulandı (bağlantı zaman aşımı). Yerine Google Cloud'dan erişilebilen topluluk agregatörü kullanılıyor.
+- **Filo listesi:** Haftada bir `tar1090-db` (`aircraft.csv.gz`, açık kaynak) indirilir; tescili `TC-` ile başlayan ve tipi yolcu jeti olan uçakların hex kodları (~1.000) `state/fleet.json`'a yazılır. Yenileme başarısız olursa eski liste kullanılır.
+- **Sağlayıcı:** ADSBexchange-v2 uyumlu `/v2/hex/{a,b,c}` uç noktası. Varsayılan **adsb.fi** (`https://opendata.adsb.fi/api`, anahtar yok, saniyede 1 istek). **airplanes.live** (`https://api.airplanes.live`) erişim onayı gelirse tek bir config parametresiyle (`ADSB_PROVIDER`) seçilir.
+- **Sorgu:** Filo 100'lük gruplar halinde sorulur, istekler arası 1,1 sn (~11 istek, ~12 sn/tur).
+- **Filtre:** callsign `^THY` ile başlayanlar (yolcu + Turkish Cargo). Yabancı tescilli kiralık (wet-lease) THY uçakları kapsam dışı kalır.
+- **Lisans:** adsb.fi verisi kişisel / ticari olmayan kullanım içindir ve adsb.fi'ye linkli atıf zorunludur. `day.json` bir `source: { name, url }` alanı taşır; HUD atıfı buradan gösterir.
 - **Uçuş kimliği:**
   - Anahtar `icao24 + callsign`.
   - Şu durumlarda yeni uçuş başlar: önceki kayıt `on_ground` iken şimdi havada; ya da son temastan bu yana 45 dakikadan fazla geçmiş; ya da callsign değişmiş.
-- **Örnekleme:** Her tur, havadaki her uçuşa bir örnek ekler: `t` (unix sn), irtifa (`baro_altitude` → feet), lat, lon.
+- **Örnekleme:** Her tur, havadaki her uçuşa bir örnek ekler: `t` (unix sn), irtifa (`alt_baro`, yoksa `alt_geom`; feet), lat, lon.
 - **İniş:** Uçuşun `arr` alanı şu durumlarda kapanır:
-  - `on_ground = true` görüldüğünde,
+  - yerde görüldüğünde (`alt_baro = "ground"`),
   - ya da 45 dakika boyunca temas olmazsa. Bu durumda `arr` = son temas zamanı.
 - **Budama:** Her turda `arr < now − 24 saat` olan uçuşlar silinir. Hâlâ devam eden uçuşların 24 saatten eski örnekleri de kırpılır.
 - **Eşzamanlılık:** `tracker.json`, okunduğu generation'a koşullu yazılır (`ifGenerationMatch`). Çakışma olursa o tur atlanır.
@@ -112,6 +114,7 @@ interface DayFile {
   generatedAt: number;            // unix sn
   collectingSince: number;        // collector'ın ilk başarılı turu
   status: { state: "ok" | "delayed"; lastSuccessAt: number; error?: string };
+  source: { name: string; url: string };  // ör. { name: "adsb.fi", url: "https://adsb.fi" } — HUD atıfı
   window: { from: number; to: number };   // to = generatedAt, from = to − 86400
   stats: {
     airborne: number;             // şu an havada
@@ -267,18 +270,18 @@ Sayılarda `font-variant-numeric: tabular-nums` kullanılır. Font `tnum` destek
 | Alt şerit | 24 saatlik kalkış histogramı (saatlik) + replay playhead'i. GLOBAL fazında `TOP DESTINATIONS` (ilk 10) olur. |
 | Sağ alt | Bölge çubukları. Renkleri şerit renkleriyle aynı (lejant işlevi de görür). |
 | Spotlight kartı | `TK1 · IST → JFK`, `FL370`, `GS 488 KT`, `ELAPSED 06:12`, mini irtifa profili. Uçuşa ince bir çizgiyle bağlı. |
-| Alt sol | `SOURCE: OPENSKY NETWORK · UPDATED 14 S AGO · 2,031 FLIGHTS` |
+| Alt sol | `SOURCE: ADSB.FI · UPDATED 14 S AGO · 2,031 FLIGHTS` (kaynak adı ve linki `day.json.source`'tan) |
 
 - **Durum metinleri:**
   - `DATA DELAYED · LAST UPDATE 12 MIN AGO` (amber)
   - `COLLECTING · STARTED 2H AGO`
-- **Hız (`GS`):** `Flight.now.gs` alanından gelir. Collector bunu OpenSky'daki `velocity` değerinden hesaplar (m/s → kt).
+- **Hız (`GS`):** `Flight.now.gs` alanından gelir. Sağlayıcının `gs` alanından (knot) gelir.
 
 ## 9. Hata durumları
 
 | Durum | Davranış |
 |---|---|
-| OpenSky hatası / 429 / auth | Tur atlanır ve loglanır. `status.state = "delayed"`, son veri korunur. |
+| Sağlayıcı (adsb.fi) ya da filo DB hatası / 429 | Tur atlanır ve loglanır. `status.state = "delayed"`, son veri korunur. |
 | adsbdb hatası | Bölge `UNK`, açı = true track. Bir sonraki turda tekrar denenir. |
 | Storage yazma çakışması | Tur atlanır. |
 | `day.json` yok (ilk kurulum) | Tunnel varsayılan parametrelerle akar, HUD `COLLECTING` gösterir. |
@@ -288,7 +291,7 @@ Sayılarda `font-variant-numeric: tabular-nums` kullanılır. Font `tnum` destek
 
 ## 10. Aşamalar
 
-- **Aşama 0: Ön kontrol.** Cloud Functions'tan OpenSky'a bir test isteği atılır, IP kısıtlaması olmadığı doğrulanır. Kısıtlama varsa bu spec'e dönülür ve alternatif aranır (ör. küçük bir VPS proxy).
+- **Aşama 0: Ön kontrol (tamamlandı, 2026-10-05).** OpenSky Cloud Functions'tan erişilemez (bağlantı zaman aşımı); adsb.fi ve tar1090-db erişilebilir (adsb.fi 151 ms). Veri kaynağı buna göre değiştirildi.
 - **Aşama 1:** Veri hattı + tunnel + ribbons + bloom + picking + HUD + `REPLAY ⇄ LIVE` döngüsü + fixture modu. Kendi başına tamamlanmış bir deneyim olarak teslim edilir.
 - **Aşama 2:** Globe pass + kara maskesi + morph + `EXIT / GLOBAL / DIVE` fazları + küre sürükleme.
 
@@ -298,7 +301,7 @@ Sayılarda `font-variant-numeric: tabular-nums` kullanılır. Font `tnum` destek
   - `tracker`: segmentasyon (yerden kalkış, 45 dk boşluk, callsign değişimi), örnekleme, budama.
   - `regions`: hub mantığı, yön hesabı, ülke → bölge eşlemesi.
   - `publish`: istatistikler, şema.
-  - Fixture olarak kaydedilmiş gerçek OpenSky yanıtları kullanılır.
+  - Fixture olarak gerçek adsb.fi yanıt formatından türetilmiş örnekler kullanılır.
 - **Entegrasyon:** Firebase Emulator'da (Functions + Storage + Firestore) iki tur çalıştırılıp `day.json` doğrulanır.
 - **Web (Vitest):** `mapping` (tunnel ve dünya pozisyonları, büyük daire enterpolasyonu), `stats` (histogramlar), `cycle/machine` (faz geçişleri, manuel mod ve 20 sn sonra geri dönüş).
 - **Görsel ve performans:** Fixture verisiyle ve canlı veriyle tarayıcı önizlemesinde, 1080p ve 4K'da FPS ölçümü. Kabul kriteri: 2.000 uçuşla ≥ 55 fps (adaptif kalite devredeyken).
@@ -307,14 +310,15 @@ Sayılarda `font-variant-numeric: tabular-nums` kullanılır. Font `tnum` destek
 
 - Firebase Blaze planı. Tahmini aylık maliyet:
   - Functions $0, Scheduler $0, Firestore $0.
-  - Storage ~$0,20, Secret Manager ~$0,03, Hosting egress $0–birkaç cent.
+  - Storage ~$0,20, Hosting egress $0–birkaç cent.
   - **Toplam: ayda $0–1.**
 - Kurulumda **$5'lık bir bütçe alarmı** tanımlanır.
 - Artifact Registry'ye bir temizleme politikası eklenir (eski function imajları silinir).
 
 ## 13. Riskler
 
-- OpenSky'ın bulut sağlayıcılarının IP'lerini kısıtlaması → Aşama 0'da doğrulanacak.
+- adsb.fi ücretsiz bir topluluk servisi; erişimi kısıtlayabilir veya kapatabilir. Azaltma: airplanes.live'a config ile geçiş hazır (erişim onayı gerekir).
+- Ticari kullanım: adsb.fi koşulları izin vermez. Proje ticarileşirse sağlayıcıyla anlaşma gerekir.
 - adsbdb rota kapsamı eksik olabilir. Etkisi: `UNK` oranı yükselir. Collector her turda bu oranı loglar.
 - ADS-B kapsama boşlukları (okyanus, Afrika). Enterpolasyonla kapatılır.
 - TK fontlarının lisansı. Installation dışında yayınlanacaksa kontrol edilmeli.

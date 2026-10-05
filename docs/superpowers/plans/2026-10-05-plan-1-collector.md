@@ -1977,3 +1977,861 @@ git commit -m "feat(functions): deterministic fixture day.json for web developme
 
 - **Plan 2 — Web Phase 1:** Vite + React + TS + Three.js app reading `day.json` (live or `?data=fixture`): tunnel pass, ribbons, bloom, picking, HUD, `REPLAY ⇄ LIVE` cycle, input handling, adaptive quality, Firebase Hosting.
 - **Plan 3 — Web Phase 2:** globe pass, land mask, morph, `EXIT / GLOBAL / DIVE`.
+
+---
+
+## Amendment A — Data source switch to adsb.fi (2026-10-05)
+
+**Why:** Task 4 (Phase 0) failed. From Cloud Functions `europe-west1`, `opensky-network.org` and `auth.opensky-network.org` time out (`UND_ERR_CONNECT_TIMEOUT`), while adsbdb works. The same credentials work from the user's machine. OpenSky blocks Google Cloud IPs. The user chose a community ADS-B aggregator. Verified from Cloud Functions: `https://opendata.adsb.fi/api/v2/hex/<a,b,…>` → 200 in 151 ms; `tar1090-db` `aircraft.csv.gz` → 200. airplanes.live has the same v2 API but returns 403 until access is approved by email, so the client is provider-agnostic.
+
+**Superseded:** Task 3's `opensky.ts` is replaced by `adsb.ts` (A1) and removed in A3. Task 4 is closed (findings above). Task 9 is replaced by Task A4. Already-done Firebase setup: Firestore `(default)` in `eur3`; default bucket `omerkilavuz-9ad41.firebasestorage.app` (EUROPE-WEST1); project budget alert exists (100 TRY); `.firebaserc` → `omerkilavuz-9ad41`.
+
+**Amended Global Constraints (replace the OpenSky/secret lines above):**
+- Provider: ADSBexchange-v2 compatible `GET {baseUrl}/v2/hex/{hex,hex,…}`. Default `adsbfi` = `{ name: "adsb.fi", url: "https://adsb.fi", baseUrl: "https://opendata.adsb.fi/api" }`; alternative `airplaneslive` = `{ name: "airplanes.live", url: "https://airplanes.live", baseUrl: "https://api.airplanes.live" }`. Selected by the string param `ADSB_PROVIDER` (default `adsbfi`).
+- Fleet: hexes of aircraft whose registration starts with `TC-` and whose ICAO type is in the airliner set (below), from `https://raw.githubusercontent.com/wiedehopf/tar1090-db/csv/aircraft.csv.gz` (rows `hex;registration;type;…`), cached at `state/fleet.json`, refreshed every 7 days; on refresh failure use the stale list.
+- Query in chunks of 100 hexes, 1100 ms between requests (adsb.fi limit 1 req/s).
+- Callsign filter unchanged: `^THY[0-9A-Z]+$`.
+- `alt_baro === "ground"` ⇒ on ground. Altitude: `alt_baro` (number) else `alt_geom`, in feet → `/100` rounded. Sample time `t = round(now_s − seen_pos)` (fallback `seen`, then 0), where `now_s = response.now / 1000`.
+- `day.json` gains `source: { name: string; url: string }` (HUD attribution; adsb.fi terms require citing adsb.fi with a link). Fixture uses `{ name: "synthetic fixture", url: "" }`.
+- No secrets are needed any more.
+
+Airliner ICAO type set (exact):
+```
+A19N A20N A21N A319 A320 A321 A332 A333 A338 A339 A359 A35K A306 A310 B37M B38M B39M B3XM B737 B738 B739 B744 B748 B752 B763 B772 B77L B77W B788 B789 B78X E190 E195 E290 E295 CRJ9 AT76
+```
+
+---
+
+### Task A1: Provider-agnostic ADS-B v2 client
+
+**Files:**
+- Create: `functions/src/adsb.ts`, `functions/test/fixtures/adsb-v2.json`
+- Modify: `functions/src/routes.ts` (only the `FetchFn` import line)
+- Test: `functions/test/adsb.test.ts`
+
+**Interfaces:**
+- Consumes: `AircraftState` (day-schema).
+- Produces: `type FetchFn = typeof fetch`, `interface AdsbProvider { name: string; url: string; baseUrl: string }`, `PROVIDERS: { adsbfi: AdsbProvider; airplaneslive: AdsbProvider }`, `CHUNK = 100`, `SPACING_MS = 1100`, `parseV2(json: unknown): AircraftState[]`, `fetchAircraft(f: FetchFn, provider: AdsbProvider, hexes: string[], sleep: (ms: number) => Promise<void>): Promise<AircraftState[]>`.
+
+- [ ] **Step 1: Fixture**
+
+`functions/test/fixtures/adsb-v2.json`:
+```json
+{
+  "now": 1791208214001,
+  "total": 6,
+  "msg": "No error",
+  "ac": [
+    { "hex": "4baa53", "flight": "THY2JE  ", "r": "TC-JRS", "t": "A321", "lat": 53.054535, "lon": 16.67099, "alt_baro": 32975, "alt_geom": 34100, "gs": 475.5, "track": 142.26, "seen_pos": 0.0, "seen": 0.0 },
+    { "hex": "4baa89", "flight": "THY7KC  ", "lat": 41.26, "lon": 28.75, "alt_baro": "ground", "gs": 5.2, "track": 90, "seen_pos": 3.2, "seen": 1.0 },
+    { "hex": "4baa8b", "flight": "THY2020 ", "lat": 40.0, "lon": 30.0, "alt_geom": 10000, "gs": 300, "seen_pos": 12.6, "seen": 2.0 },
+    { "hex": "4bd8cf", "flight": "TKJ8VB  ", "lat": 40.86, "lon": 29.25, "alt_baro": 950, "gs": 74, "track": 64.5, "seen_pos": 0.5 },
+    { "hex": "4baa79", "flight": "THY55   ", "alt_baro": 9000, "gs": 230, "track": 10, "seen": 0.3 },
+    { "hex": "4baa86", "lat": 40.0, "lon": 20.0, "alt_baro": 9000, "gs": 230, "track": 10, "seen_pos": 0.2 }
+  ]
+}
+```
+
+- [ ] **Step 2: Write the failing test**
+
+`functions/test/adsb.test.ts`:
+```ts
+import { describe, expect, it, vi } from "vitest";
+import fixture from "./fixtures/adsb-v2.json" with { type: "json" };
+import { CHUNK, PROVIDERS, SPACING_MS, fetchAircraft, parseV2 } from "../src/adsb.js";
+
+describe("parseV2", () => {
+  const out = parseV2(fixture);
+
+  it("keeps only THY aircraft with a position", () => {
+    expect(out.map((a) => a.cs)).toEqual(["THY2JE", "THY7KC", "THY2020"]);
+  });
+
+  it("maps fields and units", () => {
+    expect(out[0]).toEqual({
+      icao24: "4baa53",
+      cs: "THY2JE",
+      t: 1791208214,
+      lat: 53.054535,
+      lon: 16.67099,
+      alt100: 330,
+      onGround: false,
+      gs: 476,
+      trk: 142.26,
+    });
+  });
+
+  it("ground, geometric altitude fallback, seen_pos age, missing track", () => {
+    expect(out[1]).toMatchObject({ onGround: true, alt100: 0, t: 1791208211, gs: 5, trk: 90 });
+    expect(out[2]).toMatchObject({ onGround: false, alt100: 100, t: 1791208201, trk: null });
+  });
+
+  it("handles empty / null ac", () => {
+    expect(parseV2({ now: 1, ac: null })).toEqual([]);
+    expect(parseV2({ now: 1 })).toEqual([]);
+  });
+});
+
+describe("fetchAircraft", () => {
+  const hexes = Array.from({ length: 250 }, (_, i) => i.toString(16).padStart(6, "0"));
+
+  it("queries in chunks with spacing and merges results", async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify(fixture)));
+    const sleep = vi.fn(async () => {});
+    const out = await fetchAircraft(f as unknown as typeof fetch, PROVIDERS.adsbfi, hexes, sleep);
+    const urls = f.mock.calls.map((c) => String((c as unknown as [string])[0]));
+    expect(urls).toHaveLength(3);
+    expect(urls[0]).toBe(`https://opendata.adsb.fi/api/v2/hex/${hexes.slice(0, CHUNK).join(",")}`);
+    expect(urls[2]).toBe(`https://opendata.adsb.fi/api/v2/hex/${hexes.slice(200).join(",")}`);
+    expect(sleep).toHaveBeenCalledTimes(2);
+    expect(sleep).toHaveBeenCalledWith(SPACING_MS);
+    expect(out.map((a) => a.cs)).toEqual(["THY2JE", "THY7KC", "THY2020"]); // deduplicated by icao24
+  });
+
+  it("uses the airplanes.live base URL", async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ now: 1, ac: [] })));
+    await fetchAircraft(f as unknown as typeof fetch, PROVIDERS.airplaneslive, ["4baa53"], async () => {});
+    expect(String((f.mock.calls[0] as unknown as [string])[0])).toBe("https://api.airplanes.live/v2/hex/4baa53");
+  });
+
+  it("throws with the provider name on HTTP errors", async () => {
+    const f = vi.fn(async () => new Response("", { status: 429 }));
+    await expect(fetchAircraft(f as unknown as typeof fetch, PROVIDERS.adsbfi, ["4baa53"], async () => {})).rejects.toThrow("adsb.fi 429");
+  });
+
+  it("does nothing for an empty fleet", async () => {
+    const f = vi.fn();
+    await expect(fetchAircraft(f as unknown as typeof fetch, PROVIDERS.adsbfi, [], async () => {})).resolves.toEqual([]);
+    expect(f).not.toHaveBeenCalled();
+  });
+});
+```
+
+- [ ] **Step 3: Run to verify it fails**
+
+Run: `cd functions && npx vitest run test/adsb.test.ts`
+Expected: FAIL — cannot resolve `../src/adsb.js`.
+
+- [ ] **Step 4: Implement `adsb.ts`**
+
+`functions/src/adsb.ts`:
+```ts
+import type { AircraftState } from "./day-schema.js";
+
+export type FetchFn = typeof fetch;
+
+export interface AdsbProvider {
+  name: string; // attribution name shown in the HUD
+  url: string; // attribution link
+  baseUrl: string; // ADSBexchange-v2 compatible API root
+}
+
+export const PROVIDERS = {
+  adsbfi: { name: "adsb.fi", url: "https://adsb.fi", baseUrl: "https://opendata.adsb.fi/api" },
+  airplaneslive: { name: "airplanes.live", url: "https://airplanes.live", baseUrl: "https://api.airplanes.live" },
+} satisfies Record<string, AdsbProvider>;
+
+export const CHUNK = 100;
+export const SPACING_MS = 1100;
+
+const THY = /^THY[0-9A-Z]+$/;
+const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
+
+interface V2Aircraft {
+  hex?: string;
+  flight?: string;
+  lat?: number;
+  lon?: number;
+  alt_baro?: number | "ground";
+  alt_geom?: number;
+  gs?: number;
+  track?: number;
+  seen_pos?: number;
+  seen?: number;
+}
+
+export function parseV2(json: unknown): AircraftState[] {
+  const body = json as { now?: number; ac?: V2Aircraft[] | null };
+  const nowS = (num(body.now) ?? 0) / 1000;
+  const out: AircraftState[] = [];
+  for (const a of body.ac ?? []) {
+    const cs = (a.flight ?? "").trim();
+    if (!THY.test(cs)) continue;
+    const lat = num(a.lat);
+    const lon = num(a.lon);
+    if (lat === null || lon === null || !a.hex) continue;
+    const onGround = a.alt_baro === "ground";
+    const altFt = onGround ? 0 : (num(a.alt_baro) ?? num(a.alt_geom));
+    const gs = num(a.gs);
+    out.push({
+      icao24: a.hex.toLowerCase(),
+      cs,
+      t: Math.round(nowS - (num(a.seen_pos) ?? num(a.seen) ?? 0)),
+      lat,
+      lon,
+      alt100: altFt === null ? null : Math.max(0, Math.round(altFt / 100)),
+      onGround,
+      gs: gs === null ? null : Math.round(gs),
+      trk: num(a.track),
+    });
+  }
+  return out;
+}
+
+export async function fetchAircraft(
+  f: FetchFn,
+  provider: AdsbProvider,
+  hexes: string[],
+  sleep: (ms: number) => Promise<void>,
+): Promise<AircraftState[]> {
+  const byHex = new Map<string, AircraftState>();
+  for (let i = 0; i < hexes.length; i += CHUNK) {
+    if (i > 0) await sleep(SPACING_MS);
+    const res = await f(`${provider.baseUrl}/v2/hex/${hexes.slice(i, i + CHUNK).join(",")}`);
+    if (!res.ok) throw new Error(`${provider.name} ${res.status}`);
+    for (const a of parseV2(await res.json())) byHex.set(a.icao24, a);
+  }
+  return [...byHex.values()];
+}
+```
+
+- [ ] **Step 5: Point `routes.ts` at the new `FetchFn`**
+
+In `functions/src/routes.ts` replace the line
+```ts
+import type { FetchFn } from "./opensky.js";
+```
+with
+```ts
+import type { FetchFn } from "./adsb.js";
+```
+
+- [ ] **Step 6: Run tests**
+
+Run: `cd functions && npx vitest run && npx tsc --noEmit`
+Expected: all PASS (the old OpenSky tests still pass; they are removed in A3).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add functions/src/adsb.ts functions/src/routes.ts functions/test/adsb.test.ts functions/test/fixtures/adsb-v2.json
+git commit -m "feat(functions): provider-agnostic ADS-B v2 client (adsb.fi / airplanes.live)"
+```
+
+---
+
+### Task A2: THY fleet list from tar1090-db
+
+**Files:**
+- Create: `functions/src/fleet.ts`
+- Test: `functions/test/fleet.test.ts`
+
+**Interfaces:**
+- Consumes: `FetchFn` (A1), `JsonStore` (Task 8).
+- Produces: `FLEET_DB_URL`, `FLEET_PATH = "state/fleet.json"`, `FLEET_TTL = 604800`, `AIRLINER_TYPES: Set<string>`, `interface Fleet { fetchedAt: number; hexes: string[] }`, `parseFleetCsv(csv: string): string[]` (lower-case, unique, sorted), `fetchFleet(f: FetchFn): Promise<string[]>`, `loadFleet(store: JsonStore, f: FetchFn, now: number, log: (msg: string, extra?: Record<string, unknown>) => void): Promise<string[]>`.
+
+- [ ] **Step 1: Write the failing test**
+
+`functions/test/fleet.test.ts`:
+```ts
+import { gzipSync } from "node:zlib";
+import { describe, expect, it, vi } from "vitest";
+import { FLEET_DB_URL, FLEET_PATH, FLEET_TTL, fetchFleet, loadFleet, parseFleetCsv, type Fleet } from "../src/fleet.js";
+import type { JsonStore } from "../src/storage.js";
+
+const CSV = [
+  "4BAA53;TC-JRS;A321;00;;;;",
+  "4BB141;TC-LJA;B77W;00;;;;",
+  "4B801A;TC-J60;BTB2;10;;;;",
+  "43A8F4;TC-JGT;B738;00;;;Miscode - TURKEY;",
+  "3C6444;D-AIBA;A319;00;;;;",
+  "4BAA53;TC-JRS;A321;00;;;;",
+  "",
+].join("\n");
+
+function memStore(init?: Fleet) {
+  const files = new Map<string, unknown>(init ? [[FLEET_PATH, init]] : []);
+  const store: JsonStore = {
+    async read<T>(path: string) {
+      return files.has(path) ? { data: structuredClone(files.get(path)) as T, generation: 1 } : null;
+    },
+    async write(path, data) {
+      files.set(path, structuredClone(data));
+    },
+  };
+  return { store, files };
+}
+
+describe("parseFleetCsv", () => {
+  it("keeps TC- airliners, lower-cased, unique, sorted", () => {
+    expect(parseFleetCsv(CSV)).toEqual(["43a8f4", "4baa53", "4bb141"]);
+  });
+});
+
+describe("fetchFleet", () => {
+  it("downloads and gunzips the CSV", async () => {
+    const f = vi.fn(async () => new Response(gzipSync(CSV)));
+    await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toEqual(["43a8f4", "4baa53", "4bb141"]);
+    expect((f.mock.calls[0] as unknown as [string])[0]).toBe(FLEET_DB_URL);
+  });
+
+  it("accepts an already-decompressed body", async () => {
+    const f = vi.fn(async () => new Response(CSV));
+    await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toHaveLength(3);
+  });
+
+  it("throws on HTTP errors", async () => {
+    const f = vi.fn(async () => new Response("", { status: 503 }));
+    await expect(fetchFleet(f as unknown as typeof fetch)).rejects.toThrow("fleet db 503");
+  });
+});
+
+describe("loadFleet", () => {
+  const NOW = 1_800_000_000;
+  const log = () => {};
+
+  it("returns a fresh cached list without downloading", async () => {
+    const { store } = memStore({ fetchedAt: NOW - 3600, hexes: ["aaaaaa"] });
+    const f = vi.fn();
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toEqual(["aaaaaa"]);
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("refreshes an expired list and stores it", async () => {
+    const { store, files } = memStore({ fetchedAt: NOW - FLEET_TTL - 1, hexes: ["aaaaaa"] });
+    const f = vi.fn(async () => new Response(gzipSync(CSV)));
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toHaveLength(3);
+    expect(files.get(FLEET_PATH)).toEqual({ fetchedAt: NOW, hexes: ["43a8f4", "4baa53", "4bb141"] });
+  });
+
+  it("falls back to the stale list when the refresh fails", async () => {
+    const { store } = memStore({ fetchedAt: NOW - FLEET_TTL - 1, hexes: ["aaaaaa"] });
+    const f = vi.fn(async () => new Response("", { status: 503 }));
+    const logged = vi.fn();
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, logged)).resolves.toEqual(["aaaaaa"]);
+    expect(logged).toHaveBeenCalledWith("fleet refresh failed, using stale list", { error: "Error: fleet db 503" });
+  });
+
+  it("throws when there is no list at all", async () => {
+    const { store } = memStore();
+    const f = vi.fn(async () => new Response("", { status: 503 }));
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).rejects.toThrow("fleet db 503");
+  });
+
+  it("treats an empty download as a failure", async () => {
+    const { store } = memStore();
+    const f = vi.fn(async () => new Response(gzipSync("3C6444;D-AIBA;A319;00;;;;\n")));
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).rejects.toThrow("fleet db empty");
+  });
+});
+```
+
+- [ ] **Step 2: Run to verify it fails**
+
+Run: `cd functions && npx vitest run test/fleet.test.ts`
+Expected: FAIL — cannot resolve `../src/fleet.js`.
+
+- [ ] **Step 3: Implement `fleet.ts`**
+
+`functions/src/fleet.ts`:
+```ts
+import { gunzipSync } from "node:zlib";
+import type { FetchFn } from "./adsb.js";
+import type { JsonStore } from "./storage.js";
+
+export const FLEET_DB_URL = "https://raw.githubusercontent.com/wiedehopf/tar1090-db/csv/aircraft.csv.gz";
+export const FLEET_PATH = "state/fleet.json";
+export const FLEET_TTL = 7 * 86400;
+
+export const AIRLINER_TYPES = new Set(
+  "A19N A20N A21N A319 A320 A321 A332 A333 A338 A339 A359 A35K A306 A310 B37M B38M B39M B3XM B737 B738 B739 B744 B748 B752 B763 B772 B77L B77W B788 B789 B78X E190 E195 E290 E295 CRJ9 AT76".split(" "),
+);
+
+export interface Fleet {
+  fetchedAt: number;
+  hexes: string[];
+}
+
+/** tar1090-db rows: `hex;registration;icaoType;flags;…`. Keeps Turkish-registered airliners. */
+export function parseFleetCsv(csv: string): string[] {
+  const hexes = new Set<string>();
+  for (const line of csv.split("\n")) {
+    const [hex, reg, type] = line.split(";");
+    if (hex && reg?.startsWith("TC-") && AIRLINER_TYPES.has(type)) hexes.add(hex.toLowerCase());
+  }
+  return [...hexes].sort();
+}
+
+export async function fetchFleet(f: FetchFn): Promise<string[]> {
+  const res = await f(FLEET_DB_URL);
+  if (!res.ok) throw new Error(`fleet db ${res.status}`);
+  const buf = Buffer.from(await res.arrayBuffer());
+  const gzipped = buf[0] === 0x1f && buf[1] === 0x8b;
+  return parseFleetCsv((gzipped ? gunzipSync(buf) : buf).toString("utf8"));
+}
+
+export async function loadFleet(
+  store: JsonStore,
+  f: FetchFn,
+  now: number,
+  log: (msg: string, extra?: Record<string, unknown>) => void,
+): Promise<string[]> {
+  const cached = await store.read<Fleet>(FLEET_PATH);
+  if (cached && now - cached.data.fetchedAt < FLEET_TTL && cached.data.hexes.length > 0) {
+    return cached.data.hexes;
+  }
+  try {
+    const hexes = await fetchFleet(f);
+    if (hexes.length === 0) throw new Error("fleet db empty");
+    await store.write(FLEET_PATH, { fetchedAt: now, hexes } satisfies Fleet);
+    return hexes;
+  } catch (e) {
+    if (cached && cached.data.hexes.length > 0) {
+      log("fleet refresh failed, using stale list", { error: String(e) });
+      return cached.data.hexes;
+    }
+    throw e;
+  }
+}
+```
+
+- [ ] **Step 4: Run tests**
+
+Run: `cd functions && npx vitest run && npx tsc --noEmit`
+Expected: all PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add functions/src/fleet.ts functions/test/fleet.test.ts
+git commit -m "feat(functions): THY fleet hex list from tar1090-db with weekly cache"
+```
+
+---
+
+### Task A3: Switch the orchestrator to fleet + adsb, add `source` to `day.json`, remove OpenSky
+
+**Files:**
+- Modify: `functions/src/day-schema.ts`, `functions/src/publish.ts`, `functions/src/collect.ts`, `functions/scripts/make-fixture.ts`, `functions/test/publish.test.ts`, `functions/test/collect.test.ts`
+- Delete: `functions/src/opensky.ts`, `functions/test/opensky.test.ts`, `functions/test/fixtures/opensky-states.json`
+- Regenerate: `web/public/fixture/day.json`
+
+**Interfaces:**
+- Consumes: `fetchAircraft`, `AdsbProvider`, `FetchFn` (A1); `loadFleet` (A2).
+- Produces:
+  - `DayFile.source: { name: string; url: string }` (also `export type DaySource = DayFile["source"]` in day-schema).
+  - `buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource): DayFile`.
+  - `CollectDeps` = `{ fetch: FetchFn; now: () => number; sleep: (ms: number) => Promise<void>; store: JsonStore; routes: RouteCache; provider: AdsbProvider; log: (msg: string, extra?: Record<string, unknown>) => void }` (the `creds` field is removed).
+
+- [ ] **Step 1: Schema**
+
+In `functions/src/day-schema.ts`, inside `interface DayFile`, after the `status: DayStatus;` line add:
+```ts
+  source: { name: string; url: string };
+```
+and at the end of the file add:
+```ts
+export type DaySource = DayFile["source"];
+```
+
+- [ ] **Step 2: Update publish test (failing)**
+
+In `functions/test/publish.test.ts`:
+- change the import line `import type { RouteInfo, TrackerState } from "../src/day-schema.js";` to `import type { DaySource, RouteInfo, TrackerState } from "../src/day-schema.js";`
+- add after the `const NOW = …` line: `const SRC: DaySource = { name: "adsb.fi", url: "https://adsb.fi" };`
+- change `buildDayFile(state, NOW, { state: "ok", lastSuccessAt: NOW })` to `buildDayFile(state, NOW, { state: "ok", lastSuccessAt: NOW }, SRC)`
+- change `buildDayFile(state, NOW, { state: "delayed", lastSuccessAt: NOW - 600, error: "x" })` to `buildDayFile(state, NOW, { state: "delayed", lastSuccessAt: NOW - 600, error: "x" }, SRC)`
+- in the `"header"` test's `toMatchObject({...})`, add the property `source: { name: "adsb.fi", url: "https://adsb.fi" },`
+
+- [ ] **Step 3: Replace `functions/test/collect.test.ts` entirely (failing)**
+
+```ts
+import { gzipSync } from "node:zlib";
+import { describe, expect, it } from "vitest";
+import { PROVIDERS } from "../src/adsb.js";
+import type { DayFile, TrackerState } from "../src/day-schema.js";
+import { DAY_PATH, TRACKER_PATH, runCollect, type CollectDeps } from "../src/collect.js";
+import { FLEET_PATH } from "../src/fleet.js";
+import { PreconditionFailed, type JsonStore } from "../src/storage.js";
+import type { RouteCache, RouteCacheEntry } from "../src/routes.js";
+
+const NOW = 1_800_000_000;
+
+function memStore(): JsonStore & { files: Map<string, { data: unknown; generation: number; cacheControl?: string }> } {
+  const files = new Map<string, { data: unknown; generation: number; cacheControl?: string }>();
+  return {
+    files,
+    async read<T>(path: string) {
+      const f = files.get(path);
+      return f ? { data: structuredClone(f.data) as T, generation: f.generation } : null;
+    },
+    async write(path, data, opts = {}) {
+      const cur = files.get(path);
+      if (opts.ifGeneration !== undefined && (cur?.generation ?? 0) !== opts.ifGeneration) throw new PreconditionFailed(path);
+      files.set(path, { data: structuredClone(data), generation: (cur?.generation ?? 0) + 1, cacheControl: opts.cacheControl });
+    },
+  };
+}
+
+const memRoutes = (): RouteCache => {
+  const m = new Map<string, RouteCacheEntry>();
+  return { get: async (cs) => m.get(cs) ?? null, set: async (cs, e) => void m.set(cs, e) };
+};
+
+const fleetCsv = "ABC123;TC-JJA;A321;00;;;;\n";
+const hexBody = {
+  now: NOW * 1000,
+  ac: [{ hex: "abc123", flight: "THY1    ", lat: 44.2, lon: 25.1, alt_baro: 37000, gs: 486, track: 308.5, seen_pos: 0 }],
+};
+const routeBody = {
+  response: {
+    flightroute: {
+      origin: { country_iso_name: "TR", iata_code: "IST", latitude: 41.26, longitude: 28.74 },
+      destination: { country_iso_name: "US", iata_code: "JFK", latitude: 40.64, longitude: -73.78 },
+    },
+  },
+};
+
+function fakeFetch(opts: { hexStatus?: number; fleetStatus?: number; routeStatus?: number } = {}) {
+  return (async (input: string | URL) => {
+    const url = String(input);
+    if (url.includes("tar1090-db")) return new Response(gzipSync(fleetCsv), { status: opts.fleetStatus ?? 200 });
+    if (url.includes("adsbdb")) return new Response(JSON.stringify(routeBody), { status: opts.routeStatus ?? 200 });
+    if (url.includes("/v2/hex/")) return new Response(JSON.stringify(hexBody), { status: opts.hexStatus ?? 200 });
+    throw new Error(`unexpected ${url}`);
+  }) as typeof fetch;
+}
+
+const deps = (over: Partial<CollectDeps> = {}): CollectDeps => ({
+  fetch: fakeFetch(),
+  now: () => NOW,
+  sleep: async () => {},
+  store: memStore(),
+  routes: memRoutes(),
+  provider: PROVIDERS.adsbfi,
+  log: () => {},
+  ...over,
+});
+
+describe("runCollect", () => {
+  it("first run caches the fleet, creates tracker and day.json with routes and source", async () => {
+    const d = deps();
+    await expect(runCollect(d)).resolves.toBe("ok");
+    const store = d.store as ReturnType<typeof memStore>;
+    expect((store.files.get(FLEET_PATH)!.data as { hexes: string[] }).hexes).toEqual(["abc123"]);
+    const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
+    expect(tracker.collectingSince).toBe(NOW);
+    expect(tracker.flights[0]).toMatchObject({ cs: "THY1", samples: [[NOW, 370, 44.2, 25.1]] });
+    expect(tracker.flights[0].route?.destination.iata).toBe("JFK");
+    const day = store.files.get(DAY_PATH)!;
+    expect(day.cacheControl).toBe("public, max-age=60");
+    const file = day.data as DayFile;
+    expect(file.flights[0]).toMatchObject({ tk: "TK1", region: "AME" });
+    expect(file.status.state).toBe("ok");
+    expect(file.source).toEqual({ name: "adsb.fi", url: "https://adsb.fi" });
+  });
+
+  it("provider failure publishes delayed status and keeps tracker untouched", async () => {
+    const store = memStore();
+    await runCollect(deps({ store }));
+    const gen = store.files.get(TRACKER_PATH)!.generation;
+    await expect(runCollect(deps({ store, fetch: fakeFetch({ hexStatus: 429 }), now: () => NOW + 120 }))).resolves.toBe("delayed");
+    expect(store.files.get(TRACKER_PATH)!.generation).toBe(gen);
+    const day = store.files.get(DAY_PATH)!.data as DayFile;
+    expect(day.status).toEqual({ state: "delayed", lastSuccessAt: NOW, error: "Error: adsb.fi 429" });
+    expect(day.flights).toHaveLength(1);
+  });
+
+  it("fleet failure with no cached fleet publishes delayed status", async () => {
+    const store = memStore();
+    await expect(runCollect(deps({ store, fetch: fakeFetch({ fleetStatus: 503 }) }))).resolves.toBe("delayed");
+    expect((store.files.get(DAY_PATH)!.data as DayFile).status).toMatchObject({ state: "delayed", error: "Error: fleet db 503" });
+    expect(store.files.has(TRACKER_PATH)).toBe(false);
+  });
+
+  it("tracker write conflict skips publishing", async () => {
+    const store = memStore();
+    const racing: JsonStore = {
+      read: store.read,
+      async write(path, data, opts) {
+        if (path === TRACKER_PATH) throw new PreconditionFailed(path);
+        return store.write(path, data, opts);
+      },
+    };
+    await expect(runCollect(deps({ store: racing }))).resolves.toBe("conflict");
+    expect(store.files.has(DAY_PATH)).toBe(false);
+  });
+
+  it("route lookup failure leaves route undefined for retry", async () => {
+    const store = memStore();
+    await runCollect(deps({ store, fetch: fakeFetch({ routeStatus: 500 }) }));
+    const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
+    expect(tracker.flights[0].route).toBeUndefined();
+  });
+});
+```
+
+- [ ] **Step 4: Run to verify they fail**
+
+Run: `cd functions && npx vitest run test/publish.test.ts test/collect.test.ts`
+Expected: FAIL (publish header lacks `source`; collect imports `PROVIDERS`/`FLEET_PATH` but `runCollect` still uses OpenSky and `creds`).
+
+- [ ] **Step 5: Update `publish.ts`**
+
+In `functions/src/publish.ts`:
+- change the first import to `import type { DayFile, DaySource, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";`
+- change the signature to `export function buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource): DayFile {`
+- in the returned object, after `status,` add `source,`
+
+- [ ] **Step 6: Replace `functions/src/collect.ts` entirely**
+
+```ts
+import { fetchAircraft, type AdsbProvider, type FetchFn } from "./adsb.js";
+import type { AircraftState, TrackerState } from "./day-schema.js";
+import { loadFleet } from "./fleet.js";
+import { buildDayFile } from "./publish.js";
+import { lookupRoute, type RouteCache } from "./routes.js";
+import { PreconditionFailed, type JsonStore } from "./storage.js";
+import { emptyState, step } from "./tracker.js";
+
+export const TRACKER_PATH = "state/tracker.json";
+export const DAY_PATH = "public/day.json";
+export const DAY_CACHE = "public, max-age=60";
+export const MAX_ROUTE_LOOKUPS = 40;
+
+export interface CollectDeps {
+  fetch: FetchFn;
+  now: () => number;
+  sleep: (ms: number) => Promise<void>;
+  store: JsonStore;
+  routes: RouteCache;
+  provider: AdsbProvider;
+  log: (msg: string, extra?: Record<string, unknown>) => void;
+}
+
+async function resolveRoutes(state: TrackerState, d: CollectDeps, now: number) {
+  let lookups = 0;
+  for (const f of state.flights) {
+    if (f.route !== undefined) continue;
+    if (lookups++ >= MAX_ROUTE_LOOKUPS) break;
+    try {
+      f.route = await lookupRoute(f.cs, d.routes, d.fetch, now);
+    } catch (e) {
+      d.log("route lookup failed", { cs: f.cs, error: String(e) });
+    }
+  }
+}
+
+export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "conflict"> {
+  const now = d.now();
+  const source = { name: d.provider.name, url: d.provider.url };
+  const current = await d.store.read<TrackerState>(TRACKER_PATH);
+  const prev = current?.data ?? emptyState(now);
+
+  let aircraft: AircraftState[];
+  let fleetSize: number;
+  try {
+    const fleet = await loadFleet(d.store, d.fetch, now, d.log);
+    fleetSize = fleet.length;
+    aircraft = await fetchAircraft(d.fetch, d.provider, fleet, d.sleep);
+  } catch (e) {
+    const error = String(e);
+    d.log("live data failed", { error });
+    const day = buildDayFile(prev, now, { state: "delayed", lastSuccessAt: prev.lastSuccessAt, error }, source);
+    await d.store.write(DAY_PATH, day, { cacheControl: DAY_CACHE });
+    return "delayed";
+  }
+
+  const next = step(prev, aircraft, now);
+  await resolveRoutes(next, d, now);
+
+  try {
+    await d.store.write(TRACKER_PATH, next, { ifGeneration: current?.generation ?? 0 });
+  } catch (e) {
+    if (e instanceof PreconditionFailed) {
+      d.log("tracker write conflict, skipping run");
+      return "conflict";
+    }
+    throw e;
+  }
+
+  await d.store.write(DAY_PATH, buildDayFile(next, now, { state: "ok", lastSuccessAt: now }, source), {
+    cacheControl: DAY_CACHE,
+  });
+  d.log("collect ok", {
+    fleet: fleetSize,
+    aircraft: aircraft.length,
+    flights: next.flights.length,
+    unknownRoutes: next.flights.filter((f) => f.route === null).length,
+    pendingRoutes: next.flights.filter((f) => f.route === undefined).length,
+  });
+  return "ok";
+}
+```
+
+- [ ] **Step 7: Fixture source**
+
+In `functions/scripts/make-fixture.ts` change
+```ts
+  return buildDayFile(state, now, { state: "ok", lastSuccessAt: now });
+```
+to
+```ts
+  return buildDayFile(state, now, { state: "ok", lastSuccessAt: now }, { name: "synthetic fixture", url: "" });
+```
+
+- [ ] **Step 8: Remove OpenSky**
+
+```bash
+git rm functions/src/opensky.ts functions/test/opensky.test.ts functions/test/fixtures/opensky-states.json
+```
+Then confirm nothing references it: `grep -rn "opensky" functions/src functions/test functions/scripts` → no output.
+
+- [ ] **Step 9: Run tests, typecheck, regenerate fixture**
+
+Run: `cd functions && npx vitest run && npx tsc --noEmit && npm run fixture`
+Expected: all PASS; fixture written (`… flights, … airborne`). Verify: `node -e "const d=require('../web/public/fixture/day.json');console.log(d.source)"` → `{ name: 'synthetic fixture', url: '' }`.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add -A functions/src functions/test functions/scripts web/public/fixture/day.json
+git commit -m "feat(functions): collect from adsb.fi fleet query; day.json source attribution; drop OpenSky"
+```
+
+---
+
+### Task A4: Scheduled function wiring, deploy, live verification (replaces Task 9)
+
+**Files:**
+- Modify: `functions/src/index.ts` (currently `export {};`, untracked — add it in this task)
+- Create: `README.md`
+
+**Interfaces:**
+- Consumes: `runCollect`, `CollectDeps` (A3), `PROVIDERS` (A1), `gcsStore` (Task 8), `firestoreRouteCache` (Task 5).
+
+- [ ] **Step 1: Wire the scheduled function**
+
+`functions/src/index.ts`:
+```ts
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { getStorage } from "firebase-admin/storage";
+import * as logger from "firebase-functions/logger";
+import { defineString } from "firebase-functions/params";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { PROVIDERS } from "./adsb.js";
+import { runCollect } from "./collect.js";
+import { firestoreRouteCache } from "./routes.js";
+import { gcsStore } from "./storage.js";
+
+initializeApp();
+
+const ADSB_PROVIDER = defineString("ADSB_PROVIDER", { default: "adsbfi" });
+
+export const collect = onSchedule(
+  {
+    schedule: "every 2 minutes",
+    region: "europe-west1",
+    timeoutSeconds: 90,
+    memory: "512MiB",
+    maxInstances: 1,
+    retryCount: 0,
+  },
+  async () => {
+    const key = ADSB_PROVIDER.value() as keyof typeof PROVIDERS;
+    const provider = PROVIDERS[key];
+    if (!provider) throw new Error(`unknown ADSB_PROVIDER "${key}"`);
+    const result = await runCollect({
+      fetch,
+      now: () => Math.floor(Date.now() / 1000),
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+      store: gcsStore(getStorage().bucket()),
+      routes: firestoreRouteCache(getFirestore()),
+      provider,
+      log: (msg, extra) => logger.info(msg, extra),
+    });
+    logger.info("collect finished", { result, provider: provider.name });
+  },
+);
+```
+
+- [ ] **Step 2: Build and test**
+
+Run: `cd functions && npm run build && npx vitest run`
+Expected: `lib/index.js` emitted, all tests PASS.
+
+- [ ] **Step 3: Deploy**
+
+```bash
+firebase deploy --only functions:collect,firestore:rules,storage --project omerkilavuz-9ad41 --non-interactive --force
+```
+Expected: deploy completes; a Cloud Scheduler job for `collect` exists. (`--force` also creates the Artifact Registry cleanup policy.) If the CLI prompts for `ADSB_PROVIDER`, accept the default `adsbfi`.
+
+- [ ] **Step 4: Bucket CORS**
+
+```bash
+gcloud storage buckets update gs://omerkilavuz-9ad41.firebasestorage.app --cors-file=cors.json --project omerkilavuz-9ad41
+```
+
+- [ ] **Step 5: Verify live output after ≥ 2 scheduler runs (~5 min)**
+
+```bash
+firebase functions:log --only collect --project omerkilavuz-9ad41 | tail -20
+```
+Expected: `collect ok` with `fleet` ≈ 1000 and `aircraft` > 50.
+
+```bash
+curl -s "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media" | head -c 400
+```
+Expected: starts with `{"v":1,"generatedAt":…,"status":{"state":"ok"…},"source":{"name":"adsb.fi","url":"https://adsb.fi"}`.
+
+```bash
+curl -sI "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media" | grep -i -E "cache-control"
+```
+Expected: `cache-control: public, max-age=60`.
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/state%2Ftracker.json?alt=media"
+```
+Expected: `403`.
+
+- [ ] **Step 6: README**
+
+`README.md`:
+```markdown
+# DataRoute — THY 24H Data Tunnel
+
+## Data pipeline (`functions/`)
+
+A Cloud Function (`collect`, europe-west1) runs every 2 minutes:
+
+1. Loads the Turkish-registered airliner fleet (`TC-` + airliner type) from the open-source
+   [tar1090-db](https://github.com/wiedehopf/tar1090-db), cached weekly in `state/fleet.json`.
+2. Queries live positions for that fleet from [adsb.fi](https://adsb.fi) open data
+   (100 aircraft per request, 1 request/second) and keeps `THY*` callsigns.
+3. Segments flights, keeps a rolling 24 h log (`state/tracker.json`), resolves routes via
+   [adsbdb](https://www.adsbdb.com) (cached in Firestore `routes/`).
+4. Publishes `public/day.json`:
+   https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media
+
+Switch provider (e.g. to airplanes.live once access is approved): set the `ADSB_PROVIDER`
+param to `airplaneslive` in `functions/.env` and redeploy.
+
+Logs: `firebase functions:log --only collect`
+
+Data attribution: live aircraft data © [adsb.fi](https://adsb.fi) (personal, non-commercial use);
+routes from adsbdb; fleet from tar1090-db.
+
+## Development
+
+    cd functions && npm test        # unit tests
+    cd functions && npm run fixture # regenerate web/public/fixture/day.json
+```
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add functions/src/index.ts README.md
+git commit -m "feat(functions): scheduled adsb.fi collector every 2 minutes"
+```
