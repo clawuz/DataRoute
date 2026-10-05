@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Airport, DayFile, Sample, TrackedFlight, TrackerState } from "../src/day-schema.js";
-import { haversineKm, interpolateGreatCircle } from "../src/geo.js";
+import { haversineKm, initialBearing, interpolateGreatCircle } from "../src/geo.js";
 import { buildDayFile } from "../src/publish.js";
 
 const IST: Airport = { iata: "IST", country: "TR", lat: 41.2613, lon: 28.742 };
@@ -78,40 +78,50 @@ export function makeFixture(now: number, seed = 1): DayFile {
     const dur = Math.round((km / KMH + 0.4) * 3600);
     const cruise = km < 1000 ? 330 : km < 3000 ? 370 : 390 + Math.round(rnd() * 20);
 
-    // Departure: weighted hour of day, spread over [now − 86400 − dur, now].
+    // Daily rotation: a weighted hour-of-day slot, latest occurrence ≤ now. The previous day's
+    // occurrence is also emitted when it is still airborne after the window start, so a
+    // steady-state number of flights is already in the air at window.from (their early samples
+    // fall before the window and are trimmed).
     const { h } = pickWeighted(hours, (x) => x.w, rnd());
     const dayStart = Math.floor(now / 86400) * 86400;
-    let dep = dayStart + h * 3600 + Math.floor(rnd() * 3600);
-    while (dep + dur < now - 86400) dep += 86400;
-    while (dep > now) dep -= 86400; // wrap into the window so every hour of the last 24h is populated
+    let base = dayStart + h * 3600 + Math.floor(rnd() * 3600);
+    if (base > now) base -= 86400;
+    const unrouted = rnd() < 0.04;
 
-    const climb = 22 * 60;
-    const descent = 28 * 60;
-    const samples: Sample[] = [];
-    for (let t = dep; t <= Math.min(dep + dur, now); t += STEP) {
-      if (t < now - 86400) continue;
-      const e = t - dep;
-      const f = e / dur;
-      const alt = Math.round(cruise * Math.max(0, Math.min(1, e / climb, (dur - e) / descent)));
-      const [la, lo] = interpolateGreatCircle(origin.lat, origin.lon, destination.lat, destination.lon, f);
-      samples.push([t, alt, Math.round(la * 1e4) / 1e4, Math.round(lo * 1e4) / 1e4]);
+    for (const dep of [base, base - 86400]) {
+      if (dep + dur <= now - 86400) continue;
+      const climb = 22 * 60;
+      const descent = 28 * 60;
+      const samples: Sample[] = [];
+      for (let t = dep; t <= Math.min(dep + dur, now); t += STEP) {
+        if (t < now - 86400) continue;
+        const e = t - dep;
+        const f = e / dur;
+        const alt = Math.round(cruise * Math.max(0, Math.min(1, e / climb, (dur - e) / descent)));
+        const [la, lo] = interpolateGreatCircle(origin.lat, origin.lon, destination.lat, destination.lon, f);
+        samples.push([t, alt, Math.round(la * 1e4) / 1e4, Math.round(lo * 1e4) / 1e4]);
+      }
+      if (samples.length === 0) continue;
+
+      const airborne = dep + dur > now;
+      const last = samples[samples.length - 1];
+      const prev = samples.length > 1 ? samples[samples.length - 2] : null;
+      const trk = prev
+        ? initialBearing(prev[2], prev[3], last[2], last[3])
+        : initialBearing(origin.lat, origin.lon, destination.lat, destination.lon);
+      const icao24 = Math.floor(rnd() * 0xffffff).toString(16).padStart(6, "0");
+      flights.push({
+        id: `${icao24}-${dep}`,
+        icao24,
+        cs: `THY${1 + Math.floor(rnd() * 2999)}`,
+        dep,
+        arr: airborne ? null : dep + dur,
+        lastContact: last[0],
+        samples,
+        route: unrouted ? null : { origin, destination },
+        ...(airborne ? { now: { gs: Math.round(440 + rnd() * 60), trk: Math.round(trk * 10) / 10 } } : {}),
+      });
     }
-    if (samples.length === 0) continue;
-
-    const airborne = dep + dur > now;
-    const last = samples[samples.length - 1];
-    const icao24 = Math.floor(rnd() * 0xffffff).toString(16).padStart(6, "0");
-    flights.push({
-      id: `${icao24}-${dep}`,
-      icao24,
-      cs: `THY${1 + Math.floor(rnd() * 2999)}`,
-      dep,
-      arr: airborne ? null : dep + dur,
-      lastContact: last[0],
-      samples,
-      route: { origin, destination },
-      ...(airborne ? { now: { gs: Math.round(440 + rnd() * 60), trk: Math.round(rnd() * 3600) / 10 } } : {}),
-    });
   }
 
   flights.sort((a, b) => a.dep - b.dep);

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { initialBearing } from "../src/geo.js";
 import { makeFixture } from "../scripts/make-fixture.js";
 
 describe("makeFixture", () => {
@@ -25,6 +26,26 @@ describe("makeFixture", () => {
         expect(f.dep + dt).toBeGreaterThanOrEqual(NOW - 86400);
         expect(alt).toBeLessThanOrEqual(420);
       }
+    }
+  });
+
+  it("has flights airborne at window start, trimmed samples and UNK flights", () => {
+    const from = day.window.from;
+    const airborneAtStart = day.flights.filter((f) => f.dep < from && (f.arr === null || f.arr > from)).length;
+    expect(airborneAtStart).toBeGreaterThan(100);
+    expect(day.flights.some((f) => f.s[0][0] > 0)).toBe(true);
+    const unk = day.flights.filter((f) => f.region === "UNK").length;
+    expect(unk).toBeGreaterThan(0);
+    expect(unk / day.flights.length).toBeLessThan(0.1);
+  });
+
+  it("airborne heading follows the path", () => {
+    for (const f of day.flights.filter((x) => x.now && x.s.length > 1).slice(0, 50)) {
+      const [, , la1, lo1] = f.s[f.s.length - 2];
+      const [, , la2, lo2] = f.s[f.s.length - 1];
+      const brg = initialBearing(la1, lo1, la2, lo2);
+      const d = Math.abs(((f.now!.trk - brg + 540) % 360) - 180);
+      expect(d).toBeLessThan(0.2);
     }
   });
 });
