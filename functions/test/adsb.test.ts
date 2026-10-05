@@ -32,6 +32,10 @@ describe("parseV2", () => {
     expect(parseV2({ now: 1, ac: null })).toEqual([]);
     expect(parseV2({ now: 1 })).toEqual([]);
   });
+
+  it("throws when now is missing but aircraft are present", () => {
+    expect(() => parseV2({ ac: fixture.ac })).toThrow("adsb response missing now");
+  });
 });
 
 describe("fetchAircraft", () => {

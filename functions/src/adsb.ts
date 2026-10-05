@@ -34,9 +34,12 @@ interface V2Aircraft {
 
 export function parseV2(json: unknown): AircraftState[] {
   const body = json as { now?: number; ac?: V2Aircraft[] | null };
-  const nowS = (num(body.now) ?? 0) / 1000;
+  const list = body.ac ?? [];
+  if (list.length === 0) return [];
+  if (!Number.isFinite(body.now)) throw new Error("adsb response missing now");
+  const nowS = (body.now as number) / 1000;
   const out: AircraftState[] = [];
-  for (const a of body.ac ?? []) {
+  for (const a of list) {
     const cs = (a.flight ?? "").trim();
     if (!THY.test(cs)) continue;
     const lat = num(a.lat);
