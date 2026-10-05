@@ -1,6 +1,9 @@
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
+import { PROVIDERS } from "../src/adsb.js";
 import type { DayFile, TrackerState } from "../src/day-schema.js";
 import { DAY_PATH, TRACKER_PATH, runCollect, type CollectDeps } from "../src/collect.js";
+import { FLEET_PATH } from "../src/fleet.js";
 import { PreconditionFailed, type JsonStore } from "../src/storage.js";
 import type { RouteCache, RouteCacheEntry } from "../src/routes.js";
 
@@ -27,9 +30,10 @@ const memRoutes = (): RouteCache => {
   return { get: async (cs) => m.get(cs) ?? null, set: async (cs, e) => void m.set(cs, e) };
 };
 
-const statesBody = {
-  time: NOW,
-  states: [["abc123", "THY1    ", "Turkey", NOW, NOW, 25.1, 44.2, 11277.6, false, 250, 308.5, 0, null, null, "1", false, 0]],
+const fleetCsv = "ABC123;TC-JJA;A321;00;;;;\n";
+const hexBody = {
+  now: NOW * 1000,
+  ac: [{ hex: "abc123", flight: "THY1    ", lat: 44.2, lon: 25.1, alt_baro: 37000, gs: 486, track: 308.5, seen_pos: 0 }],
 };
 const routeBody = {
   response: {
@@ -40,12 +44,12 @@ const routeBody = {
   },
 };
 
-function fakeFetch(opts: { statesStatus?: number } = {}) {
+function fakeFetch(opts: { hexStatus?: number; fleetStatus?: number; routeStatus?: number } = {}) {
   return (async (input: string | URL) => {
     const url = String(input);
-    if (url.includes("openid-connect/token")) return new Response(JSON.stringify({ access_token: "t" }));
-    if (url.includes("/states/all")) return new Response(JSON.stringify(statesBody), { status: opts.statesStatus ?? 200 });
-    if (url.includes("adsbdb")) return new Response(JSON.stringify(routeBody));
+    if (url.includes("tar1090-db")) return new Response(gzipSync(fleetCsv), { status: opts.fleetStatus ?? 200 });
+    if (url.includes("adsbdb")) return new Response(JSON.stringify(routeBody), { status: opts.routeStatus ?? 200 });
+    if (url.includes("/v2/hex/")) return new Response(JSON.stringify(hexBody), { status: opts.hexStatus ?? 200 });
     throw new Error(`unexpected ${url}`);
   }) as typeof fetch;
 }
@@ -53,36 +57,48 @@ function fakeFetch(opts: { statesStatus?: number } = {}) {
 const deps = (over: Partial<CollectDeps> = {}): CollectDeps => ({
   fetch: fakeFetch(),
   now: () => NOW,
+  sleep: async () => {},
   store: memStore(),
   routes: memRoutes(),
-  creds: { id: "id", secret: "s" },
+  provider: PROVIDERS.adsbfi,
   log: () => {},
   ...over,
 });
 
 describe("runCollect", () => {
-  it("first run creates tracker and day.json with routes", async () => {
+  it("first run caches the fleet, creates tracker and day.json with routes and source", async () => {
     const d = deps();
     await expect(runCollect(d)).resolves.toBe("ok");
     const store = d.store as ReturnType<typeof memStore>;
+    expect((store.files.get(FLEET_PATH)!.data as { hexes: string[] }).hexes).toEqual(["abc123"]);
     const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
     expect(tracker.collectingSince).toBe(NOW);
+    expect(tracker.flights[0]).toMatchObject({ cs: "THY1", samples: [[NOW, 370, 44.2, 25.1]] });
     expect(tracker.flights[0].route?.destination.iata).toBe("JFK");
     const day = store.files.get(DAY_PATH)!;
     expect(day.cacheControl).toBe("public, max-age=60");
-    expect((day.data as DayFile).flights[0]).toMatchObject({ tk: "TK1", region: "AME" });
-    expect((day.data as DayFile).status.state).toBe("ok");
+    const file = day.data as DayFile;
+    expect(file.flights[0]).toMatchObject({ tk: "TK1", region: "AME" });
+    expect(file.status.state).toBe("ok");
+    expect(file.source).toEqual({ name: "adsb.fi", url: "https://adsb.fi" });
   });
 
-  it("OpenSky failure publishes delayed status and keeps tracker untouched", async () => {
+  it("provider failure publishes delayed status and keeps tracker untouched", async () => {
     const store = memStore();
     await runCollect(deps({ store }));
     const gen = store.files.get(TRACKER_PATH)!.generation;
-    await expect(runCollect(deps({ store, fetch: fakeFetch({ statesStatus: 429 }), now: () => NOW + 120 }))).resolves.toBe("delayed");
+    await expect(runCollect(deps({ store, fetch: fakeFetch({ hexStatus: 429 }), now: () => NOW + 120 }))).resolves.toBe("delayed");
     expect(store.files.get(TRACKER_PATH)!.generation).toBe(gen);
     const day = store.files.get(DAY_PATH)!.data as DayFile;
-    expect(day.status).toEqual({ state: "delayed", lastSuccessAt: NOW, error: "Error: opensky states 429" });
+    expect(day.status).toEqual({ state: "delayed", lastSuccessAt: NOW, error: "Error: adsb.fi 429" });
     expect(day.flights).toHaveLength(1);
+  });
+
+  it("fleet failure with no cached fleet publishes delayed status", async () => {
+    const store = memStore();
+    await expect(runCollect(deps({ store, fetch: fakeFetch({ fleetStatus: 503 }) }))).resolves.toBe("delayed");
+    expect((store.files.get(DAY_PATH)!.data as DayFile).status).toMatchObject({ state: "delayed", error: "Error: fleet db 503" });
+    expect(store.files.has(TRACKER_PATH)).toBe(false);
   });
 
   it("tracker write conflict skips publishing", async () => {
@@ -99,12 +115,8 @@ describe("runCollect", () => {
   });
 
   it("route lookup failure leaves route undefined for retry", async () => {
-    const f = (async (input: string | URL) => {
-      if (String(input).includes("adsbdb")) return new Response("", { status: 500 });
-      return fakeFetch()(input);
-    }) as typeof fetch;
     const store = memStore();
-    await runCollect(deps({ store, fetch: f }));
+    await runCollect(deps({ store, fetch: fakeFetch({ routeStatus: 500 }) }));
     const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
     expect(tracker.flights[0].route).toBeUndefined();
   });

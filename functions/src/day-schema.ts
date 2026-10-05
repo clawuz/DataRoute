@@ -17,7 +17,7 @@ export interface RouteInfo {
   destination: Airport;
 }
 
-/** One THY aircraft from one OpenSky poll. */
+/** One THY aircraft from one ADS-B poll. */
 export interface AircraftState {
   icao24: string;
   cs: string; // trimmed callsign, e.g. "THY1"
@@ -75,6 +75,7 @@ export interface DayFile {
   generatedAt: number;
   collectingSince: number;
   status: DayStatus;
+  source: { name: string; url: string };
   window: { from: number; to: number };
   stats: {
     airborne: number;
@@ -85,3 +86,4 @@ export interface DayFile {
   };
   flights: Flight[];
 }
+export type DaySource = DayFile["source"];

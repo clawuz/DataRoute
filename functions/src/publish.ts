@@ -1,4 +1,4 @@
-import type { DayFile, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";
+import type { DayFile, DaySource, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";
 import { haversineKm, initialBearing } from "./geo.js";
 import { resolveEndpoint } from "./regions.js";
 import { WINDOW } from "./tracker.js";
@@ -31,7 +31,7 @@ function toFlight(f: TrackedFlight): Flight {
   return out;
 }
 
-export function buildDayFile(state: TrackerState, now: number, status: DayStatus): DayFile {
+export function buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource): DayFile {
   const destinations = new Set<string>();
   const countries = new Set<string>();
   let km = 0;
@@ -52,6 +52,7 @@ export function buildDayFile(state: TrackerState, now: number, status: DayStatus
     generatedAt: now,
     collectingSince: state.collectingSince,
     status,
+    source,
     window: { from: now - WINDOW, to: now },
     stats: {
       airborne: state.flights.filter((f) => f.arr === null).length,

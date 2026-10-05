@@ -1,5 +1,6 @@
+import { fetchAircraft, type AdsbProvider, type FetchFn } from "./adsb.js";
 import type { AircraftState, TrackerState } from "./day-schema.js";
-import { fetchStates, fetchToken, parseThyStates, type FetchFn } from "./opensky.js";
+import { loadFleet } from "./fleet.js";
 import { buildDayFile } from "./publish.js";
 import { lookupRoute, type RouteCache } from "./routes.js";
 import { PreconditionFailed, type JsonStore } from "./storage.js";
@@ -13,9 +14,10 @@ export const MAX_ROUTE_LOOKUPS = 40;
 export interface CollectDeps {
   fetch: FetchFn;
   now: () => number;
+  sleep: (ms: number) => Promise<void>;
   store: JsonStore;
   routes: RouteCache;
-  creds: { id: string; secret: string };
+  provider: AdsbProvider;
   log: (msg: string, extra?: Record<string, unknown>) => void;
 }
 
@@ -34,17 +36,20 @@ async function resolveRoutes(state: TrackerState, d: CollectDeps, now: number) {
 
 export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "conflict"> {
   const now = d.now();
+  const source = { name: d.provider.name, url: d.provider.url };
   const current = await d.store.read<TrackerState>(TRACKER_PATH);
   const prev = current?.data ?? emptyState(now);
 
   let aircraft: AircraftState[];
+  let fleetSize: number;
   try {
-    const token = await fetchToken(d.fetch, d.creds.id, d.creds.secret);
-    aircraft = parseThyStates(await fetchStates(d.fetch, token));
+    const fleet = await loadFleet(d.store, d.fetch, now, d.log);
+    fleetSize = fleet.length;
+    aircraft = await fetchAircraft(d.fetch, d.provider, fleet, d.sleep);
   } catch (e) {
     const error = String(e);
-    d.log("opensky failed", { error });
-    const day = buildDayFile(prev, now, { state: "delayed", lastSuccessAt: prev.lastSuccessAt, error });
+    d.log("live data failed", { error });
+    const day = buildDayFile(prev, now, { state: "delayed", lastSuccessAt: prev.lastSuccessAt, error }, source);
     await d.store.write(DAY_PATH, day, { cacheControl: DAY_CACHE });
     return "delayed";
   }
@@ -62,10 +67,11 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
     throw e;
   }
 
-  await d.store.write(DAY_PATH, buildDayFile(next, now, { state: "ok", lastSuccessAt: now }), {
+  await d.store.write(DAY_PATH, buildDayFile(next, now, { state: "ok", lastSuccessAt: now }, source), {
     cacheControl: DAY_CACHE,
   });
   d.log("collect ok", {
+    fleet: fleetSize,
     aircraft: aircraft.length,
     flights: next.flights.length,
     unknownRoutes: next.flights.filter((f) => f.route === null).length,

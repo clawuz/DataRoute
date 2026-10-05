@@ -116,7 +116,7 @@ export function makeFixture(now: number, seed = 1): DayFile {
 
   flights.sort((a, b) => a.dep - b.dep);
   const state: TrackerState = { v: 1, collectingSince: now - 86400, lastSuccessAt: now, flights };
-  return buildDayFile(state, now, { state: "ok", lastSuccessAt: now });
+  return buildDayFile(state, now, { state: "ok", lastSuccessAt: now }, { name: "synthetic fixture", url: "" });
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);

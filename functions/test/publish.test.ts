@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { RouteInfo, TrackerState } from "../src/day-schema.js";
+import type { DaySource, RouteInfo, TrackerState } from "../src/day-schema.js";
 import { buildDayFile } from "../src/publish.js";
 
 const NOW = 1_800_000_000;
+const SRC: DaySource = { name: "adsb.fi", url: "https://adsb.fi" };
 const IST = { iata: "IST", country: "TR", lat: 41.2613, lon: 28.742 };
 const JFK = { iata: "JFK", country: "US", lat: 40.6398, lon: -73.7789 };
 const LHR = { iata: "LHR", country: "GB", lat: 51.47, lon: -0.454 };
@@ -32,12 +33,13 @@ const state: TrackerState = {
 };
 
 describe("buildDayFile", () => {
-  const day = buildDayFile(state, NOW, { state: "ok", lastSuccessAt: NOW });
+  const day = buildDayFile(state, NOW, { state: "ok", lastSuccessAt: NOW }, SRC);
 
   it("header", () => {
     expect(day).toMatchObject({
       v: 1, generatedAt: NOW, collectingSince: NOW - 7200,
       status: { state: "ok", lastSuccessAt: NOW },
+      source: { name: "adsb.fi", url: "https://adsb.fi" },
       window: { from: NOW - 86400, to: NOW },
     });
   });
@@ -61,7 +63,7 @@ describe("buildDayFile", () => {
   });
 
   it("passes through delayed status", () => {
-    const d = buildDayFile(state, NOW, { state: "delayed", lastSuccessAt: NOW - 600, error: "x" });
-    expect(d.status).toEqual({ state: "delayed", lastSuccessAt: NOW - 600, error: "x" });
+    const d = buildDayFile(state, NOW, { state: "delayed", lastSuccessAt: NOW - 600, error: "x" }, SRC);
+    expect(d.status).toEqual({ state: "delayed", lastSuccessAt: NOW - 600, error: "x" }, SRC);
   });
 });
