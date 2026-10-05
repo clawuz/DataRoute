@@ -2835,3 +2835,17 @@ routes from adsbdb; fleet from tar1090-db.
 git add functions/src/index.ts README.md
 git commit -m "feat(functions): scheduled adsb.fi collector every 2 minutes"
 ```
+
+---
+
+## Outcome & handoff to Plan 2 (2026-10-05)
+
+**Live:** `collect` (europe-west1) every 2 min · fleet 1022 `TC-` airliners · ~120–135 THY aircraft airborne per poll (afternoon UTC) · public `day.json`: https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media (gzip, `max-age=60`, CORS `*`). Collection started 2026-10-05 ~14:10 UTC, so the 24 h window fills by 2026-10-06 ~14:10 UTC.
+
+**Requirements Plan 2 must honour (from the final review):**
+- Treat `generatedAt` older than ~6 min as "delayed" even if `status.state === "ok"`.
+- Tolerate `dep < window.from`, `s[0][0] > 0` (trimmed samples), `arr` earlier than the last sample time (clamp), `status.lastSuccessAt === 0`, and `region: "UNK"`.
+- Always render `source.name` linked to `source.url` (adsb.fi terms: attribution with link; personal / non-commercial use). The fixture's source is `synthetic fixture` with an empty URL.
+- Payload budget: the fixture (2185 flights) is ~2.0 MB gzipped; a full live day may approach that. Re-fetch cost per viewer ≈ 60 MB/h at a 120 s interval — consider conditional requests / longer interval, and revisit the spec §4.3 size estimate (300–400 KB was optimistic).
+
+**Ops leftovers (not blocking):** orphaned Secret Manager secrets `OPENSKY_CLIENT_ID` / `OPENSKY_CLIENT_SECRET` (unused; delete when convenient); check function memory after the first weekly fleet refresh (2026-10-12); budget alert is 100 TRY (existing), not the spec's $5.
