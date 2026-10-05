@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import fixture from "./fixtures/adsb-v2.json" with { type: "json" };
-import { CHUNK, PROVIDERS, SPACING_MS, fetchAircraft, parseV2 } from "../src/adsb.js";
+import { ADSB_TIMEOUT_MS, CHUNK, PROVIDERS, SPACING_MS, fetchAircraft, parseV2 } from "../src/adsb.js";
 
 describe("parseV2", () => {
   const out = parseV2(fixture);
@@ -63,6 +63,20 @@ describe("fetchAircraft", () => {
   it("throws with the provider name on HTTP errors", async () => {
     const f = vi.fn(async () => new Response("", { status: 429 }));
     await expect(fetchAircraft(f as unknown as typeof fetch, PROVIDERS.adsbfi, ["4baa53"], async () => {})).rejects.toThrow("adsb.fi 429");
+  });
+
+  it("passes an abort signal and names the provider on network errors", async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ now: 1, ac: [] })));
+    await fetchAircraft(f as unknown as typeof fetch, PROVIDERS.adsbfi, ["4baa53"], async () => {});
+    const init = (f.mock.calls[0] as unknown as [string, RequestInit])[1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(ADSB_TIMEOUT_MS).toBe(10_000);
+    const boom = vi.fn(async () => {
+      throw new Error("The operation was aborted due to timeout");
+    });
+    await expect(fetchAircraft(boom as unknown as typeof fetch, PROVIDERS.adsbfi, ["4baa53"], async () => {})).rejects.toThrow(
+      "adsb.fi Error: The operation was aborted due to timeout",
+    );
   });
 
   it("does nothing for an empty fleet", async () => {

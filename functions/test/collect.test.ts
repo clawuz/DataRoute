@@ -1,8 +1,8 @@
 import { gzipSync } from "node:zlib";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { PROVIDERS } from "../src/adsb.js";
 import type { DayFile, TrackerState } from "../src/day-schema.js";
-import { DAY_PATH, TRACKER_PATH, runCollect, type CollectDeps } from "../src/collect.js";
+import { DAY_PATH, ROUTE_BUDGET_MS, TRACKER_PATH, runCollect, type CollectDeps } from "../src/collect.js";
 import { FLEET_PATH } from "../src/fleet.js";
 import { PreconditionFailed, type JsonStore } from "../src/storage.js";
 import type { RouteCache, RouteCacheEntry } from "../src/routes.js";
@@ -62,6 +62,8 @@ const deps = (over: Partial<CollectDeps> = {}): CollectDeps => ({
   routes: memRoutes(),
   provider: PROVIDERS.adsbfi,
   log: () => {},
+  warn: () => {},
+  clock: () => 0,
   ...over,
 });
 
@@ -119,5 +121,57 @@ describe("runCollect", () => {
     await runCollect(deps({ store, fetch: fakeFetch({ routeStatus: 500 }) }));
     const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
     expect(tracker.flights[0].route).toBeUndefined();
+  });
+
+  it("stops starting route lookups once the budget is spent", async () => {
+    const store = memStore();
+    const calls: string[] = [];
+    const body = {
+      now: NOW * 1000,
+      ac: [1, 2, 3].map((i) => ({ hex: `abc12${i}`, flight: `THY${i}`, lat: 44 + i, lon: 25, alt_baro: 37000, gs: 480, track: 300, seen_pos: 0 })),
+    };
+    const f = (async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes("tar1090-db")) return new Response(gzipSync("ABC121;TC-JJA;A321;00;;;;\n"));
+      if (url.includes("adsbdb")) {
+        calls.push(url);
+        return new Response(JSON.stringify(routeBody));
+      }
+      return new Response(JSON.stringify(body));
+    }) as typeof fetch;
+    let t = 0;
+    const clock = () => (t += ROUTE_BUDGET_MS / 2 + 1); // start, then 1st check ok, 2nd check over budget
+    const warn = vi.fn();
+    await expect(runCollect(deps({ store, fetch: f, clock, warn }))).resolves.toBe("ok");
+    expect(calls).toHaveLength(1);
+    const tracker = store.files.get(TRACKER_PATH)!.data as TrackerState;
+    expect(tracker.flights.filter((x) => x.route === undefined)).toHaveLength(2);
+    expect(warn).toHaveBeenCalledWith("route budget exhausted", { remaining: 2 });
+    expect(warn.mock.calls.filter((c) => c[0] === "route budget exhausted")).toHaveLength(1);
+    expect(store.files.has(DAY_PATH)).toBe(true);
+  });
+
+  it("tracker read failure returns delayed without writing day.json", async () => {
+    const store = memStore();
+    const broken: JsonStore = {
+      read: async () => {
+        throw new Error("gcs down");
+      },
+      write: store.write,
+    };
+    const warn = vi.fn();
+    await expect(runCollect(deps({ store: broken, warn }))).resolves.toBe("delayed");
+    expect(warn).toHaveBeenCalledWith("tracker read failed", { error: "Error: gcs down" });
+    expect(store.files.size).toBe(0);
+  });
+
+  it("logs failures at warn level and success at info", async () => {
+    const warn = vi.fn();
+    const log = vi.fn();
+    await runCollect(deps({ fetch: fakeFetch({ hexStatus: 429 }), warn, log }));
+    expect(warn).toHaveBeenCalledWith("live data failed", { error: "Error: adsb.fi 429" });
+    await runCollect(deps({ fetch: fakeFetch({ routeStatus: 500 }), warn, log }));
+    expect(warn.mock.calls.map((c) => c[0])).toContain("route lookup failed");
+    expect(log.mock.calls.map((c) => c[0])).toContain("collect ok");
   });
 });

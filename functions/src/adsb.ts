@@ -15,6 +15,9 @@ export const PROVIDERS = {
 
 export const CHUNK = 100;
 export const SPACING_MS = 1100;
+export const ADSB_TIMEOUT_MS = 10_000;
+
+class HttpStatusError extends Error {}
 
 const THY = /^THY[0-9A-Z]+$/;
 const num = (v: unknown): number | null => (typeof v === "number" ? v : null);
@@ -72,9 +75,18 @@ export async function fetchAircraft(
   const byHex = new Map<string, AircraftState>();
   for (let i = 0; i < hexes.length; i += CHUNK) {
     if (i > 0) await sleep(SPACING_MS);
-    const res = await f(`${provider.baseUrl}/v2/hex/${hexes.slice(i, i + CHUNK).join(",")}`);
-    if (!res.ok) throw new Error(`${provider.name} ${res.status}`);
-    for (const a of parseV2(await res.json())) byHex.set(a.icao24, a);
+    let list: AircraftState[];
+    try {
+      const res = await f(`${provider.baseUrl}/v2/hex/${hexes.slice(i, i + CHUNK).join(",")}`, {
+        signal: AbortSignal.timeout(ADSB_TIMEOUT_MS),
+      });
+      if (!res.ok) throw new HttpStatusError(`${provider.name} ${res.status}`);
+      list = parseV2(await res.json());
+    } catch (e) {
+      if (e instanceof HttpStatusError) throw e;
+      throw new Error(`${provider.name} ${String(e)}`);
+    }
+    for (const a of list) byHex.set(a.icao24, a);
   }
   return [...byHex.values()];
 }

@@ -5,6 +5,7 @@ import type { FetchFn } from "./adsb.js";
 export const ADSBDB_URL = "https://api.adsbdb.com/v0/callsign/";
 export const ROUTE_TTL = 7 * 86400;
 export const NEG_TTL = 86400;
+export const ROUTE_TIMEOUT_MS = 5_000;
 
 export interface RouteCacheEntry {
   route: RouteInfo | null;
@@ -31,7 +32,7 @@ const toAirport = (a: AdsbdbAirport): Airport => ({
 });
 
 export async function fetchRoute(f: FetchFn, cs: string): Promise<RouteInfo | null> {
-  const res = await f(ADSBDB_URL + encodeURIComponent(cs));
+  const res = await f(ADSBDB_URL + encodeURIComponent(cs), { signal: AbortSignal.timeout(ROUTE_TIMEOUT_MS) });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`adsbdb ${res.status}`);
   const json = (await res.json()) as {

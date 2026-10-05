@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
-import { FLEET_DB_URL, FLEET_PATH, FLEET_TTL, fetchFleet, loadFleet, parseFleetCsv, type Fleet } from "../src/fleet.js";
+import { FLEET_DB_URL, FLEET_TIMEOUT_MS, FLEET_PATH, FLEET_TTL, fetchFleet, loadFleet, parseFleetCsv, type Fleet } from "../src/fleet.js";
 import type { JsonStore } from "../src/storage.js";
 
 const CSV = [
@@ -37,6 +37,14 @@ describe("fetchFleet", () => {
     const f = vi.fn(async () => new Response(gzipSync(CSV)));
     await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toEqual(["43a8f4", "4baa53", "4bb141"]);
     expect((f.mock.calls[0] as unknown as [string])[0]).toBe(FLEET_DB_URL);
+  });
+
+  it("passes an abort signal", async () => {
+    const f = vi.fn(async () => new Response(gzipSync(CSV)));
+    await fetchFleet(f as unknown as typeof fetch);
+    const init = (f.mock.calls[0] as unknown as [string, RequestInit])[1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(FLEET_TIMEOUT_MS).toBe(30_000);
   });
 
   it("accepts an already-decompressed body", async () => {

@@ -34,6 +34,8 @@ export const collect = onSchedule(
       routes: firestoreRouteCache(getFirestore()),
       provider,
       log: (msg, extra) => logger.info(msg, extra),
+      warn: (msg, extra) => logger.warn(msg, extra),
+      clock: Date.now,
     });
     logger.info("collect finished", { result, provider: provider.name });
   },

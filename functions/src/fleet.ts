@@ -5,6 +5,7 @@ import type { JsonStore } from "./storage.js";
 export const FLEET_DB_URL = "https://raw.githubusercontent.com/wiedehopf/tar1090-db/csv/aircraft.csv.gz";
 export const FLEET_PATH = "state/fleet.json";
 export const FLEET_TTL = 7 * 86400;
+export const FLEET_TIMEOUT_MS = 30_000;
 
 export const AIRLINER_TYPES = new Set(
   "A19N A20N A21N A319 A320 A321 A332 A333 A338 A339 A359 A35K A306 A310 B37M B38M B39M B3XM B737 B738 B739 B744 B748 B752 B763 B772 B77L B77W B788 B789 B78X E190 E195 E290 E295 CRJ9 AT76".split(" "),
@@ -26,7 +27,7 @@ export function parseFleetCsv(csv: string): string[] {
 }
 
 export async function fetchFleet(f: FetchFn): Promise<string[]> {
-  const res = await f(FLEET_DB_URL);
+  const res = await f(FLEET_DB_URL, { signal: AbortSignal.timeout(FLEET_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`fleet db ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   const gzipped = buf[0] === 0x1f && buf[1] === 0x8b;

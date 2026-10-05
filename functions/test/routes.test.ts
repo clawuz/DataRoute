@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ADSBDB_URL, fetchRoute, lookupRoute, type RouteCache, type RouteCacheEntry } from "../src/routes.js";
+import { ADSBDB_URL, ROUTE_TIMEOUT_MS, fetchRoute, lookupRoute, type RouteCache, type RouteCacheEntry } from "../src/routes.js";
 
 const THY1 = {
   response: {
@@ -27,6 +27,14 @@ describe("fetchRoute", () => {
       destination: { iata: "JFK", country: "US", lat: 40.639801, lon: -73.7789 },
     });
     expect((f.mock.calls[0] as unknown as [string])[0]).toBe(`${ADSBDB_URL}THY1`);
+  });
+
+  it("passes an abort signal", async () => {
+    const f = respond(200, THY1);
+    await fetchRoute(f as unknown as typeof fetch, "THY1");
+    const init = (f.mock.calls[0] as unknown as [string, RequestInit])[1];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(ROUTE_TIMEOUT_MS).toBe(5_000);
   });
 
   it("404 → null, 500 → throws", async () => {
