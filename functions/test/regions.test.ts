@@ -22,6 +22,7 @@ describe("regions", () => {
     expect(countryToRegion("AZ")).toBe("EUR");
     expect(countryToRegion("AE")).toBe("MEA");
     expect(countryToRegion("EG")).toBe("AFR");
+    expect(countryToRegion("TD")).toBe("AFR");
     expect(countryToRegion("JP")).toBe("ASI");
     expect(countryToRegion("AU")).toBe("ASI");
     expect(countryToRegion("BR")).toBe("AME");
