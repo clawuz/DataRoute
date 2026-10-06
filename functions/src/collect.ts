@@ -4,6 +4,7 @@ import { loadFleet, type FleetInfo } from "./fleet.js";
 import { buildDayFile } from "./publish.js";
 import { lookupRoute, type RouteCache } from "./routes.js";
 import { PreconditionFailed, type JsonStore } from "./storage.js";
+import { selectHexes } from "./sweep.js";
 import { emptyState, step } from "./tracker.js";
 
 export const TRACKER_PATH = "state/tracker.json";
@@ -57,12 +58,17 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
 
   let aircraft: AircraftState[];
   let fleetSize: number;
+  let polled = 0;
+  let full = false;
   let info: FleetInfo | undefined;
   try {
     const fleet = await loadFleet(d.store, d.fetch, now, d.warn);
     info = fleet.info;
     fleetSize = fleet.hexes.length;
-    aircraft = await fetchAircraft(d.fetch, d.provider, fleet.hexes, d.sleep);
+    const sel = selectHexes(fleet.hexes, prev, now);
+    polled = sel.hexes.length;
+    full = sel.full;
+    aircraft = await fetchAircraft(d.fetch, d.provider, sel.hexes, d.sleep);
   } catch (e) {
     const error = String(e);
     d.warn("live data failed", { error });
@@ -72,6 +78,7 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
   }
 
   const next = step(prev, aircraft, now);
+  if (full) next.lastFullSweepAt = now;
   await resolveRoutes(next, d, now);
 
   try {
@@ -89,6 +96,8 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
   });
   d.log("collect ok", {
     fleet: fleetSize,
+    hexes: polled,
+    full,
     aircraft: aircraft.length,
     flights: next.flights.length,
     unknownRoutes: next.flights.filter((f) => f.route === null).length,

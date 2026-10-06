@@ -174,4 +174,53 @@ describe("runCollect", () => {
     expect(warn.mock.calls.map((c) => c[0])).toContain("route lookup failed");
     expect(log.mock.calls.map((c) => c[0])).toContain("collect ok");
   });
+  describe("two-tier polling", () => {
+    const BIG = Array.from({ length: 250 }, (_, i) => `A${i.toString(16).padStart(5, "0")};TC-J${i};A321;00;;;;`).join("\n");
+    const counting = (opts: { failHex?: () => boolean } = {}) => {
+      const hexCalls: string[] = [];
+      const f = (async (input: string | URL) => {
+        const url = String(input);
+        if (url.includes("tar1090-db")) return new Response(gzipSync(BIG));
+        if (url.includes("adsbdb")) return new Response(JSON.stringify(routeBody));
+        hexCalls.push(url);
+        if (opts.failHex?.()) return new Response("x", { status: 429 });
+        return new Response(JSON.stringify(hexBody));
+      }) as typeof fetch;
+      return { f, hexCalls };
+    };
+    const hexBodyFor = { ...hexBody, ac: [{ ...hexBody.ac[0], hex: "a00000" }] };
+
+    it("full sweep first, then active-only requests until 30 min pass", async () => {
+      const store = memStore();
+      const c = counting();
+      const f = (async (input: string | URL, init?: RequestInit) => {
+        const r = await c.f(input, init);
+        return String(input).includes("/v2/hex/") ? new Response(JSON.stringify(hexBodyFor)) : r;
+      }) as typeof fetch;
+      await runCollect(deps({ store, fetch: f }));
+      expect(c.hexCalls).toHaveLength(3); // 250 hexes / 100
+      expect((store.files.get(TRACKER_PATH)!.data as TrackerState).lastFullSweepAt).toBe(NOW);
+      c.hexCalls.length = 0;
+      await runCollect(deps({ store, fetch: f, now: () => NOW + 60 }));
+      expect(c.hexCalls).toHaveLength(1);
+      expect(c.hexCalls[0]).toBe("https://opendata.adsb.fi/api/v2/hex/a00000");
+      expect((store.files.get(TRACKER_PATH)!.data as TrackerState).lastFullSweepAt).toBe(NOW);
+      c.hexCalls.length = 0;
+      await runCollect(deps({ store, fetch: f, now: () => NOW + 1800 }));
+      expect(c.hexCalls).toHaveLength(3);
+      expect((store.files.get(TRACKER_PATH)!.data as TrackerState).lastFullSweepAt).toBe(NOW + 1800);
+    });
+
+    it("a failed full sweep does not advance lastFullSweepAt", async () => {
+      const store = memStore();
+      const ok = counting();
+      await runCollect(deps({ store, fetch: ok.f }));
+      const bad = counting({ failHex: () => true });
+      await expect(runCollect(deps({ store, fetch: bad.f, now: () => NOW + 1800 }))).resolves.toBe("delayed");
+      expect((store.files.get(TRACKER_PATH)!.data as TrackerState).lastFullSweepAt).toBe(NOW);
+      const again = counting();
+      await runCollect(deps({ store, fetch: again.f, now: () => NOW + 1860 }));
+      expect(again.hexCalls).toHaveLength(3); // still due for a full sweep
+    });
+  });
 });

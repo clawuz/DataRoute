@@ -59,6 +59,10 @@ export interface TrackerState {
   collectingSince: number;
   lastSuccessAt: number;
   flights: TrackedFlight[];
+  /** icao24 -> unix s of the newest report (airborne or ground); pruned after 24 h */
+  seen?: Record<string, number>;
+  /** unix s of the last successful whole-fleet poll */
+  lastFullSweepAt?: number;
 }
 
 export interface Flight {

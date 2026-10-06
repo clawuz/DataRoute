@@ -82,7 +82,9 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
     return p;
   };
 
+  const seen: Record<string, number> = { ...(prev.seen ?? {}) };
   for (const a of aircraft) {
+    seen[a.icao24] = Math.max(seen[a.icao24] ?? 0, a.t);
     let f = open.get(a.icao24);
     if (f && f.cs !== a.cs) {
       const dt = a.t - f.lastContact;
@@ -155,5 +157,9 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
     }
   }
 
-  return { v: 1, collectingSince: prev.collectingSince, lastSuccessAt: now, flights: kept };
+  for (const [hex, t] of Object.entries(seen)) if (t < cutoff) delete seen[hex];
+
+  const out: TrackerState = { v: 1, collectingSince: prev.collectingSince, lastSuccessAt: now, flights: kept, seen };
+  if (prev.lastFullSweepAt !== undefined) out.lastFullSweepAt = prev.lastFullSweepAt;
+  return out;
 }
