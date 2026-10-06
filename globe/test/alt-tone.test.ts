@@ -15,10 +15,10 @@ describe("altTone", () => {
       }
     }
   });
-  it("ground is darker and the ceiling lighter than the region colour", () => {
+  it("ground is much darker; the ceiling is the full region colour (never whitened)", () => {
     for (const rgb of REGION_RGB) {
-      expect(lum(altTone(rgb, 0))).toBeLessThan(lum(rgb));
-      expect(lum(altTone(rgb, ALT_MAX100))).toBeGreaterThan(lum(rgb));
+      expect(lum(altTone(rgb, 0))).toBeLessThan(0.45 * lum(rgb));
+      expect(lum(altTone(rgb, ALT_MAX100))).toBeCloseTo(lum(rgb), 6);
     }
   });
   it("clamps beyond the range and keeps components in 0..1", () => {
