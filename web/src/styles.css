@@ -25,3 +25,56 @@ body { font-family: var(--text); -webkit-font-smoothing: antialiased; }
 .stage { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
 .num { font-variant-numeric: tabular-nums; }
 .debug { position: fixed; right: 1vmin; bottom: 1vmin; margin: 0; font: 12px/1.3 ui-monospace, monospace; color: #8f8; pointer-events: none; z-index: 10; }
+
+.hud { position: fixed; inset: 0; pointer-events: none; transition: opacity 0.4s ease; z-index: 5; }
+.hud.hidden { opacity: 0; }
+.label { font-family: var(--label); font-weight: 500; font-size: calc(1.1 * var(--u)); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); }
+
+.title { position: absolute; left: 3vmin; top: 3vmin; }
+.title h1 {
+  margin: 0; font-family: var(--display); font-weight: 700; font-size: calc(4 * var(--u)); letter-spacing: 0.02em; line-height: 1;
+  text-shadow: -0.14vmin 0 rgba(255, 40, 70, 0.7), 0.14vmin 0 rgba(40, 200, 255, 0.7);
+}
+.phase { margin-top: 1.2vmin; display: flex; gap: 1vmin; align-items: center; font-family: var(--label); font-size: calc(1.35 * var(--u)); letter-spacing: 0.16em; }
+.phase .dot { width: 0.9vmin; height: 0.9vmin; border-radius: 50%; background: var(--thy); box-shadow: 0 0 1.2vmin var(--thy); animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .phase .dot { animation: none; } .card { transition: none; } }
+
+.counters { position: absolute; right: 3vmin; top: 3vmin; display: grid; grid-template-columns: repeat(2, auto); gap: 1.8vmin 3.4vmin; text-align: right; }
+.counter .value { font-family: var(--display); font-weight: 600; font-size: calc(4.4 * var(--u)); line-height: 1; margin-top: 0.4vmin; }
+.counter.primary .value { color: #fff; text-shadow: 0 0 2vmin rgba(255, 255, 255, 0.25); }
+
+.alt { position: absolute; left: 3vmin; top: 50%; transform: translateY(-50%); }
+.alt-body { display: flex; gap: 1vmin; margin-top: 1vmin; }
+.alt-scale { display: flex; flex-direction: column; justify-content: space-between; font-family: var(--label); font-size: calc(1 * var(--u)); color: var(--ink-faint); }
+.alt-svg { width: 9vmin; height: 36vmin; }
+.alt-svg .bar, .dep-svg .bar { fill: rgba(233, 237, 245, 0.5); }
+
+.dep { position: absolute; left: 3vmin; right: 34vmin; bottom: 6.5vmin; }
+.dep-svg { display: block; width: 100%; height: 6vmin; margin-top: 0.8vmin; }
+.dep-svg .playhead { stroke: var(--thy); stroke-width: 2; }
+
+.regions { position: absolute; right: 3vmin; bottom: 6.5vmin; width: 27vmin; }
+.region-row { display: grid; grid-template-columns: 11vmin 1fr 4vmin; align-items: center; gap: 1vmin; margin-top: 0.7vmin; font-family: var(--label); font-size: calc(1 * var(--u)); letter-spacing: 0.12em; color: var(--ink-dim); }
+.region-bar { height: 0.5vmin; background: var(--line); }
+.region-bar > span { display: block; height: 100%; transition: width 0.25s linear; }
+.region-count { text-align: right; color: var(--ink); }
+
+.source { position: absolute; left: 3vmin; bottom: 2.6vmin; font-size: calc(1 * var(--u)); }
+.source a { pointer-events: auto; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+.source.delayed, .source.delayed a { color: var(--amber); }
+
+.card {
+  position: absolute; transform: translate(2.4vmin, -50%); min-width: 19vmin; padding: 1.2vmin 1.5vmin;
+  border: 1px solid var(--line); border-left-width: 0.4vmin; background: rgba(3, 4, 10, 0.62); backdrop-filter: blur(6px);
+  transition: left 0.25s linear, top 0.25s linear;
+}
+.card::before { content: ""; position: absolute; left: -2.4vmin; top: 50%; width: 2.4vmin; border-top: 1px solid var(--line-strong); }
+.card .tk { font-family: var(--display); font-weight: 700; font-size: calc(2.6 * var(--u)); line-height: 1; }
+.card .route { margin-top: 0.4vmin; font-family: var(--label); font-size: calc(1.2 * var(--u)); letter-spacing: 0.14em; color: var(--ink-dim); }
+.card .meta { display: flex; gap: 1.4vmin; margin-top: 0.7vmin; font-size: calc(1.25 * var(--u)); }
+.card svg { display: block; margin-top: 0.9vmin; width: 18vmin; height: 4vmin; color: var(--ink-dim); }
+.card.tooltip { border-color: var(--line-strong); }
+
+.error { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; z-index: 20; }
+.error p { font-family: var(--display); font-size: calc(3 * var(--u)); margin: 1.5vmin 0 0; }

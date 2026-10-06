@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createController, type Controller } from "./app/controller";
 import { isFixture, dataUrl } from "./data/source";
 import { EMPTY_SNAPSHOT, type HudSnapshot } from "./hud/snapshot";
-import { createStore, useStore, type Store } from "./hud/store";
+import { ErrorScreen, Hud } from "./hud/Hud";
+import { createStore } from "./hud/store";
 import { createEngine, hasWebGL2, type Engine } from "./render/engine";
 
 export function App() {
@@ -65,17 +66,7 @@ export function App() {
   return (
     <>
       <canvas ref={canvasRef} className="stage" />
-      {error ? <pre className="debug">{error}</pre> : <DebugReadout store={store} />}
+      {error ? <ErrorScreen message={error} /> : <Hud store={store} />}
     </>
-  );
-}
-
-function DebugReadout({ store }: { store: Store<HudSnapshot> }) {
-  const s = useStore(store);
-  if (!s.debug) return null;
-  return (
-    <pre className="debug">
-      {`${s.debug.fps} FPS · Q${s.debug.level} · ${s.debug.flights} FLIGHTS · ${s.phase} ${s.timeLabel}`}
-    </pre>
   );
 }
