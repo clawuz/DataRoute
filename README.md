@@ -38,3 +38,4 @@ Keys: Space pause · ← / → scrub one hour · H hide HUD · F fullscreen. Mou
 
 The TK fonts are licensed and are **not** in this repository: `npm run fonts` copies them from `../font`
 (present only on the author's machine); without them the HUD falls back to system fonts.
+Note: the deployed site (Firebase Hosting) does serve these five woff2 files, copied into `web/dist` at build time; they are licensed for this installation only and must not be redistributed.

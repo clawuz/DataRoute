@@ -40,7 +40,7 @@ body { font-family: var(--text); -webkit-font-smoothing: antialiased; }
 .phase { margin-top: 1.2vmin; display: flex; gap: 1vmin; align-items: center; font-family: var(--label); font-size: calc(1.35 * var(--u)); letter-spacing: 0.16em; }
 .phase .dot { width: 0.9vmin; height: 0.9vmin; border-radius: 50%; background: var(--thy); box-shadow: 0 0 1.2vmin var(--thy); animation: blink 1.6s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: 0.35; } }
-@media (prefers-reduced-motion: reduce) { .phase .dot { animation: none; } .region-bar > span, .hud > *, .card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .phase .dot { animation: none; } .region-bar > span, .hud > *, .card, .hud.hidden > :not(.source) { transition: none; } }
 
 .counters { position: absolute; right: 3vmin; top: 3vmin; display: grid; grid-template-columns: repeat(2, auto); gap: 1.8vmin 3.4vmin; text-align: right; }
 .counter { min-width: 14vmin; }

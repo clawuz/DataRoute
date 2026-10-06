@@ -59,7 +59,7 @@ export function AltitudeGauge({ bins }: { bins: number[] }) {
           <span>FL210</span>
           <span>FL000</span>
         </div>
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="alt-svg" role="img" aria-label="Altitude distribution, FL000 to FL410">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="alt-svg" role="img" aria-label="Altitude distribution, FL000 to FL420">
           {bins.map((n, i) => (
             <rect key={i} x={0} y={H - (i + 1) * step + 0.12} width={(n / max) * W} height={step - 0.24} className="bar" />
           ))}
@@ -192,8 +192,8 @@ export function Hud({ store }: { store: Store<HudSnapshot> }) {
         </>
       )}
       <SourceLine s={s} />
-      <FlightCardView key={s.spotlight?.tk ?? "none"} card={s.spotlight} kind="spotlight" />
-      <FlightCardView key={s.tooltip?.tk ?? "none"} card={s.tooltip} kind="tooltip" />
+      <FlightCardView key={"spot-" + (s.spotlight?.tk ?? "")} card={s.spotlight} kind="spotlight" />
+      <FlightCardView key={"tip-" + (s.tooltip?.tk ?? "")} card={s.tooltip} kind="tooltip" />
       {s.debug && (
         <pre className="debug">{`${s.debug.fps} FPS · Q${s.debug.level} · ${s.debug.flights} FLIGHTS`}</pre>
       )}
