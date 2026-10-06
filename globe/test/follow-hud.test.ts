@@ -66,7 +66,10 @@ describe("formatFollow", () => {
   });
 
   it("reports NO DATA for the unobserved span after a landed flight's last sample", () => {
-    const f = landed();
+    const f = one({
+      from: "IST", to: "JFK", dep: FROM, arr: FROM + 3600, end: "LANDED",
+      s: [[0, 100, 0, 0], [600, 200, 0, 1], [1200, 300, 0, 2], [1800, 300, 0, 3]],
+    });
     const h = formatFollow(f, telemetryAt(f, 1800 + 1000, FROM)!, { u: 2800, speed: null, paused: false });
     expect(h.state).toBe("NO DATA");
     expect(h.alt).toBe("—");
@@ -76,6 +79,22 @@ describe("formatFollow", () => {
     const f = landed();
     expect(speedLabel(f, { u: 10, speed: 480, paused: false })).toBe("×480");
     expect(speedLabel(f, { u: 10, speed: 480, paused: true })).toBe("PAUSED");
+  });
+
+  it("shows LANDED at the landing time even when the last sample is over 600 s earlier", () => {
+    const f = one({
+      dep: FROM, arr: FROM + 3000, end: "LANDED",
+      s: [[0, 100, 0, 0], [600, 200, 0, 1], [1200, 300, 0, 2]],
+    });
+    expect(f.end).toBe(3000);
+    expect(followState(f, telemetryAt(f, 3000, FROM)!, 3000)).toBe("LANDED");
+    expect(followState(f, telemetryAt(f, 2500, FROM)!, 2500)).toBe("NO DATA");
+  });
+
+  it("explains EST values", () => {
+    const air = one({ dep: FROM, arr: null, end: "AIRBORNE", s: [[0, 300, 41, 29], [600, 370, 45, 20]], now: { gs: 480, trk: 300 } });
+    const h = formatFollow(air, telemetryAt(air, 700, FROM)!, { u: 700, speed: null, paused: false });
+    expect(h.notes).toContain("EST = ESTIMATED (GAP / PLANNED / EXTRAPOLATED)");
   });
 
   it("LANDED at the end", () => {
@@ -94,5 +113,11 @@ describe("hoverNote", () => {
     const lc = one({ dep: FROM, arr: FROM + 600, end: "LAST_CONTACT", s: [[0, 300, 0, 0], [600, 300, 0, 1]] });
     expect(hoverNote(lc, 600)).toBe("LAST CONTACT");
     expect(hoverNote(lc, 300)).toBe("");
+  });
+
+  it("flags NO DATA inside a long observed segment", () => {
+    const f = one({ dep: FROM, arr: null, end: "AIRBORNE", s: [[0, 300, 0, 0], [900, 300, 0, 1], [1000, 300, 0, 2]] });
+    expect(hoverNote(f, 500)).toBe("NO DATA");
+    expect(hoverNote(f, 950)).toBe("");
   });
 });

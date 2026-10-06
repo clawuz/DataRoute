@@ -141,7 +141,7 @@ export function telemetryAt(f: GlobeFlight, u: number, fromAbs: number): Telemet
 
   if (extrap) {
     const h = headState(f, Math.min(u, f.lastT + EXTRAPOLATE_MAX_SEC));
-    holding = u > f.lastT + EXTRAPOLATE_MAX_SEC;
+    holding = u >= f.lastT + EXTRAPOLATE_MAX_SEC;
     const final = p.segs[p.segs.length - 1];
     const lastSeg = final.gsKt !== null ? final : [...p.segs].reverse().find((x) => x.gsKt !== null);
     if (h) {

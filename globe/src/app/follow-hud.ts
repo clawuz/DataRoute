@@ -30,9 +30,9 @@ const PROFILE_POINTS = 48;
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 export function followState(f: GlobeFlight, tel: Telemetry, u: number): FollowStateLabel {
+  if (f.status === "LANDED" && u >= f.end) return "LANDED";
   if (tel.source === "NO DATA") return "NO DATA";
   if (tel.source === "EXTRAPOLATED") return tel.holding ? "LAST CONTACT" : "EXTRAPOLATED";
-  if (f.status === "LANDED" && u >= f.end) return "LANDED";
   if (f.status === "LAST_CONTACT" && u >= f.lastT) return "LAST CONTACT";
   return "OBSERVED";
 }
@@ -58,7 +58,7 @@ export function formatFollow(f: GlobeFlight, tel: Telemetry, clock: FollowClock)
   const notes = ["GS / HDG / VS ARE 2-MIN AVERAGES"];
   if (state === "NO DATA") notes.push("NO DATA · OUTSIDE ADS-B COVERAGE");
   if (state === "EXTRAPOLATED") notes.push("EXTRAPOLATED FROM LAST REPORT");
-  if (tel.distEstimated) notes.push("EST = PARTLY PLANNED ROUTE");
+  if (tel.distEstimated) notes.push("EST = ESTIMATED (GAP / PLANNED / EXTRAPOLATED)");
 
   return {
     tk: f.tk,

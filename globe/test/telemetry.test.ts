@@ -1,3 +1,4 @@
+import { EXTRAPOLATE_MAX_SEC } from "../src/model/dead-reckon";
 import { describe, expect, it } from "vitest";
 import { haversineKm } from "@collector/geo";
 import { buildGlobeModel, type GlobeFlight } from "../src/model/globe-model";
@@ -145,6 +146,15 @@ describe("telemetryAt", () => {
     expect(b.gsKt).toBeNull();
     expect(b.lon).toBeCloseTo(0, 6);
     expect(telemetryAt(pre, 700, FROM)!.source).toBe("OBSERVED");
+  });
+
+  it("holding starts exactly when the extrapolation clock stops", () => {
+    const f = one({
+      dep: FROM, arr: null, end: "AIRBORNE",
+      s: [[0, 300, 0, 0], [600, 300, 0, 1]], now: { gs: 480, trk: 90 },
+    });
+    expect(telemetryAt(f, 600 + EXTRAPOLATE_MAX_SEC - 1, FROM)!.holding).toBe(false);
+    expect(telemetryAt(f, 600 + EXTRAPOLATE_MAX_SEC, FROM)!.holding).toBe(true);
   });
 
   it("ETA speed uses only segments already flown", () => {

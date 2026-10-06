@@ -213,7 +213,7 @@ describe("globe controller", () => {
     await flush();
     h.c.onClick(10, 10);
     const f = h.frame(1);
-    expect(f.follow).toEqual({ flight: 0, u: 83400 + 116 });
+    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83400 + 116 });
     expect(f.cur).toBe(83516);
     expect(f.highlight).toBe(0);
     expect(f.absTime).toBe(G1 - 86400 + 83516);
@@ -271,7 +271,7 @@ describe("globe controller", () => {
     h.c.refresh();
     await flush();
     const f = h.frame(0);
-    expect(f.follow).toEqual({ flight: 0, u: 83516 - 120 });
+    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83516 - 120 });
     h.c.dispose();
   });
 
@@ -284,6 +284,30 @@ describe("globe controller", () => {
     await flush();
     expect(h.frame(0.1).follow).toBeNull();
     expect(h.store.get().notice).toBe("FLIGHT NO LONGER IN DATA");
+    h.c.dispose();
+  });
+
+  it("H toggles the HUD while following without leaving FOLLOW", async () => {
+    const h = setup();
+    await flush();
+    h.c.onClick(10, 10);
+    h.frame(0.3);
+    h.c.onKey("h");
+    expect(h.frame(0.3).follow).not.toBeNull();
+    expect(h.store.get().hidden).toBe(true);
+    h.c.dispose();
+  });
+
+  it("clamps the shifted follow time to the flight's first sample after a window move", async () => {
+    const h = setup({ days: [dayAt(G1, [airborne("AIRBORNE", null)]), dayAt(G1 + 5000, [airborne("AIRBORNE", null)])] });
+    await flush();
+    h.c.onClick(10, 10);
+    h.frame(0);
+    h.c.refresh();
+    await flush();
+    const f = h.frame(0);
+    expect(f.follow!.u).toBeGreaterThanOrEqual(0);
+    expect(f.follow!.id).toBe("a");
     h.c.dispose();
   });
 

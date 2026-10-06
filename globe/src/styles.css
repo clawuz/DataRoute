@@ -43,5 +43,6 @@ body { background: #02030a; }
 .fp-notes { font-size: calc(0.8 * var(--u)); color: var(--ink-dim); line-height: 1.5; }
 .notice { position: fixed; left: 50%; top: 18vmin; transform: translateX(-50%); letter-spacing: 0.2em; color: var(--amber); z-index: 6; pointer-events: none; }
 @media (max-aspect-ratio: 1/1) {
+  .notice { top: 22vmin; }
   .flight-panel { top: auto; bottom: 22vmin; transform: none; right: 3vmin; width: 42vmin; }
 }

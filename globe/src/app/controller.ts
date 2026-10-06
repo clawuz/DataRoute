@@ -214,7 +214,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       cur,
       highlight: follow ? follow.idx : hoverIdx,
       nowSec,
-      follow: follow ? { flight: follow.idx, u: follow.clock.u } : null,
+      follow: follow ? { flight: follow.idx, id: follow.id, u: follow.clock.u } : null,
     };
   };
   d.engine.setFrameSource(frame);
@@ -250,7 +250,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         say("FLIGHT NO LONGER IN DATA");
       } else {
         follow.idx = idx;
-        follow.clock = { ...follow.clock, u: follow.clock.u - (next.from - prev!.from) };
+        follow.clock = {
+          ...follow.clock,
+          u: Math.max(next.flights[idx].t[0], follow.clock.u - (next.from - prev!.from)),
+        };
       }
     }
     const evs = diffEvents(prev, next);
@@ -299,12 +302,16 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         return;
       }
       if (follow && f) {
+        let handled = true;
         if (cmd === "togglePause") follow.clock = { ...follow.clock, paused: !follow.clock.paused };
         else if (cmd === "scrubBack" || cmd === "scrubForward")
           follow.clock = scrubFollow(follow.clock, f, cmd === "scrubBack" ? -SCRUB_FOLLOW_SEC : SCRUB_FOLLOW_SEC);
         else if (cmd === "slower" || cmd === "faster") follow.clock = cycleSpeed(follow.clock, f, cmd === "faster" ? 1 : -1);
-        else if (cmd === "toggleReplay") follow = null; // falls through to the normal REPLAY toggle below
-        if (follow) {
+        else if (cmd === "toggleReplay") {
+          follow = null; // falls through to the normal REPLAY toggle below
+          handled = false;
+        } else handled = false; // HUD / fullscreen keep their normal handling while following
+        if (handled) {
           act({ type: "interact" });
           pushHud();
           return;

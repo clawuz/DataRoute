@@ -29,7 +29,7 @@ export interface GlobeFrameInput {
   /** wall clock (unix seconds): drives pulses and smoothing */
   nowSec: number;
   /** FOLLOW target: flight index in the current model and its flight time (seconds relative to window.from) */
-  follow?: { flight: number; u: number } | null;
+  follow?: { flight: number; id?: string; u: number } | null;
 }
 
 export interface GlobeEngineOptions {
@@ -114,7 +114,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let cam: CamState = initCam();
   let chasePos: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
   let chaseTgt: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
-  let followKey = -2; // flight index the damped chase state was initialised for (-2 = none)
+  let followKey: string | number = -2; // flight identity (id, else index) the damped chase state was initialised for (-2 = none)
   let lastChase: { pos: Vec3; target: Vec3 } | null = null; // Earth-fixed
   let afterRender: (() => void) | null = null;
   let lastDragMove = 0;
@@ -205,10 +205,11 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     if (fol) {
       const pose = chaseFor(posAt(fol.flight), fol.u);
       if (pose) {
-        if (followKey !== fol.flight) {
+        const key = fol.id ?? fol.flight;
+        if (followKey !== key) {
           chasePos = { p: pose.pos, v: [0, 0, 0] };
           chaseTgt = { p: pose.target, v: [0, 0, 0] };
-          followKey = fol.flight;
+          followKey = key;
         } else {
           chasePos = smoothDampVec(chasePos, pose.pos, SMOOTH_SEC, dt);
           chaseTgt = smoothDampVec(chaseTgt, pose.target, SMOOTH_SEC, dt);

@@ -2,6 +2,7 @@ import { EMPTY_SNAPSHOT, type HudSnapshot } from "@web/hud/snapshot";
 import type { EventKind, FlightEvent } from "../model/events";
 import type { CamMode } from "../camera/follow-rig";
 import type { GlobeFlight, GlobeModel } from "../model/globe-model";
+import { BREAK_SEC } from "../scene/arcs";
 import type { FollowHud } from "./follow-hud";
 
 export const CREDIT = "EARTH IMAGERY: NASA EARTH OBSERVATORY (BLUE MARBLE · BLACK MARBLE)";
@@ -111,6 +112,12 @@ export function createLabelBus(): LabelBus {
 export function hoverNote(f: GlobeFlight, cur: number): string {
   if (f.status === "AIRBORNE" && cur > f.lastT) return "EXTRAPOLATED";
   if (f.gaps.some(([s, e]) => cur >= s && cur <= e)) return "NO DATA";
+  for (let i = 0; i + 1 < f.t.length; i++) {
+    if (cur >= f.t[i] && cur <= f.t[i + 1]) {
+      if (f.t[i + 1] - f.t[i] > BREAK_SEC) return "NO DATA";
+      break;
+    }
+  }
   if (f.status === "LAST_CONTACT" && cur >= f.lastT) return "LAST CONTACT";
   return "";
 }
