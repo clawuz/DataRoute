@@ -39,3 +39,18 @@ Keys: Space pause · ← / → scrub one hour · H hide HUD · F fullscreen. Mou
 The TK fonts are licensed and are **not** in this repository: `npm run fonts` copies them from `../font`
 (present only on the author's machine); without them the HUD falls back to system fonts.
 Note: the deployed site (Firebase Hosting) does serve these five woff2 files, copied into `web/dist` at build time; they are licensed for this installation only and must not be redistributed.
+
+## Globe (`globe/`)
+
+Live: https://dataroute-tk.web.app — real-time rotating Earth with every THY flight as a curved arc
+(faint planned route + bright observed track; gaps in ADS-B coverage stay faint). `?data=fixture` for the
+synthetic dataset, `?debug=1` for FPS / quality.
+
+    cd globe && npm install && npm run dev     # http://localhost:5174/?data=fixture
+    cd globe && npm test
+    firebase deploy --only hosting:globe       # builds globe/ and deploys
+
+Keys: Space pause · R replay ⇄ live · ← / → one hour · H hide HUD · F fullscreen. Drag to rotate, hover an arc for details.
+
+`globe/` reuses `web/src` (data, cycle, HUD) through the `@web/*` alias; the tunnel build in `web/` is unchanged
+(`firebase deploy --only hosting:tunnel`). Earth imagery: NASA Earth Observatory (see `NOTICE`).

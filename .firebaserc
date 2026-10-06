@@ -1,1 +1,11 @@
-{ "projects": { "default": "omerkilavuz-9ad41" } }
+{
+  "projects": { "default": "omerkilavuz-9ad41" },
+  "targets": {
+    "omerkilavuz-9ad41": {
+      "hosting": {
+        "tunnel": ["omerkilavuz-9ad41"],
+        "globe": ["dataroute-tk"]
+      }
+    }
+  }
+}
