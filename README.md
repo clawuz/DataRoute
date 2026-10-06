@@ -16,6 +16,23 @@ A Cloud Function (`collect`, europe-west1) runs every 2 minutes:
 Switch provider (e.g. to airplanes.live once access is approved): set the `ADSB_PROVIDER`
 param to `airplaneslive` in `functions/.env` and redeploy.
 
+### Switching provider
+
+`ADSB_PROVIDER` (in `functions/.env`) accepts `adsbfi` (default), `airplaneslive` and `opensky`.
+`opensky` is prepared but inactive: it uses the OpenSky Network REST API with OAuth2 client
+credentials (`/api/states/all?icao24=...`, 100 aircraft per request, 1.1 s spacing; the bearer token
+is cached in memory until ~1 min before expiry). To enable it:
+
+1. `firebase functions:secrets:set OPENSKY_CLIENT_ID` and `OPENSKY_CLIENT_SECRET` (API client from your
+   OpenSky account page).
+2. Set `ADSB_PROVIDER=opensky` in `functions/.env` and redeploy. The secrets are only bound when this
+   value is set at deploy time, so the default deployment needs none.
+
+Caveats: OpenSky previously blocked Google Cloud IPs (undocumented; not re-tested), so it may fail
+from Cloud Functions. Authenticated accounts get roughly 4000 API credits/day; each request costs
+credits, so budget about (requests per run x runs per day) against that. Attribution switches to
+"OpenSky Network" automatically.
+
 Logs: `firebase functions:log --only collect`
 
 Data attribution: live aircraft data © [adsb.fi](https://adsb.fi) (personal, non-commercial use);

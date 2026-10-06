@@ -2,16 +2,22 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import * as logger from "firebase-functions/logger";
-import { defineString } from "firebase-functions/params";
+import { defineSecret, defineString } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { PROVIDERS } from "./adsb.js";
 import { runCollect } from "./collect.js";
 import { firestoreRouteCache } from "./routes.js";
+import { selectProvider } from "./providers.js";
 import { gcsStore } from "./storage.js";
 
 initializeApp();
 
 const ADSB_PROVIDER = defineString("ADSB_PROVIDER", { default: "adsbfi" });
+
+// OpenSky secrets are only defined/bound when that provider is selected at deploy time,
+// so the default (adsb.fi) deployment needs no secrets and is unchanged.
+const useOpenSky = process.env.ADSB_PROVIDER === "opensky";
+const OPENSKY_CLIENT_ID = useOpenSky ? defineSecret("OPENSKY_CLIENT_ID") : null;
+const OPENSKY_CLIENT_SECRET = useOpenSky ? defineSecret("OPENSKY_CLIENT_SECRET") : null;
 
 export const collect = onSchedule(
   {
@@ -21,18 +27,26 @@ export const collect = onSchedule(
     memory: "512MiB",
     maxInstances: 1,
     retryCount: 0,
+    ...(OPENSKY_CLIENT_ID && OPENSKY_CLIENT_SECRET ? { secrets: [OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET] } : {}),
   },
   async () => {
-    const key = ADSB_PROVIDER.value() as keyof typeof PROVIDERS;
-    const provider = PROVIDERS[key];
-    if (!provider) throw new Error(`unknown ADSB_PROVIDER "${key}"`);
+    const now = () => Math.floor(Date.now() / 1000);
+    const { provider, live } = selectProvider(
+      ADSB_PROVIDER.value(),
+      fetch,
+      now,
+      OPENSKY_CLIENT_ID && OPENSKY_CLIENT_SECRET
+        ? { clientId: () => OPENSKY_CLIENT_ID.value(), clientSecret: () => OPENSKY_CLIENT_SECRET.value() }
+        : null,
+    );
     const result = await runCollect({
       fetch,
-      now: () => Math.floor(Date.now() / 1000),
+      now,
       sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
       store: gcsStore(getStorage().bucket()),
       routes: firestoreRouteCache(getFirestore()),
       provider,
+      live,
       log: (msg, extra) => logger.info(msg, extra),
       warn: (msg, extra) => logger.warn(msg, extra),
       clock: Date.now,
