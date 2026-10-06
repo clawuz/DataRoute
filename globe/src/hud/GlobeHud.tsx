@@ -1,7 +1,6 @@
 import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine, TitleBlock } from "@web/hud/Hud";
 import { useEffect, useRef } from "react";
 import { useStore, type Store } from "@web/hud/store";
-import { ALT_MAX100, altTone } from "../scene/alt-tone";
 import type { FollowHud } from "../app/follow-hud";
 import type { AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
 
@@ -101,31 +100,6 @@ export function FlightPanel({ f }: { f: FollowHud }) {
   );
 }
 
-const LEGEND_REF: [number, number, number] = [0.85, 0.85, 0.9];
-const LEGEND_STOPS = 6;
-
-export function altLegendGradient(): string {
-  const stops = Array.from({ length: LEGEND_STOPS }, (_, i) => {
-    const f = i / (LEGEND_STOPS - 1);
-    const [r, g, b] = altTone(LEGEND_REF, f * ALT_MAX100).map((c) => Math.round(c * 255));
-    return `rgb(${r}, ${g}, ${b}) ${Math.round(f * 100)}%`;
-  });
-  return `linear-gradient(90deg, ${stops.join(", ")})`;
-}
-
-export function AltLegend() {
-  return (
-    <div className="alt-legend label" aria-hidden="true">
-      <span className="alt-legend-title">ALT</span>
-      <span className="alt-legend-strip" style={{ backgroundImage: altLegendGradient() }} />
-      <span className="alt-legend-ends">
-        <span>FL000</span>
-        <span>FL{ALT_MAX100}</span>
-      </span>
-    </div>
-  );
-}
-
 export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
   const text = s.follow
     ? `FOLLOW · ${s.follow.speed} · ${s.follow.state}`
@@ -160,7 +134,6 @@ export function GlobeHud({ store, labelBus }: { store: Store<GlobeHudSnapshot>; 
           <Counters c={s.counters} animate={animate} />
           <DepartureStrip bins={s.depHist} playhead={s.playhead} />
           {!s.follow && <RegionBars counts={s.regionAirborne} />}
-          {!s.follow && <AltLegend />}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />
