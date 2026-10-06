@@ -138,4 +138,22 @@ describe("controller", () => {
     expect(found).toBe(0);
     h.c.dispose();
   });
+
+  it("keeps a pinned spotlight while manual mode is active, releases it when auto-cycle resumes", async () => {
+    const long = (id: string) => flight({ id, from: "IST", to: "JFK", dep: FROM + 3600, arr: null, s: [[0, 0, 0, 0], [80000, 300, 0, 1]] });
+    const h = setup({ flights: [long("a"), long("b")] });
+    await flush();
+    h.frame(0.3); // first spotlight: random() = 0 -> flight a (index 0)
+    vi.mocked(h.engine.pick).mockReturnValue(1);
+    h.c.onPointerMove(1, 2);
+    h.c.onClick(); // pins b
+    h.c.onPointerLeave();
+    expect(h.frame(0.016).highlight).toBe(1);
+    for (let i = 0; i < 15; i++) h.frame(1); // 15 s: still inside the 20 s hold
+    expect(h.frame(0.016).highlight).toBe(1);
+    for (let i = 0; i < 6; i++) h.frame(1); // hold expires
+    h.frame(0.016);
+    expect(h.frame(0.016).highlight).toBe(0); // rotated away from the pinned flight
+    h.c.dispose();
+  });
 });

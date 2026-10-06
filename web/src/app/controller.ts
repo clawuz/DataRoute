@@ -98,7 +98,12 @@ export function createController(d: ControllerDeps): Controller {
   }
 
   const frame = (dt: number): FrameInput => {
+    const wasManual = cycle.manual;
     cycle = stepCycle(cycle, dt, bounds());
+    if (wasManual && !cycle.manual) {
+      pinned = false;
+      spotTimer = SPOTLIGHT_SEC;
+    }
     if (!cycle.paused) roll += dt * (cycle.phase === "LIVE" ? ROLL_LIVE : ROLL_REPLAY) * motion;
     if (!pinned && !cycle.paused) {
       spotTimer += dt;
@@ -153,7 +158,12 @@ export function createController(d: ControllerDeps): Controller {
     },
     setTimer: (fn, ms) => setTimeout(fn, ms),
     clearTimer: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
+    visible: () => typeof document === "undefined" || !document.hidden,
   });
+  const onVisible = () => {
+    if (!document.hidden) poller.refresh();
+  };
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", onVisible);
   poller.start();
   pushHud();
 
@@ -207,6 +217,7 @@ export function createController(d: ControllerDeps): Controller {
     },
     dispose() {
       poller.stop();
+      if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       d.engine.setFrameSource(null);
     },
   };

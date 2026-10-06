@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { FIXTURE_URL, LIVE_URL, POLL_MS, createPoller, dataUrl, isFixture } from "../src/data/source";
+import { FETCH_TIMEOUT_MS, FIXTURE_URL, LIVE_URL, POLL_MS, createPoller, dataUrl, isFixture } from "../src/data/source";
 import { makeDay } from "./helpers";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
-function harness(responses: Array<() => Response>) {
+function harness(responses: Array<() => Response>, visible?: () => boolean) {
   const timers: Array<{ fn: () => void; ms: number }> = [];
   const onData = vi.fn();
   const onError = vi.fn();
@@ -20,6 +20,7 @@ function harness(responses: Array<() => Response>) {
       return timers.length;
     },
     clearTimer: vi.fn(),
+    visible,
   });
   return { poller, timers, onData, onError, fetchFn };
 }
@@ -41,7 +42,7 @@ describe("source", () => {
     await flush();
     expect(h.onData).toHaveBeenCalledTimes(1);
     expect(h.timers.map((t) => t.ms)).toEqual([POLL_MS]);
-    expect(h.fetchFn).toHaveBeenCalledWith("u", { cache: "no-cache" });
+    expect(h.fetchFn).toHaveBeenCalledWith("u", expect.objectContaining({ cache: "no-cache", signal: expect.any(AbortSignal) }));
   });
 
   it("backs off 15 → 30 → 60 → 120 → 120 s on failures, then resets", async () => {
@@ -130,5 +131,49 @@ describe("source", () => {
     // should not schedule a new timer. Total onData calls should be at most 1 per run.
     // We expect the second run's fetch to complete, so onData should be called once.
     expect(onData.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("does not fetch while hidden, then refresh() fetches immediately once visible", async () => {
+    let vis = false;
+    const h = harness([ok], () => vis);
+    h.poller.start();
+    await flush();
+    expect(h.fetchFn).not.toHaveBeenCalled();
+    expect(h.timers.map((t) => t.ms)).toEqual([POLL_MS]);
+    vis = true;
+    h.poller.refresh();
+    await flush();
+    expect(h.fetchFn).toHaveBeenCalledTimes(1);
+    expect(h.onData).toHaveBeenCalledTimes(1);
+  });
+
+  it("refresh() after stop() does nothing", async () => {
+    const h = harness([ok]);
+    h.poller.start();
+    await flush();
+    h.poller.stop();
+    h.poller.refresh();
+    await flush();
+    expect(h.fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a fetch abort (timeout) as a failure with 15 s backoff", async () => {
+    const timers: Array<{ fn: () => void; ms: number }> = [];
+    const onError = vi.fn();
+    const poller = createPoller({
+      url: "u",
+      fetch: (async () => {
+        throw new DOMException("timed out", "AbortError");
+      }) as unknown as typeof fetch,
+      onData: vi.fn(),
+      onError,
+      setTimer: (fn, ms) => (timers.push({ fn, ms }), timers.length),
+      clearTimer: vi.fn(),
+    });
+    poller.start();
+    await flush();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(timers.map((t) => t.ms)).toEqual([15_000]);
+    expect(FETCH_TIMEOUT_MS).toBe(30_000);
   });
 });
