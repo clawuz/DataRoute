@@ -1,16 +1,41 @@
 import { NoColorSpace, RepeatWrapping, TextureLoader, type Texture, type WebGLRenderer } from "three";
 
-export type TextureTier = "8k" | "4k";
+export type TextureTier = "16k" | "8k" | "4k";
 
 export interface TierInputs {
   maxTextureSize: number;
   deviceMemory?: number;
   coarsePointer: boolean;
+  /** window.innerWidth × devicePixelRatio */
+  viewportPx?: number;
+  /** from the URL `?tex=` parameter */
+  override?: TextureTier;
+  /** highest tier allowed (set after a WebGL context loss) */
+  cap?: TextureTier;
 }
 
-/** 8K day/night maps cost ≈ 350 MB of GPU memory; only use them where that is safe. */
+const ORDER: TextureTier[] = ["4k", "8k", "16k"];
+const MIN_TEXTURE_SIZE: Record<TextureTier, number> = { "4k": 0, "8k": 8192, "16k": 16384 };
+const CAP_KEY = "earthTierCap";
+
+export const isTier = (v: unknown): v is TextureTier => v === "16k" || v === "8k" || v === "4k";
+
+/** The next lower tier (null for 4k). */
+export const lowerTier = (t: TextureTier): TextureTier | null => ORDER[ORDER.indexOf(t) - 1] ?? null;
+
+/** 16K day maps cost ≈ 700 MB+ of GPU memory, 8K ≈ 350 MB; only use them where that is safe. */
 export function chooseTier(i: TierInputs): TextureTier {
-  return i.maxTextureSize >= 8192 && (i.deviceMemory ?? 8) > 4 && !i.coarsePointer ? "8k" : "4k";
+  let tier: TextureTier;
+  if (i.override) {
+    tier = i.override;
+    while (i.maxTextureSize < MIN_TEXTURE_SIZE[tier]) tier = lowerTier(tier)!;
+  } else if (i.maxTextureSize >= 16384 && (i.deviceMemory ?? 8) >= 8 && !i.coarsePointer && (i.viewportPx ?? 0) >= 2200) {
+    tier = "16k";
+  } else {
+    tier = i.maxTextureSize >= 8192 && (i.deviceMemory ?? 8) > 4 && !i.coarsePointer ? "8k" : "4k";
+  }
+  if (i.cap && ORDER.indexOf(tier) > ORDER.indexOf(i.cap)) tier = i.cap;
+  return tier;
 }
 
 export interface EarthTextureUrls {
@@ -21,7 +46,7 @@ export interface EarthTextureUrls {
 
 export const textureUrls = (tier: TextureTier): EarthTextureUrls => ({
   day: `/textures/day-${tier}.jpg`,
-  night: `/textures/night-${tier}.jpg`,
+  night: `/textures/night-${tier === "16k" ? "8k" : tier}.jpg`, // night lights stay 8K
   clouds: "/textures/clouds-2k.jpg",
 });
 
@@ -32,19 +57,44 @@ export interface EarthTextures {
   clouds: Texture;
 }
 
+export function readTierCap(): TextureTier | undefined {
+  try {
+    const v = sessionStorage.getItem(CAP_KEY);
+    return isTier(v) ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeTierCap(tier: TextureTier): void {
+  try {
+    sessionStorage.setItem(CAP_KEY, tier);
+  } catch {
+    /* storage blocked */
+  }
+}
+
 export function detectTierInputs(renderer: WebGLRenderer): TierInputs {
   const gl = renderer.getContext();
+  let override: TextureTier | undefined;
+  if (typeof location !== "undefined") {
+    const v = new URLSearchParams(location.search).get("tex");
+    if (isTier(v)) override = v;
+  }
   return {
     maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,
     deviceMemory: typeof navigator === "undefined" ? undefined : (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
     coarsePointer: typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches,
+    viewportPx: typeof window === "undefined" ? undefined : window.innerWidth * (window.devicePixelRatio || 1),
+    override,
+    cap: readTierCap(),
   };
 }
 
 const defaultLoad = (url: string) => new TextureLoader().loadAsync(url);
 
 /**
- * Loads day/night/clouds for `preferred`; on failure retries once with the 4k tier. Returns null when nothing
+ * Loads day/night/clouds for `preferred`; on failure steps down 16k → 8k → 4k. Returns null when nothing
  * could be loaded (the Earth then renders with flat colours). `onProgress` reports completed files / total.
  */
 export async function loadEarthTextures(
@@ -53,8 +103,8 @@ export async function loadEarthTextures(
   onProgress: (p: number) => void,
   load: (url: string) => Promise<Texture> = defaultLoad,
 ): Promise<EarthTextures | null> {
-  const tiers: TextureTier[] = preferred === "8k" ? ["8k", "4k"] : ["4k"];
-  const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  const tiers = ORDER.slice(0, ORDER.indexOf(preferred) + 1).reverse();
+  const aniso = Math.min(16, renderer.capabilities.getMaxAnisotropy());
   for (const tier of tiers) {
     const urls = textureUrls(tier);
     let done = 0;

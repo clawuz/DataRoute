@@ -61,7 +61,7 @@ Note: the deployed site (Firebase Hosting) does serve these five woff2 files, co
 
 Live: https://dataroute-tk.web.app — real-time rotating Earth with every THY flight as a curved arc
 (faint planned route + bright observed track; gaps in ADS-B coverage stay faint). `?data=fixture` for the
-synthetic dataset, `?debug=1` for FPS / quality.
+synthetic dataset, `?debug=1` for FPS / quality, `?tex=4k|8k|16k` to force an Earth texture tier (auto-chosen otherwise: 16K day map on big-screen, 8 GB+ desktop GPUs; steps down after a WebGL context loss).
 
     cd globe && npm install && npm run dev     # http://localhost:5174/?data=fixture
     cd globe && npm test

@@ -19,7 +19,7 @@ import { createEarth } from "./earth";
 import { createHeads, headLatLons } from "./heads";
 import { buildPickIndex, pickFlight, type PickIndex } from "./picking3d";
 import { createSpace } from "./space";
-import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures } from "./textures";
+import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures, lowerTier, type TextureTier, writeTierCap } from "./textures";
 
 export interface GlobeFrameInput {
   /** displayed UTC instant (unix seconds): drives Earth rotation and the sun */
@@ -41,7 +41,7 @@ export interface GlobeEngineOptions {
 
 export interface GlobeEngine {
   setModel(m: GlobeModel | null, cur: number, nowSec: number): void;
-  loadTextures(onProgress: (p: number) => void): Promise<"8k" | "4k" | null>;
+  loadTextures(onProgress: (p: number) => void): Promise<TextureTier | null>;
   setFrameSource(fn: ((dt: number) => GlobeFrameInput) | null): void;
   pick(x: number, y: number, cur: number): number;
   screenOf(lat: number, lon: number, alt100?: number): ScreenPoint;
@@ -81,6 +81,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   };
   const onContextLost = (e: Event) => {
     e.preventDefault();
+    const lower = texs ? lowerTier(texs.tier) : null; // don't repeat the same GPU-memory failure after the reload
+    if (lower) writeTierCap(lower);
     opts.onError?.("WEBGL CONTEXT LOST — RELOADING");
   };
   canvas.addEventListener("webglcontextlost", onContextLost);
