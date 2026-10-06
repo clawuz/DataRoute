@@ -121,4 +121,42 @@ describe("telemetryAt", () => {
     expect(profileOf(f)).toBe(profileOf(f));
     expect(profileOf(f).segs).toHaveLength(3);
   });
+
+  it("long unobserved spans outside the track are NO DATA; short ones stay OBSERVED", () => {
+    const f = one({
+      dep: FROM, arr: FROM + 2800, end: "LANDED",
+      s: [[0, 100, 0, 0], [600, 200, 0, 1], [1200, 300, 0, 2], [1800, 300, 0, 3]],
+    });
+    const hold = telemetryAt(f, 1800 + 1000, FROM)!;
+    expect(hold.source).toBe("NO DATA");
+    expect(hold.gsKt).toBeNull();
+    expect(hold.hdgDeg).toBeNull();
+    expect(hold.vsFpm).toBeNull();
+    expect(hold.phase).toBe("—");
+    expect(hold.distEstimated).toBe(true);
+    expect(hold.lon).toBeCloseTo(3, 6);
+    expect(telemetryAt(f, 1800 + 300, FROM)!.source).toBe("OBSERVED");
+    const pre = one({
+      dep: FROM, arr: FROM + 2800, end: "LANDED",
+      s: [[1000, 100, 0, 0], [1600, 200, 0, 1], [2200, 300, 0, 2]],
+    });
+    const b = telemetryAt(pre, 100, FROM)!;
+    expect(b.source).toBe("NO DATA");
+    expect(b.gsKt).toBeNull();
+    expect(b.lon).toBeCloseTo(0, 6);
+    expect(telemetryAt(pre, 700, FROM)!.source).toBe("OBSERVED");
+  });
+
+  it("ETA speed uses only segments already flown", () => {
+    const f = one({
+      dep: FROM, arr: null, end: "AIRBORNE", from: "IST", to: "JFK",
+      s: [[0, 300, 0, 0], [600, 300, 0, 1], [1200, 300, 0, 2], [1800, 300, 0, 6]],
+    });
+    const early = telemetryAt(f, 1200, FROM)!;
+    const late = telemetryAt(f, 1800, FROM)!;
+    // at 1200 the fast final segment must not be known: speed ≈ 1°/600 s
+    const kmh = haversineKm(0, 0, 0, 1) / (600 / 3600);
+    expect(early.remainingSec!).toBeCloseTo(((early.totalKm! - early.distKm) / kmh) * 3600, 3);
+    expect(late.remainingSec!).not.toBeCloseTo(((late.totalKm! - late.distKm) / kmh) * 3600, 0);
+  });
 });

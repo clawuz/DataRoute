@@ -92,3 +92,10 @@ describe("blendPose", () => {
     expect(norm([0, 0, 0]).every(Number.isFinite)).toBe(true);
   });
 });
+
+describe("stepCam speedScale guard", () => {
+  it("treats a non-positive speedScale as 1", () => {
+    expect(stepCam({ mode: "TO_FOLLOW", k: 0 }, 1.25, true, 0).k).toBeCloseTo(0.5, 9);
+    expect(stepCam({ mode: "TO_FOLLOW", k: 0 }, 1.25, true, -2).k).toBeCloseTo(0.5, 9);
+  });
+});

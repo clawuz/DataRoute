@@ -6,9 +6,12 @@ const TANGENT_DT = 45; // flight seconds either side
 /** Chase-camera pose (Earth-fixed) for a flight position function; null when no direction is available. */
 export function chaseFor(posAt: (u: number) => Vec3 | null, u: number): Pose | null {
   const p = posAt(u);
-  const a = posAt(u - TANGENT_DT);
-  const b = posAt(u + TANGENT_DT);
-  if (!p || !a || !b) return null;
+  if (!p) return null;
+  const a0 = posAt(u - TANGENT_DT);
+  const b0 = posAt(u + TANGENT_DT);
+  if (!a0 && !b0) return null;
+  const a = a0 ?? p; // one-sided difference when a neighbour is missing
+  const b = b0 ?? p;
   const up = norm(p);
   let tan = sub(b, a);
   tan = sub(tan, scale(up, dot(tan, up)));

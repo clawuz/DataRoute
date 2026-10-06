@@ -142,7 +142,8 @@ export function telemetryAt(f: GlobeFlight, u: number, fromAbs: number): Telemet
   if (extrap) {
     const h = headState(f, Math.min(u, f.lastT + EXTRAPOLATE_MAX_SEC));
     holding = u > f.lastT + EXTRAPOLATE_MAX_SEC;
-    const lastSeg = [...p.segs].reverse().find((x) => x.gsKt !== null);
+    const final = p.segs[p.segs.length - 1];
+    const lastSeg = final.gsKt !== null ? final : [...p.segs].reverse().find((x) => x.gsKt !== null);
     if (h) {
       lat = h.lat;
       lon = h.lon;
@@ -154,6 +155,18 @@ export function telemetryAt(f: GlobeFlight, u: number, fromAbs: number): Telemet
     vsFpm = null;
     source = "EXTRAPOLATED";
     distEstimated = true;
+  }
+
+  // unobserved span before the first / after the last sample (landed hold, pre-roll): honest NO DATA when long
+  if (!extrap && (u < f.t[0] || u > f.lastT)) {
+    const span = u < f.t[0] ? f.t[0] - u : u - f.lastT;
+    if (span > BREAK_SEC) {
+      source = "NO DATA";
+      gsKt = null;
+      hdgDeg = null;
+      vsFpm = null;
+      distEstimated = true;
+    }
   }
 
   // total distance
@@ -176,7 +189,9 @@ export function telemetryAt(f: GlobeFlight, u: number, fromAbs: number): Telemet
   if (f.status === "LANDED") {
     remainingSec = Math.max(0, f.end - u);
   } else if (airborne && totalKm !== null) {
-    const recent = p.segs.filter((x) => x.gsKt !== null).slice(-3);
+    const valid = p.segs.filter((x) => x.gsKt !== null);
+    const before = valid.filter((x) => x.t1 <= u);
+    const recent = (before.length ? before : valid).slice(-3);
     const avg = recent.length ? recent.reduce((a, x) => a + (x.gsKt as number), 0) / recent.length : 0;
     if (avg > 0) {
       remainingSec = (Math.max(0, totalKm - distKm) / (avg * KT)) * 3600;

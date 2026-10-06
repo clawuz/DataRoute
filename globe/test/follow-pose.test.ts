@@ -20,3 +20,16 @@ describe("chaseFor", () => {
     expect(chaseFor(() => [0, 0, 1], 0)).toBeNull();
   });
 });
+
+describe("chaseFor one-sided differences", () => {
+  it("works when only the forward neighbour exists", () => {
+    const p = chaseFor((u) => (u < 0 ? null : posAt(u)), 0)!;
+    expect(p).not.toBeNull();
+    expect(p.target[0]).toBeGreaterThan(p.pos[0]);
+  });
+  it("works when only the backward neighbour exists", () => {
+    const p = chaseFor((u) => (u > 0 ? null : posAt(u)), 0)!;
+    expect(p).not.toBeNull();
+    expect(p.target[0]).toBeGreaterThan(p.pos[0]);
+  });
+});

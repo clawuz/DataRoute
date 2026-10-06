@@ -54,7 +54,7 @@ export interface CamState {
 export const initCam = (): CamState => ({ mode: "GLOBE", k: 0 });
 
 export function stepCam(s: CamState, dt: number, wantFollow: boolean, speedScale = 1): CamState {
-  const dk = dt / (TRANSITION_SEC / speedScale);
+  const dk = dt / (TRANSITION_SEC / (speedScale > 0 ? speedScale : 1));
   switch (s.mode) {
     case "GLOBE":
       return wantFollow ? { mode: "TO_FOLLOW", k: 0 } : s;
