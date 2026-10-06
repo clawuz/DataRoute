@@ -5,10 +5,14 @@ import { buildTimeline, type Timeline } from "@web/data/timeline";
 import { buildSnapshot } from "@web/hud/snapshot";
 import type { Store } from "@web/hud/store";
 import { diffEvents } from "../model/events";
+import { telemetryAt } from "../geo3d/telemetry";
+import { TOUR_END_HOLD_SEC, TOUR_LIVE_HOLD_SEC, initTour, stepTour } from "../model/tour";
+import { SCRUB_FOLLOW_SEC, atEnd, atLiveHead, cycleSpeed, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
+import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
-  CREDIT, LABEL_COUNT, addEvents, liveCur, pickLabelAirports,
+  CREDIT, LABEL_COUNT, addEvents, hoverNote, liveCur, pickLabelAirports,
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
 import { SCRUB_SEC, keyToCommand } from "./keys";
@@ -35,6 +39,7 @@ export interface GlobeControllerDeps {
 export interface GlobeController {
   onKey(key: string): void;
   onPointerMove(x: number, y: number): void;
+  onClick(x: number, y: number): void;
   onPointerLeave(): void;
   onInteract(): void;
   refresh(): void;
@@ -60,6 +65,22 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let tex = { progress: 0, note: "" };
   let firstDataSec = 0;
   let disposed = false;
+  let follow: { id: string; idx: number; clock: FollowClock; liveHeadSec: number; endedSec: number } | null = null;
+  let tour = initTour(true);
+  let notice: { text: string; until: number } | null = null;
+  const NOTICE_SEC = 3;
+  const say = (text: string) => {
+    notice = { text, until: d.nowMs() / 1000 + NOTICE_SEC };
+  };
+  function startFollow(idx: number) {
+    const f = model?.flights[idx];
+    if (!f) return;
+    if (f.t.length < 2) {
+      say("TRACK TOO SHORT");
+      return;
+    }
+    follow = { id: f.id, idx, clock: startClock(f), liveHeadSec: 0, endedSec: 0 };
+  }
 
   const bounds = (): Bounds => (model ? { start: model.replayStart, end: model.span } : { start: 0, end: 0 });
   const act = (a: Parameters<typeof applyAction>[1]) => {
@@ -73,6 +94,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
 
   function currentCur(nowSec: number): number {
     if (!model) return 0;
+    if (follow) return follow.clock.u;
     if (mode === "REPLAY") return cycle.tRel;
     return liveFrozen ?? liveRaw(model, nowSec);
   }
@@ -116,8 +138,20 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       debug: d.debug ? { ...perf, flights: model?.flights.length ?? 0 } : undefined,
     });
     const labels = computeLabels();
+    let tooltip = base.tooltip;
+    if (tooltip && model && hoverIdx >= 0) {
+      const note = hoverNote(model.flights[hoverIdx], cur);
+      if (note) tooltip = { ...tooltip, route: `${tooltip.route} · ${note}` };
+    }
+    let followHud = null;
+    if (follow && model) {
+      const f = model.flights[follow.idx];
+      const tel = f ? telemetryAt(f, follow.clock.u, model.from) : null;
+      if (f && tel) followHud = formatFollow(f, tel, follow.clock);
+    }
     d.store.set({
       ...base,
+      tooltip,
       mode,
       events,
       labels,
@@ -125,16 +159,18 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       textureProgress: tex.progress,
       textureNote: tex.note,
       credit: CREDIT,
-      follow: null,
+      follow: followHud,
       camMode: d.engine.camMode(),
-      notice: "",
-      tour: true,
+      notice: notice && nowSec < notice.until ? notice.text : "",
+      tour: tour.enabled,
     });
   }
 
   const frame = (dt: number): GlobeFrameInput => {
     const nowSec = d.nowMs() / 1000;
-    cycle = stepCycle(cycle, dt, bounds(), GLOBE_CYCLE);
+    const stepped = stepCycle(cycle, dt, bounds(), GLOBE_CYCLE);
+    // while following in REPLAY the displayed instant belongs to the follow clock: freeze the replay position
+    cycle = follow && mode === "REPLAY" ? { ...stepped, phase: cycle.phase, elapsed: cycle.elapsed, tRel: cycle.tRel } : stepped;
     if (mode === "REPLAY" && cycle.phase === "LIVE") {
       mode = "LIVE"; // replay finished: back to the present
       liveFrozen = null;
@@ -143,21 +179,48 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (!cycle.paused) liveFrozen = null;
       else if (liveFrozen === null && model) liveFrozen = liveRaw(model, nowSec);
     }
+    if (follow && model) {
+      const f = model.flights[follow.idx];
+      follow.clock = stepFollow(follow.clock, f, dt);
+      if (atLiveHead(follow.clock, f) && !follow.clock.paused) follow.liveHeadSec += dt;
+      if (atEnd(follow.clock, f)) follow.endedSec += dt;
+    }
+    if (mode === "LIVE") {
+      const r = stepTour(tour, dt, {
+        following: !!follow,
+        followDone: !!follow && (follow.liveHeadSec >= TOUR_LIVE_HOLD_SEC || follow.endedSec >= TOUR_END_HOLD_SEC),
+        manual: cycle.manual,
+        model,
+        cur: currentCur(nowSec),
+        rand: Math.random,
+      });
+      tour = r.s;
+      if (r.a.type === "follow") startFollow(r.a.index);
+      else if (r.a.type === "exit") follow = null;
+    }
     if (pending && d.nowMs() - lastPick >= PICK_INTERVAL_MS) {
       lastPick = d.nowMs();
       hoverIdx = d.engine.pick(pending.x, pending.y, currentCur(nowSec));
       pending = null;
     }
-    if (d.onLabels && model) d.onLabels(computeLabels());
     hudTimer += dt;
     if (hudTimer >= HUD_TICK_SEC) {
       hudTimer = 0;
       pushHud();
     }
     const cur = currentCur(nowSec);
-    return { absTime: (model?.from ?? nowSec) + cur, cur, highlight: hoverIdx, nowSec };
+    return {
+      absTime: (model?.from ?? nowSec) + cur,
+      cur,
+      highlight: follow ? follow.idx : hoverIdx,
+      nowSec,
+      follow: follow ? { flight: follow.idx, u: follow.clock.u } : null,
+    };
   };
   d.engine.setFrameSource(frame);
+  d.engine.setAfterRender(() => {
+    if (d.onLabels && model && !disposed) d.onLabels(computeLabels());
+  });
 
   const onData = (day: DayFile) => {
     const prev = model;
@@ -180,6 +243,16 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       cycle = { ...cycle, tRel: Math.max(0, cycle.tRel - (next.from - prev!.from)) };
     }
     if (!first && liveFrozen !== null) liveFrozen = Math.max(0, liveFrozen - (next.from - prev!.from));
+    if (!first && follow) {
+      const idx = next.flights.findIndex((f) => f.id === follow!.id);
+      if (idx < 0) {
+        follow = null;
+        say("FLIGHT NO LONGER IN DATA");
+      } else {
+        follow.idx = idx;
+        follow.clock = { ...follow.clock, u: follow.clock.u - (next.from - prev!.from) };
+      }
+    }
     const evs = diffEvents(prev, next);
     events = addEvents(events, evs);
     d.engine.setModel(next, currentCur(nowSec), nowSec);
@@ -213,6 +286,31 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       const cmd = keyToCommand(key);
       if (!cmd) return;
       const nowSec = d.nowMs() / 1000;
+      const f = follow && model ? model.flights[follow.idx] : null;
+      if (cmd === "toggleTour") {
+        tour = { ...tour, enabled: !tour.enabled };
+        pushHud();
+        return;
+      }
+      if (cmd === "exitFollow") {
+        act({ type: "interact" });
+        follow = null;
+        pushHud();
+        return;
+      }
+      if (follow && f) {
+        if (cmd === "togglePause") follow.clock = { ...follow.clock, paused: !follow.clock.paused };
+        else if (cmd === "scrubBack" || cmd === "scrubForward")
+          follow.clock = scrubFollow(follow.clock, f, cmd === "scrubBack" ? -SCRUB_FOLLOW_SEC : SCRUB_FOLLOW_SEC);
+        else if (cmd === "slower" || cmd === "faster") follow.clock = cycleSpeed(follow.clock, f, cmd === "faster" ? 1 : -1);
+        else if (cmd === "toggleReplay") follow = null; // falls through to the normal REPLAY toggle below
+        if (follow) {
+          act({ type: "interact" });
+          pushHud();
+          return;
+        }
+      }
+      if (cmd === "slower" || cmd === "faster") return; // speed keys only matter while following
       if (cmd === "togglePause") act({ type: "togglePause" });
       else if (cmd === "scrubBack" || cmd === "scrubForward") {
         if (mode === "LIVE" && model) {
@@ -251,6 +349,15 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         hoverIdx = d.engine.pick(x, y, currentCur(now / 1000));
       } else pending = { x, y };
     },
+    onClick(x, y) {
+      act({ type: "interact" });
+      if (!model) return;
+      const idx = d.engine.pick(x, y, currentCur(d.nowMs() / 1000));
+      if (idx >= 0) {
+        if (!follow || follow.idx !== idx) startFollow(idx);
+      } else if (follow) follow = null;
+      pushHud();
+    },
     onPointerLeave() {
       hoverIdx = -1;
       pending = null;
@@ -275,6 +382,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       d.engine.setFrameSource(null);
+      d.engine.setAfterRender(null);
     },
   };
 }
