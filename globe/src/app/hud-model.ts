@@ -1,6 +1,8 @@
 import { EMPTY_SNAPSHOT, type HudSnapshot } from "@web/hud/snapshot";
 import type { EventKind, FlightEvent } from "../model/events";
-import type { GlobeModel } from "../model/globe-model";
+import type { CamMode } from "../camera/follow-rig";
+import type { GlobeFlight, GlobeModel } from "../model/globe-model";
+import type { FollowHud } from "./follow-hud";
 
 export const CREDIT = "EARTH IMAGERY: NASA EARTH OBSERVATORY (BLUE MARBLE · BLACK MARBLE)";
 export const MAX_EVENTS = 6;
@@ -29,6 +31,10 @@ export interface GlobeHudSnapshot extends HudSnapshot {
   textureProgress: number;
   textureNote: string;
   credit: string;
+  follow: FollowHud | null;
+  camMode: CamMode;
+  notice: string;
+  tour: boolean;
 }
 
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
@@ -40,6 +46,10 @@ export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
   textureProgress: 0,
   textureNote: "",
   credit: CREDIT,
+  follow: null,
+  camMode: "GLOBE",
+  notice: "",
+  tour: true,
 };
 
 export function eventText(e: FlightEvent): string {
@@ -95,4 +105,12 @@ export function createLabelBus(): LabelBus {
       for (const fn of subs) fn(labels);
     },
   };
+}
+
+/** Per-flight honesty note shown on the hover card. */
+export function hoverNote(f: GlobeFlight, cur: number): string {
+  if (f.status === "AIRBORNE" && cur > f.lastT) return "EXTRAPOLATED";
+  if (f.gaps.some(([s, e]) => cur >= s && cur <= e)) return "NO DATA";
+  if (f.status === "LAST_CONTACT" && cur >= f.lastT) return "LAST CONTACT";
+  return "";
 }

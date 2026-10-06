@@ -125,6 +125,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       textureProgress: tex.progress,
       textureNote: tex.note,
       credit: CREDIT,
+      follow: null,
+      camMode: d.engine.camMode(),
+      notice: "",
+      tour: true,
     });
   }
 

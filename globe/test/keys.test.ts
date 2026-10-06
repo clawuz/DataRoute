@@ -11,7 +11,13 @@ describe("keyToCommand", () => {
     expect(keyToCommand("R")).toBe("toggleReplay");
     expect(keyToCommand("h")).toBe("toggleHud");
     expect(keyToCommand("F")).toBe("fullscreen");
-    expect(keyToCommand("g")).toBeNull(); // the globe toggle belongs to Plan 4
+    expect(keyToCommand("Escape")).toBe("exitFollow");
+    expect(keyToCommand("g")).toBe("exitFollow");
+    expect(keyToCommand("G")).toBe("exitFollow");
+    expect(keyToCommand("t")).toBe("toggleTour");
+    expect(keyToCommand("T")).toBe("toggleTour");
+    expect(keyToCommand("[")).toBe("slower");
+    expect(keyToCommand("]")).toBe("faster");
     expect(keyToCommand("x")).toBeNull();
   });
 });
