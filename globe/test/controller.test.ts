@@ -30,6 +30,8 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     pick: vi.fn(() => 0),
     screenOf: () => ({ x: 100, y: 200, visible: true }),
     dragBy: vi.fn(),
+    camMode: () => "GLOBE" as const,
+    setAfterRender: vi.fn(),
     endDrag: vi.fn(),
     pulseAirport: vi.fn(),
     headsInfo: () => ({ count: 1, extrapolated: 3 }),

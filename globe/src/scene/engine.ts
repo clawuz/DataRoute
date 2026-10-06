@@ -4,9 +4,12 @@ import { TUNNEL_PERIOD, advance } from "@web/render/clocks";
 import type { ScreenPoint } from "@web/render/picking";
 import { LEVELS, initQuality, updateQuality } from "@web/render/quality";
 import { earthRotationRad, sunDirection } from "../astro";
+import { SMOOTH_SEC, blendPose, followWeight, initCam, smoothDampVec, stepCam, type CamMode, type CamState, type Damped, type Pose } from "../camera/follow-rig";
+import { chaseFor } from "../camera/follow-pose";
 import { IDLE_YAW_RATE, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
-import { altitudeRadius, latLonToVec3 } from "../geo3d/vec";
+import { altitudeRadius, latLonToVec3, type Vec3 } from "../geo3d/vec";
 import type { GlobeModel } from "../model/globe-model";
+import { EXTRAPOLATE_MAX_SEC, headState } from "../model/dead-reckon";
 import { HeadSmoother } from "../model/head-smoother";
 import { createAirports, type Airports } from "./airports";
 import { ARC_BASE_LIFT, createArcs, type Arcs } from "./arcs";
@@ -25,6 +28,8 @@ export interface GlobeFrameInput {
   highlight: number;
   /** wall clock (unix seconds): drives pulses and smoothing */
   nowSec: number;
+  /** FOLLOW target: flight index in the current model and its flight time (seconds relative to window.from) */
+  follow?: { flight: number; u: number } | null;
 }
 
 export interface GlobeEngineOptions {
@@ -41,6 +46,8 @@ export interface GlobeEngine {
   screenOf(lat: number, lon: number, alt100?: number): ScreenPoint;
   dragBy(dxPx: number, dyPx: number, dtSec: number): void;
   endDrag(): void;
+  camMode(): CamMode;
+  setAfterRender(fn: (() => void) | null): void;
   pulseAirport(iata: string, nowSec: number): void;
   headsInfo(): { count: number; extrapolated: number };
   dispose(): void;
@@ -104,6 +111,25 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const smoother = new HeadSmoother();
   let rig: RigState = initRig(initialYaw(earthRotationRad(Date.now() / 1000), 30));
   const idleRate = IDLE_YAW_RATE * (opts.reducedMotion ? 0.4 : 1);
+  let cam: CamState = initCam();
+  let chasePos: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
+  let chaseTgt: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
+  let followKey = -2; // flight index the damped chase state was initialised for (-2 = none)
+  let lastChase: { pos: Vec3; target: Vec3 } | null = null; // Earth-fixed
+  let afterRender: (() => void) | null = null;
+  let lastDragMove = 0;
+  const camScale = opts.reducedMotion ? 0.5 : 1;
+  const cA = new Vector3();
+  const cB = new Vector3();
+
+  /** Earth-fixed head position of flight `fi` at flight time `u` (clamped to where the flight can be drawn). */
+  const posAt = (fi: number) => (u: number): Vec3 | null => {
+    const f = model?.flights[fi];
+    if (!f) return null;
+    const hi = f.status === "AIRBORNE" ? f.lastT + EXTRAPOLATE_MAX_SEC : f.end;
+    const h = headState(f, Math.min(Math.max(u, f.t[0]), hi));
+    return h ? latLonToVec3(h.lat, h.lon, altitudeRadius(h.alt100) + ARC_BASE_LIFT) : null;
+  };
 
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
@@ -169,13 +195,52 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     const wall = Date.now() / 1000;
     const f: GlobeFrameInput = source ? source(dt) : { absTime: wall, cur: 0, highlight: -1, nowSec: wall };
 
-    rig = stepRig(rig, dt, idleRate);
-    const p = rigPosition(rig);
-    camera.position.set(p[0], p[1], p[2]);
-    camera.lookAt(0, 0, 0);
-    camera.updateMatrixWorld();
+    const fol = f.follow && model && model.flights[f.follow.flight] ? f.follow : null;
+    cam = stepCam(cam, dt, !!fol, camScale);
+    rig = stepRig(rig, dt, cam.mode === "GLOBE" ? idleRate : 0);
 
     earthGroup.rotation.y = earthRotationRad(f.absTime);
+    earthGroup.updateMatrixWorld();
+
+    if (fol) {
+      const pose = chaseFor(posAt(fol.flight), fol.u);
+      if (pose) {
+        if (followKey !== fol.flight) {
+          chasePos = { p: pose.pos, v: [0, 0, 0] };
+          chaseTgt = { p: pose.target, v: [0, 0, 0] };
+          followKey = fol.flight;
+        } else {
+          chasePos = smoothDampVec(chasePos, pose.pos, SMOOTH_SEC, dt);
+          chaseTgt = smoothDampVec(chaseTgt, pose.target, SMOOTH_SEC, dt);
+        }
+        lastChase = { pos: chasePos.p, target: chaseTgt.p };
+      }
+    } else if (cam.mode === "GLOBE") {
+      followKey = -2;
+    }
+
+    const rp = rigPosition(rig);
+    if (cam.mode !== "GLOBE" && lastChase) {
+      const m = earthGroup.matrixWorld;
+      cA.set(lastChase.pos[0], lastChase.pos[1], lastChase.pos[2]).applyMatrix4(m);
+      cB.set(lastChase.target[0], lastChase.target[1], lastChase.target[2]).applyMatrix4(m);
+      const globe: Pose = { pos: rp, target: [0, 0, 0], up: [0, 1, 0] };
+      const chase: Pose = {
+        pos: [cA.x, cA.y, cA.z],
+        target: [cB.x, cB.y, cB.z],
+        up: [cA.x, cA.y, cA.z], // radial direction = local up; normalised inside blendPose
+      };
+      const pose = blendPose(globe, chase, followWeight(cam));
+      camera.position.set(pose.pos[0], pose.pos[1], pose.pos[2]);
+      camera.up.set(pose.up[0], pose.up[1], pose.up[2]);
+      camera.lookAt(pose.target[0], pose.target[1], pose.target[2]);
+    } else {
+      camera.up.set(0, 1, 0);
+      camera.position.set(rp[0], rp[1], rp[2]);
+      camera.lookAt(0, 0, 0);
+    }
+    camera.updateMatrixWorld();
+
     const sun = sunDirection(f.absTime);
     earth.setSun(sun);
     atmosphere.setSun(sun);
@@ -196,6 +261,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       space.nebula.render(renderer);
       composer.render(dt);
     }
+    afterRender?.();
 
     fpsAcc += dt;
     fpsFrames++;
@@ -220,7 +286,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   raf = requestAnimationFrame(frame);
 
   const world = new Vector3();
-  const cam = new Vector3();
+  const camWorld = new Vector3();
 
   return {
     setModel(m, cur, nowSec) {
@@ -277,8 +343,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       earthGroup.updateMatrixWorld();
       const p = latLonToVec3(lat, lon, altitudeRadius(alt100) + ARC_BASE_LIFT);
       world.set(p[0], p[1], p[2]).applyMatrix4(earthGroup.matrixWorld);
-      cam.copy(camera.position);
-      const front = world.dot(cam) > 1.0;
+      camWorld.copy(camera.position);
+      const front = world.dot(camWorld) > 1.0;
       world.project(camera);
       return {
         x: ((world.x + 1) / 2) * size.w,
@@ -286,11 +352,21 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         visible: front && world.z >= -1 && world.z <= 1 && Math.abs(world.x) <= 1 && Math.abs(world.y) <= 1,
       };
     },
+    camMode() {
+      return cam.mode;
+    },
+    setAfterRender(fn) {
+      afterRender = fn;
+    },
     dragBy(dx, dy, dt) {
+      if (cam.mode === "FOLLOW" || cam.mode === "TO_FOLLOW") return;
+      lastDragMove = performance.now();
       rig = dragRig(rig, -dx * DRAG_RAD_PER_PX, dy * DRAG_RAD_PER_PX, dt);
     },
     endDrag() {
-      rig = releaseRig(rig);
+      // a pause before release must not fling the globe with the last move's velocity
+      const stale = performance.now() - lastDragMove > 60;
+      rig = releaseRig(stale ? { ...rig, yawVel: 0, pitchVel: 0 } : rig);
     },
     pulseAirport(iata, nowSec) {
       airports?.pulse(iata, rel(nowSec));
@@ -300,6 +376,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     dispose() {
       disposed = true;
+      afterRender = null;
       cancelAnimationFrame(raf);
       if (texs) for (const tex of [texs.day, texs.night, texs.clouds]) tex.dispose();
       texs = null;
