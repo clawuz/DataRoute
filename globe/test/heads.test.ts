@@ -5,6 +5,7 @@ import { HEAD_LIFT, computeHeads, createHeads, headLatLons, type HeadBuffers } f
 import { ARC_BASE_LIFT } from "../src/scene/arcs";
 import { altitudeRadius } from "../src/geo3d/vec";
 import { REGION_RGB } from "@web/data/palette";
+import { altTone } from "../src/scene/alt-tone";
 import { FROM, flight, makeDay } from "./helpers";
 
 const model = buildGlobeModel(
@@ -22,7 +23,7 @@ describe("computeHeads", () => {
     const out = buffers();
     const r = computeHeads(model, 1060, 0, null, out);
     expect(r).toEqual({ count: 2, extrapolated: 0 });
-    expect(Array.from(out.color.slice(0, 3))).toEqual(REGION_RGB[1].map(Math.fround));
+    expect(Array.from(out.color.slice(0, 3))).toEqual(altTone(REGION_RGB[1], 300).map(Math.fround));
     expect(Array.from(out.flight.slice(0, 2))).toEqual([0, 1]);
     const len = Math.hypot(out.pos[0], out.pos[1], out.pos[2]);
     expect(len).toBeCloseTo(altitudeRadius(300) + ARC_BASE_LIFT + HEAD_LIFT, 4);

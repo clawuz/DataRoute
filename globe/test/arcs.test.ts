@@ -90,6 +90,17 @@ describe("buildArcBuffers", () => {
     expect(b.info[i * 4 + 2]).toBe(0);
   });
 
+  it("alt buffer holds 2 altitudes per segment: observed from samples, planned on a cruise profile", () => {
+    expect(b.alt.length).toBe(b.count * 2);
+    expect(Array.from(b.alt.slice(0, 2))).toEqual([100, 100]);
+    const i = kinds.findIndex((k) => k === 1);
+    expect(b.alt[i * 2]).toBeCloseTo(0, 3);
+    const mid = Math.floor((i + kinds.lastIndexOf(1)) / 2);
+    expect(b.alt[mid * 2]).toBeGreaterThan(300);
+    expect(b.alt[mid * 2]).toBeLessThanOrEqual(370.0001);
+    expect(Array.from(b.alt).every(Number.isFinite)).toBe(true);
+  });
+
   it("all positions are finite", () => {
     for (const v of [b.a, b.b, b.t, b.s]) expect(Array.from(v).every(Number.isFinite)).toBe(true);
   });

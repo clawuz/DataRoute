@@ -10,6 +10,7 @@ import {
   Vector3,
 } from "three";
 import { REGION_RGB } from "@web/data/palette";
+import { ALT_TONE_GLSL } from "./alt-tone";
 import { plannedArc } from "../geo3d/great";
 import { resampleRun } from "../geo3d/resample";
 import { R_EARTH_KM, altitudeRadius, latLonToVec3 } from "../geo3d/vec";
@@ -20,6 +21,8 @@ export const MAX_RUN_POINTS = 96;
 export const PLANNED_POINTS = 48;
 export const BREAK_SEC = 600;
 export const ARC_WIDTH_PX = 1.9;
+/** Cruise altitude (100 ft) of the planned-route tone profile. */
+export const PLANNED_CRUISE100 = 370;
 
 /** True when the sample pair (i, i+1) is a coverage gap and must not be drawn as observed track. */
 export function isBreak(f: GlobeFlight, i: number): boolean {
@@ -33,6 +36,7 @@ export interface ArcBuffers {
   t: Float32Array;
   info: Float32Array;
   s: Float32Array;
+  alt: Float32Array;
   count: number;
 }
 
@@ -42,13 +46,15 @@ export function buildArcBuffers(m: GlobeModel): ArcBuffers {
   const t: number[] = [];
   const info: number[] = [];
   const s: number[] = [];
+  const alt: number[] = [];
   let count = 0;
-  const push = (pa: number[], pb: number[], tA: number, tB: number, region: number, kind: number, fi: number, sA: number, sB: number) => {
+  const push = (pa: number[], pb: number[], tA: number, tB: number, region: number, kind: number, fi: number, sA: number, sB: number, altA: number, altB: number) => {
     a.push(pa[0], pa[1], pa[2]);
     b.push(pb[0], pb[1], pb[2]);
     t.push(tA, tB);
     info.push(region, kind, fi, 0);
     s.push(sA, sB);
+    alt.push(altA, altB);
     count++;
   };
 
@@ -67,7 +73,7 @@ export function buildArcBuffers(m: GlobeModel): ArcBuffers {
             push(
               latLonToVec3(p.lat, p.lon, altitudeRadius(p.alt100) + ARC_BASE_LIFT),
               latLonToVec3(q.lat, q.lon, altitudeRadius(q.alt100) + ARC_BASE_LIFT),
-              p.t, q.t, f.regionIdx, 0, fi, 0, 0,
+              p.t, q.t, f.regionIdx, 0, fi, 0, 0, p.alt100, q.alt100,
             );
           }
         }
@@ -94,6 +100,8 @@ export function buildArcBuffers(m: GlobeModel): ArcBuffers {
           latLonToVec3(q.lat, q.lon, q.radius + ARC_BASE_LIFT),
           f.dep, f.end, f.regionIdx, 1, fi,
           (p.u * distKm) / R_EARTH_KM, (q.u * distKm) / R_EARTH_KM,
+          PLANNED_CRUISE100 * Math.pow(Math.sin(Math.PI * p.u), 0.6),
+          PLANNED_CRUISE100 * Math.pow(Math.sin(Math.PI * q.u), 0.6),
         );
       }
     }
@@ -105,11 +113,13 @@ export function buildArcBuffers(m: GlobeModel): ArcBuffers {
     t: Float32Array.from(t),
     info: Float32Array.from(info),
     s: Float32Array.from(s),
+    alt: Float32Array.from(alt),
     count,
   };
 }
 
 const ARC_VERT = /* glsl */ `
+${ALT_TONE_GLSL}
 uniform float uCur;
 uniform float uWindow;
 uniform vec2 uRes;
@@ -122,6 +132,7 @@ attribute vec3 aB;
 attribute vec2 aT;
 attribute vec4 aInfo;
 attribute vec2 aS;
+attribute vec2 aAlt;
 varying vec3 vColor;
 varying float vAlpha;
 varying float vEdge;
@@ -139,7 +150,7 @@ void hide() {
 void main() {
   float kind = aInfo.y;
   bool hi = abs(aInfo.z - uHighlight) < 0.5;
-  vec3 col = uColors[int(aInfo.x + 0.5)];
+  vec3 base = uColors[int(aInfo.x + 0.5)];
   vec3 pa = aA;
   vec3 pb = aB;
   float alpha;
@@ -169,6 +180,7 @@ void main() {
   vec4 c = mix(cA, cB, aCorner.y);
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
+  vec3 col = altTone(base, mix(aAlt.x, aAlt.y, aCorner.y));
   vColor = hi ? mix(col, vec3(1.0), 0.4) : col;
   vAlpha = alpha;
   vS = mix(aS.x, aS.y, aCorner.y);
@@ -218,6 +230,7 @@ export function createArcs(m: GlobeModel): Arcs {
   geometry.setAttribute("aT", new InstancedBufferAttribute(buf.t, 2));
   geometry.setAttribute("aInfo", new InstancedBufferAttribute(buf.info, 4));
   geometry.setAttribute("aS", new InstancedBufferAttribute(buf.s, 2));
+  geometry.setAttribute("aAlt", new InstancedBufferAttribute(buf.alt, 2));
   geometry.instanceCount = buf.count;
 
   const uniforms: ArcUniforms = {

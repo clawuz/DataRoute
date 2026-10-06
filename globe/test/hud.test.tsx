@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createStore } from "@web/hud/store";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../src/app/hud-model";
 import type { FollowHud } from "../src/app/follow-hud";
-import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
+import { AltLegend, AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
 const text = (el: HTMLElement) => el.textContent!.replace(/\s+/g, " ").trim();
@@ -181,5 +181,18 @@ describe("ModeLine / notice with FOLLOW", () => {
   it("the flight panel fades with H but is not the attribution", () => {
     const { container } = render(<GlobeHud store={createStore(snap({ follow: fh(), hidden: true }))} />);
     expect(container.querySelector(".hud.hidden .flight-panel")).not.toBeNull();
+  });
+});
+
+describe("AltLegend", () => {
+  it("renders the altitude scale labels with a gradient strip", () => {
+    const { container } = render(<AltLegend />);
+    expect(text(container)).toBe("ALTFL000FL410");
+    expect(container.querySelector(".alt-legend")!.getAttribute("aria-hidden")).toBe("true");
+    expect((container.querySelector(".alt-legend-strip") as HTMLElement).style.backgroundImage).toContain("linear-gradient");
+  });
+  it("is shown in the HUD unless following", () => {
+    const store = createStore(snap());
+    expect(render(<GlobeHud store={store} />).container.querySelector(".alt-legend")).not.toBeNull();
   });
 });

@@ -47,3 +47,10 @@ body { background: #02030a; }
   .notice { top: 22vmin; }
   .flight-panel { top: auto; bottom: 22vmin; transform: none; right: 3vmin; width: 42vmin; }
 }
+
+.alt-legend { position: absolute; right: 3vmin; bottom: 28vmin; width: 27vmin; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.5vmin 1vmin; font-size: calc(1 * var(--u)); letter-spacing: 0.12em; pointer-events: none; }
+.alt-legend-strip { height: 0.8vmin; border: 1px solid var(--line); }
+.alt-legend-ends { grid-column: 2; display: flex; justify-content: space-between; color: var(--ink-dim); }
+@media (max-aspect-ratio: 1/1) {
+  .alt-legend { bottom: 30vmin; }
+}

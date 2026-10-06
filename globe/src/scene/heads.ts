@@ -4,6 +4,7 @@ import { altitudeRadius, latLonToVec3 } from "../geo3d/vec";
 import { headState } from "../model/dead-reckon";
 import type { GlobeModel } from "../model/globe-model";
 import type { HeadSmoother } from "../model/head-smoother";
+import { altTone } from "./alt-tone";
 import { ARC_BASE_LIFT } from "./arcs";
 
 export const HEAD_SIZE_PX = 8;
@@ -39,7 +40,7 @@ export function computeHeads(
     out.pos[n * 3] = p[0];
     out.pos[n * 3 + 1] = p[1];
     out.pos[n * 3 + 2] = p[2];
-    const [r, g, b] = REGION_RGB[f.regionIdx];
+    const [r, g, b] = altTone(REGION_RGB[f.regionIdx], h.alt100);
     out.color[n * 3] = r;
     out.color[n * 3 + 1] = g;
     out.color[n * 3 + 2] = b;
