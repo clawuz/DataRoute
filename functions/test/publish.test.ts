@@ -67,3 +67,50 @@ describe("buildDayFile", () => {
     expect(d.status).toEqual({ state: "delayed", lastSuccessAt: NOW - 600, error: "x" });
   });
 });
+
+describe("buildDayFile — end, gaps, airports", () => {
+  const SAW_FALLBACK = { lat: 40.8986, lon: 29.3092, country: "TR" };
+  const state2: TrackerState = {
+    v: 1,
+    collectingSince: NOW - 7200,
+    lastSuccessAt: NOW,
+    flights: [
+      {
+        id: "a-1", icao24: "a", cs: "THY1", dep: NOW - 3600, arr: null, end: "AIRBORNE", lastContact: NOW,
+        samples: [[NOW - 3600, 0, 0, 0], [NOW, 370, 0, 1]],
+        gaps: [[NOW - 3000, NOW - 2400]],
+        now: { gs: 480, trk: 300 },
+        route: { origin: { ...IST, name: "Istanbul Airport" }, destination: JFK },
+      },
+      {
+        id: "b-1", icao24: "b", cs: "THY2", dep: NOW - 7000, arr: NOW - 100, end: "LAST_CONTACT", lastContact: NOW - 100,
+        samples: [[NOW - 7000, 350, 1, 0], [NOW - 100, 300, 2, 0]],
+        route: { origin: LHR, destination: IST },
+      },
+      // legacy row: no `end`, arr set, nowhere near its destination → LAST_CONTACT
+      {
+        id: "c-1", icao24: "c", cs: "THY3", dep: NOW - 900, arr: NOW - 300, lastContact: NOW - 300,
+        samples: [[NOW - 900, 300, 10, 10]], route: { origin: IST, destination: JFK },
+      },
+    ],
+  };
+  const day = buildDayFile(state2, NOW, { state: "ok", lastSuccessAt: NOW }, SRC);
+
+  it("every flight carries an end; gaps are relative to dep and only present when non-empty", () => {
+    expect(day.flights.map((f) => f.end)).toEqual(["AIRBORNE", "LAST_CONTACT", "LAST_CONTACT"]);
+    expect(day.flights[0].gaps).toEqual([[600, 1200]]);
+    expect(day.flights[1].gaps).toBeUndefined();
+  });
+
+  it("publishes the airports of routed flights plus IST and SAW, with names when known", () => {
+    expect(Object.keys(day.airports!).sort()).toEqual(["IST", "JFK", "LHR", "SAW"]);
+    expect(day.airports!.JFK).toEqual({ lat: 40.6398, lon: -73.7789, country: "US" });
+    expect(day.airports!.IST).toEqual({ lat: 41.2613, lon: 28.742, country: "TR", name: "Istanbul Airport" });
+    expect(day.airports!.SAW).toEqual(SAW_FALLBACK);
+  });
+
+  it("publishes IST/SAW even when no flight is routed", () => {
+    const empty = buildDayFile({ v: 1, collectingSince: NOW, lastSuccessAt: NOW, flights: [] }, NOW, { state: "ok", lastSuccessAt: NOW }, SRC);
+    expect(Object.keys(empty.airports!).sort()).toEqual(["IST", "SAW"]);
+  });
+});

@@ -104,8 +104,26 @@ export function makeFixture(now: number, seed = 1): DayFile {
       if (samples.length === 0) continue;
 
       const airborne = dep + dur > now;
-      const last = samples[samples.length - 1];
-      const prev = samples.length > 1 ? samples[samples.length - 2] : null;
+      // ~6 % of flights lose coverage in the middle (a gap), ~4 % of completed ones never reappear.
+      const rGap = rnd();
+      const rLost = rnd();
+      const lostCompleted = !airborne && rLost < 0.04 && samples.length > 8;
+      let kept = samples;
+      let lostAt: number | null = null;
+      if (lostCompleted) {
+        const cut = Math.floor(samples.length * (0.45 + 0.35 * rnd()));
+        kept = samples.slice(0, cut);
+        lostAt = kept[kept.length - 1][0];
+      }
+      let gaps: [number, number][] | undefined;
+      if (rGap < 0.06 && kept.length > 12) {
+        const i0 = Math.floor(kept.length * 0.35);
+        const i1 = Math.floor(kept.length * 0.6);
+        gaps = [[kept[i0][0], kept[i1][0]]];
+        kept = [...kept.slice(0, i0 + 1), ...kept.slice(i1)];
+      }
+      const last = kept[kept.length - 1];
+      const prev = kept.length > 1 ? kept[kept.length - 2] : null;
       const trk = prev
         ? initialBearing(prev[2], prev[3], last[2], last[3])
         : initialBearing(origin.lat, origin.lon, destination.lat, destination.lon);
@@ -115,9 +133,11 @@ export function makeFixture(now: number, seed = 1): DayFile {
         icao24,
         cs: `THY${1 + Math.floor(rnd() * 2999)}`,
         dep,
-        arr: airborne ? null : dep + dur,
+        arr: airborne ? null : lostAt ?? dep + dur,
+        end: airborne ? "AIRBORNE" : lostAt !== null ? "LAST_CONTACT" : "LANDED",
         lastContact: last[0],
-        samples,
+        samples: kept,
+        ...(gaps ? { gaps } : {}),
         route: unrouted ? null : { origin, destination },
         ...(airborne ? { now: { gs: Math.round(440 + rnd() * 60), trk: Math.round(trk * 10) / 10 } } : {}),
       });

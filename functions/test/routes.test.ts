@@ -41,6 +41,13 @@ describe("fetchRoute", () => {
     await expect(fetchRoute(respond(404, { response: "unknown callsign" }) as unknown as typeof fetch, "THYX")).resolves.toBeNull();
     await expect(fetchRoute(respond(500, {}) as unknown as typeof fetch, "THYX")).rejects.toThrow("adsbdb 500");
   });
+  it("keeps the airport name when adsbdb provides one", async () => {
+    const withName = JSON.parse(JSON.stringify(THY1));
+    withName.response.flightroute.origin.name = "Istanbul Airport";
+    const r = await fetchRoute(respond(200, withName) as unknown as typeof fetch, "THY1");
+    expect(r?.origin.name).toBe("Istanbul Airport");
+    expect(r?.destination.name).toBeUndefined();
+  });
 });
 
 describe("lookupRoute", () => {

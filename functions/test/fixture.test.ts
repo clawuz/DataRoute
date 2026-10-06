@@ -48,4 +48,17 @@ describe("makeFixture", () => {
       expect(d).toBeLessThan(0.2);
     }
   });
+
+  it("publishes airports, flight ends and some coverage gaps", () => {
+    expect(day.airports!.IST).toBeDefined();
+    expect(Object.keys(day.airports!).length).toBeGreaterThan(40);
+    expect(day.flights.every((f) => f.end)).toBe(true);
+    expect(day.flights.some((f) => f.end === "LAST_CONTACT")).toBe(true);
+    expect(day.flights.some((f) => f.end === "LANDED")).toBe(true);
+    expect(day.flights.some((f) => f.gaps && f.gaps.length > 0)).toBe(true);
+  });
+
+  it("only airborne flights are AIRBORNE", () => {
+    for (const f of day.flights) expect(f.end === "AIRBORNE").toBe(f.arr === null);
+  });
 });

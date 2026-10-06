@@ -22,6 +22,7 @@ interface AdsbdbAirport {
   country_iso_name: string;
   latitude: number;
   longitude: number;
+  name?: string;
 }
 
 const toAirport = (a: AdsbdbAirport): Airport => ({
@@ -29,6 +30,7 @@ const toAirport = (a: AdsbdbAirport): Airport => ({
   country: a.country_iso_name,
   lat: a.latitude,
   lon: a.longitude,
+  ...(a.name ? { name: a.name } : {}),
 });
 
 export async function fetchRoute(f: FetchFn, cs: string): Promise<RouteInfo | null> {

@@ -1,9 +1,16 @@
-import type { DayFile, DaySource, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";
+import type { DayAirport, DayFile, DaySource, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";
 import { haversineKm, initialBearing } from "./geo.js";
 import { resolveEndpoint } from "./regions.js";
-import { WINDOW } from "./tracker.js";
+import { WINDOW, endOf } from "./tracker.js";
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
+const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
+
+// Always published so the globe can mark the hub even on an empty day.
+const HUB_AIRPORTS: Record<string, DayAirport> = {
+  IST: { lat: 41.2613, lon: 28.742, country: "TR", name: "Istanbul Airport" },
+  SAW: { lat: 40.8986, lon: 29.3092, country: "TR" },
+};
 
 function fallbackBearing(f: TrackedFlight): number {
   if (f.now) return f.now.trk;
@@ -25,8 +32,10 @@ function toFlight(f: TrackedFlight): Flight {
     bearing: round1(ep ? ep.bearing : fallbackBearing(f)),
     dep: f.dep,
     arr: f.arr,
+    end: endOf(f),
     s: f.samples.map(([t, alt, lat, lon]) => [t - f.dep, alt, lat, lon]),
   };
+  if (f.gaps && f.gaps.length > 0) out.gaps = f.gaps.map(([a, b]) => [a - f.dep, b - f.dep]);
   if (f.arr === null && f.now) out.now = f.now;
   return out;
 }
@@ -47,6 +56,19 @@ export function buildDayFile(state: TrackerState, now: number, status: DayStatus
       km += haversineKm(la1, lo1, la2, lo2);
     }
   }
+  const airports: Record<string, DayAirport> = { ...HUB_AIRPORTS };
+  for (const f of state.flights) {
+    if (!f.route) continue;
+    for (const a of [f.route.origin, f.route.destination]) {
+      const name = a.name ?? airports[a.iata]?.name; // never lose a name already known
+      airports[a.iata] = {
+        lat: round4(a.lat),
+        lon: round4(a.lon),
+        country: a.country,
+        ...(name ? { name } : {}),
+      };
+    }
+  }
   return {
     v: 1,
     generatedAt: now,
@@ -62,5 +84,6 @@ export function buildDayFile(state: TrackerState, now: number, status: DayStatus
       km24h: Math.round(km),
     },
     flights: state.flights.map(toFlight),
+    airports,
   };
 }
