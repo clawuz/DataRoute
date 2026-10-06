@@ -50,4 +50,12 @@ describe("headState", () => {
     expect(headState(f, 60)!.extrapolated).toBe(false);
     expect(headState(f, 121)).toBeNull();
   });
+
+  it("does not head north when the report has unknown speed/track (gs 0, trk 0)", () => {
+    const f = one({ ...base, arr: null, end: "AIRBORNE", now: { gs: 0, trk: 0 } });
+    const h = headState(f, 180)!;
+    expect(h.extrapolated).toBe(true);
+    expect(h.lon).toBeGreaterThan(1);
+    expect(Math.abs(h.lat)).toBeLessThan(1e-3);
+  });
 });

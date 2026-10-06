@@ -53,7 +53,8 @@ export function buildGlobeModel(day: DayFile): GlobeModel {
       status: statusOf(f),
       gaps: (f.gaps ?? []).map(([s, e]) => [fr.dep + s, fr.dep + e] as [number, number]),
       lastT: fr.t[fr.t.length - 1],
-      ...(f.now ? { trk: f.now.trk } : {}),
+      // collector writes trk 0 when unknown; a report with gs <= 0 is treated as no report
+      ...(f.now && f.now.gs > 0 ? { trk: f.now.trk } : {}),
       ...(planned ? { planned } : {}),
     };
   });

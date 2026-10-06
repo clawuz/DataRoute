@@ -56,4 +56,9 @@ describe("buildGlobeModel", () => {
     expect(m.traffic.get("LHR")).toBe(1);
     expect(m.traffic.has("ESB")).toBe(false);
   });
+
+  it("treats a now report with gs <= 0 as unknown track", () => {
+    const g = buildGlobeModel(makeDay({ flights: [flight({ s: [[0, 300, 0, 0]], now: { gs: 0, trk: 0 } })] }));
+    expect(g.flights[0].trk).toBeUndefined();
+  });
 });
