@@ -1,4 +1,4 @@
-import { TextureLoader, type Texture, type WebGLRenderer } from "three";
+import { NoColorSpace, TextureLoader, type Texture, type WebGLRenderer } from "three";
 
 export type TextureTier = "8k" | "4k";
 
@@ -36,7 +36,7 @@ export function detectTierInputs(renderer: WebGLRenderer): TierInputs {
   const gl = renderer.getContext();
   return {
     maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,
-    deviceMemory: (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
+    deviceMemory: typeof navigator === "undefined" ? undefined : (navigator as Navigator & { deviceMemory?: number }).deviceMemory,
     coarsePointer: typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches,
   };
 }
@@ -61,16 +61,22 @@ export async function loadEarthTextures(
     const track = (url: string) =>
       load(url).then((t) => {
         t.anisotropy = aniso;
+        // Maps are sampled raw (display space) and the renderer outputs linear: no conversion. flipY stays true so
+        // the first (north) image row lands at v = 1, matching v = (lat + π/2) / π in the Earth shader.
+        t.colorSpace = NoColorSpace;
+        t.flipY = true;
         done++;
         onProgress(done / 3);
         return t;
       });
-    try {
-      const [day, night, clouds] = await Promise.all([track(urls.day), track(urls.night), track(urls.clouds)]);
+    const results = await Promise.allSettled([track(urls.day), track(urls.night), track(urls.clouds)]);
+    if (results.every((r) => r.status === "fulfilled")) {
+      const [day, night, clouds] = results.map((r) => (r as PromiseFulfilledResult<Texture>).value);
       return { tier, day, night, clouds };
-    } catch (e) {
-      console.warn(`[textures] ${tier} failed`, e);
     }
+    const failure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+    console.warn(`[textures] ${tier} failed`, failure?.reason);
+    for (const r of results) if (r.status === "fulfilled") r.value.dispose();
   }
   return null;
 }

@@ -48,6 +48,31 @@ describe("loadEarthTextures", () => {
     warn.mockRestore();
   });
 
+  it("disposes textures that loaded in a tier that failed", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const loaded: Texture[] = [];
+    const load = async (url: string) => {
+      if (url.includes("night-8k")) throw new Error("404");
+      const t = new Texture();
+      if (url.includes("8k") || url.includes("clouds")) loaded.push(t);
+      return t;
+    };
+    const disposed = new Set<Texture>();
+    const orig = Texture.prototype.dispose;
+    Texture.prototype.dispose = function (this: Texture) {
+      disposed.add(this);
+      return orig.call(this);
+    };
+    try {
+      await loadEarthTextures(renderer, "8k", () => {}, load);
+    } finally {
+      Texture.prototype.dispose = orig;
+      warn.mockRestore();
+    }
+    expect(loaded.length).toBeGreaterThan(0);
+    expect(loaded.slice(0, 2).every((t) => disposed.has(t))).toBe(true);
+  });
+
   it("returns null when every tier fails", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const t = await loadEarthTextures(renderer, "8k", () => {}, async () => {
