@@ -1,0 +1,79 @@
+import { EMPTY_SNAPSHOT, type HudSnapshot } from "@web/hud/snapshot";
+import type { EventKind, FlightEvent } from "../model/events";
+import type { GlobeModel } from "../model/globe-model";
+
+export const CREDIT = "EARTH IMAGERY: NASA EARTH OBSERVATORY (BLUE MARBLE · BLACK MARBLE)";
+export const MAX_EVENTS = 6;
+export const LABEL_COUNT = 12;
+export const LIVE_OVERRUN_SEC = 360;
+
+export interface EventLine {
+  id: string;
+  kind: EventKind;
+  text: string;
+  at: number;
+}
+
+export interface AirportLabel {
+  iata: string;
+  x: number;
+  y: number;
+  visible: boolean;
+}
+
+export interface GlobeHudSnapshot extends HudSnapshot {
+  mode: "LIVE" | "REPLAY";
+  events: EventLine[];
+  labels: AirportLabel[];
+  extrapolated: number;
+  textureProgress: number;
+  textureNote: string;
+  credit: string;
+}
+
+export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
+  ...EMPTY_SNAPSHOT,
+  mode: "LIVE",
+  events: [],
+  labels: [],
+  extrapolated: 0,
+  textureProgress: 0,
+  textureNote: "",
+  credit: CREDIT,
+};
+
+export function eventText(e: FlightEvent): string {
+  switch (e.kind) {
+    case "DEPARTED":
+      return `${e.tk} DEPARTED ${e.from ?? "???"} → ${e.to ?? "???"}`;
+    case "LANDED":
+      return `${e.tk} LANDED ${e.to ?? "???"}`;
+    case "LAST_CONTACT":
+      return `${e.tk} LAST CONTACT`;
+  }
+}
+
+export function addEvents(prev: EventLine[], evs: FlightEvent[]): EventLine[] {
+  const seen = new Set(prev.map((l) => l.id));
+  const next = [...prev];
+  for (const e of evs) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    next.push({ id: e.id, kind: e.kind, text: eventText(e), at: e.at });
+  }
+  return next.slice(-MAX_EVENTS);
+}
+
+/** IST first, then the busiest airports (by flights in the window), at most `n`. */
+export function pickLabelAirports(m: GlobeModel, n: number): string[] {
+  const others = [...m.traffic.entries()]
+    .filter(([code]) => code !== "IST")
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([code]) => code);
+  return ["IST", ...others].slice(0, n);
+}
+
+/** LIVE displayed time (seconds relative to window.from): the wall clock, capped shortly after the data. */
+export function liveCur(m: GlobeModel, nowSec: number): number {
+  return Math.min(m.span + LIVE_OVERRUN_SEC, Math.max(0, nowSec - m.from));
+}

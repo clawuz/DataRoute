@@ -1,0 +1,179 @@
+import { describe, expect, it, vi } from "vitest";
+import { EMPTY_GLOBE_SNAPSHOT, type GlobeHudSnapshot } from "../src/app/hud-model";
+import { GLOBE_CYCLE, createController } from "../src/app/controller";
+import { createStore } from "@web/hud/store";
+import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
+import { FROM, flight, makeDay } from "./helpers";
+
+const flush = () => new Promise((r) => setTimeout(r, 0));
+const G1 = FROM + 86400;
+const G2 = G1 + 120;
+
+const dayAt = (generatedAt: number, flights: ReturnType<typeof flight>[]) =>
+  makeDay({ generatedAt, window: { from: generatedAt - 86400, to: generatedAt }, collectingSince: generatedAt - 86400, flights });
+
+const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
+  flight({
+    id: "a", tk: "TK-a", from: "IST", to: "JFK", region: "AME", dep: G1 - 3000, arr, end,
+    s: [[0, 300, 41, 29], [600, 370, 45, 20], [2900, 370, 55, -20]],
+    now: { gs: 480, trk: 300 },
+  });
+
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number } } = {}) {
+  let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
+  const engine: GlobeEngine = {
+    setModel: vi.fn(),
+    loadTextures: vi.fn(async () => null),
+    setFrameSource: (fn) => {
+      frameFn = fn;
+    },
+    pick: vi.fn(() => 0),
+    screenOf: () => ({ x: 100, y: 200, visible: true }),
+    dragBy: vi.fn(),
+    endDrag: vi.fn(),
+    pulseAirport: vi.fn(),
+    headsInfo: () => ({ count: 1, extrapolated: 3 }),
+    dispose: vi.fn(),
+  };
+  const store = createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT);
+  const days = opts.days ?? [dayAt(G1, [airborne("AIRBORNE", null)])];
+  const clock = opts.now ?? { ms: (G1 + 30) * 1000 };
+  let call = 0;
+  const c = createController({
+    engine,
+    store,
+    url: "u",
+    fixture: opts.fixture ?? false,
+    debug: false,
+    reducedMotion: false,
+    nowMs: () => clock.ms,
+    fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
+  });
+  return { c, engine, store, clock, frame: (dt: number) => frameFn!(dt) };
+}
+
+describe("globe controller", () => {
+  it("opens in LIVE with the model loaded and no events", async () => {
+    const h = setup();
+    await flush();
+    expect(h.engine.setModel).toHaveBeenCalledTimes(1);
+    h.frame(0.3);
+    const s = h.store.get();
+    expect(s.ready).toBe(true);
+    expect(s.mode).toBe("LIVE");
+    expect(s.events).toEqual([]);
+    expect(s.extrapolated).toBe(3);
+    h.c.dispose();
+  });
+
+  it("LIVE time follows the wall clock; absTime = window.from + cur", async () => {
+    const h = setup();
+    await flush();
+    const f = h.frame(0.016);
+    expect(f.cur).toBe(86430);
+    expect(f.absTime).toBe(G1 - 86400 + 86430);
+    expect(f.nowSec).toBe(G1 + 30);
+    h.clock.ms += 10_000;
+    expect(h.frame(0.016).cur).toBe(86440);
+    h.c.dispose();
+  });
+
+  it("a data swap that lands a flight produces an event and pulses the airport", async () => {
+    const h = setup({ days: [dayAt(G1, [airborne("AIRBORNE", null)]), dayAt(G2, [airborne("LANDED", G2 - 60)])] });
+    await flush();
+    h.c.refresh();
+    await flush();
+    h.frame(0.3);
+    expect(h.store.get().events.map((e) => e.text)).toEqual(["TK-a LANDED JFK"]);
+    expect(h.engine.pulseAirport).toHaveBeenCalledWith("JFK", expect.any(Number));
+    expect(h.engine.setModel).toHaveBeenCalledTimes(2);
+    h.c.dispose();
+  });
+
+  it("R switches to a 3-minute REPLAY and back to LIVE when it ends", async () => {
+    const h = setup();
+    await flush();
+    h.c.onKey("r");
+    h.frame(0.5);
+    expect(h.store.get().mode).toBe("REPLAY");
+    expect(GLOBE_CYCLE.replaySec).toBe(180);
+    const first = h.frame(0.5).cur;
+    const later = h.frame(10).cur;
+    expect(later).toBeGreaterThan(first);
+    for (let i = 0; i < 400; i++) h.frame(0.5); // 200 s > 180 s
+    h.frame(0.3);
+    expect(h.store.get().mode).toBe("LIVE");
+    h.c.dispose();
+  });
+
+  it("Space freezes LIVE time and resumes on the second press", async () => {
+    const h = setup();
+    await flush();
+    const before = h.frame(0.016).cur;
+    h.c.onKey(" ");
+    h.clock.ms += 5000;
+    const frozen1 = h.frame(0.016).cur;
+    h.clock.ms += 5000;
+    const frozen2 = h.frame(0.016).cur;
+    expect(frozen1).toBe(frozen2);
+    expect(frozen1).toBeGreaterThanOrEqual(before);
+    h.c.onKey(" ");
+    h.clock.ms += 5000;
+    expect(h.frame(0.016).cur).toBeGreaterThan(frozen2);
+    h.c.dispose();
+  });
+
+  it("H hides the HUD", async () => {
+    const h = setup();
+    await flush();
+    h.c.onKey("h");
+    h.frame(0.3);
+    expect(h.store.get().hidden).toBe(true);
+    h.c.dispose();
+  });
+
+  it("fixture mode loops LIVE time inside [span, span + 240)", async () => {
+    const h = setup({ fixture: true });
+    await flush();
+    for (const dt of [0, 100_000, 237_000, 241_000]) {
+      h.clock.ms += dt;
+      const cur = h.frame(0.016).cur;
+      expect(cur).toBeGreaterThanOrEqual(86400);
+      expect(cur).toBeLessThan(86400 + 240);
+    }
+    h.c.dispose();
+  });
+
+  it("hover: synchronous first pick, trailing pick, pointer leave clears it", async () => {
+    const h = setup();
+    await flush();
+    h.c.onPointerMove(10, 20);
+    expect(h.engine.pick).toHaveBeenCalledTimes(1);
+    h.c.onPointerMove(11, 21); // inside the 100 ms window → deferred
+    expect(h.engine.pick).toHaveBeenCalledTimes(1);
+    h.clock.ms += 150;
+    h.frame(0.016);
+    expect(h.engine.pick).toHaveBeenCalledTimes(2);
+    expect(h.engine.pick).toHaveBeenLastCalledWith(11, 21, expect.any(Number));
+    expect(h.frame(0.016).highlight).toBe(0);
+    h.c.onPointerLeave();
+    expect(h.frame(0.016).highlight).toBe(-1);
+    h.c.dispose();
+  });
+
+  it("labels: IST is projected for the HUD", async () => {
+    const h = setup();
+    await flush();
+    h.frame(0.3);
+    const labels = h.store.get().labels;
+    expect(labels.some((l) => l.iata === "IST" && l.visible)).toBe(true);
+    h.c.dispose();
+  });
+
+  it("dispose detaches from the engine", async () => {
+    const h = setup();
+    await flush();
+    h.c.dispose();
+    expect(() => h.frame(0.016)).toThrow();
+  });
+});
