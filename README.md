@@ -25,3 +25,16 @@ routes from adsbdb; fleet from tar1090-db.
 
     cd functions && npm test        # unit tests
     cd functions && npm run fixture # regenerate web/public/fixture/day.json
+
+## Web installation (`web/`)
+
+Live: https://omerkilavuz-9ad41.web.app — append `?data=fixture` for the synthetic 24 h dataset, `?debug=1` for FPS / quality.
+
+    cd web && npm install && npm run dev     # http://localhost:5173/?data=fixture
+    cd web && npm test                        # unit tests
+    firebase deploy --only hosting            # builds web/ and deploys
+
+Keys: Space pause · ← / → scrub one hour · H hide HUD · F fullscreen. Mouse: hover a ribbon for details, click to pin.
+
+The TK fonts are licensed and are **not** in this repository: `npm run fonts` copies them from `../font`
+(present only on the author's machine); without them the HUD falls back to system fonts.
