@@ -19,37 +19,45 @@ export interface PollerDeps {
 }
 
 export function createPoller(d: PollerDeps): { start(): void; stop(): void } {
+  const { fetch: doFetch } = d;
   let handle: unknown = null;
   let failures = 0;
   let stopped = false;
+  let gen = 0;
 
-  const schedule = (ms: number) => {
-    if (!stopped) handle = d.setTimer(tick, ms);
+  const schedule = (ms: number, my: number) => {
+    if (my === gen && !stopped) handle = d.setTimer(() => tick(my), ms);
   };
 
-  async function tick() {
+  async function tick(my: number) {
     try {
-      const res = await d.fetch(d.url, { cache: "no-cache" });
+      const res = await doFetch(d.url, { cache: "no-cache" });
+      if (my !== gen) return;
       if (!res.ok) throw new Error(`day.json ${res.status}`);
       const day = (await res.json()) as DayFile;
-      if (stopped) return;
+      if (my !== gen) return;
       d.onData(day);
       failures = 0;
-      schedule(POLL_MS);
+      schedule(POLL_MS, my);
     } catch (e) {
-      if (stopped) return;
+      if (my !== gen) return;
       d.onError(e);
-      schedule(Math.min(POLL_MS, RETRY_MIN_MS * 2 ** failures));
+      schedule(Math.min(POLL_MS, RETRY_MIN_MS * 2 ** failures), my);
       failures++;
     }
   }
 
   return {
     start() {
+      gen++;
+      const my = gen;
       stopped = false;
-      void tick();
+      failures = 0;
+      if (handle !== null) d.clearTimer(handle);
+      void tick(my);
     },
     stop() {
+      gen++;
       stopped = true;
       if (handle !== null) d.clearTimer(handle);
     },

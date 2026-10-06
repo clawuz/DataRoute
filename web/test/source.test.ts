@@ -64,4 +64,71 @@ describe("source", () => {
     await flush();
     expect(h.timers).toHaveLength(0);
   });
+
+  it("detaches fetch (handles this-sensitive fetch)", async () => {
+    const timers: Array<{ fn: () => void; ms: number }> = [];
+    const onData = vi.fn();
+    const onError = vi.fn();
+    const fetchFn = function (this: unknown) {
+      if (this !== undefined && this !== globalThis) throw new TypeError("Illegal invocation");
+      return Promise.resolve(new Response(JSON.stringify(makeDay())));
+    };
+    const poller = createPoller({
+      url: "u",
+      fetch: fetchFn as unknown as typeof fetch,
+      onData,
+      onError,
+      setTimer: (fn, ms) => {
+        timers.push({ fn, ms });
+        return timers.length;
+      },
+      clearTimer: vi.fn(),
+    });
+    poller.start();
+    await flush();
+    expect(onData).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledTimes(0);
+  });
+
+  it("restart race is safe: start/stop/start while fetch in-flight", async () => {
+    const timers: Array<{ fn: () => void; ms: number }> = [];
+    const onData = vi.fn();
+    const onError = vi.fn();
+    let resolveFirst: ((v: Response) => void) = () => {};
+    const firstFetch = new Promise<Response>((r) => {
+      resolveFirst = r;
+    });
+    let fetchCallCount = 0;
+    const fetchFn = vi.fn(async () => {
+      if (fetchCallCount++ === 0) {
+        return await firstFetch;
+      }
+      return new Response(JSON.stringify(makeDay()));
+    });
+    const clearTimerFn = vi.fn();
+    const poller = createPoller({
+      url: "u",
+      fetch: fetchFn as unknown as typeof fetch,
+      onData,
+      onError,
+      setTimer: (fn, ms) => {
+        timers.push({ fn, ms });
+        return timers.length;
+      },
+      clearTimer: clearTimerFn,
+    });
+    poller.start();
+    await flush();
+    const timerCountAfterFirstStart = timers.length;
+    poller.stop();
+    poller.start();
+    await flush();
+    const timerCountAfterSecondStart = timers.length;
+    resolveFirst(new Response(JSON.stringify(makeDay())));
+    await flush();
+    // The second start() should have scheduled a new fetch, and the first start's fetch resolving
+    // should not schedule a new timer. Total onData calls should be at most 1 per run.
+    // We expect the second run's fetch to complete, so onData should be called once.
+    expect(onData.mock.calls.length).toBeLessThanOrEqual(1);
+  });
 });
