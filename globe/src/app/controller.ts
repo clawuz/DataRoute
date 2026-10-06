@@ -13,7 +13,7 @@ import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
-  CREDIT, LABEL_COUNT, addEvents, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
+  CREDIT, LABEL_COUNT, addEvents, aircraftBreakdown, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
 import { SCRUB_SEC, keyToCommand } from "./keys";
@@ -183,6 +183,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       camMode: d.engine.camMode(),
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
+      aircraftAirborne: model && !follow ? aircraftBreakdown(model, cur) : [],
     });
   }
 

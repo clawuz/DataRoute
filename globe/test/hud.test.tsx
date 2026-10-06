@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { createStore } from "@web/hud/store";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../src/app/hud-model";
 import type { FollowHud } from "../src/app/follow-hud";
-import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
+import { AircraftBars, AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
 const text = (el: HTMLElement) => el.textContent!.replace(/\s+/g, " ").trim();
@@ -181,5 +181,22 @@ describe("ModeLine / notice with FOLLOW", () => {
   it("the flight panel fades with H but is not the attribution", () => {
     const { container } = render(<GlobeHud store={createStore(snap({ follow: fh(), hidden: true }))} />);
     expect(container.querySelector(".hud.hidden .flight-panel")).not.toBeNull();
+  });
+});
+
+describe("AircraftBars", () => {
+  const rows = [{ label: "737-900", count: 4 }, { label: "A321NEO", count: 2 }];
+  it("renders a titled bar per aircraft type, widths relative to the largest", () => {
+    const { container } = render(<AircraftBars rows={rows} />);
+    expect(text(container)).toBe("AIRBORNE BY AIRCRAFT737-9004A321NEO2");
+    const bars = Array.from(container.querySelectorAll(".region-bar > span")) as HTMLElement[];
+    expect(bars.map((b) => b.style.width)).toEqual(["100%", "50%"]);
+  });
+  it("renders nothing without rows", () => {
+    expect(render(<AircraftBars rows={[]} />).container.innerHTML).toBe("");
+  });
+  it("is in the HUD unless following", () => {
+    expect(render(<GlobeHud store={createStore(snap({ aircraftAirborne: rows }))} />).container.querySelector(".aircraft-bars")).not.toBeNull();
+    expect(render(<GlobeHud store={createStore(snap({ aircraftAirborne: rows, follow: fh() }))} />).container.querySelector(".aircraft-bars")).toBeNull();
   });
 });

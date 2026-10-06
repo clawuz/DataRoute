@@ -47,3 +47,8 @@ body { background: #02030a; }
   .notice { top: 22vmin; }
   .flight-panel { top: auto; bottom: 22vmin; transform: none; right: 3vmin; width: 42vmin; }
 }
+
+.aircraft-bars { position: absolute; right: 3vmin; bottom: 27vmin; width: 27vmin; pointer-events: none; }
+@media (max-aspect-ratio: 1/1) {
+  .aircraft-bars { bottom: 28vmin; }
+}
