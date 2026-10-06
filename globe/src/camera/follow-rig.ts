@@ -2,8 +2,8 @@ import type { Vec3 } from "../geo3d/vec";
 
 export const TRANSITION_SEC = 2.5;
 export const MIN_RADIUS = 1.05;
-export const CHASE_BACK = 0.35;
-export const CHASE_UP = 0.12;
+export const CHASE_BACK = 0.4;
+export const CHASE_UP = 0.2;
 export const LOOK_AHEAD = 0.25;
 export const SMOOTH_SEC = 0.6;
 

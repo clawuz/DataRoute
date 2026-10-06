@@ -5,6 +5,7 @@ import type { ScreenPoint } from "@web/render/picking";
 import { LEVELS, initQuality, updateQuality } from "@web/render/quality";
 import { earthRotationRad, sunDirection } from "../astro";
 import { SMOOTH_SEC, blendPose, followWeight, initCam, smoothDampVec, stepCam, type CamMode, type CamState, type Damped, type Pose } from "../camera/follow-rig";
+import { easeAbsTime, type TimeEase } from "../camera/time-ease";
 import { chaseFor } from "../camera/follow-pose";
 import { IDLE_YAW_RATE, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
 import { altitudeRadius, latLonToVec3, type Vec3 } from "../geo3d/vec";
@@ -112,6 +113,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let rig: RigState = initRig(initialYaw(earthRotationRad(Date.now() / 1000), 30));
   const idleRate = IDLE_YAW_RATE * (opts.reducedMotion ? 0.4 : 1);
   let cam: CamState = initCam();
+  let timeEase: TimeEase | null = null;
   let chasePos: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
   let chaseTgt: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
   let followKey: string | number = -2; // flight identity (id, else index) the damped chase state was initialised for (-2 = none)
@@ -199,7 +201,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     cam = stepCam(cam, dt, !!fol, camScale);
     rig = stepRig(rig, dt, cam.mode === "GLOBE" ? idleRate : 0);
 
-    earthGroup.rotation.y = earthRotationRad(f.absTime);
+    timeEase = easeAbsTime(timeEase, f.absTime, dt);
+    const shownAbs = timeEase.shown;
+    earthGroup.rotation.y = earthRotationRad(shownAbs);
     earthGroup.updateMatrixWorld();
 
     if (fol) {
@@ -242,10 +246,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     camera.updateMatrixWorld();
 
-    const sun = sunDirection(f.absTime);
+    const sun = sunDirection(shownAbs);
     earth.setSun(sun);
     atmosphere.setSun(sun);
-    earth.setCloudDrift(f.absTime * 1.5e-6);
+    earth.setCloudDrift(shownAbs * 1.5e-6);
 
     if (arcs) {
       arcs.uniforms.uCur.value = f.cur;

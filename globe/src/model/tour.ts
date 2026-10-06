@@ -12,9 +12,11 @@ export interface TourState {
   phase: "GLOBE" | "FOLLOW";
   t: number;
   recent: string[];
+  /** the current follow was started by the user, so the tour never ends it */
+  userFollow: boolean;
 }
 
-export const initTour = (enabled = true): TourState => ({ enabled, phase: "GLOBE", t: 0, recent: [] });
+export const initTour = (enabled = true): TourState => ({ enabled, phase: "GLOBE", t: 0, recent: [], userFollow: false });
 
 /** Index of the airborne flight to follow next (long routes preferred, last three avoided), or -1. */
 export function pickTourFlight(m: GlobeModel, cur: number, recent: string[], rand: () => number): number {
@@ -62,15 +64,15 @@ const NONE: TourAction = { type: "none" };
 export function stepTour(s: TourState, dt: number, ctx: TourCtx): { s: TourState; a: TourAction } {
   if (!s.enabled || ctx.manual) return { s, a: NONE };
   if (s.phase === "GLOBE") {
-    if (ctx.following) return { s: { ...s, phase: "FOLLOW", t: 0 }, a: NONE };
+    if (ctx.following) return { s: { ...s, phase: "FOLLOW", t: 0, userFollow: true }, a: NONE };
     const t = s.t + dt;
     if (t < TOUR_GLOBE_SEC) return { s: { ...s, t }, a: NONE };
     const idx = ctx.model ? pickTourFlight(ctx.model, ctx.cur, s.recent, ctx.rand) : -1;
     if (idx < 0) return { s: { ...s, t: TOUR_GLOBE_SEC - 5 }, a: NONE };
     const recent = [ctx.model!.flights[idx].id, ...s.recent].slice(0, TOUR_RECENT);
-    return { s: { ...s, phase: "FOLLOW", t: 0, recent }, a: { type: "follow", index: idx } };
+    return { s: { ...s, phase: "FOLLOW", t: 0, recent, userFollow: false }, a: { type: "follow", index: idx } };
   }
-  if (!ctx.following) return { s: { ...s, phase: "GLOBE", t: 0 }, a: NONE };
-  if (ctx.followDone) return { s: { ...s, phase: "GLOBE", t: 0 }, a: { type: "exit" } };
+  if (!ctx.following) return { s: { ...s, phase: "GLOBE", t: 0, userFollow: false }, a: NONE };
+  if (ctx.followDone && !s.userFollow) return { s: { ...s, phase: "GLOBE", t: 0 }, a: { type: "exit" } };
   return { s: { ...s, t: s.t + dt }, a: NONE };
 }

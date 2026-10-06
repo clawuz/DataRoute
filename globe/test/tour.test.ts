@@ -90,4 +90,15 @@ describe("stepTour", () => {
     expect(r.s.phase).toBe("FOLLOW");
     expect(r.a).toEqual({ type: "none" });
   });
+
+  it("never ends a follow the user started, even when followDone is true", () => {
+    const adopted = stepTour(initTour(true), 1, ctx({ following: true }));
+    expect(adopted.s.userFollow).toBe(true);
+    const r = stepTour(adopted.s, 1, ctx({ following: true, followDone: true }));
+    expect(r.a).toEqual({ type: "none" });
+    expect(r.s.phase).toBe("FOLLOW");
+    const left = stepTour(r.s, 1, ctx({ following: false }));
+    expect(left.s.phase).toBe("GLOBE");
+    expect(left.s.userFollow).toBe(false);
+  });
 });

@@ -19,7 +19,7 @@ export function chaseFor(posAt: (u: number) => Vec3 | null, u: number): Pose | n
   tan = norm(tan);
   return {
     pos: add(sub(p, scale(tan, CHASE_BACK)), scale(up, CHASE_UP)),
-    target: add(p, scale(tan, LOOK_AHEAD)),
+    target: sub(add(p, scale(tan, LOOK_AHEAD)), scale(up, 0.04)),
     up,
   };
 }
