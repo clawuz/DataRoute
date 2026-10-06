@@ -1,3 +1,23 @@
 /* Globe-specific styles (HUD additions are appended in Task 12). */
 body { background: #02030a; }
 .stage { touch-action: none; }
+
+.modeline { position: absolute; left: 3vmin; top: 10.4vmin; letter-spacing: 0.16em; font-size: calc(1.1 * var(--u)); color: var(--ink-dim); }
+
+.events { position: absolute; left: 3vmin; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.9vmin; max-width: 32vmin; }
+.event { font-family: var(--label); font-size: calc(1.05 * var(--u)); letter-spacing: 0.12em; color: var(--ink-dim); border-left: 0.3vmin solid var(--line-strong); padding-left: 1vmin; }
+.event.departed { border-left-color: var(--thy); color: var(--ink); }
+.event.landed { border-left-color: #7bd389; }
+.event.last_contact { border-left-color: var(--amber); }
+
+.airport-label { position: absolute; transform: translate(0.9vmin, -125%); font-family: var(--label); font-size: calc(0.95 * var(--u)); letter-spacing: 0.14em; color: var(--ink); text-shadow: 0 0 0.6vmin #000, 0 0 1.4vmin #000; pointer-events: none; }
+.airport-label.hub { color: #fff; font-size: calc(1.2 * var(--u)); }
+
+.credit { bottom: 4.6vmin; }
+
+.loading { position: fixed; inset: 0; display: grid; place-items: center; letter-spacing: 0.2em; color: var(--ink-dim); pointer-events: none; z-index: 6; }
+
+@media (max-aspect-ratio: 1/1) {
+  .modeline { top: 7.4vmin; }
+  .events { top: 62%; }
+}

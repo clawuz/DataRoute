@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dataUrl, isFixture } from "@web/data/source";
 import { ErrorScreen } from "@web/hud/Hud";
-import { createStore, useStore, type Store } from "@web/hud/store";
+import { createStore } from "@web/hud/store";
 import { createController, type GlobeController } from "./app/controller";
 import { EMPTY_GLOBE_SNAPSHOT, type GlobeHudSnapshot } from "./app/hud-model";
+import { GlobeHud } from "./hud/GlobeHud";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
 
 export function App() {
@@ -113,17 +114,7 @@ export function App() {
   return (
     <>
       <canvas ref={canvasRef} className="stage" />
-      {error ? <ErrorScreen message={error} /> : <DebugReadout store={store} />}
+      {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} />}
     </>
-  );
-}
-
-// Replaced by <GlobeHud> in Task 12.
-function DebugReadout({ store }: { store: Store<GlobeHudSnapshot> }) {
-  const s = useStore(store);
-  return (
-    <pre className="debug">
-      {`${s.mode} ${s.timeLabel} · ${s.counters.airborne} AIRBORNE · ${s.extrapolated} EXTRAPOLATED · ${Math.round(s.textureProgress * 100)}% TEX`}
-    </pre>
   );
 }
