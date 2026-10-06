@@ -70,12 +70,12 @@ DataRoute/
 **Interfaces:**
 - Consumes: `haversineKm` (`functions/src/geo.ts`), existing `AircraftState`, `TrackedFlight`, `TrackerState`.
 - Produces (`day-schema.ts`): `type FlightEnd = "AIRBORNE" | "LANDED" | "LAST_CONTACT"`; `TrackedFlight.end?: FlightEnd`, `TrackedFlight.gaps?: [number, number][]` (absolute unix s); `Flight.end?: FlightEnd`, `Flight.gaps?: [number, number][]` (seconds relative to `dep`); `interface DayAirport { lat: number; lon: number; country: string; name?: string }`; `DayFile.airports?: Record<string, DayAirport>`; `Airport.name?: string`.
-- Produces (`tracker.ts`): constants `GAP = 2700`, `WINDOW = 86400`, `RESUME_WINDOW = 14 * 3600`, `LANDED_KM = 150`, `LANDED_ALT100 = 150`, `NO_ROUTE_LANDED_ALT100 = 30`, `MAX_SPEED_KMH = 950`, `JUMP_MARGIN_KM = 100`; `isLanded(f: TrackedFlight): boolean`; `endOf(f: TrackedFlight): FlightEnd`; `emptyState`, `step` (same signatures).
+- Produces (`tracker.ts`): constants `GAP = 2700`, `WINDOW = 86400`, `RESUME_WINDOW = 14 * 3600`, `LANDED_KM = 150`, `LANDED_ALT100 = 150`, `NO_ROUTE_LANDED_ALT100 = 30`, `MAX_SPEED_KMH = 1250`, `JUMP_MARGIN_KM = 100`; `isLanded(f: TrackedFlight): boolean`; `endOf(f: TrackedFlight): FlightEnd`; `emptyState`, `step` (same signatures).
 
 Rules implemented by `step` (see Global Constraints and spec §4.2):
 - New flight when: airborne after a `LANDED` end, callsign changed, or the airframe returns infeasibly/too late.
 - 45 min of silence → `finalize`: `LANDED` if `isLanded` (route known: last altitude < 15,000 ft **and** last point ≤ 150 km from the destination airport; no route: last altitude < 3,000 ft) else `LAST_CONTACT` (`arr = lastContact`, stays resumable for 14 h).
-- A returning aircraft (same `icao24` **and** callsign, ≤ 14 h, great-circle distance from the last sample ≤ `950 km/h × Δt + 100 km`) re-opens its `LAST_CONTACT` flight: `end = "AIRBORNE"`, `arr = null`, and `[lastContact, returnTime]` is appended to `gaps`.
+- A returning aircraft (same `icao24` **and** callsign, ≤ 14 h, great-circle distance from the last sample ≤ `1250 km/h × Δt + 100 km`) re-opens its `LAST_CONTACT` flight: `end = "AIRBORNE"`, `arr = null`, and `[lastContact, returnTime]` is appended to `gaps`.
 - A ground sighting of an open or resumable flight ends it as `LANDED` at the sighting time.
 - Pruning, sample trimming and gap trimming (`gap end < cutoff` removed) as before.
 - Legacy rows (no `end`): `arr === null` → open; a legacy row with `arr` set is never resumable; `endOf` classifies it with `isLanded` for publishing.
@@ -341,7 +341,7 @@ export const RESUME_WINDOW = 14 * 3600;
 export const LANDED_KM = 150;
 export const LANDED_ALT100 = 150; // 15,000 ft
 export const NO_ROUTE_LANDED_ALT100 = 30; // 3,000 ft
-export const MAX_SPEED_KMH = 950;
+export const MAX_SPEED_KMH = 1250;
 export const JUMP_MARGIN_KM = 100;
 
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;

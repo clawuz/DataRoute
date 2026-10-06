@@ -70,7 +70,7 @@ airports?: Record<string, { lat: number; lon: number; country: string; name?: st
 - Her uçuşa `end: "AIRBORNE" | "LANDED" | "LAST_CONTACT"` eklenir. `arr` yalnızca `LANDED` ve `LAST_CONTACT` için dolu, anlamı "son temas zamanı"dır.
 - **LANDED:** yerde görüldüğünde; ya da 45 dk sessizlikte, rota biliniyorsa **son nokta varış havalimanına ≤ 150 km ve irtifa < 150 (15.000 ft)** ise.
 - **LAST_CONTACT:** 45 dk sessizlik ve LANDED koşulu sağlanmıyorsa. Uçuş **hemen kapatılmaz**: 14 saat boyunca "beklemede" kalır.
-- **Birleştirme:** Aynı `icao24` + aynı çağrı kodu ile ≤ 14 saat içinde yeniden görülürse ve fiziksel olarak mümkünse (son nokta ile yeni ilk nokta arasındaki büyük daire mesafesi ≤ 950 km/sa × geçen saat + 100 km) ve önceki uçuş `LANDED` değilse, yeni örnekler **aynı uçuşa eklenir**, aradaki süre bir `gaps` listesine yazılır.
+- **Birleştirme:** Aynı `icao24` + aynı çağrı kodu ile ≤ 14 saat içinde yeniden görülürse ve fiziksel olarak mümkünse (son nokta ile yeni ilk nokta arasındaki büyük daire mesafesi ≤ 1250 km/sa × geçen saat + 100 km) ve önceki uçuş `LANDED` değilse, yeni örnekler **aynı uçuşa eklenir**, aradaki süre bir `gaps` listesine yazılır.
 - `Flight.gaps?: [number, number][]`: boşluk başlangıç/bitiş (uçuşa göre göreli saniye). Globe boşlukları soluk çizer.
 - 14 saat sonra hâlâ görülmeyen `LAST_CONTACT` uçuşlar kesinleşir. `LANDED` uçuşun ardından aynı uçak yeniden havalanırsa yeni uçuş başlar (mevcut kural).
 - Geçmiş 24 saatlik veri yeniden birleştirilmez; yeni kural yeni uçuşlardan itibaren geçerlidir (pencere bir gün içinde yenilenir).

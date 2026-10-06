@@ -7,7 +7,7 @@ export const RESUME_WINDOW = 14 * 3600;
 export const LANDED_KM = 150;
 export const LANDED_ALT100 = 150; // 15,000 ft
 export const NO_ROUTE_LANDED_ALT100 = 30; // 3,000 ft
-export const MAX_SPEED_KMH = 950;
+export const MAX_SPEED_KMH = 1250;
 export const JUMP_MARGIN_KM = 100;
 
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
@@ -40,11 +40,17 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
   });
   const open = new Map<string, TrackedFlight>(); // still being tracked
   const pending = new Map<string, TrackedFlight>(); // LAST_CONTACT, may still resume
+  const latest = new Map<string, TrackedFlight>(); // newest flight per airframe, any end
+  for (const f of flights) {
+    const cur = latest.get(f.icao24);
+    if (!cur || f.lastContact > cur.lastContact || (f.lastContact === cur.lastContact && f.dep > cur.dep)) {
+      latest.set(f.icao24, f);
+    }
+  }
   for (const f of flights) {
     if (f.arr === null) open.set(f.icao24, f);
-    else if (f.end === "LAST_CONTACT" && now - f.lastContact <= RESUME_WINDOW) {
-      const cur = pending.get(f.icao24);
-      if (!cur || f.lastContact > cur.lastContact) pending.set(f.icao24, f);
+    else if (f.end === "LAST_CONTACT" && latest.get(f.icao24) === f && now - f.lastContact <= RESUME_WINDOW) {
+      pending.set(f.icao24, f);
     }
   }
 

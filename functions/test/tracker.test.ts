@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AircraftState, RouteInfo, TrackedFlight, TrackerState } from "../src/day-schema.js";
+import { haversineKm } from "../src/geo.js";
 import { GAP, RESUME_WINDOW, WINDOW, emptyState, endOf, isLanded, step } from "../src/tracker.js";
 
 const T0 = 1_800_000_000;
@@ -156,6 +157,52 @@ describe("tracker.step", () => {
     expect(s.flights[0].dep).toBe(T0 + 700);
     expect(s.flights[0].samples).toEqual([[late, 100, 41, 29]]);
     expect(s.flights[0].gaps).toEqual([[late - 200, late - 100]]);
+  });
+
+  it("does not resume an older LAST_CONTACT flight after the aircraft has flown a newer one", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [], T0 + GAP + 1); // A -> LAST_CONTACT
+    s = step(s, [ac({ t: T0 + 4000, cs: "THY2", lat: 41.1, lon: 29.1 })], T0 + 4000);
+    s = step(s, [ac({ t: T0 + 4600, cs: "THY2", onGround: true, lat: 41.1, lon: 29.1 })], T0 + 4600);
+    s = step(s, [ac({ t: T0 + 8000, cs: "THY1", lat: 41.1, lon: 29.1 })], T0 + 8000);
+    expect(s.flights).toHaveLength(3);
+    expect(s.flights[0]).toMatchObject({ cs: "THY1", end: "LAST_CONTACT", arr: T0 });
+    expect(s.flights[0].gaps).toBeUndefined();
+    expect(s.flights[1]).toMatchObject({ cs: "THY2", end: "LANDED" });
+    expect(s.flights[2]).toMatchObject({ cs: "THY1", end: "AIRBORNE", arr: null });
+  });
+
+  it("merges a jet-stream-speed return", () => {
+    const d = haversineKm(41, 29, 41, -11);
+    expect(d).toBeGreaterThan(3000);
+    expect(d).toBeLessThan(3350);
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [], T0 + GAP + 1);
+    s = step(s, [ac({ t: T0 + 10800, lat: 41, lon: -11 })], T0 + 10800);
+    expect(s.flights).toHaveLength(1);
+    expect(s.flights[0]).toMatchObject({ end: "AIRBORNE", arr: null });
+    expect(s.flights[0].gaps).toEqual([[T0, T0 + 10800]]);
+  });
+
+  it("refuses to resume on callsign mismatch", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [], T0 + GAP + 1);
+    s = step(s, [ac({ t: T0 + 7200, cs: "THY2" })], T0 + 7200);
+    expect(s.flights).toHaveLength(2);
+    expect(s.flights[0]).toMatchObject({ end: "LAST_CONTACT", arr: T0 });
+  });
+
+  it("never resumes a legacy row (arr set, no end)", () => {
+    const prev: TrackerState = {
+      v: 1,
+      collectingSince: T0,
+      lastSuccessAt: T0,
+      flights: [{ id: "L", icao24: "abc123", cs: "THY1", dep: T0 - 600, arr: T0, lastContact: T0, samples: [[T0, 100, 41, 29]] }],
+    };
+    const s = step(prev, [ac({ t: T0 + 3600 })], T0 + 3600);
+    expect(s.flights).toHaveLength(2);
+    expect(s.flights[0].arr).toBe(T0);
+    expect(s.flights[0].gaps).toBeUndefined();
   });
 
   it("does not mutate the previous state", () => {
