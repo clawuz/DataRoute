@@ -20,7 +20,7 @@ export function easeAbsTime(s: TimeEase | null, target: number, dt: number): Tim
 }
 
 /** Seconds the displayed time takes to glide when a follow starts or ends. */
-export const REWIND_SEC = 2.5;
+export const REWIND_SEC = 1;
 
 /** Displayed time between `from` (t01 = 0) and `to` (t01 = 1), eased in and out. */
 export function blendCur(from: number, to: number, t01: number): number {

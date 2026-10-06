@@ -251,7 +251,7 @@ describe("globe controller", () => {
       h.c.onClick(10, 10);
       let prev = LIVE_CUR;
       let f = h.frame(0.1);
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 8; i++) {
         expect(f.cur).toBeLessThanOrEqual(prev);
         expect(f.cur).toBeGreaterThan(U0);
         expect(f.follow!.u).toBe(U0);
@@ -275,14 +275,15 @@ describe("globe controller", () => {
       h.c.onKey("Escape");
       let prev = last;
       let max = 0;
-      for (let i = 0; i < 150; i++) {
+      for (let i = 0; i < Math.ceil(60 * REWIND_SEC) + 30; i++) {
         const f = h.frame(1 / 60);
         expect(f.follow).toBeNull();
         expect(f.cur).toBeGreaterThanOrEqual(prev);
         max = Math.max(max, f.cur - prev);
         prev = f.cur;
       }
-      expect(max).toBeLessThan(100);
+      // easeInOut peaks at slope 3: the largest per-frame step is bounded by the distance covered over REWIND_SEC
+      expect(max).toBeLessThan(((LIVE_CUR - last) * 3 * 1.1) / (60 * REWIND_SEC));
       expect(h.frame(0.1).cur).toBe(LIVE_CUR);
       h.c.dispose();
     });
@@ -291,7 +292,7 @@ describe("globe controller", () => {
       const h = setup();
       await flush();
       h.c.onClick(10, 10);
-      const mid = h.frame(1.25).cur;
+      const mid = h.frame(REWIND_SEC / 2).cur;
       expect(mid).toBeLessThan(LIVE_CUR);
       expect(mid).toBeGreaterThan(U0);
       h.c.onKey("Escape");
@@ -304,7 +305,7 @@ describe("globe controller", () => {
       const h = setup({ days: [dayAt(G1, [airborne("AIRBORNE", null), b])] });
       await flush();
       h.c.onClick(10, 10);
-      const mid = h.frame(1).cur;
+      const mid = h.frame(REWIND_SEC / 2).cur;
       h.pickResult(1);
       h.c.onClick(10, 10);
       expect(Math.abs(h.frame(0.001).cur - mid)).toBeLessThan(5);
