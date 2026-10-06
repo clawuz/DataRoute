@@ -70,6 +70,13 @@ describe("great circle helpers", () => {
     expect(points).toHaveLength(8);
     expect(points[3].lat).toBeCloseTo(10, 9);
   });
+
+  it("stays finite near the poles", () => {
+    const [lat, lon] = destinationPoint(89.9999, 0, 0, 5);
+    expect(Number.isFinite(lat)).toBe(true);
+    expect(Number.isFinite(lon)).toBe(true);
+    expect(lat).toBeLessThanOrEqual(90);
+  });
 });
 
 describe("resampleRun", () => {

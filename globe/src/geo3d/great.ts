@@ -16,7 +16,9 @@ export function destinationPoint(latDeg: number, lonDeg: number, bearingDeg: num
   const λ1 = lonDeg * DEG;
   const θ = bearingDeg * DEG;
   const δ = distKm / R_EARTH_KM;
-  const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
+  const φ2 = Math.asin(
+    Math.max(-1, Math.min(1, Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ))),
+  );
   const λ2 =
     λ1 + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
   return [φ2 / DEG, wrap180(λ2 / DEG)];
