@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { EMPTY_GLOBE_SNAPSHOT, type AirportLabel, type GlobeHudSnapshot } from "../src/app/hud-model";
+import { REWIND_SEC } from "../src/camera/time-ease";
 import { GLOBE_CYCLE, createController } from "../src/app/controller";
 import { createStore } from "@web/hud/store";
 import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
@@ -230,12 +231,85 @@ describe("globe controller", () => {
     const h = setup();
     await flush();
     h.c.onClick(10, 10);
+    expect(h.frame(REWIND_SEC).follow).toEqual({ flight: 0, id: "a", u: 83400 }); // the flight waits for the rewind
     const f = h.frame(1);
     expect(f.follow).toEqual({ flight: 0, id: "a", u: 83400 + 116 });
     expect(f.cur).toBe(83516);
     expect(f.highlight).toBe(0);
     expect(f.absTime).toBe(G1 - 86400 + 83516);
     h.c.dispose();
+  });
+
+  describe("follow rewind blend", () => {
+    const LIVE_CUR = 86430;
+    const U0 = 83400;
+
+    it("after a click cur glides monotonically from the live time to u0 and the follow clock waits", async () => {
+      const h = setup();
+      await flush();
+      expect(h.frame(0.016).cur).toBe(LIVE_CUR);
+      h.c.onClick(10, 10);
+      let prev = LIVE_CUR;
+      let f = h.frame(0.1);
+      for (let i = 0; i < 20; i++) {
+        expect(f.cur).toBeLessThanOrEqual(prev);
+        expect(f.cur).toBeGreaterThan(U0);
+        expect(f.follow!.u).toBe(U0);
+        expect(f.absTime).toBe(G1 - 86400 + f.cur);
+        prev = f.cur;
+        f = h.frame(0.1);
+      }
+      f = h.frame(1); // finishes the rewind: cur has arrived, the flight has not started yet
+      expect(f.cur).toBe(U0);
+      expect(f.follow!.u).toBe(U0);
+      expect(h.frame(1).follow!.u).toBeGreaterThan(U0);
+      h.c.dispose();
+    });
+
+    it("leaving glides cur from the last u back to the live time without a jump", async () => {
+      const h = setup();
+      await flush();
+      h.c.onClick(10, 10);
+      h.frame(REWIND_SEC);
+      const last = h.frame(1).cur;
+      h.c.onKey("Escape");
+      let prev = last;
+      let max = 0;
+      for (let i = 0; i < 150; i++) {
+        const f = h.frame(1 / 60);
+        expect(f.follow).toBeNull();
+        expect(f.cur).toBeGreaterThanOrEqual(prev);
+        max = Math.max(max, f.cur - prev);
+        prev = f.cur;
+      }
+      expect(max).toBeLessThan(100);
+      expect(h.frame(0.1).cur).toBe(LIVE_CUR);
+      h.c.dispose();
+    });
+
+    it("leaving mid-rewind blends out from the currently displayed cur", async () => {
+      const h = setup();
+      await flush();
+      h.c.onClick(10, 10);
+      const mid = h.frame(1.25).cur;
+      expect(mid).toBeLessThan(LIVE_CUR);
+      expect(mid).toBeGreaterThan(U0);
+      h.c.onKey("Escape");
+      expect(Math.abs(h.frame(0.001).cur - mid)).toBeLessThan(5);
+      h.c.dispose();
+    });
+
+    it("starting another follow mid-rewind starts a new blend from the displayed cur", async () => {
+      const b = flight({ id: "b", tk: "TK-b", from: "IST", to: "LHR", region: "EUR", dep: G1 - 2000, arr: null, end: "AIRBORNE", s: [[0, 300, 41, 29], [600, 370, 45, 20], [1900, 370, 50, 0]], now: { gs: 480, trk: 300 } });
+      const h = setup({ days: [dayAt(G1, [airborne("AIRBORNE", null), b])] });
+      await flush();
+      h.c.onClick(10, 10);
+      const mid = h.frame(1).cur;
+      h.pickResult(1);
+      h.c.onClick(10, 10);
+      expect(Math.abs(h.frame(0.001).cur - mid)).toBeLessThan(5);
+      h.c.dispose();
+    });
   });
 
   it("Escape and a blank click leave FOLLOW", async () => {
@@ -257,6 +331,7 @@ describe("globe controller", () => {
     const h = setup();
     await flush();
     h.c.onClick(10, 10);
+    h.frame(REWIND_SEC);
     expect(h.frame(1).cur).toBe(83516);
     h.c.onKey(" ");
     expect(h.frame(1).cur).toBe(83516);
@@ -285,6 +360,7 @@ describe("globe controller", () => {
     const h = setup({ days: [dayAt(G1, [airborne("AIRBORNE", null)]), dayAt(G2, [airborne("AIRBORNE", null)])] });
     await flush();
     h.c.onClick(10, 10);
+    h.frame(REWIND_SEC);
     expect(h.frame(1).follow!.u).toBe(83516);
     h.c.refresh();
     await flush();

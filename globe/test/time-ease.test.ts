@@ -25,3 +25,16 @@ describe("easeAbsTime", () => {
     expect(steps).toBeGreaterThan(30);
   });
 });
+
+describe("blendCur", () => {
+  it("runs from `from` to `to`, eased, clamped", async () => {
+    const { blendCur } = await import("../src/camera/time-ease");
+    expect(blendCur(100, 200, 0)).toBe(100);
+    expect(blendCur(100, 200, 1)).toBe(200);
+    expect(blendCur(100, 200, 0.5)).toBeCloseTo(150, 9);
+    expect(blendCur(100, 200, -3)).toBe(100);
+    expect(blendCur(100, 200, 9)).toBe(200);
+    expect(blendCur(100, 200, 0.25)).toBeLessThan(125);
+    expect(blendCur(200, 100, 0.25)).toBeGreaterThan(175);
+  });
+});

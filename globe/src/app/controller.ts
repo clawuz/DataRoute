@@ -8,6 +8,7 @@ import { diffEvents } from "../model/events";
 import { telemetryAt } from "../geo3d/telemetry";
 import { TOUR_END_HOLD_SEC, TOUR_LIVE_HOLD_SEC, initTour, stepTour } from "../model/tour";
 import { SCRUB_FOLLOW_SEC, atEnd, atLiveHead, cycleSpeed, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
+import { REWIND_SEC, blendCur } from "../camera/time-ease";
 import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
@@ -66,6 +67,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let firstDataSec = 0;
   let disposed = false;
   let follow: { id: string; idx: number; clock: FollowClock; liveHeadSec: number; endedSec: number } | null = null;
+  /** displayed-time glide: "in" eases cur to the follow clock, "out" eases it back to the mode time; t in seconds */
+  let blend: { from: number; t: number; dir: "in" | "out" } | null = null;
   let tour = initTour(true);
   let notice: { text: string; until: number } | null = null;
   const NOTICE_SEC = 3;
@@ -79,7 +82,15 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       say("TRACK TOO SHORT");
       return;
     }
+    const from = currentCur(d.nowMs() / 1000);
     follow = { id: f.id, idx, clock: startClock(f), liveHeadSec: 0, endedSec: 0 };
+    blend = { from, t: 0, dir: "in" };
+  }
+  /** leaves FOLLOW; the displayed time glides from where it is now back to the mode time */
+  function endFollow(from?: number) {
+    if (!follow) return;
+    blend = { from: from ?? currentCur(d.nowMs() / 1000), t: 0, dir: "out" };
+    follow = null;
   }
 
   const bounds = (): Bounds => (model ? { start: model.replayStart, end: model.span } : { start: 0, end: 0 });
@@ -92,11 +103,18 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     return d.fixture ? m.span + ((nowSec - firstDataSec) % FIXTURE_LIVE_LOOP_SEC) : liveCur(m, nowSec);
   }
 
-  function currentCur(nowSec: number): number {
+  /** the time of the underlying mode (follow clock while following, else LIVE / REPLAY) */
+  function rawCur(nowSec: number): number {
     if (!model) return 0;
     if (follow) return follow.clock.u;
     if (mode === "REPLAY") return cycle.tRel;
     return liveFrozen ?? liveRaw(model, nowSec);
+  }
+
+  /** the displayed time: the raw time, or the glide between old and new while a blend runs */
+  function currentCur(nowSec: number): number {
+    const raw = rawCur(nowSec);
+    return blend ? blendCur(blend.from, raw, blend.t / REWIND_SEC) : raw;
   }
 
   let labelModel: GlobeModel | null = null;
@@ -181,7 +199,13 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (!cycle.paused) liveFrozen = null;
       else if (liveFrozen === null && model) liveFrozen = liveRaw(model, nowSec);
     }
-    if (follow && model) {
+    // the flight starts only once the displayed time has arrived at its first sample
+    const rewinding = blend?.dir === "in";
+    if (blend) {
+      blend.t += dt;
+      if (blend.t >= REWIND_SEC) blend = null;
+    }
+    if (follow && model && !rewinding) {
       const f = model.flights[follow.idx];
       follow.clock = stepFollow(follow.clock, f, dt);
       if (atLiveHead(follow.clock, f) && !follow.clock.paused) follow.liveHeadSec += dt;
@@ -198,7 +222,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       });
       tour = r.s;
       if (r.a.type === "follow") startFollow(r.a.index);
-      else if (r.a.type === "exit") follow = null;
+      else if (r.a.type === "exit") endFollow();
     }
     if (pending && d.nowMs() - lastPick >= PICK_INTERVAL_MS) {
       lastPick = d.nowMs();
@@ -232,6 +256,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     const next = buildGlobeModel(day);
     const nextTl = buildTimeline(next);
     const nowSec = d.nowMs() / 1000;
+    const shownBefore = currentCur(nowSec);
     const first = !prev;
     model = next;
     tl = nextTl;
@@ -245,10 +270,11 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       cycle = { ...cycle, tRel: Math.max(0, cycle.tRel - (next.from - prev!.from)) };
     }
     if (!first && liveFrozen !== null) liveFrozen = Math.max(0, liveFrozen - (next.from - prev!.from));
+    if (!first && blend) blend.from = Math.max(0, blend.from - (next.from - prev!.from));
     if (!first && follow) {
       const idx = next.flights.findIndex((f) => f.id === follow!.id);
       if (idx < 0) {
-        follow = null;
+        endFollow(Math.max(0, shownBefore - (next.from - prev!.from)));
         say("FLIGHT NO LONGER IN DATA");
       } else {
         follow.idx = idx;
@@ -299,7 +325,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       }
       if (cmd === "exitFollow") {
         act({ type: "interact" });
-        follow = null;
+        endFollow();
         pushHud();
         return;
       }
@@ -310,7 +336,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
           follow.clock = scrubFollow(follow.clock, f, cmd === "scrubBack" ? -SCRUB_FOLLOW_SEC : SCRUB_FOLLOW_SEC);
         else if (cmd === "slower" || cmd === "faster") follow.clock = cycleSpeed(follow.clock, f, cmd === "faster" ? 1 : -1);
         else if (cmd === "toggleReplay") {
-          follow = null; // falls through to the normal REPLAY toggle below
+          endFollow(); // falls through to the normal REPLAY toggle below
           handled = false;
         } else handled = false; // HUD / fullscreen keep their normal handling while following
         if (handled) {
@@ -364,7 +390,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       const idx = d.engine.pick(x, y, currentCur(d.nowMs() / 1000));
       if (idx >= 0) {
         if (!follow || follow.idx !== idx) startFollow(idx);
-      } else if (follow) follow = null;
+      } else if (follow) endFollow();
       pushHud();
     },
     onPointerLeave() {
