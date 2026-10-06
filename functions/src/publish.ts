@@ -1,4 +1,6 @@
 import type { DayAirport, DayFile, DaySource, DayStatus, Flight, Sample, TrackedFlight, TrackerState } from "./day-schema.js";
+import { typeName } from "./aircraft-names.js";
+import type { FleetInfo } from "./fleet.js";
 import { haversineKm, initialBearing } from "./geo.js";
 import { resolveEndpoint } from "./regions.js";
 import { WINDOW, endOf } from "./tracker.js";
@@ -39,7 +41,7 @@ function thin(samples: Sample[], now: number): Sample[] {
   return out;
 }
 
-function toFlight(f: TrackedFlight, now: number): Flight {
+function toFlight(f: TrackedFlight, now: number, info?: FleetInfo): Flight {
   const ep = f.route ? resolveEndpoint(f.route) : null;
   const out: Flight = {
     id: f.id,
@@ -56,13 +58,18 @@ function toFlight(f: TrackedFlight, now: number): Flight {
   };
   if (f.gaps && f.gaps.length > 0) out.gaps = f.gaps.map(([a, b]) => [a - f.dep, b - f.dep]);
   if (f.arr === null && f.now) out.now = f.now;
-  if (f.reg !== undefined) out.reg = f.reg;
-  if (f.type !== undefined) out.type = f.type;
-  if (f.desc !== undefined) out.desc = f.desc;
+  // Live adsb values win; the fleet db only fills what is missing.
+  const known = info?.[f.icao24.toLowerCase()];
+  const reg = f.reg ?? known?.reg;
+  const type = f.type ?? known?.type;
+  const desc = f.desc ?? (type !== undefined ? typeName(type) : undefined);
+  if (reg !== undefined) out.reg = reg;
+  if (type !== undefined) out.type = type;
+  if (desc !== undefined) out.desc = desc;
   return out;
 }
 
-export function buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource): DayFile {
+export function buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource, info?: FleetInfo): DayFile {
   const destinations = new Set<string>();
   const countries = new Set<string>();
   let km = 0;
@@ -105,7 +112,7 @@ export function buildDayFile(state: TrackerState, now: number, status: DayStatus
       countries: countries.size,
       km24h: Math.round(km),
     },
-    flights: state.flights.map((f) => toFlight(f, now)),
+    flights: state.flights.map((f) => toFlight(f, now, info)),
     airports,
   };
 }

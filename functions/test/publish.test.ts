@@ -146,3 +146,29 @@ describe("buildDayFile — aircraft type and thinning", () => {
     expect(f.s.length).toBeLessThan(samples.length);
   });
 });
+
+describe("buildDayFile type backfill", () => {
+  const mk = (extra: object, icao24 = "k"): TrackerState => ({
+    v: 1, collectingSince: NOW - 7200, lastSuccessAt: NOW,
+    flights: [{
+      id: `${icao24}-1`, icao24, cs: "THY9", dep: NOW - 600, arr: NOW - 10, lastContact: NOW - 10,
+      samples: [[NOW - 600, 50, 41, 29]], route: null, ...extra,
+    }],
+  });
+  const info = { k: { reg: "TC-LJA", type: "B739" } };
+  const build = (s: TrackerState) => buildDayFile(s, NOW, { state: "ok", lastSuccessAt: NOW }, SRC, info).flights[0];
+
+  it("fills reg, type and desc from the fleet info", () => {
+    expect(build(mk({}))).toMatchObject({ reg: "TC-LJA", type: "B739", desc: "BOEING 737-900" });
+  });
+  it("live values win", () => {
+    expect(build(mk({ reg: "TC-XXX", type: "B738", desc: "LIVE DESC" }))).toMatchObject({ reg: "TC-XXX", type: "B738", desc: "LIVE DESC" });
+  });
+  it("derives desc from a live type", () => {
+    expect(build(mk({ type: "B738" }))).toMatchObject({ reg: "TC-LJA", type: "B738", desc: "BOEING 737-800" });
+  });
+  it("unknown hex leaves the fields absent", () => {
+    const f = build(mk({}, "zz"));
+    expect("reg" in f || "type" in f || "desc" in f).toBe(false);
+  });
+});

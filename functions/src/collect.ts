@@ -1,6 +1,6 @@
 import { fetchAircraft, type AdsbProvider, type FetchFn } from "./adsb.js";
 import type { AircraftState, TrackerState } from "./day-schema.js";
-import { loadFleet } from "./fleet.js";
+import { loadFleet, type FleetInfo } from "./fleet.js";
 import { buildDayFile } from "./publish.js";
 import { lookupRoute, type RouteCache } from "./routes.js";
 import { PreconditionFailed, type JsonStore } from "./storage.js";
@@ -57,14 +57,16 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
 
   let aircraft: AircraftState[];
   let fleetSize: number;
+  let info: FleetInfo | undefined;
   try {
     const fleet = await loadFleet(d.store, d.fetch, now, d.warn);
-    fleetSize = fleet.length;
-    aircraft = await fetchAircraft(d.fetch, d.provider, fleet, d.sleep);
+    info = fleet.info;
+    fleetSize = fleet.hexes.length;
+    aircraft = await fetchAircraft(d.fetch, d.provider, fleet.hexes, d.sleep);
   } catch (e) {
     const error = String(e);
     d.warn("live data failed", { error });
-    const day = buildDayFile(prev, now, { state: "delayed", lastSuccessAt: prev.lastSuccessAt, error }, source);
+    const day = buildDayFile(prev, now, { state: "delayed", lastSuccessAt: prev.lastSuccessAt, error }, source, info);
     await d.store.write(DAY_PATH, day, { cacheControl: DAY_CACHE });
     return "delayed";
   }
@@ -82,7 +84,7 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
     throw e;
   }
 
-  await d.store.write(DAY_PATH, buildDayFile(next, now, { state: "ok", lastSuccessAt: now }, source), {
+  await d.store.write(DAY_PATH, buildDayFile(next, now, { state: "ok", lastSuccessAt: now }, source, info), {
     cacheControl: DAY_CACHE,
   });
   d.log("collect ok", {

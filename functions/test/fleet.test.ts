@@ -1,6 +1,6 @@
 import { gzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
-import { FLEET_DB_URL, FLEET_TIMEOUT_MS, FLEET_PATH, FLEET_TTL, fetchFleet, loadFleet, parseFleetCsv, type Fleet } from "../src/fleet.js";
+import { FLEET_DB_URL, FLEET_TIMEOUT_MS, FLEET_PATH, FLEET_TTL, fetchFleet, loadFleet, parseFleetCsv, parseFleetInfo, type Fleet } from "../src/fleet.js";
 import type { JsonStore } from "../src/storage.js";
 
 const CSV = [
@@ -32,10 +32,20 @@ describe("parseFleetCsv", () => {
   });
 });
 
+describe("parseFleetInfo", () => {
+  it("maps hex to registration and type for the same filter", () => {
+    expect(parseFleetInfo(CSV)).toEqual({
+      "43a8f4": { reg: "TC-JGT", type: "B738" },
+      "4baa53": { reg: "TC-JRS", type: "A321" },
+      "4bb141": { reg: "TC-LJA", type: "B77W" },
+    });
+  });
+});
+
 describe("fetchFleet", () => {
   it("downloads and gunzips the CSV", async () => {
     const f = vi.fn(async () => new Response(gzipSync(CSV)));
-    await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toEqual(["43a8f4", "4baa53", "4bb141"]);
+    await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toMatchObject({ hexes: ["43a8f4", "4baa53", "4bb141"] });
     expect((f.mock.calls[0] as unknown as [string])[0]).toBe(FLEET_DB_URL);
   });
 
@@ -49,7 +59,7 @@ describe("fetchFleet", () => {
 
   it("accepts an already-decompressed body", async () => {
     const f = vi.fn(async () => new Response(CSV));
-    await expect(fetchFleet(f as unknown as typeof fetch)).resolves.toHaveLength(3);
+    await expect(fetchFleet(f as unknown as typeof fetch).then((r) => r.hexes)).resolves.toHaveLength(3);
   });
 
   it("throws on HTTP errors", async () => {
@@ -63,25 +73,48 @@ describe("loadFleet", () => {
   const log = () => {};
 
   it("returns a fresh cached list without downloading", async () => {
-    const { store } = memStore({ fetchedAt: NOW - 3600, hexes: ["aaaaaa"] });
+    const { store } = memStore({ fetchedAt: NOW - 3600, hexes: ["aaaaaa"], info: { aaaaaa: { reg: "TC-AAA", type: "A321" } } });
     const f = vi.fn();
-    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toEqual(["aaaaaa"]);
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toEqual({ hexes: ["aaaaaa"], info: { aaaaaa: { reg: "TC-AAA", type: "A321" } } });
     expect(f).not.toHaveBeenCalled();
   });
 
   it("refreshes an expired list and stores it", async () => {
     const { store, files } = memStore({ fetchedAt: NOW - FLEET_TTL - 1, hexes: ["aaaaaa"] });
     const f = vi.fn(async () => new Response(gzipSync(CSV)));
-    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toHaveLength(3);
-    expect(files.get(FLEET_PATH)).toEqual({ fetchedAt: NOW, hexes: ["43a8f4", "4baa53", "4bb141"] });
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log).then((r) => r.hexes)).resolves.toHaveLength(3);
+    expect(files.get(FLEET_PATH)).toEqual({
+      fetchedAt: NOW,
+      hexes: ["43a8f4", "4baa53", "4bb141"],
+      info: {
+        "43a8f4": { reg: "TC-JGT", type: "B738" },
+        "4baa53": { reg: "TC-JRS", type: "A321" },
+        "4bb141": { reg: "TC-LJA", type: "B77W" },
+      },
+    });
   });
 
   it("falls back to the stale list when the refresh fails", async () => {
     const { store } = memStore({ fetchedAt: NOW - FLEET_TTL - 1, hexes: ["aaaaaa"] });
     const f = vi.fn(async () => new Response("", { status: 503 }));
     const logged = vi.fn();
-    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, logged)).resolves.toEqual(["aaaaaa"]);
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, logged)).resolves.toEqual({ hexes: ["aaaaaa"], info: {} });
     expect(logged).toHaveBeenCalledWith("fleet refresh failed, using stale list", { error: "Error: fleet db 503" });
+  });
+
+  it("refetches once when a fresh cache has no info map", async () => {
+    const { store, files } = memStore({ fetchedAt: NOW - 3600, hexes: ["aaaaaa"] });
+    const f = vi.fn(async () => new Response(gzipSync(CSV)));
+    const r = await loadFleet(store, f as unknown as typeof fetch, NOW, log);
+    expect(f).toHaveBeenCalledOnce();
+    expect(r.info["4baa53"]).toEqual({ reg: "TC-JRS", type: "A321" });
+    expect((files.get(FLEET_PATH) as Fleet).info).toBeDefined();
+  });
+
+  it("keeps the old hexes if that info refetch fails", async () => {
+    const { store } = memStore({ fetchedAt: NOW - 3600, hexes: ["aaaaaa"] });
+    const f = vi.fn(async () => new Response("", { status: 503 }));
+    await expect(loadFleet(store, f as unknown as typeof fetch, NOW, log)).resolves.toEqual({ hexes: ["aaaaaa"], info: {} });
   });
 
   it("throws when there is no list at all", async () => {

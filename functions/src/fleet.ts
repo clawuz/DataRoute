@@ -11,27 +11,42 @@ export const AIRLINER_TYPES = new Set(
   "A19N A20N A21N A319 A320 A321 A332 A333 A338 A339 A359 A35K A306 A310 B37M B38M B39M B3XM B737 B738 B739 B744 B748 B752 B763 B772 B77L B77W B788 B789 B78X E190 E195 E290 E295 CRJ9 AT76".split(" "),
 );
 
+export interface FleetInfo {
+  [hex: string]: { reg: string; type: string };
+}
+
 export interface Fleet {
   fetchedAt: number;
   hexes: string[];
+  info?: FleetInfo;
+}
+
+export interface LoadedFleet {
+  hexes: string[];
+  info: FleetInfo;
 }
 
 /** tar1090-db rows: `hex;registration;icaoType;flags;…`. Keeps Turkish-registered airliners. */
-export function parseFleetCsv(csv: string): string[] {
-  const hexes = new Set<string>();
+export function parseFleetInfo(csv: string): FleetInfo {
+  const info: FleetInfo = {};
   for (const line of csv.split("\n")) {
     const [hex, reg, type] = line.split(";");
-    if (hex && reg?.startsWith("TC-") && AIRLINER_TYPES.has(type)) hexes.add(hex.toLowerCase());
+    if (hex && reg?.startsWith("TC-") && AIRLINER_TYPES.has(type)) info[hex.toLowerCase()] = { reg, type };
   }
-  return [...hexes].sort();
+  return info;
 }
 
-export async function fetchFleet(f: FetchFn): Promise<string[]> {
+export function parseFleetCsv(csv: string): string[] {
+  return Object.keys(parseFleetInfo(csv)).sort();
+}
+
+export async function fetchFleet(f: FetchFn): Promise<LoadedFleet> {
   const res = await f(FLEET_DB_URL, { signal: AbortSignal.timeout(FLEET_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`fleet db ${res.status}`);
   const buf = Buffer.from(await res.arrayBuffer());
   const gzipped = buf[0] === 0x1f && buf[1] === 0x8b;
-  return parseFleetCsv((gzipped ? gunzipSync(buf) : buf).toString("utf8"));
+  const info = parseFleetInfo((gzipped ? gunzipSync(buf) : buf).toString("utf8"));
+  return { hexes: Object.keys(info).sort(), info };
 }
 
 export async function loadFleet(
@@ -39,20 +54,22 @@ export async function loadFleet(
   f: FetchFn,
   now: number,
   log: (msg: string, extra?: Record<string, unknown>) => void,
-): Promise<string[]> {
+): Promise<LoadedFleet> {
   const cached = await store.read<Fleet>(FLEET_PATH);
-  if (cached && now - cached.data.fetchedAt < FLEET_TTL && cached.data.hexes.length > 0) {
-    return cached.data.hexes;
+  const usable = cached && cached.data.hexes.length > 0 ? cached.data : null;
+  // A cache written before the info map existed is refetched once, even within the TTL.
+  if (usable && usable.info && now - usable.fetchedAt < FLEET_TTL) {
+    return { hexes: usable.hexes, info: usable.info };
   }
   try {
-    const hexes = await fetchFleet(f);
-    if (hexes.length === 0) throw new Error("fleet db empty");
-    await store.write(FLEET_PATH, { fetchedAt: now, hexes } satisfies Fleet);
-    return hexes;
+    const fresh = await fetchFleet(f);
+    if (fresh.hexes.length === 0) throw new Error("fleet db empty");
+    await store.write(FLEET_PATH, { fetchedAt: now, ...fresh } satisfies Fleet);
+    return fresh;
   } catch (e) {
-    if (cached && cached.data.hexes.length > 0) {
+    if (usable) {
       log("fleet refresh failed, using stale list", { error: String(e) });
-      return cached.data.hexes;
+      return { hexes: usable.hexes, info: usable.info ?? {} };
     }
     throw e;
   }
