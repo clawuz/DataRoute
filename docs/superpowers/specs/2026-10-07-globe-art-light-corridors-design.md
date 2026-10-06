@@ -59,3 +59,18 @@ Adımlar ayrı commit: (1) koridorlar, (2) alacakaranlık + bulut gölgesi + gü
 - Aurora veri dışı süs → varsayılan kapalı + etiket.
 - Koridor ağırlığı rota doğruluğuna bağlı (adsbdb yanlış eşleşme olabilir; spec §12'deki risk geçerli).
 - Yıldız dokusu ek indirme (8K ≈ 4–6 MB).
+
+## 7b. Geri alınabilirlik (kullanıcı isteği: "beğenmezsem bu bölümü not al, direkt geri alırız")
+- Her bölüm (koridorlar, alacakaranlık+bulut gölgesi+parlama, yıldız haritası, aurora, rota müziği) **kendi commit(ler)iyle** gelir; commit mesajları `art(<bölüm>):` önekini taşır, böylece `git log --grep "^art(sound)"` ile bulunur ve `git revert` ile tek başına geri alınır.
+- Bağımsızlık kuralı: bir bölüm başka bölümün koduna bağımlı olmaz (ses `corridors.ts`'in saf `buildCorridors` çıktısını okur ama koridor görselinden bağımsız çalışır; koridor görseli kaldırılsa bile ses için `buildCorridors` kalır). Her bölümün tek bağlantı noktası vardır: engine/controller/keys içinde küçük, işaretli (`// art:<bölüm>`) birkaç satır.
+- Uygulama bitince hangi commit'in hangi bölüm olduğu bu spec'in sonundaki "Uygulama notları" tablosuna yazılır (bölüm → commit hash → geri alma komutu); kullanıcı bir bölümü beğenmezse oradan geri alınır.
+- Yayın: her bölüm kendi başına deploy edilebilir; beğenilmeyen bölüm geri alınıp yeniden deploy edilir.
+
+## Uygulama notları (uygulama sırasında doldurulur)
+| Bölüm | Commit | Geri alma |
+|---|---|---|
+| Rota koridorları | — | — |
+| Alacakaranlık + bulut gölgesi + parlama | — | — |
+| Yıldız haritası | — | — |
+| Aurora | — | — |
+| Rota müziği | — | — |
