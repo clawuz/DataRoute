@@ -4,12 +4,14 @@ export type Region = "DOM" | "EUR" | "MEA" | "AFR" | "ASI" | "AME" | "UNK";
 
 /** [t (unix s, absolute in tracker / relative to dep in day.json), alt/100 ft, lat, lon] */
 export type Sample = [number, number, number, number];
+export type FlightEnd = "AIRBORNE" | "LANDED" | "LAST_CONTACT";
 
 export interface Airport {
   iata: string;
   country: string; // ISO 3166-1 alpha-2
   lat: number;
   lon: number;
+  name?: string;
 }
 
 export interface RouteInfo {
@@ -37,6 +39,9 @@ export interface TrackedFlight {
   dep: number;
   arr: number | null;
   lastContact: number;
+  end?: FlightEnd;
+  /** coverage gaps inside the flight, absolute unix s [from, to] */
+  gaps?: [number, number][];
   samples: Sample[]; // absolute t
   now?: { gs: number; trk: number };
   /** undefined = not looked up yet, null = looked up, unknown */
@@ -60,6 +65,9 @@ export interface Flight {
   bearing: number;
   dep: number;
   arr: number | null;
+  end?: FlightEnd;
+  /** coverage gaps, seconds relative to `dep` */
+  gaps?: [number, number][];
   s: Sample[]; // t relative to dep
   now?: { gs: number; trk: number };
 }
@@ -68,6 +76,13 @@ export interface DayStatus {
   state: "ok" | "delayed";
   lastSuccessAt: number;
   error?: string;
+}
+
+export interface DayAirport {
+  lat: number;
+  lon: number;
+  country: string; // ISO 3166-1 alpha-2
+  name?: string;
 }
 
 export interface DayFile {
@@ -85,5 +100,7 @@ export interface DayFile {
     km24h: number;
   };
   flights: Flight[];
+  /** IATA → position, for every airport used by a routed flight (+ IST, SAW) */
+  airports?: Record<string, DayAirport>;
 }
 export type DaySource = DayFile["source"];
