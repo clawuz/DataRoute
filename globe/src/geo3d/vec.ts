@@ -19,6 +19,7 @@ export function vec3ToLatLon(v: Vec3): { lat: number; lon: number } {
 
 /** Scene radius for an altitude given in hundreds of feet (ALT_EXAG applied). */
 export function altitudeRadius(alt100: number): number {
-  const km = (Math.max(alt100, 0) * 100 * 0.3048) / 1000;
+  const a = Number.isFinite(alt100) ? Math.max(alt100, 0) : 0;
+  const km = (a * 100 * 0.3048) / 1000;
   return 1 + (ALT_EXAG * km) / R_EARTH_KM;
 }
