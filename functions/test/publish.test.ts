@@ -114,3 +114,35 @@ describe("buildDayFile — end, gaps, airports", () => {
     expect(Object.keys(empty.airports!).sort()).toEqual(["IST", "SAW"]);
   });
 });
+
+describe("buildDayFile — aircraft type and thinning", () => {
+  const src = { name: "x", url: "" };
+  const run = (flights: TrackerState["flights"]) =>
+    buildDayFile({ v: 1, collectingSince: NOW - 86400, lastSuccessAt: NOW, flights }, NOW, { state: "ok", lastSuccessAt: NOW }, src);
+
+  it("includes reg/type/desc only when defined", () => {
+    const d = run([
+      { id: "a-1", icao24: "a", cs: "THY1", dep: NOW - 100, arr: null, lastContact: NOW, samples: [[NOW - 100, 1, 0, 0]], reg: "TC-JJK", type: "B77W", desc: "BOEING 777-300ER" },
+      { id: "b-1", icao24: "b", cs: "THY2", dep: NOW - 100, arr: null, lastContact: NOW, samples: [[NOW - 100, 1, 0, 0]] },
+    ]);
+    expect(d.flights[0]).toMatchObject({ reg: "TC-JJK", type: "B77W", desc: "BOEING 777-300ER" });
+    expect("reg" in d.flights[1] || "type" in d.flights[1] || "desc" in d.flights[1]).toBe(false);
+  });
+
+  it("thins samples older than 6 h to >= 180 s, keeps recent ones, first and last; gaps untouched", () => {
+    const dep = NOW - 10 * 3600;
+    const samples: [number, number, number, number][] = [];
+    for (let t = dep; t <= NOW; t += 60) samples.push([t, 300, 41, 29]);
+    const d = run([{ id: "a-1", icao24: "a", cs: "THY1", dep, arr: null, lastContact: NOW, samples, gaps: [[dep + 100, dep + 400]] }]);
+    const f = d.flights[0];
+    const abs = f.s.map((x) => x[0] + dep);
+    expect(abs[0]).toBe(dep);
+    expect(abs.at(-1)).toBe(NOW);
+    expect(abs.filter((t) => t >= NOW - 6 * 3600)).toHaveLength(6 * 60 + 1);
+    const old = abs.filter((t) => t < NOW - 6 * 3600);
+    for (let i = 1; i < old.length; i++) expect(old[i] - old[i - 1]).toBeGreaterThanOrEqual(180);
+    expect(old.length).toBeLessThan(4 * 60 / 3 + 3);
+    expect(f.gaps).toEqual([[100, 400]]);
+    expect(f.s.length).toBeLessThan(samples.length);
+  });
+});

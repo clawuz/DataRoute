@@ -15,7 +15,7 @@ const ADSB_PROVIDER = defineString("ADSB_PROVIDER", { default: "adsbfi" });
 
 export const collect = onSchedule(
   {
-    schedule: "every 2 minutes",
+    schedule: "every 1 minutes",
     region: "europe-west1",
     timeoutSeconds: 90,
     memory: "512MiB",

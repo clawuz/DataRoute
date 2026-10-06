@@ -64,13 +64,68 @@ describe("tracker.step", () => {
     expect(s.flights.map((f) => f.end)).toEqual(["LANDED", "AIRBORNE"]);
   });
 
-  it("starts a new flight when the callsign changes", () => {
+  it("keeps the same flight when the callsign changes plausibly mid-flight", () => {
     let s = step(emptyState(T0), [ac()], T0);
-    s = step(s, [ac({ t: T0 + 120, cs: "THY2" })], T0 + 120);
+    s.flights[0].route = toJFK;
+    s = step(s, [ac({ t: T0 + 120, cs: "THY2", lat: 41.1, lon: 29.1 })], T0 + 120);
+    expect(s.flights).toHaveLength(1);
+    expect(s.flights[0]).toMatchObject({ cs: "THY2", arr: null, end: "AIRBORNE", lastContact: T0 + 120 });
+    expect(s.flights[0].route).toBeUndefined();
+    expect(s.flights[0].samples).toHaveLength(2);
+  });
+
+  it("splits on a callsign change with an implausible jump", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [ac({ t: T0 + 120, cs: "THY2", lat: 51, lon: 29 })], T0 + 120);
     expect(s.flights).toHaveLength(2);
-    expect(s.flights[0].arr).toBe(T0);
+    expect(s.flights[0]).toMatchObject({ arr: T0, end: "LAST_CONTACT" });
+    expect(s.flights[1].cs).toBe("THY2");
+  });
+
+  it("splits on a callsign change after a long gap", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [ac({ t: T0 + GAP + 1, cs: "THY2" })], T0 + GAP + 1);
+    expect(s.flights).toHaveLength(2);
     expect(s.flights[0].end).toBe("LAST_CONTACT");
     expect(s.flights[1].cs).toBe("THY2");
+  });
+
+  it("splits on a callsign change reported from the ground", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [ac({ t: T0 + 120, cs: "THY2", onGround: true })], T0 + 120);
+    expect(s.flights).toHaveLength(1);
+    expect(s.flights[0]).toMatchObject({ cs: "THY1", end: "LAST_CONTACT" });
+  });
+
+  it("adds a final ground sample when landing", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [ac({ t: T0 + 600, onGround: true, lat: 41.00004, lon: 29.12345678 })], T0 + 600);
+    expect(s.flights[0]).toMatchObject({ arr: T0 + 600, end: "LANDED" });
+    expect(s.flights[0].samples).toEqual([[T0, 100, 41, 29], [T0 + 600, 0, 41, 29.1235]]);
+  });
+
+  it("adds the final ground sample to a resumed flight", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [], T0 + GAP + 1);
+    s = step(s, [ac({ t: T0 + 7200, onGround: true, lat: 41.3, lon: 29.3 })], T0 + 7200);
+    expect(s.flights[0].samples.at(-1)).toEqual([T0 + 7200, 0, 41.3, 29.3]);
+  });
+
+  it("does not add a ground sample with an older timestamp", () => {
+    let s = step(emptyState(T0), [ac()], T0);
+    s = step(s, [ac({ t: T0 + 600 })], T0 + 600);
+    s = step(s, [ac({ t: T0 + 300, onGround: true })], T0 + 600);
+    expect(s.flights[0].end).toBe("LANDED");
+    expect(s.flights[0].samples.map((x) => x[0])).toEqual([T0, T0 + 600]);
+  });
+
+  it("stores aircraft type on first sight and refreshes it when reported", () => {
+    let s = step(emptyState(T0), [ac({ reg: "TC-JJK", type: "B77W", desc: "BOEING 777-300ER" })], T0);
+    expect(s.flights[0]).toMatchObject({ reg: "TC-JJK", type: "B77W", desc: "BOEING 777-300ER" });
+    s = step(s, [ac({ t: T0 + 120 })], T0 + 120); // absent -> kept
+    expect(s.flights[0].type).toBe("B77W");
+    s = step(s, [ac({ t: T0 + 240, type: "B77L", desc: "BOEING 777-200LR" })], T0 + 240);
+    expect(s.flights[0]).toMatchObject({ reg: "TC-JJK", type: "B77L", desc: "BOEING 777-200LR" });
   });
 
   it("merges a returning aircraft after a coverage gap into the same flight", () => {

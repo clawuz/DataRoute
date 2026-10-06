@@ -33,7 +33,16 @@ interface V2Aircraft {
   track?: number;
   seen_pos?: number;
   seen?: number;
+  r?: unknown;
+  t?: unknown;
+  desc?: unknown;
 }
+
+const str = (v: unknown): string | undefined => {
+  if (typeof v !== "string") return undefined;
+  const s = v.trim();
+  return s === "" ? undefined : s;
+};
 
 export function parseV2(json: unknown): AircraftState[] {
   const body = json as { now?: number; ac?: V2Aircraft[] | null };
@@ -51,6 +60,9 @@ export function parseV2(json: unknown): AircraftState[] {
     const onGround = a.alt_baro === "ground";
     const altFt = onGround ? 0 : (num(a.alt_baro) ?? num(a.alt_geom));
     const gs = num(a.gs);
+    const reg = str(a.r);
+    const type = str(a.t);
+    const desc = str(a.desc);
     out.push({
       icao24: a.hex.toLowerCase(),
       cs,
@@ -61,6 +73,9 @@ export function parseV2(json: unknown): AircraftState[] {
       onGround,
       gs: gs === null ? null : Math.round(gs),
       trk: num(a.track),
+      ...(reg ? { reg: reg.toUpperCase() } : {}),
+      ...(type ? { type: type.toUpperCase() } : {}),
+      ...(desc ? { desc: desc.toUpperCase() } : {}),
     });
   }
   return out;

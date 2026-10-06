@@ -34,6 +34,13 @@ const DESTS: [string, string, number, number, number][] = [
   ["KHI", "PK", 24.907, 67.161, 1],
 ];
 
+// [ICAO type, description, weight]
+const TYPES: [string, string, number][] = [
+  ["B739", "BOEING 737-900", 5], ["A21N", "AIRBUS A-321neo", 5], ["A333", "AIRBUS A330-300", 3],
+  ["B77W", "BOEING 777-300ER", 3], ["A359", "AIRBUS A350-900", 2], ["B38M", "BOEING 737-8 MAX", 3],
+];
+const LETTERS = "ABCDEFGHIJKLMNOPRSTUVYZ";
+
 // Hub bank profile: relative departures per UTC hour.
 const HOURLY = [3, 2, 1.5, 2, 4, 6, 7, 6, 5, 5, 6, 6, 5, 5, 6, 7, 7, 6, 6, 6, 7, 6, 5, 4];
 
@@ -128,8 +135,13 @@ export function makeFixture(now: number, seed = 1): DayFile {
         ? initialBearing(prev[2], prev[3], last[2], last[3])
         : initialBearing(origin.lat, origin.lon, destination.lat, destination.lon);
       const icao24 = Math.floor(rnd() * 0xffffff).toString(16).padStart(6, "0");
+      const [type, desc] = pickWeighted(TYPES, (x) => x[2], rnd());
+      const reg = `TC-J${LETTERS[Math.floor(rnd() * LETTERS.length)]}${LETTERS[Math.floor(rnd() * LETTERS.length)]}`;
       flights.push({
         id: `${icao24}-${dep}`,
+        reg,
+        type,
+        desc,
         icao24,
         cs: `THY${1 + Math.floor(rnd() * 2999)}`,
         dep,

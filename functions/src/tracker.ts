@@ -85,8 +85,21 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
   for (const a of aircraft) {
     let f = open.get(a.icao24);
     if (f && f.cs !== a.cs) {
-      finalize(f); // new callsign = new flight
-      f = undefined;
+      const dt = a.t - f.lastContact;
+      const last = f.samples[f.samples.length - 1];
+      const same =
+        !a.onGround &&
+        last !== undefined &&
+        dt >= 0 &&
+        dt <= GAP &&
+        haversineKm(last[2], last[3], a.lat, a.lon) <= (MAX_SPEED_KMH * dt) / 3600 + JUMP_MARGIN_KM;
+      if (same) {
+        f.cs = a.cs; // callsign change mid-flight: same flight, re-look-up the route
+        delete f.route;
+      } else {
+        finalize(f); // new callsign = new flight
+        f = undefined;
+      }
     }
     if (f && a.t - f.lastContact > GAP) {
       finalize(f);
@@ -94,7 +107,11 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
     }
     if (!f) f = tryResume(a);
     if (a.onGround) {
-      if (f) settle(f, "LANDED", a.t);
+      if (f) {
+        const last = f.samples[f.samples.length - 1];
+        if (!last || a.t > last[0]) f.samples.push([a.t, 0, round4(a.lat), round4(a.lon)]);
+        settle(f, "LANDED", a.t);
+      }
       continue;
     }
     if (!f) {
@@ -111,6 +128,9 @@ export function step(prev: TrackerState, aircraft: AircraftState[], now: number)
       flights.push(f);
       open.set(a.icao24, f);
     }
+    if (a.reg) f.reg = a.reg;
+    if (a.type) f.type = a.type;
+    if (a.desc) f.desc = a.desc;
     const last = f.samples[f.samples.length - 1];
     if (!last || a.t > last[0]) {
       f.samples.push([a.t, a.alt100 ?? last?.[1] ?? 0, round4(a.lat), round4(a.lon)]);

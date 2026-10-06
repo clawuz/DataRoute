@@ -20,12 +20,26 @@ describe("parseV2", () => {
       onGround: false,
       gs: 476,
       trk: 142.26,
+      reg: "TC-JRS",
+      type: "A321",
     });
   });
 
   it("ground, geometric altitude fallback, seen_pos age, missing track", () => {
     expect(out[1]).toMatchObject({ onGround: true, alt100: 0, t: 1791208211, gs: 5, trk: 90 });
     expect(out[2]).toMatchObject({ onGround: false, alt100: 100, t: 1791208201, trk: null });
+  });
+
+  it("extracts registration, type and description; ignores non-strings", () => {
+    const j = parseV2({
+      now: 1_000_000,
+      ac: [
+        { hex: "AAAAAA", flight: "THY1  ", lat: 1, lon: 2, alt_baro: 1000, r: " TC-JJK ", t: "B77W", desc: "BOEING 777-300ER" },
+        { hex: "bbbbbb", flight: "THY2", lat: 1, lon: 2, alt_baro: 1000, r: 5, t: null, desc: "" },
+      ],
+    });
+    expect(j[0]).toMatchObject({ reg: "TC-JJK", type: "B77W", desc: "BOEING 777-300ER" });
+    expect("reg" in j[1] || "type" in j[1] || "desc" in j[1]).toBe(false);
   });
 
   it("handles empty / null ac", () => {

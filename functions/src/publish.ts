@@ -1,4 +1,4 @@
-import type { DayAirport, DayFile, DaySource, DayStatus, Flight, TrackedFlight, TrackerState } from "./day-schema.js";
+import type { DayAirport, DayFile, DaySource, DayStatus, Flight, Sample, TrackedFlight, TrackerState } from "./day-schema.js";
 import { haversineKm, initialBearing } from "./geo.js";
 import { resolveEndpoint } from "./regions.js";
 import { WINDOW, endOf } from "./tracker.js";
@@ -20,7 +20,26 @@ function fallbackBearing(f: TrackedFlight): number {
   return 0;
 }
 
-function toFlight(f: TrackedFlight): Flight {
+export const FULL_RES = 6 * 3600;
+export const THIN_STEP = 180;
+
+/** Keep every sample of the last 6 h; thin older ones to >= 180 s apart (first and last always kept). */
+function thin(samples: Sample[], now: number): Sample[] {
+  if (samples.length <= 2) return samples;
+  const out: Sample[] = [samples[0]];
+  let lastKept = samples[0][0];
+  for (let i = 1; i < samples.length - 1; i++) {
+    const s = samples[i];
+    if (s[0] >= now - FULL_RES || s[0] - lastKept >= THIN_STEP) {
+      out.push(s);
+      lastKept = s[0];
+    }
+  }
+  out.push(samples[samples.length - 1]);
+  return out;
+}
+
+function toFlight(f: TrackedFlight, now: number): Flight {
   const ep = f.route ? resolveEndpoint(f.route) : null;
   const out: Flight = {
     id: f.id,
@@ -33,10 +52,13 @@ function toFlight(f: TrackedFlight): Flight {
     dep: f.dep,
     arr: f.arr,
     end: endOf(f),
-    s: f.samples.map(([t, alt, lat, lon]) => [t - f.dep, alt, lat, lon]),
+    s: thin(f.samples, now).map(([t, alt, lat, lon]) => [t - f.dep, alt, lat, lon]),
   };
   if (f.gaps && f.gaps.length > 0) out.gaps = f.gaps.map(([a, b]) => [a - f.dep, b - f.dep]);
   if (f.arr === null && f.now) out.now = f.now;
+  if (f.reg !== undefined) out.reg = f.reg;
+  if (f.type !== undefined) out.type = f.type;
+  if (f.desc !== undefined) out.desc = f.desc;
   return out;
 }
 
@@ -83,7 +105,7 @@ export function buildDayFile(state: TrackerState, now: number, status: DayStatus
       countries: countries.size,
       km24h: Math.round(km),
     },
-    flights: state.flights.map(toFlight),
+    flights: state.flights.map((f) => toFlight(f, now)),
     airports,
   };
 }

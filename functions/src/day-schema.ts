@@ -30,6 +30,9 @@ export interface AircraftState {
   onGround: boolean;
   gs: number | null; // ground speed, knots
   trk: number | null; // true track, degrees
+  reg?: string; // registration, e.g. "TC-JJK"
+  type?: string; // ICAO type code, e.g. "B77W"
+  desc?: string; // e.g. "BOEING 777-300ER"
 }
 
 export interface TrackedFlight {
@@ -46,6 +49,9 @@ export interface TrackedFlight {
   now?: { gs: number; trk: number };
   /** undefined = not looked up yet, null = looked up, unknown */
   route?: RouteInfo | null;
+  reg?: string;
+  type?: string;
+  desc?: string;
 }
 
 export interface TrackerState {
@@ -70,6 +76,9 @@ export interface Flight {
   gaps?: [number, number][];
   s: Sample[]; // t relative to dep
   now?: { gs: number; trk: number };
+  reg?: string;
+  type?: string;
+  desc?: string;
 }
 
 export interface DayStatus {
