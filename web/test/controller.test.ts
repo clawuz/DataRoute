@@ -7,7 +7,7 @@ import { FROM, flight, makeDay } from "./helpers";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
-function setup() {
+function setup(o: { deferFetch?: boolean; flights?: Parameters<typeof makeDay>[0] extends infer P ? (P extends { flights?: infer F } ? F : never) : never } = {}) {
   let now = (FROM + 86400) * 1000;
   let frameFn: ((dt: number) => FrameInput) | null = null;
   const engine: Engine = {
@@ -22,8 +22,10 @@ function setup() {
   const store = createStore<HudSnapshot>(EMPTY_SNAPSHOT);
   const day = makeDay({
     collectingSince: FROM + 3600,
-    flights: [flight({ id: "a", from: "IST", to: "JFK", dep: FROM + 3600, arr: null, s: [[0, 0, 0, 0], [600, 300, 0, 1]] })],
+    flights: o.flights ?? [flight({ id: "a", from: "IST", to: "JFK", dep: FROM + 3600, arr: null, s: [[0, 0, 0, 0], [600, 300, 0, 1]] })],
   });
+  let release: () => void = () => {};
+  const gate = o.deferFetch ? new Promise<void>((r) => (release = r)) : null;
   const c = createController({
     engine,
     store,
@@ -32,10 +34,13 @@ function setup() {
     debug: false,
     reducedMotion: false,
     nowMs: () => now,
-    fetch: (async () => new Response(JSON.stringify(day))) as unknown as typeof fetch,
+    fetch: (async () => {
+      if (gate) await gate;
+      return new Response(JSON.stringify(day));
+    }) as unknown as typeof fetch,
     random: () => 0,
   });
-  return { c, engine, store, frame: (dt: number) => frameFn!(dt), advance: (ms: number) => (now += ms) };
+  return { c, engine, store, frame: (dt: number) => frameFn!(dt), advance: (ms: number) => (now += ms), release };
 }
 
 describe("controller", () => {
@@ -108,11 +113,29 @@ describe("controller", () => {
     h.c.dispose();
   });
 
-  it("picks the first spotlight immediately instead of after 8 s", async () => {
-    const h = setup();
+  it("picks the first spotlight right after data even when frames ran before it", async () => {
+    const h = setup({ deferFetch: true });
     await flush();
-    expect(h.frame(0.3).highlight).toBeGreaterThanOrEqual(0); // with the old 8 s delay this is -1
+    for (let i = 0; i < 3; i++) h.frame(0.3); // pre-data frames reset the spotlight timer
+    expect(h.store.get().ready).toBe(false);
+    h.release();
+    await flush();
+    h.frame(0.3);
+    // with the old behaviour (no timer reset on first data) the spotlight would wait ~8 s here
+    expect(h.frame(0.016).highlight).toBeGreaterThanOrEqual(0);
     expect(h.store.get().spotlight).not.toBeNull();
+    h.c.dispose();
+  });
+
+  it("retries the spotlight after 1 s when no flight is live yet", async () => {
+    const late = flight({ id: "late", from: "IST", to: "JFK", dep: FROM + 3600 + 2760, arr: null, s: [[0, 0, 0, 0], [600, 300, 0, 1]] });
+    const h = setup({ flights: [late] });
+    await flush();
+    expect(h.frame(0.3).highlight).toBe(-1); // nothing airborne at replayStart
+    // replay advances ~920 s per second, so the flight is airborne after ~3 s; a retry must happen well before 8 s
+    let found = -1;
+    for (let i = 0; i < 12 && found < 0; i++) found = h.frame(0.3).highlight; // up to 3.6 s
+    expect(found).toBe(0);
     h.c.dispose();
   });
 });
