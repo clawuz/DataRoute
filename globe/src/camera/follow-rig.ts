@@ -5,6 +5,7 @@ export const MIN_RADIUS = 1.05;
 export const CHASE_BACK = 0.4;
 export const CHASE_UP = 0.2;
 export const LOOK_AHEAD = 0.25;
+export const LOOK_DOWN = 0.14; // tilt of the look target toward the surface
 export const SMOOTH_SEC = 0.6;
 
 export const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];

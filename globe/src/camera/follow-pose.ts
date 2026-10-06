@@ -1,5 +1,5 @@
 import type { Vec3 } from "../geo3d/vec";
-import { CHASE_BACK, CHASE_UP, LOOK_AHEAD, add, dot, len, norm, scale, sub, type Pose } from "./follow-rig";
+import { CHASE_BACK, CHASE_UP, LOOK_AHEAD, LOOK_DOWN, add, dot, len, norm, scale, sub, type Pose } from "./follow-rig";
 
 const TANGENT_DT = 45; // flight seconds either side
 
@@ -19,7 +19,7 @@ export function chaseFor(posAt: (u: number) => Vec3 | null, u: number): Pose | n
   tan = norm(tan);
   return {
     pos: add(sub(p, scale(tan, CHASE_BACK)), scale(up, CHASE_UP)),
-    target: sub(add(p, scale(tan, LOOK_AHEAD)), scale(up, 0.04)),
+    target: sub(add(p, scale(tan, LOOK_AHEAD)), scale(up, LOOK_DOWN)),
     up,
   };
 }

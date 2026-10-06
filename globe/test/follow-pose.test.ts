@@ -11,7 +11,7 @@ describe("chaseFor", () => {
     expect(p.pos[0]).toBeCloseTo(-0.4, 6); // 0.40 behind (west)
     expect(p.pos[2]).toBeCloseTo(1.2, 6); // 0.20 above the surface
     expect(p.target[0]).toBeCloseTo(0.25, 6); // 0.25 ahead (east)
-    expect(p.target[2]).toBeCloseTo(0.96, 6); // tilted 0.04 toward the surface
+    expect(p.target[2]).toBeCloseTo(0.86, 6); // tilted 0.14 toward the surface
     expect(p.up).toEqual([0, 0, 1].map((x) => expect.closeTo(x, 6)) as unknown as [number, number, number]);
   });
 
