@@ -29,7 +29,7 @@ uniform vec3 u_tint;
 uniform float u_fade;
 out vec4 fragColor;
 
-float tanh1(float x){ float e = exp(2.0*x); return (e-1.0)/(e+1.0); }
+float tanh1(float x){ x = clamp(x, -15.0, 15.0); float e = exp(2.0*x); return (e-1.0)/(e+1.0); }
 vec4 tanh4(vec4 v){ return vec4(tanh1(v.x), tanh1(v.y), tanh1(v.z), tanh1(v.w)); }
 
 void main(){

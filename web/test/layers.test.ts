@@ -1,3 +1,4 @@
+import { DoubleSide, type ShaderMaterial } from "three";
 import { describe, expect, it } from "vitest";
 import { radiusFor } from "../src/data/mapping";
 import { buildModel } from "../src/data/model";
@@ -20,6 +21,7 @@ describe("tunnel", () => {
   it("keeps the reference ray-march and adds the data uniforms", () => {
     expect(TUNNEL_FRAG).toContain("p.x += t / 0.2;");
     expect(TUNNEL_FRAG).toContain("for ( ; i++ < 5e1;");
+    expect(TUNNEL_FRAG).toContain("clamp(x, -15.0, 15.0)");
     for (const u of ["vec2 u_res;", "float u_time;", "float u_energy;", "vec3 u_tint;", "float u_fade;"]) {
       expect(TUNNEL_FRAG).toContain(`uniform ${u}`);
     }
@@ -51,6 +53,14 @@ describe("ribbons", () => {
     r.setResolution(1920, 1080, 2);
     expect(r.uniforms.uRes.value.toArray()).toEqual([1920, 1080]);
     expect(r.uniforms.uWidth.value).toBeCloseTo(2.8, 6);
+    r.dispose();
+  });
+});
+
+describe("ribbon culling", () => {
+  it("ribbon material is double-sided so winding cannot cull it", () => {
+    const r = createRibbons(m);
+    expect((r.mesh.material as ShaderMaterial).side).toBe(DoubleSide);
     r.dispose();
   });
 });

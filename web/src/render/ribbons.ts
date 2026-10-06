@@ -1,5 +1,6 @@
 import {
   AdditiveBlending,
+  DoubleSide,
   Float32BufferAttribute,
   InstancedBufferAttribute,
   InstancedBufferGeometry,
@@ -149,6 +150,7 @@ export function createRibbons(m: Model): Ribbons {
     depthTest: false,
     depthWrite: false,
     blending: AdditiveBlending,
+    side: DoubleSide,
   });
   const mesh = new Mesh(geometry, material);
   mesh.frustumCulled = false;
