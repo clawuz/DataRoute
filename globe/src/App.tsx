@@ -22,32 +22,43 @@ export function App() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let controller: GlobeController | null = null;
     let engine: GlobeEngine;
+    let reloadTimer: ReturnType<typeof setTimeout> | undefined;
     try {
       engine = createGlobeEngine(canvas, {
         reducedMotion,
         onPerf: (fps, level) => controller?.setPerf(fps, level),
         onError: (msg) => {
           setError(msg);
-          if (msg.includes("RELOADING")) setTimeout(() => window.location.reload(), 1500);
+          if (msg.includes("RELOADING")) reloadTimer = setTimeout(() => window.location.reload(), 1500);
         },
       });
     } catch (e) {
       setError(String(e));
       return;
     }
-    controller = createController({
-      engine,
-      store,
-      url: dataUrl(search),
-      fixture: isFixture(search),
-      debug: params.get("debug") === "1",
-      reducedMotion,
-      nowMs: () => Date.now(),
-    });
+    try {
+      controller = createController({
+        engine,
+        store,
+        url: dataUrl(search),
+        fixture: isFixture(search),
+        debug: params.get("debug") === "1",
+        reducedMotion,
+        nowMs: () => Date.now(),
+      });
+    } catch (e) {
+      engine.dispose();
+      setError(String(e));
+      return;
+    }
     controller.setTextureState(0, "");
-    void engine
+    engine
       .loadTextures((p) => controller?.setTextureState(p, ""))
-      .then((tier) => controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)"));
+      .then((tier) => controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)"))
+      .catch((e) => {
+        console.error("[textures]", e);
+        controller?.setTextureState(1, "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
+      });
 
     let drag: { x: number; y: number; t: number } | null = null;
     const down = (e: PointerEvent) => {
@@ -70,12 +81,16 @@ export function App() {
     };
     const key = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === " " || e.key === "ArrowLeft" || e.key === "ArrowRight") e.preventDefault();
+      if (e.repeat && !e.key.startsWith("Arrow")) return;
       controller?.onKey(e.key);
     };
     const leave = () => controller?.onPointerLeave();
     canvas.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    canvas.addEventListener("lostpointercapture", up);
     window.addEventListener("keydown", key);
     document.documentElement.addEventListener("pointerleave", leave);
     window.addEventListener("blur", leave);
@@ -83,10 +98,14 @@ export function App() {
       canvas.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      canvas.removeEventListener("lostpointercapture", up);
       window.removeEventListener("keydown", key);
       document.documentElement.removeEventListener("pointerleave", leave);
       window.removeEventListener("blur", leave);
+      if (reloadTimer !== undefined) clearTimeout(reloadTimer);
       controller?.dispose();
+      controller = null;
       engine.dispose();
     };
   }, [store]);

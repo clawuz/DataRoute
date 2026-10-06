@@ -15,7 +15,7 @@ import { createEarth } from "./earth";
 import { createHeads, headLatLons } from "./heads";
 import { buildPickIndex, pickFlight, type PickIndex } from "./picking3d";
 import { createSpace } from "./space";
-import { chooseTier, detectTierInputs, loadEarthTextures } from "./textures";
+import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures } from "./textures";
 
 export interface GlobeFrameInput {
   /** displayed UTC instant (unix seconds): drives Earth rotation and the sun */
@@ -94,6 +94,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const heads = createHeads();
   earthGroup.add(heads.points);
 
+  let disposed = false;
+  let texs: EarthTextures | null = null;
   let arcs: Arcs | null = null;
   let airports: Airports | null = null;
   let model: GlobeModel | null = null;
@@ -151,6 +153,17 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const flowScale = opts.reducedMotion ? 0.4 : 1;
 
   function frame(now: number) {
+    try {
+      frameBody(now);
+    } catch (e) {
+      console.error("[frame]", e);
+      opts.onError?.("RENDER ERROR — SEE CONSOLE");
+    } finally {
+      if (!disposed) raf = requestAnimationFrame(frame);
+    }
+  }
+
+  function frameBody(now: number) {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     const wall = Date.now() / 1000;
@@ -198,7 +211,6 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       fpsAcc = 0;
       fpsFrames = 0;
     }
-    raf = requestAnimationFrame(frame);
   }
 
   window.addEventListener("resize", resize);
@@ -245,6 +257,11 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     async loadTextures(onProgress) {
       const t = await loadEarthTextures(renderer, chooseTier(detectTierInputs(renderer)), onProgress);
+      if (disposed) {
+        if (t) for (const tex of [t.day, t.night, t.clouds]) tex.dispose();
+        return null;
+      }
+      texs = t;
       earth.setTextures(t);
       return t ? t.tier : null;
     },
@@ -282,7 +299,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       return headInfo;
     },
     dispose() {
+      disposed = true;
       cancelAnimationFrame(raf);
+      if (texs) for (const tex of [texs.day, texs.night, texs.clouds]) tex.dispose();
+      texs = null;
       window.removeEventListener("resize", resize);
       ro?.disconnect();
       canvas.removeEventListener("webglcontextlost", onContextLost);

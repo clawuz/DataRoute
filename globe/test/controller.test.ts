@@ -144,6 +144,24 @@ describe("globe controller", () => {
     h.c.dispose();
   });
 
+  it("Space freezes fixture-looped LIVE time (stays inside the loop) and resumes", async () => {
+    const h = setup({ fixture: true });
+    await flush();
+    h.clock.ms += 100_000;
+    h.frame(0.016);
+    h.c.onKey(" ");
+    const f1 = h.frame(0.016).cur;
+    h.clock.ms += 77_000;
+    const f2 = h.frame(0.016).cur;
+    expect(f2).toBe(f1);
+    expect(f1).toBeGreaterThanOrEqual(86400);
+    expect(f1).toBeLessThan(86400 + 240);
+    h.c.onKey(" ");
+    h.clock.ms += 7_000;
+    expect(h.frame(0.016).cur).not.toBe(f1);
+    h.c.dispose();
+  });
+
   it("hover: synchronous first pick, trailing pick, pointer leave clears it", async () => {
     const h = setup();
     await flush();

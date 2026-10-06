@@ -57,20 +57,26 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let perf = { fps: 0, level: 0 };
   let tex = { progress: 0, note: "" };
   let firstDataSec = 0;
+  let disposed = false;
 
   const bounds = (): Bounds => (model ? { start: model.replayStart, end: model.span } : { start: 0, end: 0 });
   const act = (a: Parameters<typeof applyAction>[1]) => {
     cycle = applyAction(cycle, a, bounds(), GLOBE_CYCLE);
   };
 
+  /** unfrozen LIVE time: the wall clock, or the looped stale-snapshot clock in fixture mode */
+  function liveRaw(m: GlobeModel, nowSec: number): number {
+    return d.fixture ? m.span + ((nowSec - firstDataSec) % FIXTURE_LIVE_LOOP_SEC) : liveCur(m, nowSec);
+  }
+
   function currentCur(nowSec: number): number {
     if (!model) return 0;
     if (mode === "REPLAY") return cycle.tRel;
-    if (d.fixture) return model.span + ((nowSec - firstDataSec) % FIXTURE_LIVE_LOOP_SEC);
-    return liveFrozen ?? liveCur(model, nowSec);
+    return liveFrozen ?? liveRaw(model, nowSec);
   }
 
   function pushHud() {
+    if (disposed) return;
     const nowSec = d.nowMs() / 1000;
     const cur = currentCur(nowSec);
     let hoverScreen: { x: number; y: number; visible: boolean } | null = null;
@@ -119,7 +125,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     }
     if (mode === "LIVE") {
       if (!cycle.paused) liveFrozen = null;
-      else if (liveFrozen === null && model) liveFrozen = liveCur(model, nowSec);
+      else if (liveFrozen === null && model) liveFrozen = liveRaw(model, nowSec);
     }
     if (pending && d.nowMs() - lastPick >= PICK_INTERVAL_MS) {
       lastPick = d.nowMs();
@@ -140,11 +146,13 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     const prev = model;
     // ignore equal/older payloads (cached or stale responses)
     if (prev && !(day.generatedAt > prev.generatedAt)) return;
+    if (disposed) return;
     const next = buildGlobeModel(day);
+    const nextTl = buildTimeline(next);
     const nowSec = d.nowMs() / 1000;
     const first = !prev;
     model = next;
-    tl = buildTimeline(next);
+    tl = nextTl;
     if (first) {
       firstDataSec = nowSec;
       mode = "LIVE";
@@ -154,6 +162,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       // keep the displayed instant stable while paused (window.from moved forward)
       cycle = { ...cycle, tRel: Math.max(0, cycle.tRel - (next.from - prev!.from)) };
     }
+    if (!first && liveFrozen !== null) liveFrozen = Math.max(0, liveFrozen - (next.from - prev!.from));
     const evs = diffEvents(prev, next);
     events = addEvents(events, evs);
     d.engine.setModel(next, currentCur(nowSec), nowSec);
@@ -233,16 +242,19 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       act({ type: "interact" });
     },
     refresh() {
-      poller.refresh();
+      if (!disposed) poller.refresh();
     },
     setPerf(fps, level) {
+      if (disposed) return;
       perf = { fps, level };
     },
     setTextureState(progress, note) {
+      if (disposed) return;
       tex = { progress, note };
       pushHud();
     },
     dispose() {
+      disposed = true;
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       d.engine.setFrameSource(null);
