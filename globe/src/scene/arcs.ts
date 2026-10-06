@@ -19,7 +19,7 @@ export const ARC_BASE_LIFT = 0.002;
 export const MAX_RUN_POINTS = 96;
 export const PLANNED_POINTS = 48;
 export const BREAK_SEC = 600;
-export const ARC_WIDTH_PX = 1.6;
+export const ARC_WIDTH_PX = 1.9;
 
 /** True when the sample pair (i, i+1) is a coverage gap and must not be drawn as observed track. */
 export function isBreak(f: GlobeFlight, i: number): boolean {
@@ -124,6 +124,7 @@ attribute vec4 aInfo;
 attribute vec2 aS;
 varying vec3 vColor;
 varying float vAlpha;
+varying float vEdge;
 varying float vS;
 varying float vKind;
 
@@ -151,11 +152,11 @@ void main() {
     }
     float t = mix(aT.x, mix(aT.x, aT.y, k), aCorner.y);
     float age = clamp((uCur - t) / uWindow, 0.0, 1.0);
-    alpha = exp(-age * 2.2) * (hi ? 1.0 : 0.85);
+    alpha = exp(-age * 2.6) * (hi ? 1.0 : 0.5);
   } else {
     if (aT.x > uCur) { hide(); return; }
     float after = max(uCur - aT.y, 0.0) / uWindow;
-    alpha = 0.16 * exp(-after * 8.0) * (hi ? 3.0 : 1.0);
+    alpha = 0.34 * exp(-after * 8.0) * (hi ? 3.0 : 1.0);
   }
   vec4 cA = projectionMatrix * modelViewMatrix * vec4(pa, 1.0);
   vec4 cB = projectionMatrix * modelViewMatrix * vec4(pb, 1.0);
@@ -164,13 +165,14 @@ void main() {
   vec2 dir = sB - sA;
   dir = length(dir) < 1e-4 ? vec2(1.0, 0.0) : normalize(dir);
   vec2 n = vec2(-dir.y, dir.x);
-  float w = uWidth * (hi ? 2.2 : 1.0) * (kind < 0.5 ? 1.0 : 0.7);
+  float w = uWidth * (hi ? 2.2 : 1.0) * (kind < 0.5 ? 1.0 : 0.85);
   vec4 c = mix(cA, cB, aCorner.y);
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
   vColor = hi ? mix(col, vec3(1.0), 0.4) : col;
   vAlpha = alpha;
   vS = mix(aS.x, aS.y, aCorner.y);
+  vEdge = aCorner.x;
   vKind = kind;
 }
 `;
@@ -178,12 +180,14 @@ void main() {
 const ARC_FRAG = /* glsl */ `
 varying vec3 vColor;
 varying float vAlpha;
+varying float vEdge;
 varying float vS;
 varying float vKind;
 void main() {
   if (vAlpha <= 0.002) discard;
   if (vKind > 0.5 && fract(vS * 90.0) > 0.55) discard;
-  gl_FragColor = vec4(vColor * vAlpha, 1.0);
+  float edge = 1.0 - smoothstep(0.55, 1.0, abs(vEdge));
+  gl_FragColor = vec4(vColor * vAlpha * edge, 1.0);
 }
 `;
 
