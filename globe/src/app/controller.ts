@@ -12,7 +12,7 @@ import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
-  CREDIT, LABEL_COUNT, addEvents, hoverNote, liveCur, pickLabelAirports,
+  CREDIT, LABEL_COUNT, addEvents, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
 import { SCRUB_SEC, keyToCommand } from "./keys";
@@ -140,8 +140,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     const labels = computeLabels();
     let tooltip = base.tooltip;
     if (tooltip && model && hoverIdx >= 0) {
-      const note = hoverNote(model.flights[hoverIdx], cur);
-      if (note) tooltip = { ...tooltip, route: `${tooltip.route} · ${note}` };
+      const hf = model.flights[hoverIdx];
+      const note = hoverNote(hf, cur);
+      const ac = hf.type ?? aircraftLabel(hf).name;
+      tooltip = { ...tooltip, route: `${tooltip.route} · ${ac}${note ? ` · ${note}` : ""}` };
     }
     let followHud = null;
     if (follow && model) {

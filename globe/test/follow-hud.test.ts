@@ -34,6 +34,16 @@ describe("formatFollow", () => {
     expect(h.notes.join(" ")).toContain("2-MIN AVERAGES");
   });
 
+  it("shows the aircraft as name · registration, with graceful fallbacks", () => {
+    const mk = (o: Partial<Parameters<typeof flight>[0]>) => {
+      const f = one({ ...o, s: [[0, 100, 0, 0], [600, 200, 0, 1]] });
+      return formatFollow(f, telemetryAt(f, 300, FROM)!, { u: 300, speed: null, paused: false }).aircraft;
+    };
+    expect(mk({ desc: "BOEING 737-900", type: "B739", reg: "TC-JXX" })).toBe("BOEING 737-900 · TC-JXX");
+    expect(mk({ type: "A21N" })).toBe("A21N");
+    expect(mk({})).toBe("AIRCRAFT UNKNOWN");
+  });
+
   it("shows em dashes and NO DATA inside a coverage gap", () => {
     const f = one({
       dep: FROM, arr: null, end: "AIRBORNE", gaps: [[600, 1200]],

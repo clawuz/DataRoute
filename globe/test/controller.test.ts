@@ -193,6 +193,24 @@ describe("globe controller", () => {
     h.c.dispose();
   });
 
+  it("hover card appends the aircraft type to the route, before the honesty note", async () => {
+    const live = (): ReturnType<typeof flight> => ({ ...airborne("AIRBORNE", null), s: [[0, 300, 41, 29], [600, 370, 45, 20], [3030, 370, 55, -20]] });
+    const withType = { ...live(), type: "B739", desc: "BOEING 737-900" };
+    const noType = live();
+    const a = setup({ days: [dayAt(G1, [withType])] });
+    await flush();
+    a.c.onPointerMove(10, 20);
+    a.frame(0.3);
+    expect(a.store.get().tooltip!.route).toContain("IST → JFK · B739");
+    a.c.dispose();
+    const b = setup({ days: [dayAt(G1, [noType])] });
+    await flush();
+    b.c.onPointerMove(10, 20);
+    b.frame(0.3);
+    expect(b.store.get().tooltip!.route).toContain("IST → JFK · AIRCRAFT UNKNOWN");
+    b.c.dispose();
+  });
+
   it("labels: IST is projected for the HUD", async () => {
     const h = setup();
     await flush();

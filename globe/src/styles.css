@@ -31,6 +31,7 @@ body { background: #02030a; }
 .fp-state.extrapolated { color: #ffd479; }
 .fp-state.last-contact { color: var(--amber); }
 .fp-state.landed { color: var(--ink); }
+.fp-aircraft { color: var(--ink-dim); font-size: calc(0.85 * var(--u)); letter-spacing: 0.1em; margin-top: -0.4vmin; }
 .fp-route { display: flex; align-items: center; gap: 1vmin; }
 .fp-route-text { display: none; }
 .fp-bar { flex: 1; height: 0.35vmin; background: var(--line); }

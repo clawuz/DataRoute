@@ -78,6 +78,7 @@ export function FlightPanel({ f }: { f: FollowHud }) {
         <span className="fp-tk">{f.tk}</span>
         <span className={`fp-state ${f.state.toLowerCase().replace(/ /g, "-")}`}>{f.state}</span>
       </div>
+      <div className="fp-aircraft label">{f.aircraft}</div>
       <div className="fp-route label">
         <span>{from}</span>
         <span className="fp-bar"><i style={{ width: `${Math.round(f.progress * 100)}%` }} /></span>

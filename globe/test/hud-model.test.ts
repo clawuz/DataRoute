@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_EVENTS, addEvents, eventText, liveCur, pickLabelAirports } from "../src/app/hud-model";
+import { MAX_EVENTS, addEvents, aircraftLabel, eventText, liveCur, pickLabelAirports } from "../src/app/hud-model";
 import type { FlightEvent } from "../src/model/events";
 import { buildGlobeModel } from "../src/model/globe-model";
 import { FROM, flight, makeDay } from "./helpers";
@@ -58,5 +58,14 @@ describe("liveCur", () => {
     expect(liveCur(m, FROM + 86400 + 30)).toBe(86430);
     expect(liveCur(m, FROM + 86400 + 99999)).toBe(86400 + 360);
     expect(liveCur(m, FROM - 50)).toBe(0);
+  });
+});
+
+describe("aircraftLabel", () => {
+  it("prefers desc, then type, else unknown; reg or empty", () => {
+    expect(aircraftLabel({ desc: "BOEING 737-900", type: "B739", reg: "TC-JXX" })).toEqual({ name: "BOEING 737-900", reg: "TC-JXX" });
+    expect(aircraftLabel({ type: "A21N" })).toEqual({ name: "A21N", reg: "" });
+    expect(aircraftLabel({ reg: "TC-LGA" })).toEqual({ name: "AIRCRAFT UNKNOWN", reg: "TC-LGA" });
+    expect(aircraftLabel({})).toEqual({ name: "AIRCRAFT UNKNOWN", reg: "" });
   });
 });

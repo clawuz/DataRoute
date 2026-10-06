@@ -27,6 +27,15 @@ describe("buildGlobeModel", () => {
     expect(m.flights[0].t[0]).toBe(1000);
   });
 
+  it("copies optional aircraft info (reg, type, desc) from the raw flight", () => {
+    const mm = buildGlobeModel(makeDay({ flights: [
+      flight({ id: "p", s: [[0, 0, 41, 29]], reg: "TC-JXX", type: "B739", desc: "BOEING 737-900" }),
+      flight({ id: "q", s: [[0, 0, 41, 29]] }),
+    ] }));
+    expect(mm.flights[0]).toMatchObject({ reg: "TC-JXX", type: "B739", desc: "BOEING 737-900" });
+    expect("reg" in mm.flights[1] || "type" in mm.flights[1] || "desc" in mm.flights[1]).toBe(false);
+  });
+
   it("adds status, relative gaps, last sample time and track", () => {
     const [a, b, c] = m.flights;
     expect(a.status).toBe("AIRBORNE");

@@ -108,6 +108,11 @@ export function createLabelBus(): LabelBus {
   };
 }
 
+/** Aircraft name (type description, else ICAO type, else unknown) and registration for the HUD. */
+export function aircraftLabel(f: Pick<GlobeFlight, "desc" | "type" | "reg">): { name: string; reg: string } {
+  return { name: f.desc || f.type || "AIRCRAFT UNKNOWN", reg: f.reg ?? "" };
+}
+
 /** Per-flight honesty note shown on the hover card. */
 export function hoverNote(f: GlobeFlight, cur: number): string {
   if (f.status === "AIRBORNE" && cur > f.lastT) return "EXTRAPOLATED";

@@ -17,6 +17,10 @@ export interface GlobeFlight extends FlightRec {
   lastT: number;
   trk?: number;
   planned?: PlannedRoute;
+  /** aircraft info from the collector (all optional) */
+  reg?: string;
+  type?: string;
+  desc?: string;
 }
 
 export interface GlobeModel extends Model {
@@ -56,6 +60,9 @@ export function buildGlobeModel(day: DayFile): GlobeModel {
       // collector writes trk 0 when unknown; a report with gs <= 0 is treated as no report
       ...(f.now && f.now.gs > 0 ? { trk: f.now.trk } : {}),
       ...(planned ? { planned } : {}),
+      ...(f.reg ? { reg: f.reg } : {}),
+      ...(f.type ? { type: f.type } : {}),
+      ...(f.desc ? { desc: f.desc } : {}),
     };
   });
 

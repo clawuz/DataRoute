@@ -136,7 +136,7 @@ const fh = (o: Partial<FollowHud> = {}): FollowHud => ({
   tk: "TK1", route: "IST → JFK", state: "OBSERVED", alt: "FL370 · 37,000 FT", gs: "480 KT", hdg: "290°",
   vs: "+1,000 FT/MIN", phase: "CLIMB", dist: "56 / 334 KM", elapsed: "00:05", remaining: "00:25 EST",
   utc: "08:15 UTC", local: "08:21 LOCAL SOLAR", speed: "×240", progress: 0.25, profile: [100, 300, 370],
-  cursor: 0.5, notes: ["GS / HDG / VS ARE 2-MIN AVERAGES"], ...o,
+  cursor: 0.5, aircraft: "BOEING 737-900 · TC-JXX", notes: ["GS / HDG / VS ARE 2-MIN AVERAGES"], ...o,
 });
 
 describe("FlightPanel", () => {
@@ -146,6 +146,11 @@ describe("FlightPanel", () => {
     for (const s of ["TK1", "IST → JFK", "OBSERVED", "FL370 · 37,000 FT", "480 KT", "290°", "+1,000 FT/MIN", "CLIMB", "56 / 334 KM", "00:05", "00:25 EST", "08:15 UTC", "×240", "2-MIN AVERAGES"])
       expect(t).toContain(s);
     expect(container.querySelector(".fp-state")!.className).toContain("observed");
+  });
+
+  it("shows the aircraft as a dim sub-line", () => {
+    const { container } = render(<FlightPanel f={fh()} />);
+    expect(container.querySelector(".fp-aircraft")!.textContent).toBe("BOEING 737-900 · TC-JXX");
   });
 
   it("marks NO DATA and EXTRAPOLATED states with their own class", () => {

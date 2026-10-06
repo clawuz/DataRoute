@@ -2,12 +2,14 @@ import { fmtElapsed, fmtFL, fmtInt, fmtUtc } from "@web/lib/format";
 import type { Telemetry } from "../geo3d/telemetry";
 import { atLiveHead, effectiveSpeed, type FollowClock } from "../model/follow-clock";
 import type { GlobeFlight } from "../model/globe-model";
+import { aircraftLabel } from "./hud-model";
 
 export type FollowStateLabel = "OBSERVED" | "NO DATA" | "EXTRAPOLATED" | "LAST CONTACT" | "LANDED";
 
 export interface FollowHud {
   tk: string;
   route: string;
+  aircraft: string;
   state: FollowStateLabel;
   alt: string;
   gs: string;
@@ -54,6 +56,7 @@ export function formatFollow(f: GlobeFlight, tel: Telemetry, clock: FollowClock)
   const span = f.lastT - f.t[0];
   const local = tel.localSolarHours;
   const state = followState(f, tel, clock.u);
+  const ac = aircraftLabel(f);
 
   const notes = ["GS / HDG / VS ARE 2-MIN AVERAGES"];
   if (state === "NO DATA") notes.push("NO DATA · OUTSIDE ADS-B COVERAGE");
@@ -63,6 +66,7 @@ export function formatFollow(f: GlobeFlight, tel: Telemetry, clock: FollowClock)
   return {
     tk: f.tk,
     route: f.from || f.to ? `${f.from ?? "???"} → ${f.to ?? "???"}` : "ROUTE UNKNOWN",
+    aircraft: ac.reg ? `${ac.name} · ${ac.reg}` : ac.name,
     state,
     alt: tel.source === "NO DATA" ? "—" : `${fmtFL(tel.alt100)} · ${fmtInt(tel.altFt)} FT`, // interpolated across a gap, not observed
     gs: tel.gsKt === null ? "—" : `${Math.round(tel.gsKt)} KT`,
