@@ -18,6 +18,6 @@ body { background: #02030a; }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; letter-spacing: 0.2em; color: var(--ink-dim); pointer-events: none; z-index: 6; }
 
 @media (max-aspect-ratio: 1/1) {
-  .modeline { top: 7.4vmin; }
+  .modeline { top: 10vmin; }
   .events { top: 62%; }
 }

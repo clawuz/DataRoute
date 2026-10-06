@@ -3,13 +3,14 @@ import { dataUrl, isFixture } from "@web/data/source";
 import { ErrorScreen } from "@web/hud/Hud";
 import { createStore } from "@web/hud/store";
 import { createController, type GlobeController } from "./app/controller";
-import { EMPTY_GLOBE_SNAPSHOT, type GlobeHudSnapshot } from "./app/hud-model";
+import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "./app/hud-model";
 import { GlobeHud } from "./hud/GlobeHud";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
 
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
+  const labelBus = useMemo(() => createLabelBus(), []);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export function App() {
         fixture: isFixture(search),
         debug: params.get("debug") === "1",
         reducedMotion,
+        onLabels: labelBus.emit,
         nowMs: () => Date.now(),
       });
     } catch (e) {
@@ -109,12 +111,12 @@ export function App() {
       controller = null;
       engine.dispose();
     };
-  }, [store]);
+  }, [store, labelBus]);
 
   return (
     <>
       <canvas ref={canvasRef} className="stage" />
-      {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} />}
+      {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} />}
     </>
   );
 }

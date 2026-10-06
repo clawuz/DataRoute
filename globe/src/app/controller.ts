@@ -28,6 +28,8 @@ export interface GlobeControllerDeps {
   nowMs: () => number;
   fetch?: typeof fetch;
   visible?: () => boolean;
+  /** per-frame airport label positions (the store only carries them at HUD rate) */
+  onLabels?: (labels: AirportLabel[]) => void;
 }
 
 export interface GlobeController {
@@ -75,6 +77,24 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     return liveFrozen ?? liveRaw(model, nowSec);
   }
 
+  let labelModel: GlobeModel | null = null;
+  let labelIatas: string[] = [];
+  function computeLabels(): AirportLabel[] {
+    if (!model) return [];
+    if (labelModel !== model) {
+      labelModel = model;
+      labelIatas = pickLabelAirports(model, LABEL_COUNT);
+    }
+    const out: AirportLabel[] = [];
+    for (const iata of labelIatas) {
+      const a = model.airports[iata];
+      if (!a) continue;
+      const p = d.engine.screenOf(a.lat, a.lon, 0);
+      out.push({ iata, x: p.x, y: p.y, visible: p.visible });
+    }
+    return out;
+  }
+
   function pushHud() {
     if (disposed) return;
     const nowSec = d.nowMs() / 1000;
@@ -95,15 +115,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       reducedMotion: d.reducedMotion,
       debug: d.debug ? { ...perf, flights: model?.flights.length ?? 0 } : undefined,
     });
-    const labels: AirportLabel[] = [];
-    if (model) {
-      for (const iata of pickLabelAirports(model, LABEL_COUNT)) {
-        const a = model.airports[iata];
-        if (!a) continue;
-        const p = d.engine.screenOf(a.lat, a.lon, 0);
-        labels.push({ iata, x: p.x, y: p.y, visible: p.visible });
-      }
-    }
+    const labels = computeLabels();
     d.store.set({
       ...base,
       mode,
@@ -132,6 +144,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       hoverIdx = d.engine.pick(pending.x, pending.y, currentCur(nowSec));
       pending = null;
     }
+    if (d.onLabels && model) d.onLabels(computeLabels());
     hudTimer += dt;
     if (hudTimer >= HUD_TICK_SEC) {
       hudTimer = 0;

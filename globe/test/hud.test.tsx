@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { createStore } from "@web/hud/store";
-import { EMPTY_GLOBE_SNAPSHOT, type GlobeHudSnapshot } from "../src/app/hud-model";
+import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../src/app/hud-model";
 import { AirportLabels, Credit, EventFeed, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
@@ -101,5 +101,32 @@ describe("GlobeHud", () => {
     const sources = Array.from(hud.children).filter((c) => c.classList.contains("source"));
     expect(sources.length).toBe(2);
     expect(hud.textContent).toContain("SOURCE: ADSB.FI");
+  });
+});
+
+describe("per-frame labels, a11y, clamping, fixture honesty", () => {
+  it("bus updates label positions imperatively and marks labels aria-hidden", () => {
+    const bus = createLabelBus();
+    const { container } = render(<AirportLabels labels={[{ iata: "IST", x: 1, y: 2, visible: true }]} bus={bus} />);
+    const el = container.querySelector<HTMLElement>(".airport-label")!;
+    expect(el.getAttribute("aria-hidden")).toBe("true");
+    act(() => bus.emit([{ iata: "IST", x: 50, y: 60, visible: false }]));
+    expect(el.style.left).toBe("50px");
+    expect(el.style.top).toBe("60px");
+    expect(el.style.visibility).toBe("hidden");
+  });
+  it("event feed is an explicit non-live log", () => {
+    const { container } = render(<EventFeed events={[{ id: "1", kind: "LANDED", text: "x", at: 1 }]} />);
+    const feed = container.querySelector(".events")!;
+    expect(feed.getAttribute("role")).toBe("log");
+    expect(feed.getAttribute("aria-live")).toBe("off");
+  });
+  it("clamps loading progress", () => {
+    expect(text(render(<LoadingOverlay s={snap({ textureProgress: -0.2 })} />).container)).toBe("LOADING EARTH IMAGERY 0%");
+  });
+  it("a fixture-mode snapshot never says DELAYED", () => {
+    const store = createStore(snap({ dataState: "ok", sourceName: "fixture", sourceUrl: "", updatedAgo: "2 H AGO", textureProgress: 1 }));
+    const { container } = render(<GlobeHud store={store} />);
+    expect(container.textContent!.toUpperCase()).not.toContain("DELAYED");
   });
 });

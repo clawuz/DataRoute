@@ -77,3 +77,22 @@ export function pickLabelAirports(m: GlobeModel, n: number): string[] {
 export function liveCur(m: GlobeModel, nowSec: number): number {
   return Math.min(m.span + LIVE_OVERRUN_SEC, Math.max(0, nowSec - m.from));
 }
+
+/** Per-frame channel for airport label positions (bypasses the 4 Hz store). */
+export interface LabelBus {
+  subscribe(fn: (labels: AirportLabel[]) => void): () => void;
+  emit(labels: AirportLabel[]): void;
+}
+
+export function createLabelBus(): LabelBus {
+  const subs = new Set<(labels: AirportLabel[]) => void>();
+  return {
+    subscribe(fn) {
+      subs.add(fn);
+      return () => subs.delete(fn);
+    },
+    emit(labels) {
+      for (const fn of subs) fn(labels);
+    },
+  };
+}
