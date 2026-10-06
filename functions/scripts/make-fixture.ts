@@ -151,9 +151,14 @@ export function makeFixture(now: number, seed = 1): DayFile {
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
-  const out = resolve(dirname(fileURLToPath(import.meta.url)), "../../web/public/fixture/day.json");
+  const here = dirname(fileURLToPath(import.meta.url));
   const day = makeFixture(Math.floor(Date.now() / 1000), 42);
-  mkdirSync(dirname(out), { recursive: true });
-  writeFileSync(out, JSON.stringify(day));
-  console.log(`wrote ${out}: ${day.stats.flights24h} flights, ${day.stats.airborne} airborne`);
+  for (const out of [
+    resolve(here, "../../web/public/fixture/day.json"),
+    resolve(here, "../../globe/public/fixture/day.json"),
+  ]) {
+    mkdirSync(dirname(out), { recursive: true });
+    writeFileSync(out, JSON.stringify(day));
+  }
+  console.log(`wrote web + globe fixtures: ${day.stats.flights24h} flights, ${day.stats.airborne} airborne`);
 }
