@@ -51,11 +51,18 @@ void main() {
   vec3 N = normalize(vWorldN);
   vec3 V = normalize(cameraPosition - vWorldPos);
   vec2 uv = sphereUV(vObj);
+  // u wraps 1 -> 0 at the antimeridian; take the derivatives from whichever of u / u+0.5 is continuous there,
+  // otherwise the 2x2 quad across the seam samples the smallest mip and draws a hairline.
+  vec2 uvB = vec2(fract(uv.x + 0.5), uv.y);
+  vec2 dxA = dFdx(uv), dyA = dFdy(uv), dxB = dFdx(uvB), dyB = dFdy(uvB);
+  bool useB = max(abs(dxA.x), abs(dyA.x)) > max(abs(dxB.x), abs(dyB.x));
+  vec2 gx = useB ? dxB : dxA;
+  vec2 gy = useB ? dyB : dyA;
   float ndl = dot(N, uSunDir);
   float dayAmt = smoothstep(-0.10, 0.22, ndl);
 
-  vec3 dayCol = uHasTex > 0.5 ? texture2D(uDay, uv).rgb : vec3(0.10, 0.22, 0.45);
-  float cloud = uHasTex > 0.5 ? texture2D(uClouds, vec2(fract(uv.x + uCloudDrift), uv.y)).r : 0.0;
+  vec3 dayCol = uHasTex > 0.5 ? textureGrad(uDay, uv, gx, gy).rgb : vec3(0.10, 0.22, 0.45);
+  float cloud = uHasTex > 0.5 ? textureGrad(uClouds, vec2(uv.x + uCloudDrift, uv.y), gx, gy).r : 0.0;
   float ocean = clamp((dayCol.b - max(dayCol.r, dayCol.g)) * 6.0, 0.0, 1.0);
 
   vec3 albedo = mix(dayCol, vec3(1.0), cloud * 0.6);
@@ -65,7 +72,7 @@ void main() {
   vec3 R = reflect(-uSunDir, N);
   col += vec3(1.0, 0.97, 0.9) * pow(max(dot(R, V), 0.0), 36.0) * ocean * (1.0 - cloud) * 0.45 * dayAmt;
 
-  vec3 night = uHasTex > 0.5 ? pow(texture2D(uNight, uv).rgb, vec3(1.7)) : vec3(0.0);
+  vec3 night = uHasTex > 0.5 ? pow(textureGrad(uNight, uv, gx, gy).rgb, vec3(1.7)) : vec3(0.0);
   col += night * vec3(1.0, 0.78, 0.5) * 1.7 * (1.0 - dayAmt) * (1.0 - cloud * 0.65);
 
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);

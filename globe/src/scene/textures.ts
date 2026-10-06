@@ -1,4 +1,4 @@
-import { NoColorSpace, TextureLoader, type Texture, type WebGLRenderer } from "three";
+import { NoColorSpace, RepeatWrapping, TextureLoader, type Texture, type WebGLRenderer } from "three";
 
 export type TextureTier = "8k" | "4k";
 
@@ -65,6 +65,7 @@ export async function loadEarthTextures(
         // the first (north) image row lands at v = 1, matching v = (lat + π/2) / π in the Earth shader.
         t.colorSpace = NoColorSpace;
         t.flipY = true;
+        t.wrapS = RepeatWrapping; // cloud drift and the antimeridian rely on horizontal wrap
         done++;
         onProgress(done / 3);
         return t;
