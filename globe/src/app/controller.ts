@@ -142,8 +142,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (tooltip && model && hoverIdx >= 0) {
       const hf = model.flights[hoverIdx];
       const note = hoverNote(hf, cur);
-      const ac = hf.type ?? aircraftLabel(hf).name;
-      tooltip = { ...tooltip, route: `${tooltip.route} · ${ac}${note ? ` · ${note}` : ""}` };
+      const ac = hf.type ?? (hf.desc ? aircraftLabel(hf).name : "");
+      tooltip = { ...tooltip, route: `${tooltip.route}${ac ? ` · ${ac}` : ""}${note ? ` · ${note}` : ""}` };
     }
     let followHud = null;
     if (follow && model) {

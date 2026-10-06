@@ -207,7 +207,7 @@ describe("globe controller", () => {
     await flush();
     b.c.onPointerMove(10, 20);
     b.frame(0.3);
-    expect(b.store.get().tooltip!.route).toContain("IST → JFK · AIRCRAFT UNKNOWN");
+    expect(b.store.get().tooltip!.route).toBe("IST → JFK · NO DATA");
     b.c.dispose();
   });
 
