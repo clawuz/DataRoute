@@ -1,7 +1,7 @@
 # DataRoute — THY Globe: Tasarım Spec'i
 
 - **Tarih:** 2026-10-06
-- **Durum:** Onay bekliyor (kullanıcı tasarımı sözlü onayladı; yazılı spec incelemesi bekleniyor)
+- **Durum:** Onay bekliyor (kullanıcı tasarımı ve 2026-10-06 ek kararlarını sözlü onayladı; yazılı spec incelemesi bekleniyor)
 - **Öncülleri:** `2026-10-05-thy-data-tunnel-design.md` (veri hattı §4 aynen geçerli), Plan 1 (collector, canlı), Plan 2 (tunnel sürümü, yayında ve **değişmeyecek**)
 - **Görsel referans:** [jsulpis/realtime-planet-shader](https://github.com/jsulpis/realtime-planet-shader) (GPL-3.0)
 
@@ -25,6 +25,9 @@ Tunnel sürümü veriyi okunur kıldı ama "tek bir noktaya akan çizgiler" gibi
 | GPL | Kullanıcı: "GPL sorununu boşver, referanstan kopyala." Referans repodan alınan kod/shader parçalarının üstünde yazarın telif başlığı korunur, `NOTICE` dosyasına kaynak yazılır. **`LICENSE` dosyasına dokunulmaz;** lisans yönetimi sahibindedir. |
 | Dokular | 8K gündüz + 8K gece. Kaynak ve lisans indirme öncesi ayrıca onaya sunulur (§9). |
 | GLOBE | İstendiğinde tek ekran; kamera yaylar boyunca akmaz. |
+| Veri kalitesi | Collector düzeltilir (§4.2); globe her rotalı uçuş için soluk **planlı rota yayı** + parlak **gözlenen iz** çizer. |
+| FOLLOW hızı | Varsayılan **×240** (8 saatlik uçuş ≈ 2 dk). |
+| LIVE | Varsayılan açılış modu: **otomatik tur + tahmini (extrapolated) başlar + olay akışı**; aksiyon durmaz. |
 | FOLLOW | Seçili uçuşun yayı boyunca kamera akar; yükseklik, hız vb. değerler doğru ve senkron. |
 
 ## 3. Mimari
@@ -45,17 +48,33 @@ web/src/data/*  ← `@web/*` takma adıyla paylaşılır (model, timeline, sourc
 - **Derinlik:** Dünya derinlik yazar; yaylar ve başlar derinlik testiyle küre tarafından doğru gizlenir.
 - **Render sırası:** uzay → tunnel nebulası → Dünya → atmosfer kabuğu → yaylar → başlar → bloom.
 
-## 4. Veri değişikliği (Plan 1'e küçük ek)
+## 4. Veri değişiklikleri (Plan 1'e ek)
 
+### 4.1 Havalimanları
 `day.json`'a isteğe bağlı bir alan eklenir (şema v1 geriye uyumlu; eski istemciler yok sayar):
 
 ```ts
-airports?: Record<string, { lat: number; lon: number; country: string }>; // IATA → konum
+airports?: Record<string, { lat: number; lon: number; country: string; name?: string }>; // IATA → konum
 ```
 
-- Collector, günün uçuşlarında geçen havalimanlarını (`from`/`to`, ≈ 110–150 adet) route önbelleğindeki koordinatlardan üretir. İstanbul (IST, SAW) her zaman dahildir.
-- `functions/src/publish.ts` (`buildDayFile`) ve `day-schema.ts` güncellenir, testleri eklenir, fixture üreteci aynı alanı üretir, `collect` yeniden deploy edilir.
-- Alan yoksa (eski dosya) globe, kalkış/iniş bağlantılarını ve havalimanı düğümlerini çizmez, kalan her şey çalışır.
+- Collector, günün uçuşlarında geçen havalimanlarını (≈ 230 adet) route önbelleğindeki koordinatlardan üretir. IST ve SAW her zaman dahildir.
+- Alan yoksa (eski dosya) globe havalimanı düğümlerini ve planlı yayları çizmez; gözlenen izler çalışır.
+- Konum kaynağı adsbdb'dir (havalimanı referans noktası). Rota bilinmeyen uçuşlar (ölçülen ≈ %4) için havalimanı işareti konmaz.
+
+### 4.2 Veri kalitesi: kapsam boşlukları ve "iniş" sınıflaması (ölçüme dayalı)
+**Ölçüm (2026-10-06, 1.151 rotalı ve "inmiş" kayıtlı uçuş):** yalnızca 414'ünün (%36) son noktası varış havalimanına 100 km'den yakın; son nokta–varış mesafesi medyanı 754 km, 90. yüzdelik 6.769 km; son noktadaki medyan irtifa ≈ 9.200 ft. Nedenler:
+1. adsb.fi alıcıları okyanus, Afrika ve Asya'da seyrek: uçak sinyal dışına çıkıyor.
+2. `tracker.step` 45 dakikalık sessizlikten sonra uçuşu "indi" sayıp kapatıyor; sinyal dönünce aynı uçak **yeni uçuş** oluyor (örnek: THY6275 → JFK iki kayıt).
+
+**Düzeltme (`functions/src/tracker.ts`, `publish.ts`, `day-schema.ts`):**
+- Her uçuşa `end: "AIRBORNE" | "LANDED" | "LAST_CONTACT"` eklenir. `arr` yalnızca `LANDED` ve `LAST_CONTACT` için dolu, anlamı "son temas zamanı"dır.
+- **LANDED:** yerde görüldüğünde; ya da 45 dk sessizlikte, rota biliniyorsa **son nokta varış havalimanına ≤ 150 km ve irtifa < 150 (15.000 ft)** ise.
+- **LAST_CONTACT:** 45 dk sessizlik ve LANDED koşulu sağlanmıyorsa. Uçuş **hemen kapatılmaz**: 14 saat boyunca "beklemede" kalır.
+- **Birleştirme:** Aynı `icao24` + aynı çağrı kodu ile ≤ 14 saat içinde yeniden görülürse ve fiziksel olarak mümkünse (son nokta ile yeni ilk nokta arasındaki büyük daire mesafesi ≤ 950 km/sa × geçen saat + 100 km) ve önceki uçuş `LANDED` değilse, yeni örnekler **aynı uçuşa eklenir**, aradaki süre bir `gaps` listesine yazılır.
+- `Flight.gaps?: [number, number][]`: boşluk başlangıç/bitiş (uçuşa göre göreli saniye). Globe boşlukları soluk çizer.
+- 14 saat sonra hâlâ görülmeyen `LAST_CONTACT` uçuşlar kesinleşir. `LANDED` uçuşun ardından aynı uçak yeniden havalanırsa yeni uçuş başlar (mevcut kural).
+- Geçmiş 24 saatlik veri yeniden birleştirilmez; yeni kural yeni uçuşlardan itibaren geçerlidir (pencere bir gün içinde yenilenir).
+- Testler: boşlukla birleştirme, LANDED ve LAST_CONTACT sınıflaması, imkânsız sıçrayışta birleştirmeme, 14 saat sonra kesinleşme, `gaps` serileştirmesi.
 
 ## 5. Sahne ayrıntıları
 
@@ -83,6 +102,7 @@ Saf fonksiyonlar, Astronomical Almanac düşük duyarlıklı formülleri (~0,01�
 ### 5.4 Yaylar (`scene/arcs`, `geo3d/curve`)
 - Her uçuşun `s` örnekleri (zaman, irtifa/100 ft, enlem, boylam) → 3B noktalar: `P = (1 + k·alt_km/6371)·ecef(φ, λ)`, **k = 30** (görsel abartı). HUD gerçek irtifayı gösterir.
 - Noktalar arası **Catmull-Rom** (centripetal) eğri, zaman parametreli. Her uçuş, model kurulurken en fazla 96 noktaya eşit zaman aralıklarıyla yeniden örneklenir; toplam segment sayısı böylece sınırlı kalır.
+- **Planlı rota:** rotası bilinen (havalimanları `airports`'ta bulunan) her uçuşta kalkış ile varış havalimanı arasında **soluk bir büyük daire yayı** (irtifa kaldırması yarım sinüs, tepe ≈ seyir irtifası) her zaman çizilir. Üstüne **gözlenen iz** parlak çizilir. `gaps` aralıkları ve gözlenmeyen kısımlar soluk kalır.
 - **Gözlenen parça** düz çizgi, **projected** parçalar kesikli:
   - Havadaki uçuşun henüz uçulmamış kısmı: son örnekten varış havalimanına büyük daire yayı.
   - Kalkış ve iniş uçları: havalimanı ile ilk/son örnek arasındaki kısa bağlantı.
@@ -102,16 +122,20 @@ Saf fonksiyonlar, Astronomical Almanac düşük duyarlıklı formülleri (~0,01�
 - **Geçişler:** `TO_FOLLOW` ve `TO_GLOBE` 2,5 sn, ease-in-out; küresel yörünge üzerinde yay boyunca geçer (kameranın Dünya'yı kesmesi engellenir: yarıçap alt sınırı 1,05 R). Geçiş sırasında Dünya dönüşü ve HUD sürer.
 - `prefers-reduced-motion`: geçiş süreleri ×2, kamera sallanması/dönüş ×0,4.
 
-### 6.2 GLOBE
-- Döngü Plan 2 ile aynı: REPLAY 90 sn ⇄ LIVE 30 sn, girdi gelince manuel mod, 20 sn sonra otomatik devam.
-- Etkileşim: sürükle (döndür), üzerine gel (tooltip), tıkla (uçuşu seç → FOLLOW), `Space`, `←` `→`, `H`, `F`.
+### 6.2 GLOBE ve LIVE
+- **Açılış modu LIVE**'dır (gerçek "şimdi"). REPLAY elle seçilir (`R`); 24 saat **3 dk**'da oynar (×480), 15 sn LIVE beklemesi yoktur: bitince LIVE'a döner.
+- **Tahmini başlar (extrapolated):** Her havadaki uçuşun başı, iki örnek arasında son ölçülen yer hızı ve yönle her karede ilerletilir (büyük daire üstünde); yeni veri gelince 1,5 sn'lik yumuşatmayla düzeltilir. HUD'da başlar "EXTRAPOLATED" etiketiyle ayrılır; ölçülen değerler "UPDATED 38 S AGO" ile yaşını gösterir. Tahmin en çok 5 dk sürer, sonra baş durur ve "LAST CONTACT" olur.
+- **Otomatik tur (LIVE'da):** GLOBE (≈ 25 sn) → havadaki bir uçuş seçilir (uzun menzillileri tercih eder) → FOLLOW'da **catch-up**: o ana kadar uçulan iz ×240 ile oynatılır, canlı başa ulaşınca kısa süre (≈ 20 sn) canlı kalınır → GLOBE'a dönülür → bir sonraki. Seçim son 3 turdakini tekrarlamaz. Girdi gelince tur durur (manuel mod), 20 sn sonra kaldığı yerden sürer.
+- **Olay akışı:** kalkış/iniş ve LAST CONTACT olayları (`TK1 DEPARTED IST → JFK`, `TK80 LANDED ESB`) alt köşede akar (son 6 satır). Olay anında ilgili havalimanı düğümü nabız atar. Olaylar veri yenilenmelerinde önceki ve yeni model karşılaştırılarak çıkarılır; ilk yüklemede olay üretilmez.
+- Sürekli hareket: kamera GLOBE'da çok yavaş bir yaw sürüklenmesi (≈ 0,6°/sn, fiziksel dönüşten ayrı, `prefers-reduced-motion`'da ×0,4) yapar.
+- Etkileşim: sürükle (döndür), üzerine gel (tooltip), tıkla (FOLLOW), `Space`, `←` `→`, `R` (REPLAY ⇄ LIVE), `T` (otomatik tur aç/kapa), `H`, `F`.
 
 ### 6.3 FOLLOW ve zaman modeli
 - Seçim: bir yayın üstüne tıklama (ya da otomatik spotlight'a tıklama). `Esc`, boş yere tıklama ya da `G` GLOBE'a döner.
 - **Uçuş saati `u`**: `[dep, end]` aralığında ilerler. `end`, inmiş uçuşta iniş zamanı, havadaki uçuşta son örnek zamanıdır.
-- **Oynatma hızı** `s = clamp((end − dep)/45 sn, 60, 2000)` kat gerçek zaman; yani 8 saatlik uçuş ≈ 45 sn, kısa uçuşlar çok yavaşlamaz. `Space` duraklatır, `←` `→` ±5 dk atlar, `[` `]` hızı yarıya/ikiye katlar.
+- **Oynatma hızı:** varsayılan **×240**; süre `clamp((end − dep)/240, 25 sn, 240 sn)` olacak şekilde hız türetilir (8 saatlik uçuş ≈ 2 dk; 1 saatlik 25 sn'ye kıstırılır, çok uzun uçuş en fazla 4 dk). `Space` duraklatır, `←` `→` ±5 dk atlar, `[` `]` hızı sırayla ×60, ×120, ×240, ×480, ×960 basamaklarında değiştirir.
 - **Zaman senkronu:** `T = dep + u` olduğundan Dünya dönüşü, gündüz/gece sınırı ve HUD saati aynı saati kullanır; uçak gerçekten karanlığa uçar.
-- Havadaki uçuşta baş canlı noktaya ulaşınca kamera orada kalır, yeni veri geldikçe (2 dk) ilerler ("LIVE HEAD" etiketi).
+- Havadaki uçuşta baş canlı noktaya ulaşınca hız ×1'e iner, kamera tahmini başı izler ("LIVE HEAD · EXTRAPOLATED"). `LAST_CONTACT` uçuşta kamera son gözlenen noktada durur ve "LAST CONTACT" yazar; kapsam boşluklarından (`gaps`) geçerken değerler "NO DATA" olur ve kamera boşluğu planlı yay üstünde aynı hızla geçer.
 - Veri yenilenirken (2 dk) seçili uçuş `id` ile korunur; kaybolursa FOLLOW kapanır ve GLOBE'a dönülür.
 
 ## 7. HUD ve doğru değerler
@@ -125,9 +149,9 @@ Tüm değerler **kameranın o anki uçuş saatinden** hesaplanır (`geo3d/teleme
 | HDG | Segmentin başlangıç pusula yönü; ortalar arasında açısal ara değer |
 | VS | Segment irtifa farkı ÷ Δt (ft/dk), aynı yumuşatma |
 | PHASE | `CLIMB` (VS > +300 ft/dk ve alt < 0,9·maks), `DESCENT` (VS < −300), aksi `CRUISE`; projected parçada `—` |
-| DIST | Katedilen büyük daire toplamı / toplam (inmiş: gözlenen toplam; havada: gözlenen + projected, "EST" etiketli) |
+| DIST | Katedilen büyük daire toplamı / toplam. `LANDED` uçuşta gözlenen toplam; havada veya `LAST_CONTACT`'ta gözlenen + planlı rota kalanı, "EST" etiketli. Boşluklardaki mesafe planlı yaydan sayılır ve "EST" olur |
 | ELAPSED | `u − dep` |
-| REMAINING / ETA | İnmiş uçuşta `arr − u`; havada kalan mesafe ÷ son 3 segmentin ortalama hızı, **"EST"** etiketli |
+| REMAINING / ETA | `LANDED` uçuşta `arr − u`; havada kalan mesafe ÷ son 3 segmentin ortalama hızı, **"EST"** etiketli; `LAST_CONTACT`'ta gösterilmez |
 | UTC / LOCAL | `T` (UTC); yerel güneş saati = UTC + boylam/15 |
 | Profil | İrtifa-zaman mini grafiği, **geçerli konumu gösteren imleç** (kamera ile görsel senkron) |
 | Rota şeridi | `IST ──●── JFK`, ilerleme çubuğu |
@@ -146,8 +170,8 @@ Plan 2 §9 ile aynı (veri gecikmesi, collecting, yükleme, WebGL2 yok) artı:
 - HUD alt satırında doku atfı gösterilir. Referans repodaki shader parçaları için `NOTICE` dosyası.
 
 ## 10. Aşamalar
-- **Aşama A:** Collector'a `airports` + `globe/` iskeleti + astro/geo3d çekirdek modüller + Dünya/uzay/atmosfer + yaylar + GLOBE modu + temel HUD + yeni siteye deploy. Kendi başına çalışan bir teslimdir.
-- **Aşama B:** FOLLOW modu (kamera donanımı, geçişler, telemetri, FlightPanel) + oynatma kontrolleri + deploy.
+- **Aşama A:** Collector'a `airports` + veri kalitesi düzeltmesi (§4.2) + `globe/` iskeleti + astro/geo3d çekirdek modüller + Dünya/uzay/atmosfer + planlı ve gözlenen yaylar + GLOBE/LIVE modu (tahmini başlar, olay akışı) + temel HUD + yeni siteye deploy. Kendi başına çalışan bir teslimdir.
+- **Aşama B:** FOLLOW modu (kamera donanımı, geçişler, telemetri, FlightPanel) + oynatma kontrolleri + otomatik tur + deploy.
 
 ## 11. Test
 - **Saf modüller (Vitest):**
@@ -155,11 +179,14 @@ Plan 2 §9 ile aynı (veri gecikmesi, collecting, yükleme, WebGL2 yok) artı:
   - `geo3d`: enlem/boylam→xyz ve geri (yuvarlak gidiş-dönüş), Catmull-Rom'un örnek noktalardan geçmesi, zaman parametreli örnekleme, antimeridyen.
   - `telemetry`: sentetik bir uçuşta GS/HDG/VS/PHASE/DIST/ELAPSED beklenen değerlerle (elle hesaplanmış), projected parçanın etiketlenmesi.
   - `camera`: durum makinesi geçişleri, `Esc`/tıklama ile dönüş, yarıçap alt sınırı (kamera Dünya'nın içine girmez), smooth damp yakınsaması.
-- **Collector:** `airports` üretimi (benzersiz, IST/SAW dahil), şema geriye uyumu, fixture.
+- **Collector:** `airports` üretimi (benzersiz, IST/SAW dahil), şema geriye uyumu, fixture; §4.2'deki sınıflama ve birleştirme testleri (önceki ölçüm: %36 → hedef: yeni uçuşlarda LANDED olmayan hiçbir uçuş "iniş" sayılmaz).
+- **LIVE:** `deadReckon` (örnekler arası başın büyük daire üstünde doğru ilerlemesi, yumuşatmalı düzeltme, 5 dk sonra durma), `events` (iki model karşılaştırması: kalkış/iniş/LAST CONTACT, ilk yüklemede olay yok), otomatik tur seçicisi (son 3'ü tekrarlamaz, uzun menzil tercihi).
 - **Görsel ve performans (tarayıcıda, gerçek veri + fixture):** GLOBE ve FOLLOW ekran görüntüleri; ≥ 55 fps (1080p, ~2.200 yay, kalite denetleyicisi açık); FOLLOW sırasında HUD değerlerinin kameranın konumuyla uyuştuğunun elle kontrolü (ALT imleci, DIST, UTC/terminatör).
 
 ## 12. Riskler
 - **8K doku belleği ve ilk yükleme süresi** (tahmini onlarca MB): `-4k` yedek sürüm ve ilerlemeli yükleme göstergesi.
+- **Alıcı kapsamı:** okyanus/Afrika/Asya'da izler boşluklu; ölçüm: eski kuralla uçuşların yalnızca %36'sı varış havalimanına ulaşıyordu. Düzeltme + planlı yay bunu örter ama gerçek veri gibi göstermez.
+- **Rota doğruluğu:** adsbdb çağrı kodunu planlı rotaya eşler; yanlış eşleşme olabilir (ölçülmedi). `LANDED` sınıflaması varış yakınlığını kontrol ettiği için yanlış eşleşmeyi ele verir.
 - **2 dakikalık örnekleme:** kamera yolu 2 dk'lık noktalardan geçen eğridir; hız/yön ortalamadır. Bu sınır HUD'da yazar.
 - **GPL:** kod kopyalanırsa türev eser GPL-3.0 yükümlülükleri doğurur; karar sahibindedir.
 - **adsb.fi koşulları** (kişisel/ticari olmayan, atıf) ve **TK font lisansı** önceki spec'lerdeki gibi geçerlidir.
