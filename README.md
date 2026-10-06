@@ -50,7 +50,10 @@ synthetic dataset, `?debug=1` for FPS / quality.
     cd globe && npm test
     firebase deploy --only hosting:globe       # builds globe/ and deploys
 
-Keys: Space pause · R replay ⇄ live · ← / → one hour · H hide HUD · F fullscreen. Drag to rotate, hover an arc for details.
+Keys: Space pause · R replay ⇄ live · ← / → one hour · H hide HUD · F fullscreen · T auto-tour on/off.
+Click an arc (or let the tour pick one) to FOLLOW it: the camera flows along the flight in real time with its true altitude, speed, heading and vertical speed (2-minute averages; gaps are `NO DATA`, extrapolated heads `EXTRAPOLATED`).
+While following: Space pause · ← / → ±5 min · [ / ] speed ×60…×960 · Esc / G back to the globe.
+Drag to rotate, hover an arc for details.
 
 `globe/` reuses `web/src` (data, cycle, HUD) through the `@web/*` alias; the tunnel build in `web/` is unchanged
 (`firebase deploy --only hosting:tunnel`). Earth imagery: NASA Earth Observatory (see `NOTICE`).
