@@ -1,0 +1,16 @@
+DataRoute — third-party notices
+
+1. globe/src/scene/earth.ts
+   The Earth shading approach (day/night blend, night lights, cloud mix, Reinhard-style tone mapping) is adapted
+   from "realtime-planet-shader" by Julien Sulpis, https://github.com/jsulpis/realtime-planet-shader,
+   licensed under GPL-3.0. How this repository is licensed with respect to that work is decided by the
+   repository owner.
+
+2. Earth imagery (globe/public/textures)
+   NASA Earth Observatory / Visible Earth: Blue Marble (land_shallow_topo), Black Marble 2016 (Suomi NPP VIIRS),
+   cloud composite. NASA imagery is generally not copyrighted; credit "NASA Earth Observatory".
+
+3. Live aircraft data: adsb.fi open data (personal, non-commercial use; attribution required).
+   Flight routes: adsbdb. Aircraft registry: tar1090-db (open source).
+
+4. TK fonts are licensed and are not stored in git; they are copied into the build from a local folder.
