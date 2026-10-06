@@ -4,6 +4,7 @@ import { CAMERA_Z } from "../data/mapping";
 import type { Model } from "../data/model";
 import { createHeads } from "./heads";
 import { collectPickPoints, pickNearest, projectToScreen, type PickPoints, type ScreenPoint } from "./picking";
+import { PULSE_PERIOD, TUNNEL_PERIOD, advance } from "./clocks";
 import { LEVELS, initQuality, updateQuality } from "./quality";
 import { createRibbons, type Ribbons } from "./ribbons";
 import { createTunnel } from "./tunnel";
@@ -113,10 +114,10 @@ export function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): En
   function frame(now: number) {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
-    clock += dt;
+    clock = advance(clock, dt, PULSE_PERIOD);
     const f = source ? source(dt) : IDLE_FRAME;
 
-    tunnelTime += dt * f.flow * flowScale;
+    tunnelTime = advance(tunnelTime, dt * f.flow * flowScale, TUNNEL_PERIOD);
     tunnel.uniforms.u_time.value = tunnelTime;
     tunnel.uniforms.u_tint.value.set(f.tint[0], f.tint[1], f.tint[2]);
     group.rotation.z = f.roll;
