@@ -3,7 +3,8 @@ import { act, render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { createStore } from "@web/hud/store";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../src/app/hud-model";
-import { AirportLabels, Credit, EventFeed, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
+import type { FollowHud } from "../src/app/follow-hud";
+import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
 const text = (el: HTMLElement) => el.textContent!.replace(/\s+/g, " ").trim();
@@ -128,5 +129,52 @@ describe("per-frame labels, a11y, clamping, fixture honesty", () => {
     const store = createStore(snap({ dataState: "ok", sourceName: "fixture", sourceUrl: "", updatedAgo: "2 H AGO", textureProgress: 1 }));
     const { container } = render(<GlobeHud store={store} />);
     expect(container.textContent!.toUpperCase()).not.toContain("DELAYED");
+  });
+});
+
+const fh = (o: Partial<FollowHud> = {}): FollowHud => ({
+  tk: "TK1", route: "IST → JFK", state: "OBSERVED", alt: "FL370 · 37,000 FT", gs: "480 KT", hdg: "290°",
+  vs: "+1,000 FT/MIN", phase: "CLIMB", dist: "56 / 334 KM", elapsed: "00:05", remaining: "00:25 EST",
+  utc: "08:15 UTC", local: "08:21 LOCAL SOLAR", speed: "×240", progress: 0.25, profile: [100, 300, 370],
+  cursor: 0.5, notes: ["GS / HDG / VS ARE 2-MIN AVERAGES"], ...o,
+});
+
+describe("FlightPanel", () => {
+  it("shows every telemetry value, the state badge and the averages note", () => {
+    const { container } = render(<FlightPanel f={fh()} />);
+    const t = text(container);
+    for (const s of ["TK1", "IST → JFK", "OBSERVED", "FL370 · 37,000 FT", "480 KT", "290°", "+1,000 FT/MIN", "CLIMB", "56 / 334 KM", "00:05", "00:25 EST", "08:15 UTC", "×240", "2-MIN AVERAGES"])
+      expect(t).toContain(s);
+    expect(container.querySelector(".fp-state")!.className).toContain("observed");
+  });
+
+  it("marks NO DATA and EXTRAPOLATED states with their own class", () => {
+    const a = render(<FlightPanel f={fh({ state: "NO DATA" })} />).container;
+    expect(a.querySelector(".fp-state")!.className).toContain("no-data");
+    const b = render(<FlightPanel f={fh({ state: "EXTRAPOLATED" })} />).container;
+    expect(b.querySelector(".fp-state")!.className).toContain("extrapolated");
+  });
+
+  it("draws the altitude profile with a cursor and the route progress bar", () => {
+    const { container } = render(<FlightPanel f={fh({ progress: 0.25, cursor: 0.5 })} />);
+    expect(container.querySelector("svg polyline")).not.toBeNull();
+    const bar = container.querySelector<HTMLElement>(".fp-bar > i")!;
+    expect(bar.style.width).toBe("25%");
+    const cur = container.querySelector("svg line.fp-cursor")!;
+    expect(Number(cur.getAttribute("x1"))).toBeCloseTo(50, 3);
+  });
+});
+
+describe("ModeLine / notice with FOLLOW", () => {
+  it("shows FOLLOW with speed and state; PAUSED live; and the notice", () => {
+    expect(text(render(<ModeLine s={snap({ follow: fh() })} />).container)).toBe("FOLLOW · ×240 · OBSERVED");
+    expect(text(render(<ModeLine s={snap({ paused: true })} />).container)).toBe("LIVE · PAUSED");
+    const { container } = render(<GlobeHud store={createStore(snap({ notice: "TRACK TOO SHORT" }))} />);
+    expect(text(container)).toContain("TRACK TOO SHORT");
+  });
+
+  it("the flight panel fades with H but is not the attribution", () => {
+    const { container } = render(<GlobeHud store={createStore(snap({ follow: fh(), hidden: true }))} />);
+    expect(container.querySelector(".hud.hidden .flight-panel")).not.toBeNull();
   });
 });

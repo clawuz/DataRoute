@@ -1,6 +1,7 @@
 import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine, TitleBlock } from "@web/hud/Hud";
 import { useEffect, useRef } from "react";
 import { useStore, type Store } from "@web/hud/store";
+import type { FollowHud } from "../app/follow-hud";
 import type { AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
 
 export function EventFeed({ events }: { events: EventLine[] }) {
@@ -52,13 +53,62 @@ export function AirportLabels({ labels, bus }: { labels: AirportLabel[]; bus?: L
   );
 }
 
+const rows: [string, keyof FollowHud][] = [
+  ["ALT", "alt"], ["GS", "gs"], ["HDG", "hdg"], ["VS", "vs"], ["PHASE", "phase"],
+  ["DIST", "dist"], ["ELAPSED", "elapsed"], ["REMAINING", "remaining"], ["UTC", "utc"], ["LOCAL", "local"],
+];
+
+function Profile({ profile, cursor }: { profile: number[]; cursor: number }) {
+  const max = Math.max(1, ...profile);
+  const pts = profile.map((a, i) => `${(profile.length > 1 ? (i / (profile.length - 1)) * 100 : 0).toFixed(2)},${(30 - (a / max) * 28).toFixed(2)}`).join(" ");
+  const x = (cursor * 100).toFixed(2);
+  return (
+    <svg className="fp-profile" viewBox="0 0 100 30" preserveAspectRatio="none" aria-label="Altitude profile">
+      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+      <line className="fp-cursor" x1={x} x2={x} y1="0" y2="30" stroke="var(--thy)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+export function FlightPanel({ f }: { f: FollowHud }) {
+  const [from, to] = f.route.split(" → ");
+  return (
+    <div className="flight-panel">
+      <div className="fp-head">
+        <span className="fp-tk">{f.tk}</span>
+        <span className={`fp-state ${f.state.toLowerCase().replace(/ /g, "-")}`}>{f.state}</span>
+      </div>
+      <div className="fp-route label">
+        <span>{from}</span>
+        <span className="fp-bar"><i style={{ width: `${Math.round(f.progress * 100)}%` }} /></span>
+        <span>{to ?? ""}</span>
+      </div>
+      <div className="fp-route-text label">{f.route}</div>
+      <dl className="fp-grid">
+        {rows.map(([label, key]) => (
+          <div key={label}>
+            <dt className="label">{label}</dt>
+            <dd>{String(f[key])}</dd>
+          </div>
+        ))}
+      </dl>
+      <Profile profile={f.profile} cursor={f.cursor} />
+      <div className="fp-speed label">{f.speed}</div>
+      <div className="fp-notes label">{f.notes.map((n) => <div key={n}>{n}</div>)}</div>
+    </div>
+  );
+}
+
 export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
-  const text =
-    s.mode === "REPLAY"
+  const text = s.follow
+    ? `FOLLOW · ${s.follow.speed} · ${s.follow.state}`
+    : s.mode === "REPLAY"
       ? "REPLAY · 24H IN 3 MIN"
-      : s.extrapolated > 0
-        ? `LIVE · ${s.extrapolated} HEADS EXTRAPOLATED`
-        : "LIVE";
+      : s.paused
+        ? "LIVE · PAUSED"
+        : s.extrapolated > 0
+          ? `LIVE · ${s.extrapolated} HEADS EXTRAPOLATED`
+          : "LIVE";
   return <div className="modeline label">{text}</div>;
 }
 
@@ -82,13 +132,15 @@ export function GlobeHud({ store, labelBus }: { store: Store<GlobeHudSnapshot>; 
         <>
           <Counters c={s.counters} animate={animate} />
           <DepartureStrip bins={s.depHist} playhead={s.playhead} />
-          <RegionBars counts={s.regionAirborne} />
+          {!s.follow && <RegionBars counts={s.regionAirborne} />}
+          {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />
         </>
       )}
       <SourceLine s={s} />
       <Credit s={s} />
+      {s.notice && <div className="notice label">{s.notice}</div>}
       <FlightCardView key={"tip-" + (s.tooltip?.tk ?? "")} card={s.tooltip} kind="tooltip" />
       <LoadingOverlay s={s} />
       {s.debug && <pre className="debug">{`${s.debug.fps} FPS · Q${s.debug.level} · ${s.debug.flights} FLIGHTS`}</pre>}

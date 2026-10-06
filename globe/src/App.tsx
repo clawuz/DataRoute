@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { dataUrl, isFixture } from "@web/data/source";
 import { ErrorScreen } from "@web/hud/Hud";
 import { createStore } from "@web/hud/store";
+import { isClick } from "./app/click";
 import { createController, type GlobeController } from "./app/controller";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "./app/hud-model";
 import { GlobeHud } from "./hud/GlobeHud";
@@ -55,18 +56,24 @@ export function App() {
       return;
     }
     controller.setTextureState(0, "");
+    let maxProgress = 0;
     engine
-      .loadTextures((p) => controller?.setTextureState(p, ""))
+      .loadTextures((p) => {
+        maxProgress = Math.max(maxProgress, p);
+        controller?.setTextureState(maxProgress, "");
+      })
       .then((tier) => controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)"))
       .catch((e) => {
         console.error("[textures]", e);
         controller?.setTextureState(1, "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
       });
 
+    let press: { x: number; y: number; t: number } | null = null;
     let drag: { x: number; y: number; t: number } | null = null;
     const down = (e: PointerEvent) => {
       canvas.setPointerCapture?.(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, t: performance.now() };
+      press = { x: e.clientX, y: e.clientY, t: performance.now() };
       controller?.onInteract();
     };
     const move = (e: PointerEvent) => {
@@ -78,9 +85,16 @@ export function App() {
       }
     };
     const up = (e: PointerEvent) => {
+      press = null;
       drag = null;
       engine.endDrag();
       canvas.releasePointerCapture?.(e.pointerId);
+    };
+    const upClick = (e: PointerEvent) => {
+      const p = press;
+      press = null;
+      up(e);
+      if (p && isClick(e.clientX - p.x, e.clientY - p.y, performance.now() - p.t)) controller?.onClick(e.clientX, e.clientY);
     };
     const key = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -91,7 +105,7 @@ export function App() {
     const leave = () => controller?.onPointerLeave();
     canvas.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    window.addEventListener("pointerup", upClick);
     window.addEventListener("pointercancel", up);
     canvas.addEventListener("lostpointercapture", up);
     window.addEventListener("keydown", key);
@@ -100,7 +114,7 @@ export function App() {
     return () => {
       canvas.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointerup", upClick);
       window.removeEventListener("pointercancel", up);
       canvas.removeEventListener("lostpointercapture", up);
       window.removeEventListener("keydown", key);
