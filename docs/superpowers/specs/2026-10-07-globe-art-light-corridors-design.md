@@ -1,13 +1,14 @@
-# DataRoute Globe — Işık, atmosfer ve rota koridorları: Tasarım Spec'i
+# DataRoute Globe — Işık, atmosfer, rota koridorları ve rota müziği: Tasarım Spec'i
 
 Tarih: 2026-10-07 · Kapsam: `globe/` (collector ve `web/` değişmez) · Önceki spec: `2026-10-06-thy-globe-design.md`
 
 ## 1. Amaç
-Globe'u "veri işi olduğu ilk bakışta anlaşılan, sanatsal" bir sahneye yaklaştırmak: (a) rota yoğunluğunu gösteren **koridorlar**, (b) gezegenin yaşayan görünümü için **ışık ve atmosfer** katmanları. Yeni görsel öğelerin hiçbiri veri uydurmaz; veriye bağlı olmayan tek öğe (aurora) varsayılan kapalıdır ve açıkça süs olarak işaretlenir.
+Globe'u "veri işi olduğu ilk bakışta anlaşılan, sanatsal" bir sahneye yaklaştırmak: (a) rota yoğunluğunu gösteren **koridorlar**, (b) gezegenin yaşayan görünümü için **ışık ve atmosfer** katmanları, (c) her koridorun bir ses olduğu, istendiğinde açılan **rota müziği** (sonifikasyon). Yeni görsel öğelerin hiçbiri veri uydurmaz; veriye bağlı olmayan tek öğe (aurora) varsayılan kapalıdır ve açıkça süs olarak işaretlenir.
 
 ## 2. Kararlar (kullanıcıdan)
 - Öncelik: **ışık ve atmosfer** + **rota koridorları**. Çizgi stili olarak koridorlar seçildi (kuyruklu yaylar, halka dalgaları, akan parçacıklar ve dünün hayaleti bu spec'in dışında; sonraki tur).
 - Aurora: eklenir, **varsayılan kapalı**, `A` tuşuyla açılır.
+- Rota müziği: **sakin ambiyans**, her yoğun koridor bir pad sesi; `M` ile aç/kapa, **varsayılan kapalı**; hazır müzik dosyası yok (Web Audio ile üretilir).
 - Gerçek yıldız haritası eklenir; **indirme öncesi dosya adı, kaynak ve boyut ayrıca kullanıcıya bildirilir ve onay alınır** (NASA kamu malı veri tercih edilir).
 
 ## 3. Rota koridorları (`scene/corridors.ts`)
@@ -29,15 +30,29 @@ Hepsi Earth shader'ına ve küçük yeni katmanlara eklenir; Dünya'nın fizikse
 - **Aurora (`scene/aurora.ts`):** Dünya yarıçapının 1.012 katında iki kutup kabuğu; fragment shader'da enlem 62–78° bandında gürültüyle dalgalanan perde, yalnızca gece tarafında (`ndl < 0`), yeşil→mor. **Veriye bağlı değil (süs).** Varsayılan kapalı, `A` ile açılır. Açıkken HUD'da `AURORA · ILLUSTRATIVE` etiketi.
 - **Kalite bağlantısı:** `LEVELS` kalite seviyeleri düşünce önce aurora, sonra bulut gölgesi, sonra güneş parlaması kapanır. `?art=0` tüm yeni efektleri kapatır (koridor dahil).
 
+## 4b. Rota müziği (`audio/route-voices.ts`, `audio/engine.ts`)
+Veri-ses eşlemesi (sonifikasyon): sesin müzik olduğu iddiası yok; perde mesafeyi, ses seviyesi yoğunluğu, FOLLOW'daki parlaklık yüksekliği anlatır.
+- **Sesler:** `buildCorridors` çıktısından yoğunluğa göre ilk **10** koridor, her biri sürekli çalan bir pad (iki detune'lu osilatör + alçak geçiren filtre + yavaş genlik LFO'su).
+- **Nota (saf, testli):** rota anahtarının (`min+max` IATA) kararlı karması → a-minör pentatonik gamdan derece (A C D E G); aynı rota her zaman aynı notayı çalar.
+- **Oktav:** mesafe > 6000 km → oktav 2 (≈110 Hz tabanı), 3000–6000 → 3, 1000–3000 → 4, < 1000 → 5.
+- **Tını:** bölgeye göre dalga biçimi ve filtre kesim frekansı (yumuşak sinüs/üçgen/hafif testere karışımları); sabit tablo.
+- **Ses seviyesi:** `master · w` (w = `sqrt(count/maxCount)`), sınırlayıcı (compressor) toplamı korur; ana seviye varsayılan düşük.
+- **Yerleşim (pan):** koridor orta noktasının ekran x konumuna göre `[-1, 1]` (kısıtlı, yavaş yumuşatılmış); Dünya'nın arka yüzündeki koridorlar kısılır.
+- **Oda:** üretilmiş dürtü yanıtıyla (≈ 2,5 sn) yankı, ıslak oran %35.
+- **Olaylar:** kalkış/iniş olayında o rotanın notasının bir oktav üstünde kısa yumuşak "damla"; saniyede en çok 3.
+- **FOLLOW:** takip edilen rotanın sesi +6 dB, diğerleri −6 dB; takip edilen uçuşun yüksekliği o sesin filtre kesimini açar (`cutoff ≈ 300 + 8·alt100` Hz).
+- **Kontrol:** `M` tuşu aç/kapa; varsayılan kapalı; tercih `localStorage`'da (try/catch). Ses ilk açılışta kullanıcı tuş hareketiyle başlar (tarayıcı otomatik çalma kuralı). 0,8 sn yumuşak giriş/çıkış; sekme gizlenince `AudioContext` askıya alınır. HUD'da küçük `SOUND ON` göstergesi. `?art=0` sesi de kapalı tutar.
+- **Test:** eşleme saf fonksiyonlar (aynı rota → aynı nota, oktav sınırları, seviye yoğunlukla artar, ilk 10 seçimi, pan kısıtı); ses grafiği sahte `AudioContext` ile (düğüm sayısı, `dispose`, `M` aç/kapa, sekme gizlenince askı). Dinleme kontrolü kullanıcıyla yapılır.
+
 ## 5. Dosyalar
-Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `app/art.ts` (`?art`, `A`/`C` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
+Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `audio/route-voices.ts`, `audio/engine.ts` (rota müziği), `app/art.ts` (`?art`, `A`/`C`/`M` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`, `M`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
 
 ## 6. Test
 - **Birim (Vitest):** `buildCorridors` (aynı rota N uçuş = 1 koridor, ters yön birleşir, rotasız uçuş dışarıda, sıralama), ağırlık→kalınlık/renk/alfa eğrisi (monoton, sınırlar), alacakaranlık ve gölge fonksiyonlarının TS yansımaları (güneş vektöründen), `art` durumu (`?art=0`, tuşlar, kalite düşüşü sırası), `arcs` koridor açıkken planlı yay üretmez / kapalıyken üretir, HUD etiketleri.
 - **Tarayıcı (gözle):** terminatör bandı, bulut gölgesi, güneş parlaması, koridor kalınlıkları (İstanbul çevresinde yığılma yok), FPS ≥ 55 (kalite denetleyici açık); sonuçlar uygulama notlarına yazılır.
 
 ## 7. Yayın
-Adımlar ayrı commit: (1) koridorlar, (2) alacakaranlık + bulut gölgesi + güneş parlaması, (3) yıldız haritası (onaylı indirme), (4) aurora. Her adım sonrası yerel görsel kontrol; sonunda tek `hosting:globe` deploy (onayla). Eski site ve collector etkilenmez.
+Adımlar ayrı commit: (1) koridorlar, (2) alacakaranlık + bulut gölgesi + güneş parlaması, (3) yıldız haritası (onaylı indirme), (4) aurora, (5) rota müziği. Her adım sonrası yerel görsel kontrol; sonunda tek `hosting:globe` deploy (onayla). Eski site ve collector etkilenmez.
 
 ## 8. Riskler
 - Alacakaranlık ve gölge gündüzü karartabilir → parlaklık ölçümü, sabitler ayarlanır.
