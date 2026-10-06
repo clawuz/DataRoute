@@ -35,7 +35,9 @@ const IDLE_FRAME: FrameInput = { tRel: 0, roll: 0, flow: 1, tint: [1, 1, 1], hig
 
 export function hasWebGL2(): boolean {
   try {
-    return !!document.createElement("canvas").getContext("webgl2");
+    const gl = document.createElement("canvas").getContext("webgl2");
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+    return !!gl;
   } catch {
     return false;
   }
@@ -70,17 +72,31 @@ export function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): En
   let quality = initQuality();
   let level = LEVELS[0];
   const size = { w: 1, h: 1 };
+  let sized = false;
 
   function resize() {
-    size.w = canvas.clientWidth || window.innerWidth;
-    size.h = canvas.clientHeight || window.innerHeight;
+    const w = canvas.clientWidth || window.innerWidth;
+    const h = canvas.clientHeight || window.innerHeight;
+    if (w < 1 || h < 1) {
+      sized = false;
+      return;
+    }
+    sized = true;
+    size.w = w;
+    size.h = h;
     renderer.setSize(size.w, size.h, false);
     composer.setSize(size.w, size.h, false);
     camera.aspect = size.w / size.h;
     camera.updateProjectionMatrix();
     const pr = renderer.getPixelRatio();
     tunnel.setSize(size.w * pr, size.h * pr, level.tunnelScale);
-    bloom.resolution.scale = level.bloomScale;
+    bloom.resolution.scale = level.bloomScale; // must precede the explicit sizing below (fires a change event)
+    // mipmapBlur ignores resolution.scale: size the luminance + mip chain explicitly (mip0 is already half its input).
+    const k = level.bloomScale * 2;
+    const bw = Math.max(1, Math.round(size.w * pr * k));
+    const bh = Math.max(1, Math.round(size.h * pr * k));
+    bloom.luminancePass.setSize(bw, bh);
+    bloom.mipmapBlurPass.setSize(bw, bh);
     ribbons?.setResolution(size.w * pr, size.h * pr, pr);
     heads.setPixelRatio(pr);
   }
@@ -110,8 +126,10 @@ export function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): En
     }
     if (model) heads.update(model, f.tRel, clock, f.highlight);
 
-    tunnel.render(renderer);
-    composer.render(dt);
+    if (sized) {
+      tunnel.render(renderer);
+      composer.render(dt);
+    }
 
     fpsAcc += dt;
     fpsFrames++;
@@ -131,6 +149,8 @@ export function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): En
   }
 
   window.addEventListener("resize", resize);
+  const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(() => resize()) : null;
+  ro?.observe(canvas);
   resize();
   raf = requestAnimationFrame(frame);
 
@@ -168,6 +188,7 @@ export function createEngine(canvas: HTMLCanvasElement, opts: EngineOptions): En
     dispose() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      ro?.disconnect();
       ribbons?.dispose();
       heads.dispose();
       tunnel.dispose();

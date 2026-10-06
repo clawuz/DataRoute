@@ -8,6 +8,7 @@ import { FROM, flight, makeDay } from "./helpers";
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 function setup() {
+  let now = (FROM + 86400) * 1000;
   let frameFn: ((dt: number) => FrameInput) | null = null;
   const engine: Engine = {
     setModel: vi.fn(),
@@ -30,11 +31,11 @@ function setup() {
     fixture: false,
     debug: false,
     reducedMotion: false,
-    nowMs: () => (FROM + 86400) * 1000,
+    nowMs: () => now,
     fetch: (async () => new Response(JSON.stringify(day))) as unknown as typeof fetch,
     random: () => 0,
   });
-  return { c, engine, store, frame: (dt: number) => frameFn!(dt) };
+  return { c, engine, store, frame: (dt: number) => frameFn!(dt), advance: (ms: number) => (now += ms) };
 }
 
 describe("controller", () => {
@@ -77,5 +78,41 @@ describe("controller", () => {
     await flush();
     h.c.dispose();
     expect(() => h.frame(0.016)).toThrow();
+  });
+
+  it("runs a trailing pick for a throttled pointer move", async () => {
+    const h = setup();
+    await flush();
+    h.c.onPointerMove(1, 2);
+    expect(h.engine.pick).toHaveBeenCalledTimes(1);
+    h.advance(40);
+    h.c.onPointerMove(30, 40);
+    expect(h.engine.pick).toHaveBeenCalledTimes(1);
+    h.frame(0.016);
+    expect(h.engine.pick).toHaveBeenCalledTimes(1); // still inside the window
+    h.advance(100);
+    h.frame(0.016);
+    expect(h.engine.pick).toHaveBeenCalledTimes(2);
+    expect(h.engine.pick).toHaveBeenLastCalledWith(30, 40, expect.any(Number));
+    h.c.dispose();
+  });
+
+  it("pointer leave clears the hover", async () => {
+    const h = setup();
+    await flush();
+    vi.mocked(h.engine.pick).mockReturnValue(7); // hover differs from the spotlighted flight (0)
+    h.c.onPointerMove(1, 2);
+    expect(h.frame(0.016).highlight).toBe(7);
+    h.c.onPointerLeave();
+    expect(h.frame(0.016).highlight).toBe(0); // falls back to the spotlight
+    h.c.dispose();
+  });
+
+  it("picks the first spotlight immediately instead of after 8 s", async () => {
+    const h = setup();
+    await flush();
+    expect(h.frame(0.3).highlight).toBeGreaterThanOrEqual(0); // with the old 8 s delay this is -1
+    expect(h.store.get().spotlight).not.toBeNull();
+    h.c.dispose();
   });
 });

@@ -39,16 +39,24 @@ export function App() {
       reducedMotion,
       nowMs: () => Date.now(),
     });
-    const onKey = (e: KeyboardEvent) => controller?.onKey(e.key);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      controller?.onKey(e.key);
+    };
+    const onLeave = () => controller?.onPointerLeave();
     const onMove = (e: PointerEvent) => controller?.onPointerMove(e.clientX, e.clientY);
     const onClick = () => controller?.onClick();
     window.addEventListener("keydown", onKey);
     window.addEventListener("pointermove", onMove);
     window.addEventListener("click", onClick);
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    window.addEventListener("blur", onLeave);
     return () => {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("click", onClick);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("blur", onLeave);
       controller?.dispose();
       engine.dispose();
     };

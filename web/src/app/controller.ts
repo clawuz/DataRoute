@@ -32,6 +32,7 @@ export interface Controller {
   onKey(key: string): void;
   onPointerMove(x: number, y: number): void;
   onClick(): void;
+  onPointerLeave(): void;
   setPerf(fps: number, level: number): void;
   dispose(): void;
 }
@@ -50,6 +51,7 @@ export function createController(d: ControllerDeps): Controller {
   let hidden = false;
   let hudTimer = 0;
   let lastPick = -Infinity;
+  let pendingPick: { x: number; y: number } | null = null;
   let perf = { fps: 0, level: 0 };
   const scratch = new Float32Array(3);
 
@@ -63,6 +65,7 @@ export function createController(d: ControllerDeps): Controller {
       if (sampleAt(f, cycle.tRel)) live.push(i);
     });
     spotId = live.length ? model.flights[live[Math.floor(random() * live.length)]].id : null;
+    if (spotId === null) spotTimer = SPOTLIGHT_SEC - 1; // nothing airborne yet: retry in 1 s
   }
 
   function screenFor(idx: number): ScreenPoint | null {
@@ -104,6 +107,11 @@ export function createController(d: ControllerDeps): Controller {
         chooseSpotlight();
       }
     }
+    if (pendingPick && d.nowMs() - lastPick >= PICK_INTERVAL_MS) {
+      lastPick = d.nowMs();
+      hoverIdx = d.engine.pick(pendingPick.x, pendingPick.y, cycle.tRel);
+      pendingPick = null;
+    }
     hudTimer += dt;
     if (hudTimer >= HUD_TICK_SEC) {
       hudTimer = 0;
@@ -128,7 +136,10 @@ export function createController(d: ControllerDeps): Controller {
       model = buildModel(day);
       tl = buildTimeline(model);
       d.engine.setModel(model);
-      if (first) cycle = initCycle(bounds());
+      if (first) {
+        cycle = initCycle(bounds());
+        spotTimer = SPOTLIGHT_SEC;
+      }
       if (idxOf(spotId) < 0) {
         spotId = null;
         pinned = false;
@@ -170,7 +181,10 @@ export function createController(d: ControllerDeps): Controller {
       const now = d.nowMs();
       if (now - lastPick >= PICK_INTERVAL_MS) {
         lastPick = now;
+        pendingPick = null;
         hoverIdx = d.engine.pick(x, y, cycle.tRel);
+      } else {
+        pendingPick = { x, y };
       }
     },
     onClick() {
@@ -183,6 +197,10 @@ export function createController(d: ControllerDeps): Controller {
         spotTimer = SPOTLIGHT_SEC;
       }
       pushHud();
+    },
+    onPointerLeave() {
+      hoverIdx = -1;
+      pendingPick = null;
     },
     setPerf(fps, level) {
       perf = { fps, level };
