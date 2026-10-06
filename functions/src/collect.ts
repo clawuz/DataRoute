@@ -20,6 +20,8 @@ export interface CollectDeps {
   store: JsonStore;
   routes: RouteCache;
   provider: AdsbProvider;
+  /** Optional live-data source overriding the adsb-v2 fetch (e.g. OpenSky). Omitted = adsb path. */
+  live?: (hexes: string[], sleep: (ms: number) => Promise<void>) => Promise<AircraftState[]>;
   log: (msg: string, extra?: Record<string, unknown>) => void;
   warn: (msg: string, extra?: Record<string, unknown>) => void;
   clock: () => number; // milliseconds
@@ -68,7 +70,9 @@ export async function runCollect(d: CollectDeps): Promise<"ok" | "delayed" | "co
     const sel = selectHexes(fleet.hexes, prev, now);
     polled = sel.hexes.length;
     full = sel.full;
-    aircraft = await fetchAircraft(d.fetch, d.provider, sel.hexes, d.sleep);
+    aircraft = d.live
+      ? await d.live(sel.hexes, d.sleep)
+      : await fetchAircraft(d.fetch, d.provider, sel.hexes, d.sleep);
   } catch (e) {
     const error = String(e);
     d.warn("live data failed", { error });

@@ -223,4 +223,24 @@ describe("runCollect", () => {
       expect(again.hexCalls).toHaveLength(3); // still due for a full sweep
     });
   });
+
+  it("default config requests hex URLs from the adsb provider (no live override)", async () => {
+    const urls: string[] = [];
+    const inner = fakeFetch();
+    const f = (async (u: string | URL) => (urls.push(String(u)), inner(u))) as typeof fetch;
+    await runCollect(deps({ fetch: f }));
+    expect(urls.filter((u) => u.includes("opendata.adsb.fi"))).toEqual(["https://opendata.adsb.fi/api/v2/hex/abc123"]);
+    expect(urls.some((u) => u.includes("opensky"))).toBe(false);
+  });
+
+  it("a live override replaces the adsb fetch and its provider is the attribution source", async () => {
+    const live = vi.fn(async () => [
+      { icao24: "abc123", cs: "THY1", t: NOW, lat: 44.2, lon: 25.1, alt100: 370, onGround: false, gs: 486, trk: 308.5 },
+    ]);
+    const d = deps({ live, provider: { name: "OpenSky Network", url: "https://opensky-network.org", baseUrl: "" } });
+    await expect(runCollect(d)).resolves.toBe("ok");
+    expect(live).toHaveBeenCalledWith(["abc123"], d.sleep);
+    const file = (d.store as ReturnType<typeof memStore>).files.get(DAY_PATH)!.data as DayFile;
+    expect(file.source).toEqual({ name: "OpenSky Network", url: "https://opensky-network.org" });
+  });
 });
