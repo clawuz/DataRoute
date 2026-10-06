@@ -48,7 +48,7 @@ describe("chooseTier", () => {
 describe("textureUrls", () => {
   it("builds per-tier urls; clouds are always 2k", () => {
     expect(textureUrls("8k")).toEqual({ day: "/textures/day-8k.jpg", night: "/textures/night-8k.jpg", clouds: "/textures/clouds-2k.jpg" });
-    expect(textureUrls("16k")).toEqual({ day: "/textures/day-16k.jpg", night: "/textures/night-8k.jpg", clouds: "/textures/clouds-2k.jpg" });
+    expect(textureUrls("16k")).toEqual({ day: "/textures/day-16k.jpg", night: "/textures/night-16k.jpg", clouds: "/textures/clouds-2k.jpg" });
     expect(textureUrls("4k").day).toBe("/textures/day-4k.jpg");
   });
 });

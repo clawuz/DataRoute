@@ -46,7 +46,7 @@ export interface EarthTextureUrls {
 
 export const textureUrls = (tier: TextureTier): EarthTextureUrls => ({
   day: `/textures/day-${tier}.jpg`,
-  night: `/textures/night-${tier === "16k" ? "8k" : tier}.jpg`, // night lights stay 8K
+  night: `/textures/night-${tier}.jpg`,
   clouds: "/textures/clouds-2k.jpg",
 });
 

@@ -29,6 +29,7 @@ uniform float uHasTex;
 uniform vec3 uSunDir;
 uniform float uCloudDrift;
 uniform float uExposure;
+uniform float uNightPow;
 uniform float uGamma;
 varying vec3 vObj;
 varying vec3 vWorldN;
@@ -72,7 +73,7 @@ void main() {
   vec3 R = reflect(-uSunDir, N);
   col += vec3(1.0, 0.97, 0.9) * pow(max(dot(R, V), 0.0), 36.0) * ocean * (1.0 - cloud) * 0.45 * dayAmt;
 
-  vec3 night = uHasTex > 0.5 ? pow(textureGrad(uNight, uv, gx, gy).rgb, vec3(1.7)) : vec3(0.0);
+  vec3 night = uHasTex > 0.5 ? pow(textureGrad(uNight, uv, gx, gy).rgb, vec3(uNightPow)) : vec3(0.0);
   col += night * vec3(1.0, 0.78, 0.5) * 1.7 * (1.0 - dayAmt) * (1.0 - cloud * 0.65);
 
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
@@ -91,6 +92,7 @@ export type EarthUniforms = {
   uSunDir: { value: Vector3 };
   uCloudDrift: { value: number };
   uExposure: { value: number };
+  uNightPow: { value: number };
   uGamma: { value: number };
 }
 
@@ -103,6 +105,10 @@ export interface Earth {
   dispose(): void;
 }
 
+/** Night-map contrast: the 2012 16K map carries a brighter blue land/ocean background than the 2016 8K one, so it needs a steeper curve to keep only the city lights. */
+export const NIGHT_POW_DEFAULT = 1.7;
+export const NIGHT_POW_16K = 2.8;
+
 export function createEarth(): Earth {
   const uniforms: EarthUniforms = {
     uDay: { value: null },
@@ -112,6 +118,7 @@ export function createEarth(): Earth {
     uSunDir: { value: new Vector3(1, 0, 0) },
     uCloudDrift: { value: 0 },
     uExposure: { value: 1.5 },
+    uNightPow: { value: NIGHT_POW_DEFAULT },
     uGamma: { value: 1 / 2.4 },
   };
   const geometry = new SphereGeometry(1, 128, 96);
@@ -126,6 +133,7 @@ export function createEarth(): Earth {
       uniforms.uNight.value = t?.night ?? null;
       uniforms.uClouds.value = t?.clouds ?? null;
       uniforms.uHasTex.value = t ? 1 : 0;
+      uniforms.uNightPow.value = t?.tier === "16k" ? NIGHT_POW_16K : NIGHT_POW_DEFAULT;
     },
     setSun(dir) {
       uniforms.uSunDir.value.set(dir[0], dir[1], dir[2]).normalize();
