@@ -18,7 +18,7 @@ export function useTickNumber(target: number, animate: boolean): number {
     const t0 = performance.now();
     let raf = 0;
     const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / DURATION_MS);
+      const k = Math.min(1, Math.max(0, (now - t0) / DURATION_MS));
       const value = from + (target - from) * (1 - (1 - k) ** 3);
       fromRef.current = value;
       setShown(value);
@@ -28,5 +28,5 @@ export function useTickNumber(target: number, animate: boolean): number {
     return () => cancelAnimationFrame(raf);
   }, [target, animate]);
 
-  return shown;
+  return animate ? shown : target;
 }

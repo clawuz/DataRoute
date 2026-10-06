@@ -41,6 +41,10 @@ describe("SourceLine", () => {
     const { container } = render(<SourceLine s={snap({ dataState: "loading" })} />);
     expect(text(container)).toBe("LOADING DATA…");
   });
+  it("renders no link for a non-http(s) URL", () => {
+    const { container } = render(<SourceLine s={snap({ sourceUrl: "javascript:alert(1)" })} />);
+    expect(container.querySelector("a")).toBeNull();
+  });
 });
 
 describe("Counters", () => {
@@ -61,13 +65,24 @@ describe("FlightCardView", () => {
     const { container } = render(
       <FlightCardView
         kind="spotlight"
-        card={{ tk: "TK1", route: "IST → JFK", fl: "FL370", gs: "GS 486 KT", elapsed: "ELAPSED 06:12", region: "AME", profile: [0, 200, 370], x: 50, y: 60, visible: true }}
+        card={{ tk: "TK1", route: "IST → JFK", fl: "FL370", gs: "GS 486 KT", elapsed: "ELAPSED 06:12", region: "AME", profile: [0, 200, 370], x: 600, y: 400, visible: true }}
       />,
     );
     expect(container.querySelector(".tk")!.textContent).toBe("TK1");
     expect(container.querySelector(".route")!.textContent).toBe("IST → JFK");
     expect(Array.from(container.querySelectorAll(".meta span")).map((e) => e.textContent)).toEqual(["FL370", "GS 486 KT", "ELAPSED 06:12"]);
     expect(container.querySelector("polyline")).not.toBeNull();
-    expect((container.firstElementChild as HTMLElement).style.left).toBe("50px");
+    expect((container.firstElementChild as HTMLElement).style.left).toBe("600px");
+  });
+  it("clamps an edge card inside the viewport and mirrors it west", () => {
+    const { container } = render(
+      <FlightCardView
+        kind="spotlight"
+        card={{ tk: "TK2", route: "A → B", fl: "FL100", gs: "GS 1 KT", elapsed: "ELAPSED 00:01", region: "EUR", profile: [], x: 50, y: 400, visible: true }}
+      />,
+    );
+    const el = container.firstElementChild as HTMLElement;
+    expect(parseFloat(el.style.left)).toBeCloseTo(26 * (768 / 100), 1);
+    expect(el.classList.contains("west")).toBe(true);
   });
 });

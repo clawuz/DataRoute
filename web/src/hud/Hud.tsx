@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { REGIONS, REGION_HEX, REGION_LABEL } from "../data/palette";
 import { fmtInt, fmtKm } from "../lib/format";
 import type { FlightCard, HudSnapshot } from "./snapshot";
@@ -54,11 +55,11 @@ export function AltitudeGauge({ bins }: { bins: number[] }) {
       <div className="label">ALTITUDE</div>
       <div className="alt-body">
         <div className="alt-scale num">
-          <span>FL410</span>
-          <span>FL200</span>
+          <span>FL420</span>
+          <span>FL210</span>
           <span>FL000</span>
         </div>
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="alt-svg">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="alt-svg" role="img" aria-label="Altitude distribution, FL000 to FL410">
           {bins.map((n, i) => (
             <rect key={i} x={0} y={H - (i + 1) * step + 0.12} width={(n / max) * W} height={step - 0.24} className="bar" />
           ))}
@@ -73,7 +74,7 @@ export function DepartureStrip({ bins, playhead }: { bins: number[]; playhead: n
   return (
     <div className="dep">
       <div className="label">DEPARTURES / HOUR</div>
-      <svg viewBox="0 0 240 40" preserveAspectRatio="none" className="dep-svg">
+      <svg viewBox="0 0 240 40" preserveAspectRatio="none" className="dep-svg" role="img" aria-label="Departures per hour over the last 24 hours">
         {bins.map((n, i) => (
           <rect key={i} x={i * 10 + 1} y={40 - (n / max) * 38} width={8} height={(n / max) * 38} className="bar" />
         ))}
@@ -104,7 +105,7 @@ export function RegionBars({ counts }: { counts: number[] }) {
 export function SourceLine({ s }: { s: HudSnapshot }) {
   if (s.dataState === "loading") return <div className="source label">LOADING DATA…</div>;
   const name = s.sourceName.toUpperCase();
-  const src = s.sourceUrl ? (
+  const src = /^https?:\/\//.test(s.sourceUrl) ? (
     <a href={s.sourceUrl} target="_blank" rel="noreferrer">
       {name}
     </a>
@@ -137,10 +138,22 @@ function Profile({ values }: { values: number[] }) {
   );
 }
 
+const CARD_W_VMIN = 26; // card width + connector gap
+const CARD_HALF_H_VMIN = 8; // half card height + margin
+
 export function FlightCardView({ card, kind }: { card: FlightCard | null; kind: "spotlight" | "tooltip" }) {
   if (!card || !card.visible) return null;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const vmin = Math.min(vw, vh) / 100;
+  const west = card.x < vw / 2; // outward = away from the screen centre
+  const x = west ? Math.max(card.x, CARD_W_VMIN * vmin) : Math.min(card.x, vw - CARD_W_VMIN * vmin);
+  const y = Math.min(Math.max(card.y, CARD_HALF_H_VMIN * vmin), vh - CARD_HALF_H_VMIN * vmin);
   return (
-    <div className={`card ${kind}`} style={{ left: `${card.x}px`, top: `${card.y}px`, borderLeftColor: REGION_HEX[card.region] }}>
+    <div
+      className={`card ${kind} ${west ? "west" : "east"}`}
+      style={{ left: `${x}px`, top: `${y}px`, "--accent": REGION_HEX[card.region] } as CSSProperties}
+    >
       <div className="tk">{card.tk}</div>
       <div className="route">{card.route}</div>
       <div className="meta num">
@@ -179,8 +192,8 @@ export function Hud({ store }: { store: Store<HudSnapshot> }) {
         </>
       )}
       <SourceLine s={s} />
-      <FlightCardView card={s.spotlight} kind="spotlight" />
-      <FlightCardView card={s.tooltip} kind="tooltip" />
+      <FlightCardView key={s.spotlight?.tk ?? "none"} card={s.spotlight} kind="spotlight" />
+      <FlightCardView key={s.tooltip?.tk ?? "none"} card={s.tooltip} kind="tooltip" />
       {s.debug && (
         <pre className="debug">{`${s.debug.fps} FPS · Q${s.debug.level} · ${s.debug.flights} FLIGHTS`}</pre>
       )}
