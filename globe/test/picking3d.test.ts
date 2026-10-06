@@ -43,6 +43,12 @@ describe("pickFlight", () => {
     expect(pickFlight(idx, null, cur, new Matrix4(), camBack, 800, 800, 400, 400)).toBe(0);
   });
 
+  it("honours the world matrix: a half turn swaps the visible flight", () => {
+    const turned = new Matrix4().makeRotationY(Math.PI);
+    expect(pickFlight(idx, null, cur, new Matrix4(), camera(), 800, 800, 400, 400)).toBe(0);
+    expect(pickFlight(idx, null, cur, turned, camera(), 800, 800, 400, 400)).toBe(1);
+  });
+
   it("returns -1 away from every point and for points in the future", () => {
     expect(pickFlight(idx, null, cur, new Matrix4(), camera(), 800, 800, 20, 20)).toBe(-1);
     expect(pickFlight(idx, null, 50, new Matrix4(), camera(), 800, 800, 400, 400)).toBe(-1); // before dep

@@ -37,7 +37,7 @@ varying vec3 vWorldPos;
 
 vec2 sphereUV(vec3 p) {
   vec3 d = normalize(p);
-  float lon = atan(d.x, d.z);
+  float lon = (abs(d.x) + abs(d.z) < 1e-6) ? 0.0 : atan(d.x, d.z); // atan(0, 0) is undefined at the exact poles
   float lat = asin(clamp(d.y, -1.0, 1.0));
   return vec2((lon + PI) / (2.0 * PI), (lat + PI * 0.5) / PI);
 }

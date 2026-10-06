@@ -72,3 +72,16 @@ describe("space", () => {
     s.dispose();
   });
 });
+
+describe("earth uniforms", () => {
+  it("every uniform declared in EARTH_FRAG is provided by the material", () => {
+    const declared = [...EARTH_FRAG.matchAll(/uniform\s+\w+\s+(\w+)\s*;/g)].map((m) => m[1]);
+    expect(declared.length).toBeGreaterThan(5);
+    const e = createEarth();
+    try {
+      for (const name of declared) expect(Object.keys(e.uniforms)).toContain(name);
+    } finally {
+      e.dispose();
+    }
+  });
+});

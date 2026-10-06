@@ -37,6 +37,26 @@ describe("isBreak", () => {
   });
 });
 
+describe("isBreak gap branch", () => {
+  const mk = (gaps: [number, number][]) =>
+    buildGlobeModel(
+      makeDay({
+        flights: [
+          flight({ id: "g", dep: FROM + 100, s: [[0, 100, 10, 10], [300, 100, 11, 11], [420, 100, 12, 12]], gaps }),
+        ],
+      }),
+    ).flights[0];
+  it("breaks on a recorded gap even when dt is below BREAK_SEC", () => {
+    const f = mk([[0, 300]]);
+    expect(f.t[1] - f.t[0]).toBeLessThan(BREAK_SEC);
+    expect(isBreak(f, 0)).toBe(true);
+    expect(isBreak(f, 1)).toBe(false);
+  });
+  it("does not break without the gap record", () => {
+    expect(isBreak(mk([]), 0)).toBe(false);
+  });
+});
+
 describe("buildArcBuffers", () => {
   const b = buildArcBuffers(model);
   const kinds = Array.from({ length: b.count }, (_, i) => b.info[i * 4 + 1]);
