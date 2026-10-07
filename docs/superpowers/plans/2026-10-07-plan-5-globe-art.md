@@ -1799,8 +1799,8 @@ git commit -m "art(sound): wire the continent orchestra into the controller (M)"
 
 - [ ] **Step 1: README** — in the Globe section add:
 ```markdown
-Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default): a generative continent orchestra — every departure/landing is a note; Europe vibraphone, Middle East oud, Africa kalimba, Asia koto, Americas strings, domestic pulse, on one 96 BPM clock.
-Twilight band, cloud shadows, sun glare and the real star map are always on; `?art=0` turns every art layer off and restores the plain look. Preferences persist in the browser.
+Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default; a generative continent orchestra: every departure/landing is a note — Europe vibraphone, Middle East oud, Africa kalimba, Asia koto, Americas strings, domestic pulse — on one 96 BPM clock over an Am–F–C–G progression).
+Cloud shadows, sun glare and the real star map are always on (cloud shadows switch off at quality level 2 or worse). `?art=0` turns every art layer off and restores the plain look. Preferences persist in the browser.
 ```
 - [ ] **Step 2: Fill the notes table** at the end of the spec: for each section the commit hash(es) (`git log --oneline --grep "^art("`), the exact revert command (`git revert <hash>` — for multi-commit sections `git revert <newest>^..<oldest>`), the controller's visual-check observations and the tuning constants that were changed.
 - [ ] **Step 3: Full verification** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`; `cd ../functions && npx vitest run` (untouched; must pass).

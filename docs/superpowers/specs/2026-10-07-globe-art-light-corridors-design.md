@@ -61,29 +61,37 @@ Veriye dayalı üretken müzik (sonifikasyon). **Hangi nota ne zaman çalar** ge
 Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `audio/theory.ts`, `audio/score.ts`, `audio/instruments.ts`, `audio/engine.ts` (rota müziği), `app/art.ts` (`?art`, `A`/`C`/`M` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`, `M`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
 
 ## 6. Test
-- **Birim (Vitest):** `buildCorridors` (aynı rota N uçuş = 1 koridor, ters yön birleşir, rotasız uçuş dışarıda, sıralama), ağırlık→kalınlık/renk/alfa eğrisi (monoton, sınırlar), alacakaranlık ve gölge fonksiyonlarının TS yansımaları (güneş vektöründen), `art` durumu (`?art=0`, tuşlar, kalite düşüşü sırası), `arcs` koridor açıkken planlı yay üretmez / kapalıyken üretir, HUD etiketleri.
-- **Tarayıcı (gözle):** terminatör bandı, bulut gölgesi, güneş parlaması, koridor kalınlıkları (İstanbul çevresinde yığılma yok), FPS ≥ 55 (kalite denetleyici açık); sonuçlar uygulama notlarına yazılır.
+- **Birim (Vitest):** `buildCorridors` (aynı rota N uçuş = 1 koridor, ters yön birleşir, rotasız uçuş dışarıda, sıralama), ağırlık→kalınlık/renk/alfa eğrisi (monoton, sınırlar), gölge fonksiyonunun TS yansıması (güneş vektöründen), `art` durumu (`?art=0`, tuşlar, kalite düşüşü sırası), `arcs` koridor açıkken planlı yay üretmez / kapalıyken üretir, HUD etiketleri.
+- **Tarayıcı (gözle):** bulut gölgesi, güneş parlaması, koridor kalınlıkları (İstanbul çevresinde yığılma yok), FPS ≥ 55 (kalite denetleyici açık); sonuçlar uygulama notlarına yazılır.
 
 ## 7. Yayın
-Adımlar ayrı commit: (1) koridorlar, (2) alacakaranlık + bulut gölgesi + güneş parlaması, (3) yıldız haritası (onaylı indirme), (4) aurora, (5) rota müziği. Her adım sonrası yerel görsel kontrol; sonunda tek `hosting:globe` deploy (onayla). Eski site ve collector etkilenmez.
+Adımlar ayrı commit: (1) koridorlar, (2) bulut gölgesi + güneş parlaması, (3) yıldız haritası (onaylı indirme), (4) aurora, (5) rota müziği. Her adım sonrası yerel görsel kontrol; sonunda tek `hosting:globe` deploy (onayla). Eski site ve collector etkilenmez.
 
 ## 8. Riskler
-- Alacakaranlık ve gölge gündüzü karartabilir → parlaklık ölçümü, sabitler ayarlanır.
+- Bulut gölgesi gündüzü karartabilir → parlaklık ölçümü, sabitler ayarlanır.
 - Aurora veri dışı süs → varsayılan kapalı + etiket.
 - Koridor ağırlığı rota doğruluğuna bağlı (adsbdb yanlış eşleşme olabilir; spec §12'deki risk geçerli).
 - Yıldız dokusu ek indirme (8K ≈ 4–6 MB).
 
 ## 7b. Geri alınabilirlik (kullanıcı isteği: "beğenmezsem bu bölümü not al, direkt geri alırız")
-- Her bölüm (koridorlar, alacakaranlık+bulut gölgesi+parlama, yıldız haritası, aurora, rota müziği) **kendi commit(ler)iyle** gelir; commit mesajları `art(<bölüm>):` önekini taşır, böylece `git log --grep "^art(sound)"` ile bulunur ve `git revert` ile tek başına geri alınır.
+- Her bölüm (koridorlar, bulut gölgesi+parlama, yıldız haritası, aurora, rota müziği) **kendi commit(ler)iyle** gelir; commit mesajları `art(<bölüm>):` önekini taşır, böylece `git log --grep "^art(sound)"` ile bulunur ve `git revert` ile tek başına geri alınır.
 - Bağımsızlık kuralı: bir bölüm başka bölümün koduna bağımlı olmaz (ses `corridors.ts`'in saf `buildCorridors` çıktısını okur ama koridor görselinden bağımsız çalışır; koridor görseli kaldırılsa bile ses için `buildCorridors` kalır). Her bölümün tek bağlantı noktası vardır: engine/controller/keys içinde küçük, işaretli (`// art:<bölüm>`) birkaç satır.
 - Uygulama bitince hangi commit'in hangi bölüm olduğu bu spec'in sonundaki "Uygulama notları" tablosuna yazılır (bölüm → commit hash → geri alma komutu); kullanıcı bir bölümü beğenmezse oradan geri alınır.
 - Yayın: her bölüm kendi başına deploy edilebilir; beğenilmeyen bölüm geri alınıp yeniden deploy edilir.
 
-## Uygulama notları (uygulama sırasında doldurulur)
+## Uygulama notları
 | Bölüm | Commit | Geri alma |
 |---|---|---|
-| Rota koridorları | — | — |
-| Alacakaranlık + bulut gölgesi + parlama | — | — |
-| Yıldız haritası | — | — |
-| Aurora | — | — |
-| Rota müziği | — | — |
+| Çekirdek (`art.ts`, tuşlar, efekt altyapısı, HUD) | ce19e46, de7278e, 59d1cf1 | `git revert 59d1cf1 de7278e ce19e46` (diğer bölümler çekirdeğe bağlıdır; en son geri alın) |
+| Rota koridorları | 4d4536b | `git revert 4d4536b` |
+| Bulut gölgesi + güneş parlaması | 2fa789d, 74f04aa, 2472a11 (alacakaranlık eklendi, sonra kaldırıldı) | `git revert 2472a11 74f04aa 2fa789d` |
+| Yıldız haritası | 8934651, dd7abab | `git revert dd7abab 8934651` |
+| Aurora | f1a1d47, 985055c | `git revert 985055c f1a1d47` |
+| Rota müziği | 7b459ae, 3a84843, 075d0a2, 08180d4 | `git revert 08180d4 075d0a2 3a84843 7b459ae` |
+
+Gözlemler:
+- Koridorlar çiziliyor (gündüz tarafında krem/turuncu); İstanbul çevresi hâlâ beyaza doyuyor.
+- Güneş parlaması limbde doğrulandı.
+- Yıldız haritası ayarlandıktan sonra ince; takımyıldızlara göre yönelim henüz doğrulanmadı.
+- Alacakaranlık bandı kullanıcı tercihiyle kaldırıldı.
+- Aurora ve ses henüz kullanıcı tarafından incelenmedi (ses için dinleme gerekir).
