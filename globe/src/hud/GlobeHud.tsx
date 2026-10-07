@@ -7,15 +7,16 @@ import { createNoteBus, type NoteBus } from "../audio/notes-bus"; // art:sound
 import { MusicScope } from "./MusicScope"; // art:sound
 import { resolveLabelOverlaps, type AirportLabel, type EventLine, type GlobeHudSnapshot, type LabelBus } from "../app/hud-model";
 
-/** The globe's title with a hierarchy: TURKISH AIRLINES large, 24H OPERATIONS small and light beside it (the tunnel site keeps its one-line title). */
+/** The globe's title block (option A): the name, the descriptor under it on the same left edge, a hairline, then one status chip. The tunnel site keeps its one-line title. */
 export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
   return (
-    <div className="title">
+    <div className="title gt">
       <h1 className="gt-h1" aria-label="Turkish Airlines · 24H Operations">
         <span className="gt-main">TURKISH AIRLINES</span>
         <span className="gt-sub">24H OPERATIONS</span>
       </h1>
-      <div className="phase">
+      <div className="gt-rule" />
+      <div className="phase gt-chip">
         <span className="dot" />
         {s.ready ? (
           <span className="num">
@@ -26,6 +27,8 @@ export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
           <span>STANDBY</span>
         )}
       </div>
+      <ModeLine s={s} />
+      <ArtNotes art={s.art} />
     </div>
   );
 }
@@ -331,8 +334,6 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
     <div className={`hud${s.hidden ? " hidden" : ""}`}>
       <GlobeTitle s={s} />
       <MusicLockup />
-      <ModeLine s={s} />
-      <ArtNotes art={s.art} />
       {s.ready && (
         <>
           <Counters c={s.counters} animate={animate} />
