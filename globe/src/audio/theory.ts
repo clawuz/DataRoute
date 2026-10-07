@@ -1,7 +1,10 @@
 import { REGIONS } from "@web/data/palette";
 
-/** Semitones above A for each chord tone; `seventh`/`ninth` are optional colour tones. */
-export interface Chord {
+/**
+ * v2 chord shape (semitones above A for each chord tone; `seventh`/`ninth` are optional colour tones).
+ * Legacy: still used by the v2 engine, score and ney/winds code until Task 13 moves them to `harmony.ts`'s `Chord`.
+ */
+export interface LegacyChord {
   name: string;
   root: number;
   third: number;
@@ -10,13 +13,16 @@ export interface Chord {
   ninth?: number;
 }
 
-export function chordAtBeat(beat: number, progression: Chord[], beatsPerChord: number): Chord {
+export function chordAtBeat(beat: number, progression: LegacyChord[], beatsPerChord: number): LegacyChord {
   const i = Math.floor(Math.max(0, beat) / beatsPerChord) % progression.length;
   return progression[i];
 }
 
 export type RegionName = (typeof REGIONS)[number];
-export type Instrument = RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT";
+/** v3 adds the Rhodes (EP, domestic/unknown lines) and the groove voices (colours and scope lanes). */
+export type Instrument =
+  | RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT"
+  | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS" | "SAXPAD";
 
 export interface RegionMusic {
   /** semitones above A, all inside natural A minor */
@@ -112,7 +118,7 @@ export function octaveFor(distKm: number): 2 | 3 | 4 | 5 {
 
 export const freqOf = (oct: number, semis: number): number => 110 * 2 ** (oct - 2) * 2 ** (semis / 12);
 
-export function pickNote(instrument: Instrument, key: string, distKm: number, chord: Chord, beat: number, kind: "dep" | "arr"): number | null {
+export function pickNote(instrument: Instrument, key: string, distKm: number, chord: LegacyChord, beat: number, kind: "dep" | "arr"): number | null {
   const m = INSTRUMENT_MUSIC[instrument];
   if (!m || m.melody || m.arpeggio) return null;
   if (m.followChord) return freqOf(m.octaves[0], kind === "arr" || beat % 2 !== 0 ? chord.fifth : chord.root);

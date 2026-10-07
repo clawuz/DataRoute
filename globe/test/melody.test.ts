@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { SECTIONS } from "../src/audio/form";
+import { LEGACY_SECTIONS as SECTIONS } from "../src/audio/form"; // v2 data until Task 13
 import {
   NEY_LADDER, bearingOf, contourFor, initNey, initPiano, ladderFreq, ladderIndexOf, neyCell, neyRange, pianoNext, stepFor, windParts,
   type NeyNote, type NeyState,
 } from "../src/audio/melody";
-import { freqOf, type Chord } from "../src/audio/theory";
+import { freqOf, type LegacyChord as Chord } from "../src/audio/theory";
 
 const { NIGHT, MORNING, DAY, EVENING } = SECTIONS;
 const C = DAY.progression[0]; // C: root 3, third 7, fifth 10, seventh 2 → pitch classes C E G B

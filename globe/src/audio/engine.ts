@@ -1,10 +1,10 @@
 import { REGIONS } from "@web/data/palette";
 import { playNote } from "./instruments";
-import { sectionAt, type Section, type SectionId } from "./form";
+import { legacySectionAt as sectionAt, type LegacySection as Section, type SectionId } from "./form"; // v2 path until Task 13
 import { createNoteBus, type NoteEvent } from "./notes-bus";
 import { initNey, initPiano, type NeyState, type PianoState } from "./melody";
 import { planNotes, type ScoreEvent } from "./score";
-import { chordAtBeat, freqOf, type Chord, type Instrument } from "./theory";
+import { chordAtBeat, freqOf, type LegacyChord as Chord, type Instrument } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
@@ -38,6 +38,8 @@ const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x
 /** Region index whose focus boost applies to an instrument; the ney and its wind ensemble ignore focus. */
 export function instrumentRegionIdx(i: Instrument): number | null {
   if (i === "NEY" || i === "CLA" || i === "SAX" || i === "TPT") return null;
+  if (i === "EP") return REGIONS.indexOf("DOM"); // v3 Rhodes of domestic/unknown lines
+  if (i === "BASS" || i === "KICK" || i === "SNARE" || i === "HAT" || i === "OHAT" || i === "KEYS" || i === "BRASS" || i === "SAXPAD") return null; // v3 groove voices
   return REGIONS.indexOf(i === "PNO" ? "EUR" : i);
 }
 

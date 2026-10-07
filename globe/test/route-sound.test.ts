@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { freqOf } from "../src/audio/theory";
-import { SECTIONS } from "../src/audio/form";
+import { LEGACY_SECTIONS as SECTIONS } from "../src/audio/form"; // v2 data until Task 13
 import { createRouteSound } from "../src/audio/engine";
 import { playNote } from "../src/audio/instruments";
 import type { PlannedNote, ScoreEvent } from "../src/audio/score";

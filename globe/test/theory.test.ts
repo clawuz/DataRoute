@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   INSTRUMENT_MUSIC, PATTERNS, REGION_MUSIC, chordAtBeat, euclid, freqOf, hasMusic, isWestNorth, nextActiveSlot, octaveFor, pickNote, routeHash,
-  routeKey, slotIndex, slotTime, stepSec, type Chord,
+  routeKey, slotIndex, slotTime, stepSec, type LegacyChord as Chord,
 } from "../src/audio/theory";
-import { SECTIONS } from "../src/audio/form";
+import { LEGACY_SECTIONS as SECTIONS } from "../src/audio/form"; // v2 data until Task 13
 
 const A_MINOR = new Set([0, 2, 3, 5, 7, 8, 10]); // pitch classes of natural A minor above A
 const AM: Chord = { name: "Am", root: 0, third: 3, fifth: 7 };

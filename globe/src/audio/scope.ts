@@ -4,6 +4,9 @@ import type { Instrument } from "./theory";
 export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   EUR: "#3FC8F2", PNO: "#9fe3ff", MEA: "#F7C548", AFR: "#7BD389", ASI: "#F2508F", AME: "#A98BFF",
   DOM: "#F2F4F8", NEY: "#E30A17", CLA: "#ff9f43", SAX: "#e8b64a", TPT: "#fff1cf", UNK: "#6B7280",
+  // v3: the Rhodes of domestic/unknown lines and the groove voices (lanes arrive with the v3 panel, Task 13)
+  EP: "#d9e4ff", BASS: "#7f8cff", KICK: "#ff7a59", SNARE: "#ffd166", HAT: "#c9f4ff", OHAT: "#8fe8ff",
+  KEYS: "#b8f2e6", BRASS: "#ffcf70", SAXPAD: "#e8b64a",
 };
 
 /** Top-to-bottom lane order (melody and winds first, then piano, the continents, the domestic pulse). */

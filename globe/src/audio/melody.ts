@@ -1,6 +1,6 @@
 import { initialBearing } from "@collector/geo";
-import type { Section } from "./form";
-import { freqOf, type Chord } from "./theory";
+import type { LegacySection as Section } from "./form"; // v2 shape until Task 13
+import { freqOf, type LegacyChord as Chord } from "./theory"; // v2 shape until Task 13
 
 /** A-natural-minor degrees as semitones above A2, octaves 0–3 (28 entries); index = scale-degree index. */
 const DEGREES = [0, 2, 3, 5, 7, 8, 10];

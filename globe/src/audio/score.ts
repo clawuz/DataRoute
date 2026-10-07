@@ -1,7 +1,7 @@
 import { REGIONS } from "@web/data/palette";
 import type { GlobeModel } from "../model/globe-model";
 import { isIstanbul } from "@collector/regions";
-import type { Section } from "./form";
+import type { LegacySection as Section } from "./form"; // v2 shape until Task 13
 import { neyCell, pianoNext, windParts, type NeyState, type PianoState } from "./melody";
 import {
   INSTRUMENT_MUSIC, chordAtBeat, hasMusic, isWestNorth, nextActiveSlot, octaveFor, pickNote, routeKey, slotIndex, slotTime, type Instrument,

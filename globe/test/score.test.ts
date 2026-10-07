@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildGlobeModel } from "../src/model/globe-model";
 import { PATTERNS, nextActiveSlot, slotIndex, slotTime } from "../src/audio/theory";
-import { SECTIONS, type Section } from "../src/audio/form";
+import { LEGACY_SECTIONS as SECTIONS, type LegacySection as Section } from "../src/audio/form"; // v2 data until Task 13
 import { initNey, initPiano, ladderIndexOf, neyCell, type NeyState } from "../src/audio/melody";
 import {
   LOOKAHEAD_SEC, MAX_RANGE_SEC, eventsBetween, instrumentFor, planNotes as plan, velocityFor, type PlanContext, type ScoreEvent,
