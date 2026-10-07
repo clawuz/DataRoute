@@ -17,6 +17,10 @@ import {
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
+import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/engine"; // art:sound
+import { eventsBetween } from "../audio/score"; // art:sound
+import { buildCorridors, type Corridor } from "../scene/corridors"; // art:sound
+import { interpolateGreatCircle } from "@collector/geo"; // art:sound
 import { SCRUB_SEC, keyToCommand } from "./keys";
 
 export const GLOBE_CYCLE: CycleConfig = { replaySec: 180, liveSec: Number.POSITIVE_INFINITY, holdSec: 20 };
@@ -38,6 +42,10 @@ export interface GlobeControllerDeps {
   onLabels?: (labels: AirportLabel[]) => void;
   /** the URL query string (for ?art=0); defaults to none */
   search?: string;
+  /** the route orchestra (tests inject a stub); defaults to the Web Audio engine */ // art:sound
+  sound?: RouteSound;
+  /** viewport width in px for stereo panning; defaults to window.innerWidth */ // art:sound
+  viewportWidth?: () => number;
 }
 
 export interface GlobeController {
@@ -67,7 +75,42 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let hudTimer = 0;
   let perf = { fps: 0, level: 0 };
   let art: ArtState = initArt(d.search ?? "");
-  const pushEffects = () => d.engine.setEffects(effectsFor(art, perf.level)); // art:core
+  const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
+  let soundOn = false; // art:sound
+  let prevSoundCur: number | null = null; // art:sound
+  const pans = new Map<string, { pan: number; visible: boolean }>(); // art:sound
+  let corridorModel: GlobeModel | null = null; // art:sound
+  let corridorList: Corridor[] = []; // art:sound
+  const pushEffects = () => {
+    const e = effectsFor(art, perf.level);
+    d.engine.setEffects(e); // art:core
+    if (e.sound !== soundOn) { // art:sound
+      soundOn = e.sound;
+      sound.setEnabled(e.sound);
+      prevSoundCur = null;
+    }
+  };
+  const soundFocus = (): SoundFocus | null => { // art:sound
+    if (!follow || !model) return null;
+    const f = model.flights[follow.idx];
+    if (!f) return null;
+    const tel = telemetryAt(f, follow.clock.u, model.from);
+    return { regionIdx: f.regionIdx, alt100: tel?.alt100 ?? 0 };
+  };
+  function refreshPans() { // art:sound
+    if (!model) return;
+    if (corridorModel !== model) {
+      corridorModel = model;
+      corridorList = buildCorridors(model);
+    }
+    const vw = (d.viewportWidth ?? (() => (typeof window === "undefined" ? 1280 : window.innerWidth)))();
+    pans.clear();
+    for (const c of corridorList.slice(0, 40)) {
+      const [la, lo] = interpolateGreatCircle(c.fromLat, c.fromLon, c.toLat, c.toLon, 0.5);
+      const p = d.engine.screenOf(la, lo, 0);
+      pans.set(c.key, { pan: Math.min(1, Math.max(-1, (p.x - vw / 2) / (vw / 2))), visible: p.visible });
+    }
+  }
   let tex = { progress: 0, note: "" };
   let firstDataSec = 0;
   let disposed = false;
@@ -240,8 +283,19 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (hudTimer >= HUD_TICK_SEC) {
       hudTimer = 0;
       pushHud();
+      if (soundOn && model) { // art:sound
+        refreshPans();
+        sound.setEnergy(Math.min(1, Math.max(0, (d.store.get().counters.airborne ?? 0) / 150)));
+      }
     }
     const cur = currentCur(nowSec);
+    if (soundOn && model) { // art:sound
+      if (prevSoundCur !== null) {
+        const ev = eventsBetween(model, prevSoundCur, cur);
+        if (ev.length) sound.schedule(ev, soundFocus(), pans);
+      }
+      prevSoundCur = cur;
+    }
     return {
       absTime: (model?.from ?? nowSec) + cur,
       cur,
@@ -278,6 +332,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       cycle = { ...cycle, tRel: Math.max(0, cycle.tRel - (next.from - prev!.from)) };
     }
     if (!first && liveFrozen !== null) liveFrozen = Math.max(0, liveFrozen - (next.from - prev!.from));
+    if (!first && prevSoundCur !== null) prevSoundCur -= next.from - prev!.from; // art:sound
     if (!first && blend) blend.from = Math.max(0, blend.from - (next.from - prev!.from));
     if (!first && follow) {
       const idx = next.flights.findIndex((f) => f.id === follow!.id);
@@ -430,6 +485,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     },
     dispose() {
       disposed = true;
+      sound.dispose(); // art:sound
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       d.engine.setFrameSource(null);

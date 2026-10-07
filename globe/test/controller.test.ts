@@ -4,6 +4,7 @@ import { REWIND_SEC } from "../src/camera/time-ease";
 import { GLOBE_CYCLE, createController } from "../src/app/controller";
 import { createStore } from "@web/hud/store";
 import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
+import type { RouteSound } from "../src/audio/engine";
 import { FROM, flight, makeDay } from "./helpers";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -20,7 +21,7 @@ const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
     now: { gs: 480, trk: 300 },
   });
 
-function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void } = {}) {
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number } = {}) {
   let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
   let afterRender: (() => void) | null = null;
   const engine: GlobeEngine = {
@@ -55,6 +56,8 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     reducedMotion: false,
     nowMs: () => clock.ms,
     onLabels: opts.onLabels,
+    sound: opts.sound,
+    viewportWidth: opts.viewportWidth,
     fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
   });
   return {
@@ -488,5 +491,62 @@ describe("globe controller", () => {
     const last = (h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
     expect(last.aurora).toBe(false);
     h.c.dispose();
+  });
+
+  describe("sound wiring", () => {
+    const stub = () => ({ setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() });
+
+    it("M turns the sound on and off through the stub; nothing is scheduled while it is off", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.frame(0.3);
+      expect(sound.schedule).not.toHaveBeenCalled();
+      h.c.onKey("m");
+      expect(sound.setEnabled).toHaveBeenLastCalledWith(true);
+      h.c.onKey("m");
+      expect(sound.setEnabled).toHaveBeenLastCalledWith(false);
+      h.c.dispose();
+      expect(sound.dispose).toHaveBeenCalled();
+    });
+
+    it("in a replay the departure of the routed flight is scheduled as a note on its corridor", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.c.onKey("m");
+      h.c.onKey("r"); // REPLAY: 24 h in 180 s -> 480 s of flight time per second
+      for (let i = 0; i < 200; i++) h.frame(1);
+      const events = sound.schedule.mock.calls.flatMap((c) => c[0] as { kind: string; key: string; regionIdx: number }[]);
+      expect(events.some((e) => e.kind === "dep" && e.key === "IST-JFK" && e.regionIdx === 5)).toBe(true);
+      h.c.dispose();
+    });
+
+    it("publishes the airborne energy while on and keeps the stub quiet while off", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.frame(0.3);
+      expect(sound.setEnergy).not.toHaveBeenCalled();
+      h.c.onKey("m");
+      h.frame(0.3);
+      expect(sound.setEnergy).toHaveBeenCalled();
+      const e = sound.setEnergy.mock.calls.at(-1)![0] as number;
+      expect(e).toBeGreaterThanOrEqual(0);
+      expect(e).toBeLessThanOrEqual(1);
+      h.c.dispose();
+    });
+
+    it("jumps (scrubs, rewinds) never flood the score", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.c.onKey("m");
+      h.frame(0.1);
+      h.c.onKey("ArrowLeft"); // one-hour scrub: a 3600 s jump
+      h.frame(0.1);
+      expect(sound.schedule).not.toHaveBeenCalled();
+      h.c.dispose();
+    });
   });
 });
