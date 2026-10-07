@@ -115,3 +115,9 @@ body { background: #02030a; }
 .qc-btn:hover, .qc-btn:focus-visible { color: var(--ink); border-color: var(--line-strong); background: rgba(233, 237, 245, 0.14); }
 .qc-btn.on { color: #fff; border-color: var(--line-strong); background: rgba(233, 237, 245, 0.16); }
 @media (max-aspect-ratio: 1/1) { .qc-btn { font-size: calc(1.2 * var(--u)); } }
+
+/* the globe title: a large name and a small, light, widely tracked descriptor on the same baseline */
+.title .gt-h1 { display: flex; align-items: baseline; gap: 1.8vmin; flex-wrap: wrap; text-shadow: none; }
+.gt-main { font-size: calc(4 * var(--u)); text-shadow: -0.14vmin 0 rgba(255, 40, 70, 0.7), 0.14vmin 0 rgba(40, 200, 255, 0.7); }
+.gt-sub { font-family: var(--text); font-weight: 400; font-size: calc(1.7 * var(--u)); letter-spacing: 0.36em; color: rgba(233, 237, 245, 0.72); text-shadow: none; } /* the thinnest cut we ship: TK Text Regular */
+@media (max-aspect-ratio: 1/1) { .gt-main { font-size: calc(3 * var(--u)); } .gt-sub { font-size: calc(1.35 * var(--u)); letter-spacing: 0.28em; } }

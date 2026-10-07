@@ -1,10 +1,33 @@
-import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine, TitleBlock } from "@web/hud/Hud";
+import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine } from "@web/hud/Hud";
 import { useEffect, useMemo, useRef } from "react";
 import { useStore, type Store } from "@web/hud/store";
 import type { FollowHud } from "../app/follow-hud";
 import { createNoteBus, type NoteBus } from "../audio/notes-bus"; // art:sound
 import { MusicScope } from "./MusicScope"; // art:sound
 import type { AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
+
+/** The globe's title with a hierarchy: TURKISH AIRLINES large, 24H OPERATIONS small and light beside it (the tunnel site keeps its one-line title). */
+export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
+  return (
+    <div className="title">
+      <h1 className="gt-h1" aria-label="Turkish Airlines · 24H Operations">
+        <span className="gt-main">TURKISH AIRLINES</span>
+        <span className="gt-sub">24H OPERATIONS</span>
+      </h1>
+      <div className="phase">
+        <span className="dot" />
+        {s.ready ? (
+          <span className="num">
+            {s.phase} {s.timeLabel}
+            {s.paused ? " · PAUSED" : ""}
+          </span>
+        ) : (
+          <span>STANDBY</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function EventFeed({ events }: { events: EventLine[] }) {
   if (events.length === 0) return null;
@@ -200,7 +223,7 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
   const animate = !s.reducedMotion;
   return (
     <div className={`hud${s.hidden ? " hidden" : ""}`}>
-      <TitleBlock s={s} />
+      <GlobeTitle s={s} />
       <ModeLine s={s} />
       <ArtNotes art={s.art} />
       {s.ready && (
