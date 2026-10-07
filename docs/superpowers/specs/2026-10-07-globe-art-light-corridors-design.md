@@ -8,7 +8,7 @@ Globe'u "veri işi olduğu ilk bakışta anlaşılan, sanatsal" bir sahneye yakl
 ## 2. Kararlar (kullanıcıdan)
 - Öncelik: **ışık ve atmosfer** + **rota koridorları**. Çizgi stili olarak koridorlar seçildi (kuyruklu yaylar, halka dalgaları, akan parçacıklar ve dünün hayaleti bu spec'in dışında; sonraki tur).
 - Aurora: eklenir, **varsayılan kapalı**, `A` tuşuyla açılır.
-- Rota müziği: **sakin ambiyans**, her yoğun koridor bir pad sesi; `M` ile aç/kapa, **varsayılan kapalı**; hazır müzik dosyası yok (Web Audio ile üretilir).
+- Rota müziği: önce sakin ambiyans seçildi, sonra kullanıcı isteğiyle **kıta bazlı orkestraya** genişledi: kalkışlar nota, her kıtanın kendi çalgı/tını/ritim/skalası, ortak 96 BPM saat ve Am–F–C–G armoni; `M` ile aç/kapa, **varsayılan kapalı**; hazır müzik dosyası yok (Web Audio ile üretilir).
 - Gerçek yıldız haritası eklenir; **indirme öncesi dosya adı, kaynak ve boyut ayrıca kullanıcıya bildirilir ve onay alınır** (NASA kamu malı veri tercih edilir).
 
 ## 3. Rota koridorları (`scene/corridors.ts`)
@@ -30,22 +30,35 @@ Hepsi Earth shader'ına ve küçük yeni katmanlara eklenir; Dünya'nın fizikse
 - **Aurora (`scene/aurora.ts`):** Dünya yarıçapının 1.012 katında iki kutup kabuğu; fragment shader'da enlem 62–78° bandında gürültüyle dalgalanan perde, yalnızca gece tarafında (`ndl < 0`), yeşil→mor. **Veriye bağlı değil (süs).** Varsayılan kapalı, `A` ile açılır. Açıkken HUD'da `AURORA · ILLUSTRATIVE` etiketi.
 - **Kalite bağlantısı:** `LEVELS` kalite seviyeleri düşünce önce aurora, sonra bulut gölgesi, sonra güneş parlaması kapanır. `?art=0` tüm yeni efektleri kapatır (koridor dahil).
 
-## 4b. Rota müziği (`audio/route-voices.ts`, `audio/engine.ts`)
-Veri-ses eşlemesi (sonifikasyon): sesin müzik olduğu iddiası yok; perde mesafeyi, ses seviyesi yoğunluğu, FOLLOW'daki parlaklık yüksekliği anlatır.
-- **Sesler:** `buildCorridors` çıktısından yoğunluğa göre ilk **10** koridor, her biri sürekli çalan bir pad (iki detune'lu osilatör + alçak geçiren filtre + yavaş genlik LFO'su).
-- **Nota (saf, testli):** rota anahtarının (`min+max` IATA) kararlı karması → a-minör pentatonik gamdan derece (A C D E G); aynı rota her zaman aynı notayı çalar.
-- **Oktav:** mesafe > 6000 km → oktav 2 (≈110 Hz tabanı), 3000–6000 → 3, 1000–3000 → 4, < 1000 → 5.
-- **Tını:** bölgeye göre dalga biçimi ve filtre kesim frekansı (yumuşak sinüs/üçgen/hafif testere karışımları); sabit tablo.
-- **Ses seviyesi:** `master · w` (w = `sqrt(count/maxCount)`), sınırlayıcı (compressor) toplamı korur; ana seviye varsayılan düşük.
-- **Yerleşim (pan):** koridor orta noktasının ekran x konumuna göre `[-1, 1]` (kısıtlı, yavaş yumuşatılmış); Dünya'nın arka yüzündeki koridorlar kısılır.
-- **Oda:** üretilmiş dürtü yanıtıyla (≈ 2,5 sn) yankı, ıslak oran %35.
-- **Olaylar:** kalkış/iniş olayında o rotanın notasının bir oktav üstünde kısa yumuşak "damla"; saniyede en çok 3.
-- **FOLLOW:** takip edilen rotanın sesi +6 dB, diğerleri −6 dB; takip edilen uçuşun yüksekliği o sesin filtre kesimini açar (`cutoff ≈ 300 + 8·alt100` Hz).
-- **Kontrol:** `M` tuşu aç/kapa; varsayılan kapalı; tercih `localStorage`'da (try/catch). Ses ilk açılışta kullanıcı tuş hareketiyle başlar (tarayıcı otomatik çalma kuralı). 0,8 sn yumuşak giriş/çıkış; sekme gizlenince `AudioContext` askıya alınır. HUD'da küçük `SOUND ON` göstergesi. `?art=0` sesi de kapalı tutar.
-- **Test:** eşleme saf fonksiyonlar (aynı rota → aynı nota, oktav sınırları, seviye yoğunlukla artar, ilk 10 seçimi, pan kısıtı); ses grafiği sahte `AudioContext` ile (düğüm sayısı, `dispose`, `M` aç/kapa, sekme gizlenince askı). Dinleme kontrolü kullanıcıyla yapılır.
+## 4b. Rota müziği: kıta orkestrası (`audio/theory.ts`, `audio/score.ts`, `audio/instruments.ts`, `audio/engine.ts`)
+Veriye dayalı üretken müzik (sonifikasyon). **Hangi nota ne zaman çalar** gerçek kalkış/inişlerden gelir; **nasıl çaldığı** (çalgı, ritim, skala, armoni) müzik teorisiyle belirlenir. Sesin sabit bir "beste" olduğu iddiası yok; her açılışta gerçek uçuşlar neyse o çalar.
+- **Ortak çatı:** tek ana saat **96 BPM** (vuruş = 0,625 sn). Her kıtanın ritim ızgarası ana vuruşun **tam sayı bölümü** (poliritim kayma yapmaz). Armoni sabit dörtlü **Am – F – C – G**, her akor **16 vuruş** (≈ 10 sn), sürekli döner. Bütün skalalar a-minörün alt kümesi: akor değişince çarpışmaz.
+- **Zaman kaynağı:** ekranda gösterilen zaman `cur` ilerledikçe, `(önceki cur, şimdiki cur]` aralığındaki **kalkışlar** (uçuşun `dep` zamanı) ve **inişler** (yalnızca `LANDED` uçuşların `end` zamanı) nota olur. REPLAY'de 24 saat 3 dk'da çalar; canlıda gerçek zamanda. Geri sarma, kaydırma ve rewind gibi büyük sıçramalarda (aralık > 600 sn ya da geriye) olay üretilmez.
+- **Kıtalar** (bölge dizini `REGIONS` sırasında):
+
+| Kıta | Çalgı (Web Audio sentezi) | Izgara (vuruş başına) | Skala (A'dan yarım ses) | Register |
+|---|---|---|---|---|
+| DOM yurt içi | derin sinüs "kalp atışı" (kick benzeri perde düşüşü) | 1 (çeyrek) | akor kökü (çift vuruş) / beşlisi (tek vuruş) | A1 (55 Hz) civarı |
+| EUR Avrupa | vibrafon/marimba: sinüs + 4× üst ton, kısa sönüm | 2 (sekizlik) | A minör pentatonik `[0,3,5,7,10]` | mesafeyle 3–5. oktav |
+| MEA Orta Doğu | ud: testere → alçak geçiren (kesim hızla iner) + önünde süsleme notası | 2, odd adımlar %25 gecikmeli (sallantı) | `[0,3,5,7,8]` (A C D E F) | 3–4. oktav |
+| AFR Afrika | kalimba: sinüs + 2,76× metalik üst ton, kısa | 3 (üçleme, 12/8 hissi) | `[0,3,5,7,10]` | 4–5. oktav |
+| ASI Asya-Pasifik | koto: üçgen dalga + hafif perde düşüşü, hızlı pluck | 4 (onaltılık) | `[0,2,3,7,8]` (A B C E F, Hirajoshi tadı) | 4–5. oktav |
+| AME Amerika | geniş yaylı pad: iki detune testere, yavaş atak/bırakış | 0,5 (iki vuruşta 1) | `[0,5,7,10]` (A D E G, açık beşliler) | 3. oktav |
+| UNK | sessiz | — | — | — |
+
+- **Nota seçimi (saf, testli):** `scale[routeHash(rota) % uzunluk]`; oktav mesafeye göre (kıtanın aralığına kıstırılır). DOM akor kökü/beşlisi çalar (armoniyi taşır).
+- **İniş:** bir oktav aşağıda (DOM'da akorun beşlisi), 0,6× velocity, uzun sönüm.
+- **Yoğunluk sınırı:** kıta başına adımda en çok 2 nota; fazla olaylar notayı atmaz, velocity'yi artırır (`min(1, 0,5 + 0,15·n)`).
+- **Yatak:** düşük seviyeli akor pad'i (kök, üçlü, beşli; alçak geçiren), akor sınırında yumuşak geçişle akoru izler; seviyesi tüm trafik yoğunluğuna (`airborne/150`, 0..1) bağlı.
+- **Dinamik yay:** gece seyrek/ince, sabah–öğle dolu orkestra kendiliğinden veriden çıkar.
+- **FOLLOW:** takip edilen uçuşun kıtası ×1,6 öne çıkar, diğerleri ×0,7; takip edilen uçuşun yüksekliği o kıtanın çalgı filtresini açar (`kesim × (0,6 + 0,8·alt100/410)`).
+- **Yerleşim:** notanın rotasının ekran konumuna göre sol-sağ (pan) ve arka yüzde kalan rotalar kısık (×0,3).
+- **Oda:** üretilmiş yankı (≈ 2,5 sn), ıslak %30.
+- **Kontrol:** `M` tuşu aç/kapa, varsayılan **kapalı**, tercih `localStorage`'da; ses ilk açılışta kullanıcı tuş hareketiyle başlar; 0,8 sn yumuşak giriş/çıkış; sekme gizlenince askı. HUD'da `SOUND ON`. `?art=0` sesi kapalı tutar.
+- **Test:** teori ve skor saf fonksiyonlar (ızgaralar tam sayı oranlı, akor sırası, nota ⊂ skala, aralık olayları, ızgaraya oturtma, adım başına ≤ 2 nota, velocity, iniş oktavı); ses motoru sahte `AudioContext` ile (çalgı başına düğüm sayısı, odak, akor geçişi, hız sınırı, `dispose`). Dinleme ve denge kullanıcıyla (ilk sürümden sonra çalgı seviyeleri ve tınılar kulağa göre ayarlanır).
 
 ## 5. Dosyalar
-Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `audio/route-voices.ts`, `audio/engine.ts` (rota müziği), `app/art.ts` (`?art`, `A`/`C`/`M` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`, `M`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
+Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `audio/theory.ts`, `audio/score.ts`, `audio/instruments.ts`, `audio/engine.ts` (rota müziği), `app/art.ts` (`?art`, `A`/`C`/`M` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`, `M`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
 
 ## 6. Test
 - **Birim (Vitest):** `buildCorridors` (aynı rota N uçuş = 1 koridor, ters yön birleşir, rotasız uçuş dışarıda, sıralama), ağırlık→kalınlık/renk/alfa eğrisi (monoton, sınırlar), alacakaranlık ve gölge fonksiyonlarının TS yansımaları (güneş vektöründen), `art` durumu (`?art=0`, tuşlar, kalite düşüşü sırası), `arcs` koridor açıkken planlı yay üretmez / kapalıyken üretir, HUD etiketleri.

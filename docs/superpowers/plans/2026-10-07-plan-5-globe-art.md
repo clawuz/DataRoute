@@ -4,7 +4,7 @@
 
 **Goal:** Add route-density corridors, a more alive planet (twilight band, cloud shadows, sun glare, real star map, optional aurora) and an optional route-driven ambient soundscape to the globe — every part individually revertable.
 
-**Architecture:** A small pure `art` state module (`?art`, `C`/`A`/`M` keys, quality gating) feeds an `Effects` object to the engine/controller. Corridors are a new instanced-ribbon mesh built from a pure `buildCorridors(model)`; light effects are shader additions plus two small meshes; sound is a self-contained `audio/` module driven by the same pure corridors. Each section is its own commit series with prefix `art(<section>):` and `// art:<section>` markers at its few integration points so `git revert` removes it cleanly.
+**Architecture:** A small pure `art` state module (`?art`, `C`/`A`/`M` keys, quality gating) feeds an `Effects` object to the engine/controller. Corridors are a new instanced-ribbon mesh built from a pure `buildCorridors(model)`; light effects are shader additions plus two small meshes; sound is a self-contained `audio/` module (no scene imports): a continent orchestra on one 96 BPM clock whose notes come from real departures/landings. Each section is its own commit series with prefix `art(<section>):` and `// art:<section>` markers at its few integration points so `git revert` removes it cleanly.
 
 **Tech Stack:** TypeScript, Three.js ~0.186 (ShaderMaterial/instancing), Web Audio API, React, Vitest (+ jsdom), Vite. Spec: `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`.
 
@@ -12,12 +12,12 @@
 
 - Work in `globe/` only (plus README, spec notes table); never touch `web/` source, `functions/`, fonts, credentials, `.claude/`.
 - Commit trailer on every commit: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Commit message prefix per section: `art(core):`, `art(corridors):`, `art(light):`, `art(stars):`, `art(aurora):`, `art(sound):`, `art(docs):`.
-- Revertability (user request): a section never depends on another section's code; integration points are small and marked `// art:<section>`. Sound reads `buildCorridors` output only. Record section → commit hashes in the spec's "Uygulama notları" table at the end (Task 7).
+- Revertability (user request): a section never depends on another section's code; integration points are small and marked `// art:<section>`. The controller feeds sound from the model's departures/landings and (for stereo pan) corridor midpoints; the `audio/` files import nothing from `scene/`. Record section → commit hashes in the spec's "Uygulama notları" table at the end (Task 7).
 - Time contract (unchanged): `cur`/`u` seconds relative to `window.from`; float32 GPU time = seconds since engine start (`rel(nowSec)`), never epoch.
 - Earth-fixed unit sphere via `latLonToVec3`; scene altitude radius `altitudeRadius()` + `ARC_BASE_LIFT` (0.002); Earth group rotation `earthRotationRad(absTime)`; sun in the inertial frame (`sunDirection`).
 - Defaults: corridors **on**, aurora **off**, sound **off**. `?art=0` disables every new effect (twilight, cloud shadows, glare, star map, aurora, corridors, sound) and restores the previous look. Preferences persist in `localStorage` key `dataroute.art` (always try/catch; page must work without storage).
 - Quality gating (spec §4): `LEVELS` index 0 = all effects; index ≥ 1 turns aurora off; index ≥ 2 also turns cloud shadows off. Twilight, glare, corridors never gate on quality (cheap).
-- Honesty: corridors only from routed flights, label `ROUTE DENSITY · 24H` while on; aurora is decorative (label `AURORA · ILLUSTRATIVE` while on; default off); sound is a sonification (label `SOUND ON`): pitch = route distance, loudness = traffic, FOLLOW brightness = altitude. HUD text English upper-case; attribution/credit lines unchanged and still visible when HUD hidden.
+- Honesty: corridors only from routed flights, label `ROUTE DENSITY · 24H` while on; aurora is decorative (label `AURORA · ILLUSTRATIVE` while on; default off); sound is a generative sonification of real departures/landings (label `SOUND ON`): pitch = route (distance sets the octave), loudness/density = traffic, FOLLOW brightness = altitude; each continent has its own instrument, scale and rhythm on one shared 96 BPM clock and Am–F–C–G progression. HUD text English upper-case; attribution/credit lines unchanged and still visible when HUD hidden.
 - Downloads need explicit user approval with file name, URL and size stated first (star map, Task 4); stop and ask if the user has not approved.
 - Test hygiene: pure modules have hand-checkable tests; no test asserts nothing; GL shader code is verified visually by the controller (record observations in the spec's notes table).
 
@@ -31,12 +31,12 @@
 | `globe/src/scene/sun-glare.ts` (new) | additive sun glare billboard |
 | `globe/src/scene/star-uv.ts` (new) | pure `starUV` |
 | `globe/src/scene/aurora.ts` (new) | pure `auroraBand`, shell mesh |
-| `globe/src/audio/route-voices.ts` (new) | pure route → voice mapping |
-| `globe/src/audio/engine.ts` (new) | Web Audio soundscape (`createRouteSound`) |
+| `globe/src/audio/theory.ts`, `score.ts` (new) | pure clock/harmony/rhythm grids, scales, event → note planning |
+| `globe/src/audio/instruments.ts`, `engine.ts` (new) | per-continent synth recipes, chord bed, Web Audio engine (`createRouteSound`) |
 | `globe/src/app/keys.ts`, `controller.ts`, `hud-model.ts`, `hud/GlobeHud.tsx`, `styles.css` (mod) | keys, art state, snapshot field, `ArtNotes` |
 | `globe/src/scene/{arcs,earth,atmosphere,space,textures,engine}.ts` (mod) | integration points |
 
-Tests: `globe/test/{art,corridors,light,star-uv,aurora,route-voices,route-sound}.test.ts(x)` (new) and extensions of `keys`, `controller`, `arcs`, `hud`, `scene-materials`.
+Tests: `globe/test/{art,corridors,light,star-uv,aurora,theory,score,route-sound}.test.ts(x)` (new) and extensions of `keys`, `controller`, `arcs`, `hud`, `scene-materials`.
 
 Existing code you will use (verify exact names by reading): `GlobeModel`/`GlobeFlight` (`planned`, `from`, `to`, `regionIdx`, `type`) in `globe/src/model/globe-model.ts`; `plannedArc`, `plannedLiftPeak` in `geo3d/great.ts`; `latLonToVec3`, `altitudeRadius` in `geo3d/vec.ts`; `buildArcBuffers`/`createArcs` in `scene/arcs.ts`; `createEarth`/`EARTH_FRAG` in `scene/earth.ts`; `createAtmosphere`; `createSpace`; `LEVELS` in `@web/render/quality`; `REGIONS`/`REGION_RGB` in `@web/data/palette`; controller (`setPerf`, `pushHud`, `onKey`, events via `diffEvents`/`addEvents`); engine (`frameBody`, `setModel`, `screenOf`, `dispose`, `rel`).
 
@@ -1123,190 +1123,277 @@ git commit -m "art(aurora): optional decorative polar curtains (A, default off)"
 
 ---
 
-### Task 6: Route music (sound)
+### Task 6: Music theory and score (pure)
 
 **Files:**
-- Create: `globe/src/audio/route-voices.ts`, `globe/src/audio/engine.ts`
-- Modify: `globe/src/app/controller.ts`, `globe/src/app/art.ts` (none), `globe/src/App.tsx` (none)
-- Test: `globe/test/route-voices.test.ts`, `globe/test/route-sound.test.ts`, `globe/test/controller.test.ts`
+- Create: `globe/src/audio/theory.ts`, `globe/src/audio/score.ts`
+- Test: `globe/test/theory.test.ts`, `globe/test/score.test.ts`
 
 **Interfaces:**
-- Consumes: `Corridor`, `buildCorridors` (Task 2; only the pure functions — no scene import), `REGIONS`, `Effects` (Task 1).
+- Consumes: `GlobeModel` (`flights[*]`: `dep`, `end`, `status`, `from`, `to`, `regionIdx`, `planned`), `REGIONS` from `@web/data/palette`. These files must **not** import anything from `globe/src/scene/*` or Three.js (revertability: the audio module stands alone).
 - Produces:
-  - `route-voices.ts`: `MAX_VOICES = 10`; `SCALE_SEMITONES = [0, 3, 5, 7, 10]` (A minor pentatonic); `routeHash(key: string): number` (FNV-1a 32-bit); `octaveFor(distKm: number): 2 | 3 | 4 | 5`; `noteFreq(key: string, distKm: number): number` (`110 · 2^((oct − 2)) · 2^(semitones/12)`); `interface Timbre { wave: "sine" | "triangle" | "sawtooth"; cutoff: number }`; `TIMBRES: Timbre[]` (one per `REGIONS` index); `interface VoiceSpec { key: string; freq: number; wave: Timbre["wave"]; cutoff: number; gain: number; pan: number }`; `voiceSpecs(cs: Corridor[], pans?: Map<string, { pan: number; visible: boolean }>): VoiceSpec[]` (top `MAX_VOICES` by count; `gain = master · sqrt(count/max) · octaveTrim`, with `octaveTrim = 1 / 2^((oct − 2)/2)`; hidden (back side) corridors get `gain × 0.3`; `pan` clamped to [−1, 1]); `corridorMidpoint(c: Corridor): { lat: number; lon: number }` (great-circle midpoint via `interpolateGreatCircle(..., 0.5)` from `@collector/geo`).
-  - `audio/engine.ts`: `interface RouteSound { setEnabled(on: boolean): void; update(specs: VoiceSpec[], focus: { key: string | null; alt100: number } | null): void; ping(key: string, freq: number): void; dispose(): void }`; `createRouteSound(opts?: { createContext?: () => AudioContext; now?: () => number }): RouteSound`.
-  - Controller: when `effects.sound` is on, every HUD tick computes `voiceSpecs(corridors, pans)` with pans from `engine.screenOf(midpoint)` and `RouteSound.update(...)`; events `DEPARTED`/`LANDED` call `ping`.
+  - `theory.ts`: `BPM = 96`, `BEAT_SEC = 60/96`, `BEATS_PER_CHORD = 16`; `interface Chord { name: string; root: number; third: number; fifth: number }` (semitones above A); `PROGRESSION: Chord[]` (Am, F, C, G); `chordAtBeat(beat: number): Chord`; `chordAtTime(sec: number): Chord`; `type RegionName = (typeof REGIONS)[number]`; `interface RegionMusic { scale: number[]; perBeat: number; swing: number; octaves: [number, number]; followChord?: boolean }`; `REGION_MUSIC: Partial<Record<RegionName, RegionMusic>>`; `hasMusic(r: RegionName): boolean`; `routeKey(from: string | undefined, to: string | undefined, id: string): string` (`"min-max"` when both airports are known, else the flight id); `routeHash(key: string): number` (FNV-1a 32-bit); `octaveFor(distKm: number): 2 | 3 | 4 | 5`; `freqOf(oct: number, semis: number): number` (`110 · 2^(oct−2) · 2^(semis/12)`); `pickNote(region, key, distKm, chord, beat, kind): number | null`; `stepSec(region)`, `slotIndex(sec, region)`, `slotTime(region, index)`.
+  - `score.ts`: `MAX_RANGE_SEC = 600`, `LOOKAHEAD_SEC = 0.06`, `MAX_NOTES_PER_STEP = 2`; `interface ScoreEvent { kind: "dep" | "arr"; key: string; regionIdx: number; distKm: number; at: number }`; `eventsBetween(m: GlobeModel, from: number, to: number): ScoreEvent[]`; `interface PlannedNote { when: number; region: RegionName; freq: number; vel: number; kind: "dep" | "arr"; key: string }`; `velocityFor(n: number): number`; `planNotes(events: ScoreEvent[], nowSec: number): PlannedNote[]`.
 
-- [ ] **Step 1: Failing tests** — `globe/test/route-voices.test.ts`:
+- [ ] **Step 1: Failing tests** — `globe/test/theory.test.ts`:
+
 ```ts
 import { describe, expect, it } from "vitest";
-import { MAX_VOICES, SCALE_SEMITONES, TIMBRES, noteFreq, octaveFor, routeHash, voiceSpecs } from "../src/audio/route-voices";
-import type { Corridor } from "../src/scene/corridors";
 import { REGIONS } from "@web/data/palette";
+import {
+  BEAT_SEC, BEATS_PER_CHORD, BPM, PROGRESSION, REGION_MUSIC, chordAtBeat, chordAtTime, freqOf, hasMusic, octaveFor,
+  pickNote, routeHash, routeKey, slotIndex, slotTime, stepSec,
+} from "../src/audio/theory";
 
-const cor = (key: string, count: number, distKm: number, regionIdx = 1): Corridor => {
-  const [a, b] = key.split("-");
-  return { key, a, b, fromLat: 41, fromLon: 29, toLat: 50, toLon: 8, distKm, count, regionIdx };
-};
+const A_MINOR = new Set([0, 2, 3, 5, 7, 8, 10]); // pitch classes of natural A minor above A
 
-describe("note mapping", () => {
-  it("the same route always maps to the same note, in the pentatonic scale", () => {
-    expect(noteFreq("IST-FRA", 2000)).toBe(noteFreq("IST-FRA", 2000));
-    const base = 110 * 2 ** 2; // octave 4
-    const semis = SCALE_SEMITONES.map((s) => base * 2 ** (s / 12));
-    expect(semis.some((f) => Math.abs(f - noteFreq("IST-FRA", 2000)) < 1e-6)).toBe(true);
+describe("clock and harmony", () => {
+  it("96 BPM and a four-chord loop of 16 beats each", () => {
+    expect(BPM).toBe(96);
+    expect(BEAT_SEC).toBeCloseTo(0.625, 12);
+    expect(BEATS_PER_CHORD).toBe(16);
+    expect(PROGRESSION.map((c) => c.name)).toEqual(["Am", "F", "C", "G"]);
+    expect(chordAtBeat(0).name).toBe("Am");
+    expect(chordAtBeat(15).name).toBe("Am");
+    expect(chordAtBeat(16).name).toBe("F");
+    expect(chordAtBeat(32).name).toBe("C");
+    expect(chordAtBeat(48).name).toBe("G");
+    expect(chordAtBeat(64).name).toBe("Am");
+    expect(chordAtBeat(-5).name).toBe("Am");
+    expect(chordAtTime(16 * BEAT_SEC + 0.01).name).toBe("F");
+  });
+  it("every chord tone and every region scale stays inside A natural minor", () => {
+    for (const c of PROGRESSION) for (const s of [c.root, c.third, c.fifth]) expect(A_MINOR.has(((s % 12) + 12) % 12)).toBe(true);
+    for (const m of Object.values(REGION_MUSIC)) for (const s of m!.scale) expect(A_MINOR.has(s)).toBe(true);
   });
   it("octaves follow the distance buckets", () => {
-    expect(octaveFor(7000)).toBe(2);
-    expect(octaveFor(4000)).toBe(3);
-    expect(octaveFor(2000)).toBe(4);
-    expect(octaveFor(500)).toBe(5);
-    expect(octaveFor(6000)).toBe(3); // 3000–6000 includes 6000
-    expect(octaveFor(1000)).toBe(4);
+    expect([7000, 4000, 2000, 500, 6000, 1000].map(octaveFor)).toEqual([2, 3, 4, 5, 3, 4]);
   });
-  it("long routes are lower than short ones for the same key", () => {
-    expect(noteFreq("IST-JFK", 8000)).toBeLessThan(noteFreq("IST-JFK", 500));
+  it("freqOf anchors A2 = 110 Hz", () => {
+    expect(freqOf(2, 0)).toBe(110);
+    expect(freqOf(3, 0)).toBe(220);
+    expect(freqOf(2, 12)).toBeCloseTo(220, 9);
   });
-  it("hash is stable and spreads keys over the five degrees", () => {
+  it("keys are order-independent; hashes are stable", () => {
+    expect(routeKey("JFK", "IST", "x")).toBe("IST-JFK");
+    expect(routeKey("IST", undefined, "f7")).toBe("f7");
     expect(routeHash("IST-JFK")).toBe(routeHash("IST-JFK"));
-    const degrees = new Set(["IST-JFK", "IST-LHR", "IST-FRA", "ESB-IST", "IST-DXB", "IST-SIN", "IST-NRT", "IST-CAI"].map((k) => routeHash(k) % 5));
-    expect(degrees.size).toBeGreaterThan(2);
-  });
-  it("has one timbre per region", () => {
-    expect(TIMBRES).toHaveLength(REGIONS.length);
   });
 });
 
-describe("voiceSpecs", () => {
-  const many = Array.from({ length: 14 }, (_, i) => cor(`A${String(i).padStart(2, "0")}-IST`, 100 - i * 5, 2000 + i * 100));
-  it("keeps the busiest MAX_VOICES corridors", () => {
-    const v = voiceSpecs(many);
-    expect(v).toHaveLength(MAX_VOICES);
-    expect(v[0].key).toBe(many[0].key);
+describe("rhythm grids are integer fractions of the beat, so the polyrhythm never drifts", () => {
+  const at = (r: (typeof REGIONS)[number], k: number) => slotTime(r, k);
+  it("coincide with whole beats", () => {
+    expect(at("DOM", 3)).toBeCloseTo(3 * BEAT_SEC, 12);
+    expect(at("EUR", 4)).toBeCloseTo(2 * BEAT_SEC, 12);
+    expect(at("AFR", 6)).toBeCloseTo(2 * BEAT_SEC, 12);
+    expect(at("ASI", 8)).toBeCloseTo(2 * BEAT_SEC, 12);
+    expect(at("AME", 1)).toBeCloseTo(2 * BEAT_SEC, 12);
   });
-  it("loudness grows with traffic and is trimmed for higher octaves", () => {
-    const [busy, quiet] = voiceSpecs([cor("IST-FRA", 100, 2000), cor("IST-LHR", 4, 2000)]);
-    expect(busy.gain).toBeGreaterThan(quiet.gain);
-    const [low, high] = voiceSpecs([cor("IST-JFK", 50, 8000), cor("IST-ESB", 50, 300)]);
-    expect(high.gain).toBeLessThan(low.gain);
+  it("step sizes", () => {
+    expect(stepSec("EUR")).toBeCloseTo(BEAT_SEC / 2, 12);
+    expect(stepSec("AFR")).toBeCloseTo(BEAT_SEC / 3, 12);
+    expect(stepSec("ASI")).toBeCloseTo(BEAT_SEC / 4, 12);
+    expect(stepSec("AME")).toBeCloseTo(BEAT_SEC * 2, 12);
   });
-  it("pans come from the screen map, clamped; back-side corridors are quieter", () => {
-    const pans = new Map([["IST-FRA", { pan: 3, visible: true }], ["IST-LHR", { pan: -0.5, visible: false }]]);
-    const v = voiceSpecs([cor("IST-FRA", 10, 2000), cor("IST-LHR", 10, 2000)], pans);
-    expect(v[0].pan).toBe(1);
-    expect(v[1].pan).toBe(-0.5);
-    expect(v[1].gain).toBeCloseTo(v[0].gain * 0.3, 9);
+  it("the Middle East swings its off-steps late; others do not", () => {
+    expect(slotTime("MEA", 0)).toBe(0);
+    expect(slotTime("MEA", 1)).toBeCloseTo(BEAT_SEC / 2 + 0.25 * (BEAT_SEC / 2), 12);
+    expect(slotTime("EUR", 1)).toBeCloseTo(BEAT_SEC / 2, 12);
   });
-  it("is empty with no corridors", () => {
-    expect(voiceSpecs([])).toEqual([]);
+  it("slotIndex picks the first slot at or after the time", () => {
+    expect(slotIndex(0, "EUR")).toBe(0);
+    expect(slotIndex(0.01, "EUR")).toBe(1);
+    expect(slotIndex(BEAT_SEC / 2, "EUR")).toBe(1);
+  });
+});
+
+describe("pickNote", () => {
+  it("is deterministic and drawn from the region scale at the clamped octave", () => {
+    const f = pickNote("EUR", "IST-FRA", 2000, PROGRESSION[0], 0, "dep")!;
+    expect(pickNote("EUR", "IST-FRA", 2000, PROGRESSION[0], 0, "dep")).toBe(f);
+    expect(REGION_MUSIC.EUR!.scale.map((s) => freqOf(4, s)).some((x) => Math.abs(x - f) < 1e-9)).toBe(true);
+  });
+  it("clamps the octave into the region's range (Middle East 3–4, Asia 4–5)", () => {
+    const low = pickNote("MEA", "IST-DXB", 9000, PROGRESSION[0], 0, "dep")!; // octaveFor = 2 → clamped to 3
+    expect(REGION_MUSIC.MEA!.scale.map((s) => freqOf(3, s)).some((x) => Math.abs(x - low) < 1e-9)).toBe(true);
+    const hi = pickNote("ASI", "IST-NRT", 200, PROGRESSION[0], 0, "dep")!; // octaveFor = 5, allowed
+    expect(REGION_MUSIC.ASI!.scale.map((s) => freqOf(5, s)).some((x) => Math.abs(x - hi) < 1e-9)).toBe(true);
+  });
+  it("landings sound an octave lower when that stays audible", () => {
+    const dep = pickNote("EUR", "IST-FRA", 2000, PROGRESSION[0], 0, "dep")!;
+    expect(pickNote("EUR", "IST-FRA", 2000, PROGRESSION[0], 0, "arr")).toBeCloseTo(dep / 2, 9);
+  });
+  it("domestic follows the chord: root on even beats, fifth on odd beats, landings the fifth", () => {
+    const am = PROGRESSION[0];
+    expect(pickNote("DOM", "ESB-IST", 350, am, 0, "dep")).toBeCloseTo(freqOf(1, am.root), 9);
+    expect(pickNote("DOM", "ESB-IST", 350, am, 1, "dep")).toBeCloseTo(freqOf(1, am.fifth), 9);
+    expect(pickNote("DOM", "ESB-IST", 350, am, 0, "arr")).toBeCloseTo(freqOf(1, am.fifth), 9);
+  });
+  it("unknown region is silent", () => {
+    expect(hasMusic("UNK")).toBe(false);
+    expect(pickNote("UNK", "a-b", 100, PROGRESSION[0], 0, "dep")).toBeNull();
+  });
+});
+```
+
+`globe/test/score.test.ts`:
+```ts
+import { describe, expect, it } from "vitest";
+import { buildGlobeModel } from "../src/model/globe-model";
+import { BEAT_SEC, slotIndex, slotTime } from "../src/audio/theory";
+import { LOOKAHEAD_SEC, MAX_NOTES_PER_STEP, MAX_RANGE_SEC, eventsBetween, planNotes, velocityFor, type ScoreEvent } from "../src/audio/score";
+import { FROM, flight, makeDay } from "./helpers";
+
+// regions: DOM 0, EUR 1, MEA 2, AFR 3, ASI 4, AME 5, UNK 6
+const model = () =>
+  buildGlobeModel(
+    makeDay({
+      flights: [
+        flight({ from: "IST", to: "JFK", region: "AME", dep: FROM + 1000, arr: FROM + 5000, end: "LANDED", s: [[0, 300, 41, 29], [3000, 370, 45, -20]] }),
+        flight({ from: "IST", to: "LHR", region: "EUR", dep: FROM + 2000, arr: null, end: "AIRBORNE", s: [[0, 300, 41, 29], [600, 370, 45, 10]] }),
+        flight({ from: "IST", to: "ESB", region: "DOM", dep: FROM + 3000, arr: FROM + 4000, end: "LAST_CONTACT", s: [[0, 300, 41, 29], [900, 100, 40, 33]] }),
+      ],
+    }),
+  );
+const ev = (o: Partial<ScoreEvent>): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx: 1, distKm: 2000, at: 0, ...o });
+
+describe("eventsBetween", () => {
+  it("returns departures in (from, to] and arrivals only for landed flights", () => {
+    const m = model();
+    const e = eventsBetween(m, 500, 2500);
+    expect(e.map((x) => [x.kind, x.key, x.at])).toEqual([["dep", "IST-JFK", 1000], ["dep", "IST-LHR", 2000]]);
+    const arr = eventsBetween(m, 4500, 5100);
+    expect(arr.map((x) => [x.kind, x.key, x.at])).toEqual([["arr", "IST-JFK", 5000]]);
+  });
+  it("last-contact and airborne flights never produce arrivals", () => {
+    expect(eventsBetween(model(), 3500, 4500).some((x) => x.kind === "arr")).toBe(false);
+  });
+  it("the interval is open at the start and closed at the end", () => {
+    const m = model();
+    expect(eventsBetween(m, 1000, 1500)).toEqual([]);
+    expect(eventsBetween(m, 900, 1000).length).toBe(1);
+  });
+  it("carries region index and distance; jumps and rewinds produce nothing", () => {
+    const m = model();
+    expect(eventsBetween(m, 500, 1500)[0]).toMatchObject({ regionIdx: 5, key: "IST-JFK" });
+    expect(eventsBetween(m, 500, 1500)[0].distKm).toBeGreaterThan(7000);
+    expect(eventsBetween(m, 0, MAX_RANGE_SEC + 1)).toEqual([]);
+    expect(eventsBetween(m, 2500, 500)).toEqual([]);
+  });
+});
+
+describe("velocityFor", () => {
+  it("grows with the number of merged events and is capped at 1", () => {
+    expect(velocityFor(1)).toBeCloseTo(0.65, 12);
+    expect(velocityFor(2)).toBeGreaterThan(velocityFor(1));
+    expect(velocityFor(10)).toBe(1);
+  });
+});
+
+describe("planNotes", () => {
+  it("places notes on the region grid, never earlier than now + lookahead", () => {
+    const now = 3.1;
+    const [n] = planNotes([ev({ regionIdx: 1 })], now);
+    const idx = slotIndex(now + LOOKAHEAD_SEC, "EUR");
+    expect(n.when).toBeCloseTo(slotTime("EUR", idx), 12);
+    expect(n.when).toBeGreaterThanOrEqual(now + LOOKAHEAD_SEC);
+    expect(n.region).toBe("EUR");
+  });
+  it("different regions land on their own grids (polyrhythm)", () => {
+    const notes = planNotes([ev({ regionIdx: 1 }), ev({ regionIdx: 3, key: "IST-CAI" }), ev({ regionIdx: 4, key: "IST-NRT" })], 0.01);
+    const by = Object.fromEntries(notes.map((n) => [n.region, n.when]));
+    expect(by.ASI).toBeLessThan(by.AFR);
+    expect(by.AFR).toBeLessThan(by.EUR);
+  });
+  it("at most MAX_NOTES_PER_STEP notes per region and step; extras raise the velocity", () => {
+    const many = Array.from({ length: 5 }, (_, i) => ev({ key: `A${i}-IST`, regionIdx: 1 }));
+    const notes = planNotes(many, 0);
+    expect(notes).toHaveLength(MAX_NOTES_PER_STEP);
+    expect(notes[0].vel).toBeCloseTo(velocityFor(5), 12);
+    const single = planNotes([ev({})], 0);
+    expect(notes[0].vel).toBeGreaterThan(single[0].vel);
+  });
+  it("arrivals are softer and an octave lower than departures", () => {
+    const [d] = planNotes([ev({ kind: "dep" })], 0);
+    const [a] = planNotes([ev({ kind: "arr" })], 0);
+    expect(a.freq).toBeCloseTo(d.freq / 2, 9);
+    expect(a.vel).toBeCloseTo(d.vel * 0.6, 12);
+  });
+  it("departures come before arrivals when a step overflows; UNK is silent; empty in, empty out", () => {
+    const notes = planNotes([ev({ kind: "arr", key: "Z-IST" }), ev({ kind: "dep", key: "B-IST" }), ev({ kind: "dep", key: "A-IST" })], 0);
+    expect(notes.map((n) => n.kind)).toEqual(["dep", "dep"]);
+    expect(planNotes([ev({ regionIdx: 6 })], 0)).toEqual([]);
+    expect(planNotes([], 0)).toEqual([]);
+  });
+  it("is deterministic", () => {
+    const e = [ev({}), ev({ regionIdx: 2, key: "IST-DXB", distKm: 3000 })];
+    expect(planNotes(e, 1.234)).toEqual(planNotes(e, 1.234));
+    expect(BEAT_SEC).toBeGreaterThan(0);
   });
 });
 ```
 
-`globe/test/route-sound.test.ts` — a hand-written fake audio context (all nodes record calls; params have `value`, `setTargetAtTime`, `cancelScheduledValues`, `setValueAtTime`, `linearRampToValueAtTime`):
+- [ ] **Step 2: Run to verify failure** — `cd globe && npx vitest run test/theory.test.ts test/score.test.ts` → FAIL.
+
+- [ ] **Step 3: Implement** — `globe/src/audio/theory.ts`:
+
 ```ts
-import { describe, expect, it, vi } from "vitest";
-import { createRouteSound } from "../src/audio/engine";
-import type { VoiceSpec } from "../src/audio/route-voices";
-
-class P { value = 0; setTargetAtTime = vi.fn((v: number) => { this.value = v; }); setValueAtTime = vi.fn(); linearRampToValueAtTime = vi.fn(); cancelScheduledValues = vi.fn(); }
-class N { connect = vi.fn((x: unknown) => x); disconnect = vi.fn(); start = vi.fn(); stop = vi.fn(); }
-class Osc extends N { type = "sine"; frequency = new P(); detune = new P(); }
-class Gain extends N { gain = new P(); }
-class Filt extends N { type = "lowpass"; frequency = new P(); Q = new P(); }
-class Pan extends N { pan = new P(); }
-class Conv extends N { buffer: unknown = null; }
-class Comp extends N { threshold = new P(); ratio = new P(); attack = new P(); release = new P(); knee = new P(); }
-function fakeCtx() {
-  const c = {
-    state: "suspended" as string, currentTime: 0, sampleRate: 48000, destination: new N(),
-    oscs: [] as Osc[], gains: [] as Gain[],
-    createOscillator() { const o = new Osc(); c.oscs.push(o); return o; },
-    createGain() { const g = new Gain(); c.gains.push(g); return g; },
-    createBiquadFilter: () => new Filt(), createStereoPanner: () => new Pan(), createConvolver: () => new Conv(),
-    createDynamicsCompressor: () => new Comp(),
-    createBuffer: (ch: number, len: number) => ({ numberOfChannels: ch, length: len, getChannelData: () => new Float32Array(len) }),
-    resume: vi.fn(async () => { c.state = "running"; }), suspend: vi.fn(async () => { c.state = "suspended"; }), close: vi.fn(async () => { c.state = "closed"; }),
-  };
-  return c;
-}
-const spec = (i: number): VoiceSpec => ({ key: `K${i}`, freq: 110 + i, wave: "sine", cutoff: 800, gain: 0.05, pan: 0 });
-
-describe("route sound", () => {
-  it("creates no audio context until it is enabled (browser autoplay rule)", () => {
-    const create = vi.fn(() => fakeCtx() as unknown as AudioContext);
-    const s = createRouteSound({ createContext: create });
-    s.update([spec(1)], null);
-    expect(create).not.toHaveBeenCalled();
-    s.dispose();
-  });
-
-  it("enabling resumes the context and voices follow the specs (max 10)", () => {
-    const ctx = fakeCtx();
-    const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
-    s.setEnabled(true);
-    expect(ctx.resume).toHaveBeenCalled();
-    s.update(Array.from({ length: 12 }, (_, i) => spec(i)), null);
-    // two detuned oscillators per voice + one LFO per voice, capped at 10 voices
-    expect(ctx.oscs.length).toBe(10 * 3);
-    s.update([spec(0)], null);
-    s.dispose();
-    expect(ctx.close).toHaveBeenCalled();
-  });
-
-  it("disabling fades the master out and suspends", async () => {
-    const ctx = fakeCtx();
-    const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
-    s.setEnabled(true);
-    s.setEnabled(false);
-    expect(ctx.gains[0].gain.setTargetAtTime).toHaveBeenCalled(); // master gain
-    s.dispose();
-  });
-
-  it("limits pings to three per second", () => {
-    const ctx = fakeCtx();
-    let t = 1000;
-    const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext, now: () => t });
-    s.setEnabled(true);
-    const before = ctx.oscs.length;
-    for (let i = 0; i < 10; i++) s.ping("IST-FRA", 220);
-    expect(ctx.oscs.length - before).toBe(3);
-    t += 1100;
-    s.ping("IST-FRA", 220);
-    expect(ctx.oscs.length - before).toBe(4);
-    s.dispose();
-  });
-
-  it("the focused voice is louder and its filter opens with altitude", () => {
-    const ctx = fakeCtx();
-    const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
-    s.setEnabled(true);
-    s.update([spec(1), spec(2)], { key: "K1", alt100: 370 });
-    s.update([spec(1), spec(2)], { key: "K1", alt100: 100 });
-    s.dispose();
-    expect(ctx.oscs.length).toBeGreaterThan(0);
-  });
-});
-```
-(The last test only protects against throwing; add stronger assertions on the `setTargetAtTime` arguments of the focused vs unfocused voice gain and the filter `frequency` (`300 + 8·alt100`) once you wire concrete node references — expose the created nodes through the fake the same way `oscs`/`gains` are recorded, and assert `gain(focus) ≈ 2 × spec.gain` and `gain(other) ≈ 0.5 × spec.gain` as the final `setTargetAtTime` value, and the filter frequency `300 + 8 * 370 = 3260`.)
-
-Controller tests (extend the harness: `setup` accepts `sound?: RouteSound` passed through a new optional dep `sound` — controller creates `createRouteSound()` by default; tests inject a stub with `vi.fn()`s):
-- With effects.sound false (default) `update` is never called; after `onKey("m")` and a HUD tick `update` receives specs for the model's corridors (non-empty for a routed flight).
-- A DEPARTED/LANDED event after a data swap calls `ping` with the corridor key (`"IST-JFK"`) while sound is on, and not while it is off.
-- `onKey("m")` calls `setEnabled(true)`, the second press `setEnabled(false)`; `dispose()` calls `sound.dispose()`.
-
-- [ ] **Step 2: Run to verify failure.**
-
-- [ ] **Step 3: Implement** `globe/src/audio/route-voices.ts`:
-```ts
-import { interpolateGreatCircle } from "@collector/geo";
 import { REGIONS } from "@web/data/palette";
-import type { Corridor } from "../scene/corridors";
 
-export const MAX_VOICES = 10;
-export const SCALE_SEMITONES = [0, 3, 5, 7, 10]; // A minor pentatonic
-const MASTER = 0.06;
-const BASE_HZ = 110; // A2
+export const BPM = 96;
+export const BEAT_SEC = 60 / BPM;
+export const BEATS_PER_CHORD = 16;
+
+/** Semitones above A for each chord tone. */
+export interface Chord {
+  name: string;
+  root: number;
+  third: number;
+  fifth: number;
+}
+
+export const PROGRESSION: Chord[] = [
+  { name: "Am", root: 0, third: 3, fifth: 7 },
+  { name: "F", root: 8, third: 0, fifth: 3 },
+  { name: "C", root: 3, third: 7, fifth: 10 },
+  { name: "G", root: 10, third: 2, fifth: 5 },
+];
+
+export function chordAtBeat(beat: number): Chord {
+  const i = Math.floor(Math.max(0, beat) / BEATS_PER_CHORD) % PROGRESSION.length;
+  return PROGRESSION[i];
+}
+export const chordAtTime = (sec: number): Chord => chordAtBeat(Math.floor(sec / BEAT_SEC));
+
+export type RegionName = (typeof REGIONS)[number];
+
+export interface RegionMusic {
+  /** semitones above A, all inside natural A minor */
+  scale: number[];
+  /** grid steps per beat (integer fractions of the beat keep the polyrhythm aligned) */
+  perBeat: number;
+  /** delay of odd steps as a fraction of a step */
+  swing: number;
+  /** [min, max] octave (110·2^(oct−2) Hz anchors A2); equal = fixed register */
+  octaves: [number, number];
+  followChord?: boolean;
+}
+
+export const REGION_MUSIC: Partial<Record<RegionName, RegionMusic>> = {
+  DOM: { scale: [], perBeat: 1, swing: 0, octaves: [1, 1], followChord: true },
+  EUR: { scale: [0, 3, 5, 7, 10], perBeat: 2, swing: 0, octaves: [3, 5] },
+  MEA: { scale: [0, 3, 5, 7, 8], perBeat: 2, swing: 0.25, octaves: [3, 4] },
+  AFR: { scale: [0, 3, 5, 7, 10], perBeat: 3, swing: 0, octaves: [4, 5] },
+  ASI: { scale: [0, 2, 3, 7, 8], perBeat: 4, swing: 0, octaves: [4, 5] },
+  AME: { scale: [0, 5, 7, 10], perBeat: 0.5, swing: 0, octaves: [3, 3] },
+};
+
+export const hasMusic = (r: RegionName): boolean => !!REGION_MUSIC[r];
+
+export function routeKey(from: string | undefined, to: string | undefined, id: string): string {
+  return from && to ? (from < to ? `${from}-${to}` : `${to}-${from}`) : id;
+}
 
 /** FNV-1a, 32-bit. */
 export function routeHash(key: string): number {
@@ -1325,94 +1412,396 @@ export function octaveFor(distKm: number): 2 | 3 | 4 | 5 {
   return 5;
 }
 
-export function noteFreq(key: string, distKm: number): number {
-  const oct = octaveFor(distKm);
-  const semis = SCALE_SEMITONES[routeHash(key) % SCALE_SEMITONES.length];
-  return BASE_HZ * 2 ** (oct - 2) * 2 ** (semis / 12);
+export const freqOf = (oct: number, semis: number): number => 110 * 2 ** (oct - 2) * 2 ** (semis / 12);
+
+export function pickNote(region: RegionName, key: string, distKm: number, chord: Chord, beat: number, kind: "dep" | "arr"): number | null {
+  const m = REGION_MUSIC[region];
+  if (!m) return null;
+  if (m.followChord) return freqOf(m.octaves[0], kind === "arr" || beat % 2 !== 0 ? chord.fifth : chord.root);
+  const oct = Math.min(m.octaves[1], Math.max(m.octaves[0], octaveFor(distKm)));
+  const f = freqOf(oct, m.scale[routeHash(key) % m.scale.length]);
+  return kind === "arr" && f / 2 >= 55 ? f / 2 : f;
 }
 
-export interface Timbre {
-  wave: "sine" | "triangle" | "sawtooth";
-  cutoff: number;
-}
-
-// DOM, EUR, MEA, AFR, ASI, AME, UNK (same order as REGIONS)
-export const TIMBRES: Timbre[] = [
-  { wave: "sine", cutoff: 900 },
-  { wave: "triangle", cutoff: 1100 },
-  { wave: "sawtooth", cutoff: 520 },
-  { wave: "sine", cutoff: 1300 },
-  { wave: "triangle", cutoff: 1500 },
-  { wave: "sine", cutoff: 700 },
-  { wave: "sine", cutoff: 600 },
-];
-void REGIONS; // TIMBRES is indexed by REGIONS order
-
-export interface VoiceSpec {
-  key: string;
-  freq: number;
-  wave: Timbre["wave"];
-  cutoff: number;
-  gain: number;
-  pan: number;
-}
-
-export function voiceSpecs(cs: Corridor[], pans: Map<string, { pan: number; visible: boolean }> = new Map()): VoiceSpec[] {
-  const top = cs.slice(0, MAX_VOICES);
-  const max = cs.length ? cs[0].count : 0;
-  return top.map((c) => {
-    const oct = octaveFor(c.distKm);
-    const t = TIMBRES[c.regionIdx] ?? TIMBRES[TIMBRES.length - 1];
-    const p = pans.get(c.key);
-    const trim = 1 / 2 ** ((oct - 2) / 2);
-    const weight = max > 0 ? Math.sqrt(c.count / max) : 0;
-    return {
-      key: c.key,
-      freq: noteFreq(c.key, c.distKm),
-      wave: t.wave,
-      cutoff: t.cutoff,
-      gain: MASTER * weight * trim * (p && !p.visible ? 0.3 : 1),
-      pan: p ? Math.max(-1, Math.min(1, p.pan)) : 0,
-    };
-  });
-}
-
-export function corridorMidpoint(c: Corridor): { lat: number; lon: number } {
-  const [lat, lon] = interpolateGreatCircle(c.fromLat, c.fromLon, c.toLat, c.toLon, 0.5);
-  return { lat, lon };
+export const stepSec = (region: RegionName): number => BEAT_SEC / (REGION_MUSIC[region]?.perBeat ?? 1);
+export const slotIndex = (sec: number, region: RegionName): number => Math.ceil(sec / stepSec(region) - 1e-9);
+export function slotTime(region: RegionName, index: number): number {
+  const step = stepSec(region);
+  const swing = REGION_MUSIC[region]?.swing ?? 0;
+  return index * step + (index % 2 !== 0 ? swing * step : 0);
 }
 ```
-`globe/src/audio/engine.ts` — Web Audio graph (create nodes lazily on the first `setEnabled(true)` so no `AudioContext` exists before a user gesture; `createContext` default `() => new (window.AudioContext ?? (window as any).webkitAudioContext)()`):
-- `ctx`; `master = ctx.createGain()` (gain 0) → `comp = ctx.createDynamicsCompressor()` (threshold −24, ratio 4) → `ctx.destination`; reverb: `convolver` with a generated impulse response (2.5 s, exponentially decaying noise, stereo) fed by `wetGain` (0.35) from a `bus` gain; `bus` → `master` (dry 0.65 via `dryGain`) and `bus` → `convolver` → `wetGain` → `master`.
-- Voice = `{ o1, o2 (detune ±6 cents), filter (lowpass, Q 0.7), gain, pan, lfo (0.05–0.12 Hz derived from `freq`), lfoGain (0.18·gain) }`; chain `o1,o2 → filter → gain → pan → bus`; the LFO modulates `gain.gain`.
-- `update(specs, focus)`: first ensure `ctx` exists and `enabled`; create voices for new keys (cap `MAX_VOICES`), set `frequency/type/filter cutoff/gain/pan` with `setTargetAtTime(v, now, 0.6)` for existing ones; voices for keys no longer present fade to 0 over ~1 s then stop/disconnect; focused voice: `gain × 2`, filter cutoff `300 + 8·alt100`, other voices `gain × 0.5` while a focus exists; no focus → the spec values.
-- `ping(key, freq)`: only when enabled; rate limit 3 per rolling second via `now()` (default `performance.now`); a sine at `freq·2` through the `bus` with attack 0.01 s and exponential decay ~1.4 s, then stop.
-- `setEnabled(true)`: lazily create everything, `ctx.resume()`, ramp `master` to 1 over 0.8 s (`setTargetAtTime(1, t, 0.25)`); register `visibilitychange` (suspend when hidden and enabled, resume when visible). `setEnabled(false)`: ramp master to 0 (`setTargetAtTime(0, t, 0.25)`), then `ctx.suspend()` after ~1 s (guard with the latest state); autoplay: if `ctx.state` stays `suspended` after `resume()` (the browser blocked it), install one-shot `pointerdown`/`keydown` listeners on `window` that call `resume()` and remove themselves.
-- `dispose()`: stop every oscillator, disconnect, remove listeners, `ctx.close()`; safe to call twice and before any enable.
-- Everything inside try/catch where browsers may throw (e.g. `AudioContext` missing → `setEnabled` becomes a no-op and the module never throws).
 
-`controller.ts` (`// art:sound`): imports `buildCorridors`, `Corridor` from `../scene/corridors`, `voiceSpecs`, `corridorMidpoint` from `../audio/route-voices`, `createRouteSound, RouteSound` from `../audio/engine`; new optional dep `sound?: RouteSound`; `const sound = d.sound ?? createRouteSound();`; cache `let corridorModel: GlobeModel | null = null; let corridorList: Corridor[] = [];` refreshed lazily from `model`. Track `let soundOn = false;` — in `pushEffects()` (Task 1) compute `const e = effectsFor(art, perf.level); d.engine.setEffects(e); if (e.sound !== soundOn) { soundOn = e.sound; sound.setEnabled(e.sound); }`. In `pushHud()` (4 Hz), when `soundOn && model`: build `pans` via `d.engine.screenOf(mid.lat, mid.lon)` for the top `MAX_VOICES` corridors (`pan = (x - vw/2)/(vw/2)` with `vw = d.viewportWidth?.() ?? (typeof window === "undefined" ? 1000 : window.innerWidth)`; add `viewportWidth?: () => number` to deps for tests), `sound.update(voiceSpecs(corridorList, pans), focus)` where `focus` is the followed flight's corridor key and `telemetry alt100` (use the existing `follow` + `telemetryAt` values; `null` when not following; corridor key via `corridorKey(f.from, f.to)` when both exist). After `events = addEvents(...)` in `onData`: `if (soundOn) for (const e of evs) if ((e.kind === "DEPARTED" || e.kind === "LANDED") && e.from && e.to) { const c = corridorList.find((x) => x.key === corridorKey(e.from!, e.to!)); if (c) sound.ping(c.key, noteFreq(c.key, c.distKm)); }`. `dispose()` also calls `sound.dispose()`.
+`globe/src/audio/score.ts`:
+```ts
+import { REGIONS } from "@web/data/palette";
+import type { GlobeModel } from "../model/globe-model";
+import { BEAT_SEC, chordAtBeat, hasMusic, pickNote, routeKey, slotIndex, slotTime, type RegionName } from "./theory";
 
-- [ ] **Step 4: Run to verify pass** — `npx vitest run && npx tsc --noEmit && npm run build`.
+export const MAX_RANGE_SEC = 600;
+export const LOOKAHEAD_SEC = 0.06;
+export const MAX_NOTES_PER_STEP = 2;
 
-- [ ] **Step 5: Controller listening check** (the user does the final listening; you can only verify wiring): open the page, press `M`, confirm in the browser console-free way that `SOUND ON` appears in the HUD, no console errors, and `M` again clears it; verify with `javascript_tool` that an `AudioContext` exists after the first press and is `running` (`window` has no global handle — temporarily log nothing; instead check the HUD and the absence of errors). Ask the user to listen: calm pad voices, no clipping, volume comfortable, FOLLOW changes brightness with altitude, pings gentle. Record their feedback and any gain/cutoff changes in the notes table.
+export interface ScoreEvent {
+  kind: "dep" | "arr";
+  key: string;
+  regionIdx: number;
+  distKm: number;
+  /** flight time, seconds relative to window.from */
+  at: number;
+}
 
-- [ ] **Step 6: Commit**
+/** Departures and landings (landed flights only) inside (from, to]; big jumps and rewinds yield nothing. */
+export function eventsBetween(m: GlobeModel, from: number, to: number): ScoreEvent[] {
+  if (!(to > from) || to - from > MAX_RANGE_SEC) return [];
+  const out: ScoreEvent[] = [];
+  for (const f of m.flights) {
+    const key = routeKey(f.from, f.to, f.id);
+    const distKm = f.planned?.distKm ?? 1500;
+    if (f.dep > from && f.dep <= to) out.push({ kind: "dep", key, regionIdx: f.regionIdx, distKm, at: f.dep });
+    if (f.status === "LANDED" && f.end > from && f.end <= to) out.push({ kind: "arr", key, regionIdx: f.regionIdx, distKm, at: f.end });
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+
+export interface PlannedNote {
+  when: number;
+  region: RegionName;
+  freq: number;
+  vel: number;
+  kind: "dep" | "arr";
+  key: string;
+}
+
+export const velocityFor = (n: number): number => Math.min(1, 0.5 + 0.15 * n);
+
+/** Maps events to notes on each region's grid; extra simultaneous events raise velocity instead of adding notes. */
+export function planNotes(events: ScoreEvent[], nowSec: number): PlannedNote[] {
+  const start = nowSec + LOOKAHEAD_SEC;
+  const groups = new Map<string, { region: RegionName; idx: number; evs: ScoreEvent[] }>();
+  for (const e of events) {
+    const region = REGIONS[e.regionIdx];
+    if (!region || !hasMusic(region)) continue;
+    const idx = slotIndex(start, region);
+    const gk = `${region}:${idx}`;
+    const g = groups.get(gk);
+    if (g) g.evs.push(e);
+    else groups.set(gk, { region, idx, evs: [e] });
+  }
+  const out: PlannedNote[] = [];
+  for (const { region, idx, evs } of groups.values()) {
+    evs.sort((a, b) => (a.kind === b.kind ? a.key.localeCompare(b.key) : a.kind === "dep" ? -1 : 1));
+    const when = slotTime(region, idx);
+    const beat = Math.floor(when / BEAT_SEC);
+    const chord = chordAtBeat(beat);
+    const vel = velocityFor(evs.length);
+    for (const e of evs.slice(0, MAX_NOTES_PER_STEP)) {
+      const freq = pickNote(region, e.key, e.distKm, chord, beat, e.kind);
+      if (freq === null) continue;
+      out.push({ when, region, freq, vel: e.kind === "arr" ? vel * 0.6 : vel, kind: e.kind, key: e.key });
+    }
+  }
+  return out.sort((a, b) => a.when - b.when || a.region.localeCompare(b.region));
+}
+```
+
+- [ ] **Step 4: Run to verify pass** — `npx vitest run && npx tsc --noEmit`.
+
+- [ ] **Step 5: Commit**
 ```bash
 git add globe
-git commit -m "art(sound): route-driven ambient soundscape (M, default off)"
+git commit -m "art(sound): music theory, rhythm grids and score planning (pure)"
 ```
 
 ---
 
-### Task 7: Docs, notes table, deploy
+### Task 7: Instruments and sound engine
+
+**Files:**
+- Create: `globe/src/audio/instruments.ts`, `globe/src/audio/engine.ts`
+- Test: `globe/test/route-sound.test.ts`
+
+**Interfaces:**
+- Consumes: `PlannedNote`, `ScoreEvent`, `planNotes` (Task 6); `PROGRESSION`, `chordAtTime`, `freqOf`, `REGIONS`.
+- Produces:
+  - `instruments.ts`: `interface NoteOpts { gainScale: number; cutoffScale: number; pan: number }`; `playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: NoteOpts): void`.
+  - `engine.ts`: `interface SoundFocus { regionIdx: number | null; alt100: number }`; `interface RouteSound { setEnabled(on: boolean): void; schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>): void; setEnergy(e: number): void; dispose(): void }`; `createRouteSound(opts?: { createContext?: () => AudioContext }): RouteSound`.
+
+Instrument recipes (all synthesised per note; the gain envelope peak is `0.22 · vel · gainScale`, doubled decay for landings `kind === "arr"`; every oscillator `start(when)` / `stop(when + attack + decay + 0.1)`; a per-note `GainNode` → `StereoPannerNode` → `dest`):
+- **DOM** (kick-like pulse): sine, frequency `2·f → f` over 60 ms (`exponentialRampToValueAtTime`), attack 0.005, decay 0.45.
+- **EUR** (vibraphone): sine `f` (decay 1.4) + sine `4·f` at 0.25 peak (decay 0.35); attack 0.004.
+- **MEA** (oud): sawtooth `f` → lowpass (cutoff `3200·cutoffScale` falling to `600·cutoffScale` over 0.25 s, Q 0.8), decay 0.9; for departures a grace note first: same recipe at `f / 2^(2/12)`, `when − 0.07`, 0.35 × velocity.
+- **AFR** (kalimba): sine `f` (decay 0.6) + sine `2.76·f` at 0.35 peak (decay 0.18).
+- **ASI** (koto): triangle, frequency `1.02·f → f` over 30 ms, lowpass `4200·cutoffScale`, decay 0.75.
+- **AME** (strings pad): two sawtooth at `f` detuned ±5 cents, lowpass `900·cutoffScale`, attack 1.2, decay 2.6.
+
+Engine behaviour:
+- No `AudioContext` until `setEnabled(true)` (browser autoplay rule). Default `createContext = () => new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()`; everything wrapped so a missing/blocked Web Audio makes the module a silent no-op, never an exception.
+- Graph: `master` (gain 0) → `DynamicsCompressor` (threshold −24, ratio 4) → destination; `bus` → `dry` (0.7) → `master` and `bus` → `convolver` (generated 2.5 s stereo noise impulse with exponential decay) → `wet` (0.3) → `master`; notes and the bed connect to `bus`.
+- Chord bed: three sine/triangle oscillators (root octave 2, third and fifth octave 3) → lowpass 500 Hz → `bedGain` → `bus`; `setEnergy(e)` (e clamped to 0..1) sets `bedGain` target `0.035 · e^0.7` (`setTargetAtTime`, 0.8 s) and, when `chordAtTime(ctx.currentTime)` changed since the last call, glides the three oscillator frequencies to the new chord (`setTargetAtTime(freq, now, 1.2)`).
+- `schedule(events, focus, pans)`: ignored while disabled or before the context exists; otherwise `planNotes(events, ctx.currentTime)` and `playNote` for each planned note with `gainScale = focus?.regionIdx == null ? 1 : (REGIONS.indexOf(n.region) === focus.regionIdx ? 1.6 : 0.7)`, `cutoffScale = focus matches ? 0.6 + 0.8 · clamp(alt100/410, 0, 1) : 1`, `pan = clamp(pans.get(n.key)?.pan ?? 0, −1, 1)` and a ×0.3 gain factor when `pans.get(n.key)?.visible === false`.
+- `setEnabled(true)`: lazily build everything, `ctx.resume()`, ramp `master` to 1 (`setTargetAtTime(1, t, 0.25)`), register a `visibilitychange` handler (suspend when hidden and enabled, resume when visible); if the context stays `suspended` (autoplay blocked), install one-shot `pointerdown`/`keydown` listeners that `resume()` and remove themselves. `setEnabled(false)`: ramp `master` to 0, then `suspend()` after ~1 s.
+- `dispose()`: stop and disconnect bed oscillators, remove listeners, `close()` the context; safe to call twice and before any enable.
+
+- [ ] **Step 1: Failing tests** — `globe/test/route-sound.test.ts` (hand-written fake audio graph; every node records connections; params record calls):
+
+```ts
+import { describe, expect, it, vi } from "vitest";
+import { BEAT_SEC, freqOf } from "../src/audio/theory";
+import { createRouteSound } from "../src/audio/engine";
+import type { ScoreEvent } from "../src/audio/score";
+
+class P {
+  value = 0;
+  calls: { fn: string; args: number[] }[] = [];
+  setValueAtTime = vi.fn((...a: number[]) => { this.calls.push({ fn: "set", args: a }); });
+  linearRampToValueAtTime = vi.fn((...a: number[]) => { this.calls.push({ fn: "lin", args: a }); });
+  exponentialRampToValueAtTime = vi.fn((...a: number[]) => { this.calls.push({ fn: "exp", args: a }); });
+  setTargetAtTime = vi.fn((...a: number[]) => { this.value = a[0]; this.calls.push({ fn: "target", args: a }); });
+  cancelScheduledValues = vi.fn();
+}
+class Node { connect = vi.fn((x: unknown) => x); disconnect = vi.fn(); }
+class Osc extends Node { type = "sine"; frequency = new P(); detune = new P(); start = vi.fn(); stop = vi.fn(); onended: (() => void) | null = null; }
+class Gain extends Node { gain = new P(); }
+class Filt extends Node { type = "lowpass"; frequency = new P(); Q = new P(); }
+class Pan extends Node { pan = new P(); }
+class Conv extends Node { buffer: unknown = null; }
+class Comp extends Node { threshold = new P(); ratio = new P(); attack = new P(); release = new P(); knee = new P(); }
+
+function fakeCtx() {
+  const c = {
+    state: "suspended" as string,
+    currentTime: 0,
+    sampleRate: 48000,
+    destination: new Node(),
+    oscs: [] as Osc[],
+    gains: [] as Gain[],
+    pans: [] as Pan[],
+    createOscillator() { const o = new Osc(); c.oscs.push(o); return o; },
+    createGain() { const g = new Gain(); c.gains.push(g); return g; },
+    createBiquadFilter: () => new Filt(),
+    createStereoPanner() { const p = new Pan(); c.pans.push(p); return p; },
+    createConvolver: () => new Conv(),
+    createDynamicsCompressor: () => new Comp(),
+    createBuffer: (ch: number, len: number) => ({ numberOfChannels: ch, length: len, getChannelData: () => new Float32Array(len) }),
+    resume: vi.fn(async () => { c.state = "running"; }),
+    suspend: vi.fn(async () => { c.state = "suspended"; }),
+    close: vi.fn(async () => { c.state = "closed"; }),
+  };
+  return c;
+}
+const make = () => {
+  const ctx = fakeCtx();
+  const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
+  return { ctx, s };
+};
+const BED_OSCS = 3;
+const ev = (regionIdx: number, o: Partial<ScoreEvent> = {}): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx, distKm: 2000, at: 0, ...o });
+
+describe("route sound engine", () => {
+  it("creates no audio context until enabled (autoplay rule); scheduling while disabled does nothing", () => {
+    const create = vi.fn(() => fakeCtx() as unknown as AudioContext);
+    const s = createRouteSound({ createContext: create });
+    s.schedule([ev(1)]);
+    s.setEnergy(0.5);
+    expect(create).not.toHaveBeenCalled();
+    s.dispose();
+  });
+
+  it("enabling builds the graph, resumes the context and starts the three-oscillator chord bed", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    expect(ctx.resume).toHaveBeenCalled();
+    expect(ctx.oscs).toHaveLength(BED_OSCS);
+    s.dispose();
+    expect(ctx.close).toHaveBeenCalled();
+  });
+
+  it("each continent plays its own instrument (oscillator layout per note)", () => {
+    const counts: Record<string, number> = {};
+    for (const [name, region] of [["DOM", 0], ["EUR", 1], ["MEA", 2], ["AFR", 3], ["ASI", 4], ["AME", 5]] as const) {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      const before = ctx.oscs.length;
+      s.schedule([ev(region)]);
+      counts[name] = ctx.oscs.length - before;
+      s.dispose();
+    }
+    expect(counts).toEqual({ DOM: 1, EUR: 2, MEA: 2, AFR: 2, ASI: 1, AME: 2 });
+  });
+
+  it("unknown-region events stay silent", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    const before = ctx.oscs.length;
+    s.schedule([ev(6)]);
+    expect(ctx.oscs.length).toBe(before);
+    s.dispose();
+  });
+
+  it("the focused continent is louder than the others", () => {
+    const peak = (focusRegion: number | null) => {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      const before = ctx.gains.length;
+      s.schedule([ev(1)], { regionIdx: focusRegion, alt100: 300 });
+      const lin = ctx.gains.slice(before).flatMap((g) => g.gain.calls.filter((c) => c.fn === "lin").map((c) => c.args[0]));
+      s.dispose();
+      return Math.max(...lin);
+    };
+    expect(peak(1)).toBeGreaterThan(peak(null));
+    expect(peak(null)).toBeGreaterThan(peak(4));
+  });
+
+  it("pans notes from the screen map and quietens back-side routes", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    const before = ctx.pans.length;
+    s.schedule([ev(1)], null, new Map([["IST-FRA", { pan: -0.4, visible: true }]]));
+    expect(ctx.pans[before].pan.value).toBeCloseTo(-0.4, 9);
+    s.dispose();
+  });
+
+  it("the chord bed follows the progression: Am → F after 16 beats", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    s.setEnergy(0.6);
+    ctx.currentTime = 16 * BEAT_SEC + 0.1;
+    s.setEnergy(0.6);
+    const rootTargets = ctx.oscs[0].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
+    expect(rootTargets.some((f) => Math.abs(f - freqOf(2, 8)) < 1e-6)).toBe(true); // F root, octave 2
+    s.dispose();
+  });
+
+  it("disabling fades the master out and suspends later; dispose is idempotent", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    s.setEnabled(false);
+    expect(ctx.gains[0].gain.calls.some((c) => c.fn === "target" && c.args[0] === 0)).toBe(true);
+    s.dispose();
+    expect(() => s.dispose()).not.toThrow();
+  });
+
+  it("a missing Web Audio implementation never throws", () => {
+    const s = createRouteSound({ createContext: () => { throw new Error("no audio"); } });
+    expect(() => { s.setEnabled(true); s.schedule([ev(1)]); s.setEnergy(1); s.dispose(); }).not.toThrow();
+  });
+});
+```
+
+- [ ] **Step 2: Run to verify failure.**
+
+- [ ] **Step 3: Implement** `instruments.ts` and `engine.ts` exactly per the recipes and engine behaviour above. Implementation notes: build the per-note envelope with a helper `env(g: GainNode, t: number, peak: number, attack: number, decay: number)`: `g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay)`; make landings' decay `×2` and peak `×1` (their velocity is already ×0.6); each oscillator's `onended` disconnects its per-note chain; the first `GainNode` created by `playNote` per oscillator is the envelope gain whose `linearRampToValueAtTime` first argument is the peak (the tests read it). The bed oscillators for the chord: root `freqOf(2, chord.root)`, third `freqOf(3, chord.third)`, fifth `freqOf(3, chord.fifth)`. Impulse response: stereo `Float32Array`s `(Math.random()*2−1) · (1 − i/len)^3`, length `2.5 · sampleRate`.
+
+- [ ] **Step 4: Run to verify pass** — `npx vitest run && npx tsc --noEmit && npm run build`.
+
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): per-continent instruments, chord bed and Web Audio engine"
+```
+
+---
+
+### Task 8: Sound wiring in the controller (`M`)
+
+**Files:**
+- Modify: `globe/src/app/controller.ts`
+- Test: `globe/test/controller.test.ts`
+
+**Interfaces:**
+- Consumes: Task 1 (`effectsFor`, `pushEffects`), Task 2 (`buildCorridors`), Task 6 (`eventsBetween`, `routeKey`), Task 7 (`createRouteSound`, `RouteSound`).
+- Produces: optional controller deps `sound?: RouteSound` and `viewportWidth?: () => number` (tests inject a stub; production defaults: `createRouteSound()` and `window.innerWidth`).
+
+Behaviour (`// art:sound` markers at each integration line):
+- `pushEffects()` (Task 1): `const e = effectsFor(art, perf.level); d.engine.setEffects(e); if (e.sound !== soundOn) { soundOn = e.sound; sound.setEnabled(e.sound); prevSoundCur = null; }`.
+- Every `frame()` while `soundOn && model`: `cur` as computed for the frame; `if (prevSoundCur !== null) { const ev = eventsBetween(model, prevSoundCur, cur); if (ev.length) sound.schedule(ev, soundFocus(), pans); } prevSoundCur = cur;` (`eventsBetween` already ignores backwards moves, pauses and jumps > 600 s such as rewind blends, scrubs and data-window shifts).
+- `pans` (a `Map<string, { pan: number; visible: boolean }>`) is refreshed every HUD tick for the busiest 40 corridors (cached `buildCorridors(model)` per model): `pan = clamp((x − vw/2)/(vw/2), −1, 1)` from `engine.screenOf(midLat, midLon)` where the midpoint is `interpolateGreatCircle(fromLat, fromLon, toLat, toLon, 0.5)` (`@collector/geo`), `visible` from the same call.
+- `soundFocus()` = while following: `{ regionIdx: followedFlight.regionIdx, alt100: latest telemetry alt100 }`, else `null`.
+- Every HUD tick while sound is on: `sound.setEnergy(clamp01(base.counters.airborne / 150))`.
+- Data swap: shift `prevSoundCur -= next.from − prev.from` next to the other window shifts (`liveFrozen`, follow clock).
+- `onKey("m")` toggles through the existing art plumbing (Task 1); `dispose()` calls `sound.dispose()`.
+
+- [ ] **Step 1: Failing tests** (stub sound: `{ setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() }`; extend `setup` with `sound?: RouteSound` and `viewportWidth` passed through to `createController`):
+```ts
+  it("M turns the sound on and off through the stub; nothing is scheduled while it is off", async () => {
+    const sound = { setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() };
+    const h = setup({ sound });
+    await flush();
+    h.frame(0.3);
+    expect(sound.schedule).not.toHaveBeenCalled();
+    h.c.onKey("m");
+    expect(sound.setEnabled).toHaveBeenLastCalledWith(true);
+    h.c.onKey("m");
+    expect(sound.setEnabled).toHaveBeenLastCalledWith(false);
+    h.c.dispose();
+    expect(sound.dispose).toHaveBeenCalled();
+  });
+
+  it("in a replay the departure of the routed flight is scheduled as a note on its corridor", async () => {
+    const sound = { setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() };
+    const h = setup({ sound });
+    await flush();
+    h.c.onKey("m");
+    h.c.onKey("r"); // REPLAY: 24 h in 180 s → 480 s of flight time per second
+    for (let i = 0; i < 200; i++) h.frame(1);
+    const events = sound.schedule.mock.calls.flatMap((c) => c[0] as { kind: string; key: string; regionIdx: number }[]);
+    expect(events.some((e) => e.kind === "dep" && e.key === "IST-JFK" && e.regionIdx === 5)).toBe(true);
+    h.c.dispose();
+  });
+
+  it("publishes the airborne energy while on and keeps the stub quiet while off", async () => {
+    const sound = { setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() };
+    const h = setup({ sound });
+    await flush();
+    h.frame(0.3);
+    expect(sound.setEnergy).not.toHaveBeenCalled();
+    h.c.onKey("m");
+    h.frame(0.3);
+    expect(sound.setEnergy).toHaveBeenCalled();
+    const e = sound.setEnergy.mock.calls.at(-1)![0] as number;
+    expect(e).toBeGreaterThanOrEqual(0);
+    expect(e).toBeLessThanOrEqual(1);
+    h.c.dispose();
+  });
+
+  it("jumps (scrubs, rewinds) never flood the score", async () => {
+    const sound = { setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() };
+    const h = setup({ sound });
+    await flush();
+    h.c.onKey("m");
+    h.frame(0.1);
+    h.c.onKey("ArrowLeft"); // one-hour scrub: a 3600 s jump
+    h.frame(0.1);
+    expect(sound.schedule).not.toHaveBeenCalled();
+    h.c.dispose();
+  });
+```
+
+- [ ] **Step 2: Run to verify failure.**
+
+- [ ] **Step 3: Implement** per the behaviour list above; wrap nothing in try/catch beyond what the audio engine already guarantees (the stub and real engine never throw).
+
+- [ ] **Step 4: Run to verify pass** — `npx vitest run && npx tsc --noEmit && npm run build`.
+
+- [ ] **Step 5: Listening check (user):** open the page, press `M`; confirm `SOUND ON` in the HUD and no console errors; then ask the user to listen in a REPLAY (`R`): each continent should sound different (vibraphone Europe, oud Middle East, kalimba Africa, koto Asia, strings pad Americas, deep pulse domestic), the rhythms should interlock without drifting, the chord should move every ≈ 10 s, and quiet hours should thin out. Record their feedback and any gain/cutoff/velocity/tempo changes in the spec notes table.
+
+- [ ] **Step 6: Commit**
+```bash
+git add globe
+git commit -m "art(sound): wire the continent orchestra into the controller (M)"
+```
+
+---
+
+### Task 9: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
 
 - [ ] **Step 1: README** — in the Globe section add:
 ```markdown
-Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default; pitch = route distance, loudness = traffic).
+Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default): a generative continent orchestra — every departure/landing is a note; Europe vibraphone, Middle East oud, Africa kalimba, Asia koto, Americas strings, domestic pulse, on one 96 BPM clock.
 Twilight band, cloud shadows, sun glare and the real star map are always on; `?art=0` turns every art layer off and restores the plain look. Preferences persist in the browser.
 ```
 - [ ] **Step 2: Fill the notes table** at the end of the spec: for each section the commit hash(es) (`git log --oneline --grep "^art("`), the exact revert command (`git revert <hash>` — for multi-commit sections `git revert <newest>^..<oldest>`), the controller's visual-check observations and the tuning constants that were changed.
@@ -1430,7 +1819,7 @@ git commit -m "art(docs): art layer keys and implementation notes"
 
 - Task 2/3/5: record visual-check observations and tuned constants in the spec notes table.
 - Task 4: record the approved star-map file (name, URL, size) and the chosen `STAR_FLIP`.
-- Task 6: record the user's listening feedback (levels, timbre) and any changes.
+- Task 8: record the user's listening feedback (levels, timbre) and any changes.
 
 ## Not in this plan
 
