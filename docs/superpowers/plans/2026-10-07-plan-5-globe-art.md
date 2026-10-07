@@ -2021,7 +2021,63 @@ git commit -m "art(sound): sky feed, pitch-ribbon scope and line pulses"
 
 ---
 
-### Task 15: Docs, notes table, deploy
+### Task 15: Music v4 arrangement (pure) — levels, patterns, layers, build-up
+
+**Files:**
+- Create: `globe/src/audio/arrangement.ts`
+- Modify: `globe/src/audio/groove.ts` (pattern functions by level/bar), `globe/src/audio/lines.ts` (`selectLines` takes the active region set), `globe/src/audio/form.ts` (level ranges)
+- Test: `globe/test/arrangement.test.ts` (new), `globe/test/groove.test.ts`, `globe/test/lines.test.ts`, `globe/test/form.test.ts` (update)
+
+Spec: §4f (the level table, layer rules, build-up are authoritative). Pure modules only: no scene/Three imports.
+
+**Interfaces:**
+- `form.ts`: `Section` gains `levelRange: [number, number]` — NIGHT `[0,1]`, MORNING `[1,3]`, DAY `[2,4]`, EVENING `[1,3]`; `hoursToBoundary(localHour: number): number` = hours until the next section boundary (`6, 12, 18, 24`; at exactly a boundary → the full 6).
+- `arrangement.ts`: `type Level = 0 | 1 | 2 | 3 | 4`; `intensityOf(airborne: number): number` = `clamp(airborne / 150, 0, 1)`; `smoothIntensity(prev: number, target: number, dt: number): number` (`prev + (target − prev) · (1 − exp(−dt / 2))`); `levelFor(sec: Section, intensity: number): Level`; `nextLevel(cur: Level, wanted: Level): Level` (rise immediately to `wanted`, fall by at most one level per call — the engine calls it once per bar); `regionShares(flights: SkyFlight[]): number[]` (length 7 in `REGIONS` order, sums to 1, all zeros for no flights); `activeLayers(prev: ReadonlySet<RegionName>, shares: number[], max = 4): Set<RegionName>` — enter at share ≥ 0.14, leave below 0.08, keep at most `max` (the highest shares win, ties by `REGIONS` order); `type BuildPhase = "none" | "build" | "hit"`; `buildup(hoursToBoundary: number, hoursSinceBoundary: number, replay: boolean): { phase: BuildPhase; amount: number }` — replay only: `hoursToBoundary ≤ 0.55` → `build` with `amount = 1 − hoursToBoundary / 0.55` (0..1); `hoursSinceBoundary < 0.1` → `hit`; otherwise `none`; `replay === false` → always `none`.
+- `groove.ts`: new `type Voice` members: `"TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP"` (add to `Instrument` in `theory.ts`, colours in `scope.ts`); `drumHits(level: Level, bar: number, step: number): GrooveHit[]` implements the spec §4f table exactly for KICK/SNARE/HAT/OHAT/SHAKER/TOM (level 4 hat "32nds" = two HAT hits at `step` and `step + 0.5` — represent with a `GrooveHit.offsetSteps?: number` of `0.5`), bar variants (`bar % 4 === 1`: ghost-note steps shift by +1; `bar % 4 === 3` and level ≥ 2: fill on steps 12–15 — SNARE on 12, 13, 14, 15 with rising velocity 0.5/0.6/0.75/0.9 at level ≥ 3, TOM at 14, 15 at level 2); velocity scaling by level (level 0 × 0.5, 1 × 0.7, 2 × 0.9, 3 and 4 × 1.0); `bassHits(level: Level, bar: number, step: number, chord: Chord, next: Chord): GrooveHit[]` (levels 0/1/2 as the table; level 3: ostinato steps plus 16th passing notes on steps 2, 9, 13 and the octave jump on step 8 → `root + 12` and step 14 → fifth; level 4: a 16th-note walking run each step: chord tones/scale tones ascending on bars with `bar % 2 === 0`, descending otherwise, always inside the bass register `freqOf(1,·)..freqOf(2,·)` and ending the bar on the approach note to the next root); `compHits(level: Level, step: number, chord: Chord): GrooveHit[]` (KEYS steps per level `0:[0,10] arpeggio one tone per hit, 1:[2,10], 2:[2,7,10], 3:[2,7,10], 4:[2,5,7,10,13]` with the existing rootless voicing; BRASS steps `3:[3,11]`, `4:[3,6,11,14]`, none below level 3); `layerHits(region: RegionName, step: number, bar: number): GrooveHit[]` — percussion of an active layer: MEA `DARBUKA` on `euclid(5, 8)` mapped to even steps (`step % 2 === 0`, index `step / 2`), AFR `CONGA` on `euclid(7, 12)` rotated by `bar % 3` and laid over the 16 steps by `floor(step · 12 / 16)` change-points (first step of each new index only), ASI `TAIKO` on `euclid(3, 8)` even steps, AME `TIMP` on `[0, 8]`, EUR `SHAKER` on every step with accent on 8ths (`0.5` / `0.25`), DOM/UNK none; `fillAndBuild(phase: BuildPhase, amount: number, step: number, bar: number): GrooveHit[]` — `build`: SNARE roll every step with velocity `0.3 + 0.7·amount`, HAT every step, `RISER` once at step 0 of the first build bar, BASS octave pulse on steps `0, 4, 8, 12`; `hit`: only at `step === 0`: `CRASH` + `KICK` + `BRASS` with the chord's full voicing (3rd, 7th, 9th, 5th in octaves 4–5) velocity 1.0. The old `grooveStep` stays only if still used by tests/engine until Task 16 replaces it (remove it in Task 16).
+- `lines.ts`: `selectLines(flights, followedId, max = 12, active?: ReadonlySet<RegionName>)` — when `active` is given, only flights whose region (`REGIONS[regionIdx]`) is in `active` are candidates, **plus the followed flight**; otherwise unchanged.
+
+- [ ] **Step 1: Failing tests** (hand-check every number; write from the contracts and the §4f table):
+  - `arrangement.test.ts`: `intensityOf` (0 → 0, 75 → 0.5, 300 → 1); `smoothIntensity` converges (after 2 s the gap closes to ≈ 63 %); `levelFor` per section ranges (NIGHT intensity 1 → 1, DAY intensity 0 → 2, MORNING 1 → 3, EVENING 0.5 → 2); `nextLevel` (3 → 1 gives 2; 1 → 3 gives 3); `regionShares` sums to 1 and orders by `REGIONS`; `activeLayers` hysteresis (a region at 0.10 stays active if it was, is not entered if it was not; below 0.08 leaves; cap 4 keeps the top shares); `buildup` (replay: 1 h before → none, 0.55 → build amount 0, 0.2 → ≈ 0.636, `hoursSinceBoundary 0.05` → hit; `replay false` → none).
+  - `groove.test.ts` (update/extend): per level the exact kick/snare/hat/shaker/tom step sets from the table (e.g. level 2 kick `[0,6,10]`, snare `[4,12]`, hat on all 16 steps with 8th-step accent velocities; level 3 adds ghost snare `[7,15]`, open hat `[14]`, shaker 16ths; level 4 adds kick `[3]` and hat 32nd double hits, toms on odd bars at steps 12–15), bar variants (`bar % 4 === 3` has the fill, `bar % 4 === 1` shifts ghosts), velocity scaling, `bassHits` per level (level 2 ostinato steps `[0,3,6,8,11,14]`, level 3 extra passing steps, level 4 one note every step within the bass register, last step is the approach to the next root), `compHits` steps per level and brass only at level ≥ 3, `layerHits` per region (MEA darbuka only on even steps with 5 hits per 8 steps over a 16-step bar, AFR conga pattern has 7 onsets over the bar, ASI taiko 3 over the 8 even-step slots, AME timpani at `[0,8]`, EUR shaker every step, DOM/UNK empty), `fillAndBuild` (build: snare every step with rising velocity; riser only at step 0; hit: crash + kick + brass voicing only at step 0). Every pitched hit stays inside the chord scale (bass approach excepted).
+  - `lines.test.ts`: `selectLines` with `active` filters other regions out but keeps the followed flight; without `active` behaves as before.
+  - `form.test.ts`: `levelRange` per section, `hoursToBoundary` (5.5 → 0.5 in NIGHT? (hour 5.5 → 0.5), 6 → 6, 11.9 → 0.1, 23.9 → 0.1, 0 → 6).
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; keep helpers small and pure.
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): v4 arrangement — levels, rhythm patterns, region layers and build-up (pure)"
+```
+
+---
+
+### Task 16: Music v4 engine, new percussion, controller and scope level display
+
+**Files:**
+- Modify: `globe/src/audio/engine.ts`, `globe/src/audio/instruments.ts`, `globe/src/audio/scope.ts`, `globe/src/hud/MusicScope.tsx`, `globe/src/app/controller.ts`
+- Test: `globe/test/route-sound.test.ts`, `globe/test/controller.test.ts`, `globe/test/scope.test.ts`, `globe/test/hud.test.tsx`
+
+**Interfaces:**
+- `engine.ts`: `setSky(flights, followedId, localHour?, replay?: boolean)` — also stores the airborne count (`flights.length` of the **unfiltered** sky, passed as part of the call: add a 5th optional `airborne?: number`, defaulting to `flights.length`) and the replay flag; `tick()` per planned step now: `bar = floor(step / 16)`, at every bar boundary (`step % 16 === 0`) update `intensity` (via `smoothIntensity` with the elapsed wall time, then `levelFor`/`nextLevel`) and `layers = activeLayers(layers, regionShares(sky))`; hour-based `buildup(hoursToBoundary(localHour), hoursSinceBoundary, replay)` where `hoursSinceBoundary = (localHour − boundaryHourBelow + 24) % 24` (distance since the last boundary 0/6/12/18); the step's notes = `drumHits(level, bar, stepInBar)` + `bassHits` + `compHits` + `layerHits(region, …)` for every active layer + the flight lines (selected with `selectLines(sky, followedId, 12, layers)`) — **or**, in `build`/`hit` phases, `fillAndBuild(...)` plus (during `build`) only drums/bass (keys, brass, layers and lines muted) and (at `hit`) the tutti. Remove the old `grooveStep` use and any now-dead code. `info()` additionally returns `level: Level` and `layers: RegionName[]` and `phase: BuildPhase`.
+- `instruments.ts`: recipes for the new voices (peak `0.22 · vel · gainScale` unless noted): **DARBUKA**: sine `190 → 120 Hz` over 40 ms (decay 0.18) + a 6 ms bandpass noise click at 2.5 kHz; **CONGA**: sine `330 → 250 Hz` over 30 ms (decay 0.22) + noise click; **TAIKO**: sine `110 → 55 Hz` over 120 ms (decay 0.55); **TIMP**: sine `98 → 82 Hz` (decay 0.9) + sine `196` at 0.3 peak; **TOM**: sine `160 → 90 Hz` over 90 ms (decay 0.3); **SHAKER**: noise through bandpass 9 kHz Q 1.2 (decay 0.04); **CRASH**: noise through highpass 5 kHz (decay 1.4); **RISER**: noise through a bandpass whose frequency sweeps `400 → 6000 Hz` over 3.5 s with gain rising to peak 0.5 then released; existing recipes unchanged. Keep the cached noise buffer.
+- `scope.ts`/`MusicScope.tsx`: the rhythm strip shows a **level bar** (five segments, the current level filled in the section colour) and one small coloured dot per active region layer (`INSTRUMENT_COLOR` of the layer's instrument); label `ROUTES → MUSIC · <SECTION> · <CHORD> · <BPM> BPM · L<level>`; `music` in the snapshot gains `level: number` and `layers: string[]` (from `sound.info()`); update `MusicHud` type, controller and tests.
+- `controller.ts`: pass `replay = mode === "REPLAY"` and `airborne` (`sky.length` of all airborne heads) to `sound.setSky(...)`; nothing else changes.
+
+- [ ] **Step 1: Failing tests:** (a) `route-sound.test.ts` (use `autoTick: false` and an injected `now`): the level follows intensity only at bar boundaries (a sky with 150 flights in DAY gives level 4 from bar 1; with 10 flights level 2; falling intensity drops one level per bar), `info().level/layers/phase` reflect the state; layers enter at ≥ 14 % share and leave under 8 % (compare emitted `NoteEvent.lane`s: `DARBUKA` only while MEA is active); lines of inactive regions never play (except the followed one); with `replay: true` and `localHour` within 0.55 h before 12:00 the planner emits `RISER` at the first build step and a `SNARE` roll while the keys/brass/layer/line lanes go silent, and at `hoursSinceBoundary < 0.1` step 0 emits `CRASH` + `KICK` + `BRASS`; with `replay: false` no build-up events; a section change still resets epoch/step; new-recipe oscillator/buffer-source counts (DARBUKA 1 osc + 1 buffer source, CONGA 1 + 1, TAIKO 1, TIMP 2, TOM 1, SHAKER 1 buffer source, CRASH 1 buffer source, RISER 1 buffer source + sweeping filter). (b) `controller.test.ts`: `setSky` receives `replay` true in REPLAY and false in LIVE and `airborne` equal to the number of airborne heads. (c) `scope.test.ts`/`hud.test.tsx`: the label contains `L2` for level 2, the level bar renders five segments with the current level marked, one dot per layer, no throw without a 2D context.
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; mark integration lines `// art:sound`; delete dead code.
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): v4 engine — traffic-driven rhythm levels, region layers, build-ups and new percussion"
+```
+- [ ] **Step 6: Listening check (user):** REPLAY with `M`: quiet night with sparse pulse, the groove thickening through the morning, full fusion by day with fills every fourth bar, a riser and a tutti hit at the section boundaries, instruments of busy destinations joining (darbuka for the Middle East, conga for Africa, taiko for Asia, timpani and strings for the Americas) and leaving; record feedback and tuning (thresholds, levels, fills, volumes) in the spec notes table.
+
+---
+
+### Task 17: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
