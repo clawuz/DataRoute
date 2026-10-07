@@ -62,6 +62,25 @@ Veriye dayalı üretken müzik (sonifikasyon). **Hangi nota ne zaman çalar** ge
 - **Kontrol:** `M` tuşu aç/kapa, varsayılan **kapalı**, tercih `localStorage`'da; ses ilk açılışta kullanıcı tuş hareketiyle başlar; 0,8 sn yumuşak giriş/çıkış; sekme gizlenince askı. HUD'da `SOUND ON`. `?art=0` sesi kapalı tutar.
 - **Test:** teori ve skor saf fonksiyonlar (ızgaralar tam sayı oranlı, akor sırası, nota ⊂ skala, aralık olayları, ızgaraya oturtma, adım başına ≤ 2 nota, velocity, iniş oktavı); ses motoru sahte `AudioContext` ile (çalgı başına düğüm sayısı, odak, akor geçişi, hız sınırı, `dispose`). Dinleme ve denge kullanıcıyla (ilk sürümden sonra çalgı seviyeleri ve tınılar kulağa göre ayarlanır).
 
+## 4c. Müzik v2: sinematik minimalist, dört bölümlü (kullanıcı isteği: "ezgi sabit olmamalı, müzik yapısı daha etkili olmalı")
+§4b'deki sabit 8 notalık ney motifi ve tek akor döngüsü **kaldırılır**; yerine form, veriden doğan ezgi, euclidean ritim ve zengin armoni gelir. Karakter: sinematik minimalist (uzun cümleler, nefes alan, piyano ve yaylı pad merkezli, ney baş melodi).
+- **Form (İstanbul yerel saati = UTC+3, REPLAY'de gösterilen saat; 24 saat = 3 dk):**
+
+| Bölüm | Saat | BPM | Akorlar (A'ya göre yarım ses; renk tonlarıyla) | Aktif çalgılar | Adımda azami nota | Yankı (ıslak) |
+|---|---|---|---|---|---|---|
+| NIGHT | 00–06 | 72 | Am(add9) · Am9 · Fmaj7 · Gsus | NEY, AME, PNO, DOM | 1 | 0,45 |
+| MORNING | 06–12 | 84 | Am · F · C · G | + EUR, AFR, ASI | 2 | 0,35 |
+| DAY | 12–18 | 96 | C · G · Am · F (parlak, C majör tadı) | hepsi (+ MEA) | 2 | 0,25 |
+| EVENING | 18–24 | 80 | Dm · Am · F · C · Dm · F · G · Am (Am'de çözülme) | NEY, AME, PNO, EUR, MEA, DOM | 2 | 0,40 |
+
+Her akor 8 vuruş; bölüm değişimi bir bölüm epoch'u başlatır (ızgaralar ve akor sayımı o andan sayılır). Tüm akorlar a-minör/do-majör ailesi: önceki skalalar çarpışmaz.
+- **Zenginleştirilmiş akorlar:** `Chord`'a 7. ve 9. ton eklenir (Am9, Fmaj7, Cmaj7, G sus4, Dm7); alttaki pad dört sesli (kök oktav 2, beşli oktav 3, 7./3. oktav 3, 9. oktav 4) ve akor değişiminde yumuşak geçer.
+- **Ney: veriden doğan ezgi.** Her İstanbul-ucu olay 3 notalık bir **ezgi hücresi** üretir (ardışık sekizlik adımlarda): hücrenin eğrisi rotanın İstanbul'dan **başlangıç yönüyle** belirlenir (0–180° → yükselen, 180–360° → alçalan; ±30° içinde kuzey/güney → yay), adım büyüklüğü mesafeyle (< 1500 km: 1 derece, < 4000 km: 2, daha uzun: 3). **Ses geçişi:** ilk nota bir önceki notaya en yakın akor tonu (aynı notayı tekrarlama), güçlü vuruşta akor tonu, ≥ 2 derecelik atlayıştan sonra ters yönde bir adım. **Cümle:** 4 hücre = 1 cümle; ardından akor kökü/beşlisinde **uzun cümle sonu notası** ve 2 vuruş sessizlik; sonra yeni cümle. Güçlü vuruşta kısa süs notası. Kayıt bölümle değişir (gece 3.–4. oktav, gün 4.–5.). Durum (`NeyState`) saf bir fonksiyonla ilerler; aynı olay akışı aynı ezgiyi verir (ama her günün uçuşları farklı olduğundan ezgi her gün farklı).
+- **Piyano: akan arpejler.** Hash yerine sıralı arpej deseni (kök – beşli – üçlü(+oktav) – beşli); akor değiştikten sonraki ilk olayda akor üç notayla açılarak çalınır (roll, notalar arası 30 ms). Oktav mesafeyle (3–5).
+- **Ritim: euclidean desenler.** Çalgıların ızgarası aynı kalır (tam sayı bölümleri), ama olay çalgının **sonraki aktif adımına** oturur: DOM E(2,4) (1. ve 3. vuruş), EUR E(5,8) (2/vuruşta, 4 vuruş), MEA E(3,8) (sallantılı), AFR E(5,12) (3/vuruşta), ASI E(5,16) (4/vuruşta), PNO E(6,8). AME ve NEY desensiz. Böylece grup nefes alır, her olay çalmaz.
+- **Dinamik yay:** velocity ve yoğunluk bölümle ve trafik yoğunluğuyla (`airborne/150`) ölçeklenir; yankı ıslak oranı bölüme göre `setTargetAtTime`.
+- **Test:** `sectionAt`/`istanbulHour` sınırları, ilerleyişlerin a-minör içinde kalması, euclidean desenlerin sayıları ve `nextActiveSlot`, ney hücresi (yön/mesafe → eğri/adım, tekrar yok, cümle sonu, sessizlik), piyano arpej sırası ve roll, bölümlere göre çalgı süzmesi ve adım başına nota sınırı, ses motorunda bölüm değişimi/epoch ve yeni çalgı düğüm sayıları (saf/sahte `AudioContext`). Müziksel kalite dinlemeyle.
+
 ## 5. Dosyalar
 Yeni: `scene/corridors.ts`, `scene/aurora.ts`, `scene/sun-glare.ts`, `audio/theory.ts`, `audio/score.ts`, `audio/instruments.ts`, `audio/engine.ts` (rota müziği), `app/art.ts` (`?art`, `A`/`C`/`M` durumu, kalite eşlemesi). Değişen: `scene/earth.ts`, `scene/atmosphere.ts`, `scene/space.ts`, `scene/arcs.ts`, `scene/engine.ts`, `app/controller.ts`, `app/keys.ts` (`A`, `C`, `M`), `hud/GlobeHud.tsx` (etiketler), `README.md`.
 

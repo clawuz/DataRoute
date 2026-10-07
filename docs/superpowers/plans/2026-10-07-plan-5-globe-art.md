@@ -1837,7 +1837,69 @@ git commit -m "art(sound): 8-chord harmony, piano for west/north Europe and an I
 
 ---
 
-### Task 10: Docs, notes table, deploy
+### Task 10: Music v2 — four-section form, data-born ney melody, flowing piano, euclidean rhythm
+
+**Files:**
+- Create: `globe/src/audio/form.ts`, `globe/src/audio/melody.ts`
+- Modify: `globe/src/audio/theory.ts`, `globe/src/audio/score.ts`, `globe/src/audio/instruments.ts`, `globe/src/audio/engine.ts`, `globe/src/app/controller.ts` (only the `schedule` call: pass the local hour)
+- Test: `globe/test/form.test.ts`, `globe/test/melody.test.ts` (new); `globe/test/theory.test.ts`, `globe/test/score.test.ts`, `globe/test/route-sound.test.ts`, `globe/test/controller.test.ts` (update)
+
+Spec: `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md` §4c (and §4b for what stays). The `audio/` files still must not import from `globe/src/scene/*` or Three.js. Everything pure stays pure; the only mutable music state lives in the engine (`NeyState`, piano arpeggio state, section epoch) and is advanced through the pure functions below.
+
+**Interfaces:**
+- `theory.ts`:
+  - `Chord` gains `seventh?: number; ninth?: number` (semitones above A). Replace `PROGRESSION`/`BEATS_PER_CHORD`/`BPM`/`BEAT_SEC` usage by per-section data from `form.ts`; keep `BPM`/`BEAT_SEC`/`PROGRESSION` exported only if other code still needs them (otherwise remove and update tests) — the DAY section's tempo is 96.
+  - `euclid(k: number, n: number): boolean[]` (Bjorklund / even spacing; `euclid(5, 8)` = `[true,false,true,true,false,true,true,false]`, `euclid(3, 8)` = `[true,false,false,true,false,false,true,false]`, `euclid(2, 4)` = `[true,false,true,false]`; `k ≥ n` → all true; `k ≤ 0` → all false; always `n` long and exactly `k` trues).
+  - `PATTERNS: Partial<Record<Instrument, boolean[]>>`: DOM `euclid(2,4)`, EUR `euclid(5,8)`, MEA `euclid(3,8)`, AFR `euclid(5,12)`, ASI `euclid(5,16)`, PNO `euclid(6,8)`; AME and NEY have no pattern.
+  - `nextActiveSlot(instrument: Instrument, slot: number): number` — first slot index `≥ slot` whose step (`slot mod pattern length`) is active; instruments without a pattern return `slot`.
+  - `stepSec(inst, bpm)`, `slotIndex(sec, inst, bpm)`, `slotTime(inst, index, bpm)` take the tempo explicitly (`beatSec = 60 / bpm`), times are relative to the section epoch (the caller adds the epoch).
+  - `chordAtBeat(beat: number, progression: Chord[], beatsPerChord: number): Chord`.
+- `form.ts`:
+  - `type SectionId = "NIGHT" | "MORNING" | "DAY" | "EVENING"`; `interface Section { id: SectionId; bpm: number; progression: Chord[]; beatsPerChord: number; wet: number; maxNotes: number; neyOct: number; instruments: ReadonlySet<Instrument> }` and `SECTIONS: Record<SectionId, Section>` with exactly the spec §4c table (NIGHT 72 BPM `[Am(add9), Am9, Fmaj7, Gsus4]` instruments `NEY, AME, PNO, DOM` maxNotes 1 wet 0.45 neyOct 3; MORNING 84 `[Am, F, C, G]` + `EUR, AFR, ASI` maxNotes 2 wet 0.35 neyOct 4; DAY 96 `[C, G, Am, F]` all instruments incl. `MEA` maxNotes 2 wet 0.25 neyOct 4; EVENING 80 `[Dm, Am, F, C, Dm, F, G, Am]` instruments `NEY, AME, PNO, EUR, MEA, DOM` maxNotes 2 wet 0.40 neyOct 4); `beatsPerChord = 8` everywhere. Chords (semitones above A, tones as `root/third/fifth/seventh/ninth`): Am 0/3/7/10/2, Am(add9) 0/3/7/–/2, Am9 0/3/7/10/2, F 8/0/3 (Fmaj7 seventh 7), C 3/7/10 (Cmaj7 seventh 2), G 10/2/5 (Gsus4 = third 3 instead of 2: 10/3/5), Dm 5/8/0 (seventh 3). All tones must lie in the A-natural-minor pitch classes `{0,2,3,5,7,8,10}`.
+  - `istanbulHour(absUnixSec: number): number` = `((absUnixSec / 3600 + 3) mod 24)` normalised to `[0, 24)`; `sectionAt(localHour: number): Section` — `[0,6)` NIGHT, `[6,12)` MORNING, `[12,18)` DAY, `[18,24)` EVENING (hours wrap with `mod 24`).
+- `melody.ts`:
+  - `NEY_LADDER`: the A-natural-minor degrees as absolute semitones above A2 (`[0,2,3,5,7,8,10]` repeated over octaves 0–3, i.e. 28 entries, each `+12·octave`), ladder index = scale-degree index; `ladderFreq(i)` = `110 · 2^(NEY_LADDER[i]/12)` (A2 = 110 Hz).
+  - `interface NeyState { last: number; cell: number; restUntilBeat: number }`, `initNey(sec: Section): NeyState` (`last` = ladder index of A at the section's `neyOct`, `cell = 0`, `restUntilBeat = 0`).
+  - `bearingOf(farLat: number, farLon: number): number` — initial bearing from Istanbul (41.2613, 28.742) with `initialBearing` from `@collector/geo`.
+  - `contourFor(bearing: number): "up" | "down" | "arch"` (`|bearing − 0| < 30` or `|bearing − 180| < 30` → arch, else `< 180` → up, else down) and `stepFor(distKm: number): 1 | 2 | 3` (`< 1500` → 1, `< 4000` → 2, else 3).
+  - `interface NeyNote { freq: number; slotOffset: number; vel: number; grace: boolean; long: boolean }`; `neyCell(e: { distKm: number; farLat?: number; farLon?: number; kind: "dep" | "arr" }, st: NeyState, chord: Chord, beat: number, sec: Section): { notes: NeyNote[]; state: NeyState }`:
+    - while `beat < st.restUntilBeat` → `{ notes: [], state: st }` (phrase rest);
+    - range: ladder indices `[lo, hi]` = `[7·(neyOct−2), 7·(neyOct−2) + 11]` (a ten-degree window above the section's base octave), all moves clamped/reflected into it;
+    - first note `n0`: among ladder indices in `[lo, hi]` whose pitch class (`NEY_LADDER[i] mod 12`) is a chord tone (root/third/fifth and, when present, seventh/ninth) choose the one nearest to `st.last` with `n0 ≠ st.last` (ties → lower);
+    - contour/step from `bearingOf` (`kind === "arr"`: the contour is reversed, arrivals are an octave-of-ladder lower but never below `lo`) and `stepFor(distKm)`; `up`: `n1 = n0 + step`, `n2 = n1 + (step ≥ 2 ? −1 : +1)`; `down`: mirrored; `arch`: `n1 = n0 + step`, `n2 = n0` moved one degree down; leap rule: after a step ≥ 2 the next move is one degree in the opposite direction (as written);
+    - slot offsets `0, 1, 2` (consecutive eighth-note steps of the ney grid), velocities `0.8, 0.9, 0.7` times `vel` scaling applied by the caller; `grace = true` on the first note when `beat % 4 === 0` (strong beat);
+    - phrase counter: after 4 cells (`st.cell === 3`) emit **instead of a cell** a single **cadence** note (`long: true`, slotOffset 0, velocity 1.0) on the chord **root or fifth** nearest `st.last` and set `restUntilBeat = beat + 2`, `cell = 0`; otherwise `cell + 1`;
+    - state `last` = the last emitted ladder index.
+  - `interface PianoState { i: number; chordKey: string }`, `initPiano(): PianoState`; `pianoNext(st: PianoState, chord: Chord, chordKey: string, oct: number): { notes: { freq: number; offsetSec: number }[]; state: PianoState }` — arpeggio pattern `[root, fifth, third + 12, fifth]` (semitones above A relative to the clamped octave `oct` in 3..5, `freq = freqOf(oct, tone)`); when `chordKey !== st.chordKey` return the **roll** `[root, fifth, third + 12]` with `offsetSec` `0, 0.03, 0.06` and `i = 3`; otherwise one note and `i + 1`.
+- `score.ts`:
+  - `interface ScoreClock { epoch: number; section: Section; chordKey: string }`-free: keep `planNotes` pure with the new signature `planNotes(events: ScoreEvent[], nowSec: number, ctx: { epoch: number; section: Section; ney: NeyState; piano: PianoState }): { notes: PlannedNote[]; ney: NeyState; piano: PianoState }`.
+  - Instruments not in `ctx.section.instruments` are dropped. Per instrument and grid slot the cap is `ctx.section.maxNotes` (NEY cells are not capped but obey the phrase rest). Event times are quantised: `start = nowSec + LOOKAHEAD_SEC − ctx.epoch`; `slot = nextActiveSlot(inst, slotIndex(start, inst, bpm))`; `when = ctx.epoch + slotTime(inst, slot, bpm)`; chord = `chordAtBeat(floor(slotBeat), progression, beatsPerChord)` with `slotBeat = slotTime / beatSec`.
+  - NEY events (`e.istanbul`) go through `neyCell` (each note placed at `slot + slotOffset` on the NEY grid — NEY grid is 2 per beat now: `perBeat: 2`); PNO events through `pianoNext` (the `chordKey` is `chord.name` plus the chord's progression index); other instruments keep `pickNote` (their note selection from §4b is unchanged).
+  - `PlannedNote` gains optional `grace?: boolean; long?: boolean; offsetSec?: number` (the piano roll offsets are added to `when`).
+- `instruments.ts`: NEY honours `grace` (a note one ladder degree above at `when − 0.06`, 0.4 × velocity) and `long` (decay ×2.5); everything else unchanged.
+- `engine.ts`: `schedule(events, focus, pans, localHour?)`; the engine keeps `section` (from `sectionAt(localHour ?? 12)`), `epoch` (audio time at the first schedule/section change: when `sectionAt(localHour).id` differs from the current, set `epoch = ctx.currentTime` and `neyState = initNey(section)`), `neyState`, `pianoState`; `setEnergy` uses the section's progression for the chord bed, now **four** oscillators (root oct 2; fifth oct 3; seventh — or third when absent — oct 3; ninth — or fifth when absent — oct 4) and sets the reverb wet gain target to `section.wet`; velocity is scaled by `0.6 + 0.4 · energy` (the last `setEnergy` value).
+- `controller.ts`: `sound.schedule(ev, focus, pans, istanbulHour(model.from + cur))` (import `istanbulHour` from `../audio/form`).
+
+- [ ] **Step 1: Failing tests** (write them from the interface contracts; hand-check every numeric expectation):
+  - `form.test.ts`: `sectionAt` boundaries (`0 → NIGHT`, `5.99 → NIGHT`, `6 → MORNING`, `11.99 → MORNING`, `12 → DAY`, `18 → EVENING`, `23.99 → EVENING`, `24 → NIGHT`, `-1 → EVENING`), BPMs 72/84/96/80, `istanbulHour(0) === 3`, `istanbulHour(21 * 3600) === 0` (21:00 UTC = 00:00 Istanbul), instruments sets as specified (e.g. NIGHT has `NEY` and not `AFR`; DAY has `MEA`), every chord tone of every progression ∈ A-minor pitch classes, progressions have 4/4/4/8 chords and `beatsPerChord === 8`.
+  - `theory.test.ts`: `euclid` cases above and the counts (`euclid(5,12)` has 5 trues, length 12; `euclid(5,16)` 5 of 16), `nextActiveSlot("EUR", 1)` = 2 for `euclid(5,8)` (`[T,F,T,T,F,T,T,F]` → slot 1 inactive → 2), wraps (`nextActiveSlot("EUR", 8)` = 8), instruments without pattern return the same slot, tempo-aware `stepSec("EUR", 96)` = `0.625 / 2`, `slotTime("MEA", 1, 96)` keeps the swing; `chordAtBeat(9, DAY.progression, 8).name === "G"`; update/remove the old fixed-progression tests.
+  - `melody.test.ts`: `bearingOf` (IST→JFK ≈ 300°–310° west-northwest → contour `down`; IST→DXB ≈ 120° → `up`; IST→Moscow ≈ 40° → `up`; IST→JNB ≈ 190° → `arch`: compute with the real function and assert contour categories), `stepFor` thresholds, `neyCell` (a west flight produces three notes with ladder moves `−step`; an east flight `+step`; the first note is a chord tone and differs from `st.last`; all notes stay inside `[lo, hi]`; a leap ≥ 2 is followed by a one-degree move back; the 4th cell becomes a single `long` cadence note on the chord root or fifth and sets `restUntilBeat = beat + 2`; during the rest `notes` is empty; the strong-beat first note has `grace: true`; the same inputs give the same output), `pianoNext` (sequence of five calls on one chord = `[root, fifth, third+12, fifth, root]`; a new `chordKey` returns the three-note roll with offsets `0, 0.03, 0.06`).
+  - `score.test.ts`: planning drops instruments outside the section (NIGHT drops AFR/ASI/EUR/MEA events, DAY keeps them); `maxNotes` per slot per instrument (1 at night, 2 by day); events land on active euclidean steps and on the instrument grid relative to the epoch (`when = epoch + slotTime(...)`); NEY events produce cells (3 notes on consecutive NEY slots) and thread `NeyState`; PNO events thread `PianoState` and produce a roll after a chord change; arrivals still softer and an octave lower for non-melodic instruments; determinism with equal inputs.
+  - `route-sound.test.ts`: a section change (`schedule(..., localHour 13)` after `localHour 2`) resets the epoch and uses the DAY chord bed (the bed root glides to C: `freqOf(2, 3)`); the chord bed has four oscillators; the reverb wet target equals the section's `wet`; NIGHT ignores an `ASI` event (no new oscillators); the ney `grace` note adds one oscillator; existing behaviours (no context before enable, focus boost, dispose) still hold.
+  - `controller.test.ts`: the stub `schedule` receives `localHour` as the 4th argument and it equals `istanbulHour(model.from + cur)`.
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; keep helpers small and pure; update every call site and test of changed signatures; remove dead code (old fixed `NEY_MOTIF`, `neyNote`, `pianoNote`, `snapToChord` only if nothing else uses it — `snapToChord` may stay as a helper if `neyCell` uses chord-tone snapping).
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): music v2 — four-section form, data-born ney melody, flowing piano, euclidean rhythm"
+```
+- [ ] **Step 6: Listening check (user):** REPLAY with `M` on: the night should be sparse and low (ney solo over the pad), the morning builds, midday is the brightest with the full ensemble, the evening winds down to a closing Am; the ney should tell a different tune every time (phrases of four little cells then a held note and a breath); the piano should flow in arpeggios and open each new chord. Record feedback and tuning (tempos, cell length, piano density, wet levels) in the spec notes table.
+
+---
+
+### Task 11: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
