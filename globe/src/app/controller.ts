@@ -49,6 +49,8 @@ export interface GlobeControllerDeps {
   viewportWidth?: () => number;
   /** every planned note of the route music, for the scope panel */ // art:sound
   noteBus?: NoteBus;
+  /** wall clock of the sound engine's planner (seconds; default performance.now() / 1000) */ // art:sound
+  clock?: () => number;
 }
 
 export interface GlobeController {
@@ -80,9 +82,16 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let art: ArtState = initArt(d.search ?? ""); // art:core
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
+  const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
+  const pulseTimers = new Set<ReturnType<typeof setTimeout>>(); // art:sound
   const offNote = sound.onNote((n) => { // art:sound
     d.noteBus?.emit(n);
-    d.engine.pulseRoute(n.key);
+    // flash the route's corridor when the note actually sounds
+    const t = setTimeout(() => {
+      pulseTimers.delete(t);
+      if (!disposed) d.engine.pulseRoute(n.key);
+    }, Math.max(0, (n.at - clock()) * 1000));
+    pulseTimers.add(t);
   });
   let prevSoundCur: number | null = null; // art:sound
   const pans = new Map<string, { pan: number; visible: boolean }>(); // art:sound
@@ -238,7 +247,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
       art, // art:core
-      music: { on: soundOn, ...sound.info() }, // art:sound
+      music: { on: soundOn, ...sound.info(model ? istanbulHour(model.from + cur) : undefined) }, // art:sound
     });
   }
 
@@ -493,6 +502,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     dispose() {
       disposed = true;
       offNote(); // art:sound
+      for (const t of pulseTimers) clearTimeout(t); // art:sound
+      pulseTimers.clear(); // art:sound
       sound.dispose(); // art:sound
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);

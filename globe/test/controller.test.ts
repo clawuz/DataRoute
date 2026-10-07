@@ -23,7 +23,7 @@ const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
     now: { gs: 480, trk: 300 },
   });
 
-function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string; noteBus?: NoteBus } = {}) {
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string; noteBus?: NoteBus; clock?: () => number } = {}) {
   let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
   let afterRender: (() => void) | null = null;
   const engine: GlobeEngine = {
@@ -63,6 +63,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     viewportWidth: opts.viewportWidth,
     search: opts.search,
     noteBus: opts.noteBus,
+    clock: opts.clock,
     fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
   });
   return {
@@ -530,7 +531,7 @@ describe("globe controller", () => {
           subs.add(fn);
           return () => void subs.delete(fn);
         }),
-        info: vi.fn(() => ({ section: "DAY" as const, chord: "C", bpm: 96, instruments: ["NEY", "EUR"] as NoteEvent["instrument"][] })),
+        info: vi.fn((_hour?: number) => ({ section: "DAY" as const, chord: "C", bpm: 96, instruments: ["NEY", "EUR"] as NoteEvent["instrument"][] })),
         play: (n: NoteEvent) => subs.forEach((fn) => fn(n)),
         subs,
       };
@@ -558,17 +559,29 @@ describe("globe controller", () => {
       const bus = createNoteBus();
       const got: NoteEvent[] = [];
       bus.subscribe((n) => got.push(n));
-      const h = setup({ sound, noteBus: bus });
+      const wall = { t: 50 };
+      const h = setup({ sound, noteBus: bus, clock: () => wall.t });
       await flush();
       expect(sound.onNote).toHaveBeenCalledTimes(1);
-      const n = note();
-      sound.play(n);
-      expect(got).toEqual([n]);
-      expect(h.engine.pulseRoute).toHaveBeenCalledWith("IST-JFK");
-      h.c.dispose();
+      vi.useFakeTimers();
+      try {
+        const n = note({ at: 50.5 });
+        sound.play(n);
+        expect(got).toEqual([n]); // the scope gets it at once (it waits for `at` itself)
+        vi.advanceTimersByTime(499);
+        expect(h.engine.pulseRoute).not.toHaveBeenCalled(); // the corridor flashes when the note sounds
+        vi.advanceTimersByTime(1);
+        expect(h.engine.pulseRoute).toHaveBeenCalledWith("IST-JFK");
+        sound.play(note({ key: "IST-CDG", at: 51 }));
+        h.c.dispose(); // pending flashes are dropped
+        vi.advanceTimersByTime(2000);
+        expect(h.engine.pulseRoute).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
       expect(sound.subs.size).toBe(0);
       sound.play(note({ key: "IST-LHR" }));
-      expect(got).toHaveLength(1);
+      expect(got).toHaveLength(2); // the two notes before dispose only
     });
 
     it("publishes the music state (section, chord, tempo, ensemble, on) in the snapshot", async () => {
@@ -577,6 +590,9 @@ describe("globe controller", () => {
       await flush();
       h.frame(0.3);
       expect(h.store.get().music).toEqual({ on: false, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR"] });
+      // the label follows the Istanbul hour of the displayed time, events or not
+      const f = h.frame(0.01);
+      expect(sound.info).toHaveBeenLastCalledWith(istanbulHour(f.absTime));
       h.c.onKey("m");
       expect(h.store.get().music.on).toBe(true);
       expect("aircraftAirborne" in h.store.get()).toBe(false);

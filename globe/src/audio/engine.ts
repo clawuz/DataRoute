@@ -18,8 +18,11 @@ export interface RouteSound {
   setEnergy(e: number): void;
   /** every planned note (also while muted); returns the unsubscribe */
   onNote(fn: (n: NoteEvent) => void): () => void;
-  /** the current section, the chord at the wall-clock now, the tempo and the ensemble */
-  info(): SoundInfo;
+  /**
+   * The section, the chord at the wall-clock now, the tempo and the ensemble — of `localHour`'s section when given
+   * (read-only: planning switches its section on the next `schedule`), else of the planning section.
+   */
+  info(localHour?: number): SoundInfo;
   dispose(): void;
 }
 
@@ -96,10 +99,10 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   };
   const resume = () => safe(() => void g?.ctx.resume()?.catch?.(() => {}));
 
-  function bedChord(t: number): { chord: Chord; key: string } {
-    const beat = Math.floor(Math.max(0, t - epoch) / (60 / section.bpm));
-    const idx = Math.floor(beat / section.beatsPerChord) % section.progression.length;
-    return { chord: chordAtBeat(beat, section.progression, section.beatsPerChord), key: `${section.id}:${idx}` };
+  function bedChord(t: number, sec: Section = section): { chord: Chord; key: string } {
+    const beat = Math.floor(Math.max(0, t - epoch) / (60 / sec.bpm));
+    const idx = Math.floor(beat / sec.beatsPerChord) % sec.progression.length;
+    return { chord: chordAtBeat(beat, sec.progression, sec.beatsPerChord), key: `${sec.id}:${idx}` };
   }
 
   function build(): Graph {
@@ -253,8 +256,11 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     });
   }
 
-  function info(): SoundInfo {
-    return { section: section.id, chord: bedChord(now()).chord.name, bpm: section.bpm, instruments: [...section.instruments] };
+  function info(localHour?: number): SoundInfo {
+    const sec = localHour === undefined ? section : sectionAt(localHour);
+    // a section the planner has not switched to yet starts at its first chord
+    const chord = sec.id === section.id ? bedChord(now(), sec).chord : sec.progression[0];
+    return { section: sec.id, chord: chord.name, bpm: sec.bpm, instruments: [...sec.instruments] };
   }
 
   function dispose(): void {

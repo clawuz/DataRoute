@@ -119,6 +119,21 @@ describe("route sound engine", () => {
     s.dispose();
   });
 
+  it("info(localHour) reports that hour's section without touching the planner", () => {
+    const clock = { t: 0 };
+    const s = createRouteSound({ createContext: () => fakeCtx() as unknown as AudioContext, now: () => clock.t });
+    expect(s.info(2)).toMatchObject({ section: "NIGHT", bpm: 72, chord: "Am(add9)", instruments: [...SECTIONS.NIGHT.instruments] });
+    expect(s.info(13)).toMatchObject({ section: "DAY", bpm: 96, chord: "C" });
+    expect(s.info(20)).toMatchObject({ section: "EVENING", bpm: 80 });
+    expect(s.info().section).toBe("DAY"); // read-only: planning still in the default section
+    const notes: NoteEvent[] = [];
+    s.onNote((n) => notes.push(n));
+    s.info(2);
+    s.schedule([ev(1, ATHENS)]); // DAY epoch unchanged at 0
+    expect(notes[0].at).toBeCloseTo(0.625, 9);
+    s.dispose();
+  });
+
   it("onNote unsubscribes", () => {
     const { s } = make();
     const fn = vi.fn();
