@@ -7,9 +7,6 @@ export function smoothstep(e0: number, e1: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/** Warm band around the terminator (mirrored in earth.ts and atmosphere.ts GLSL). */
-export const twilightAmount = (ndl: number): number => smoothstep(-0.12, 0, ndl) * (1 - smoothstep(0, 0.10, ndl));
-
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const norm = (a: Vec3): Vec3 => {

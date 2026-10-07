@@ -49,7 +49,6 @@ export function persistArt(s: ArtState, write: (key: string, value: string) => v
 }
 
 export interface Effects {
-  twilight: boolean;
   cloudShadow: boolean;
   glare: boolean;
   aurora: boolean;
@@ -60,9 +59,8 @@ export interface Effects {
 
 /** Which effects run for an art state at a quality level (0 = best). Aurora drops first, then cloud shadows. */
 export function effectsFor(s: ArtState, qualityLevel: number): Effects {
-  if (!s.enabled) return { twilight: false, cloudShadow: false, glare: false, aurora: false, corridors: false, sound: false, starMap: false };
+  if (!s.enabled) return { cloudShadow: false, glare: false, aurora: false, corridors: false, sound: false, starMap: false };
   return {
-    twilight: true,
     cloudShadow: qualityLevel < 2,
     glare: true,
     aurora: s.aurora && qualityLevel < 1,

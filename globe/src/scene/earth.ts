@@ -31,7 +31,6 @@ uniform float uCloudDrift;
 uniform float uExposure;
 uniform float uNightPow;
 uniform float uGamma;
-uniform float uTwilight; // art:light
 uniform float uCloudShadow; // art:light
 varying vec3 vObj;
 varying vec3 vWorldN;
@@ -45,7 +44,6 @@ vec2 sphereUV(vec3 p) {
   return vec2((lon + PI) / (2.0 * PI), (lat + PI * 0.5) / PI);
 }
 
-float smooth01(float e0, float e1, float x) { float t = clamp((x - e0) / (e1 - e0), 0.0, 1.0); return t * t * (3.0 - 2.0 * t); } // art:light
 
 vec3 reinhard(vec3 c) {
   c *= uExposure / (1.0 + c / uExposure);
@@ -65,7 +63,6 @@ void main() {
   vec2 gy = useB ? dyB : dyA;
   float ndl = dot(N, uSunDir);
   float dayAmt = smoothstep(-0.10, 0.22, ndl);
-  float tw = uTwilight * smooth01(-0.12, 0.0, ndl) * (1.0 - smooth01(0.0, 0.10, ndl)); // art:light
 
   vec3 dayCol = uHasTex > 0.5 ? textureGrad(uDay, uv, gx, gy).rgb : vec3(0.10, 0.22, 0.45);
   float cloud = uHasTex > 0.5 ? textureGrad(uClouds, vec2(uv.x + uCloudDrift, uv.y), gx, gy).r : 0.0;
@@ -93,9 +90,6 @@ void main() {
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   col += vec3(0.10, 0.32, 0.95) * fres * (0.10 + 0.9 * dayAmt) * 0.9;
 
-  // warm the light already there (a flat additive band reads as an opaque stripe on the dark side)
-  col *= mix(vec3(1.0), vec3(1.3, 0.85, 0.62), tw * 0.8); // art:light
-  col += vec3(1.0, 0.5, 0.3) * tw * 0.05; // art:light
 
   gl_FragColor = vec4(reinhard(col), 1.0);
 }
@@ -112,7 +106,6 @@ export type EarthUniforms = {
   uExposure: { value: number };
   uNightPow: { value: number };
   uGamma: { value: number };
-  uTwilight: { value: number }; // art:light
   uCloudShadow: { value: number }; // art:light
 }
 
@@ -122,7 +115,7 @@ export interface Earth {
   setTextures(t: EarthTextures | null): void;
   setSun(dir: [number, number, number]): void;
   setCloudDrift(x: number): void;
-  setLight(e: { twilight: boolean; cloudShadow: boolean }): void; // art:light
+  setLight(e: { cloudShadow: boolean }): void; // art:light
   dispose(): void;
 }
 
@@ -141,7 +134,6 @@ export function createEarth(): Earth {
     uExposure: { value: 1.5 },
     uNightPow: { value: NIGHT_POW_DEFAULT },
     uGamma: { value: 1 / 2.4 },
-    uTwilight: { value: 0 }, // art:light
     uCloudShadow: { value: 0 }, // art:light
   };
   const geometry = new SphereGeometry(1, 128, 96);
@@ -165,7 +157,6 @@ export function createEarth(): Earth {
       uniforms.uCloudDrift.value = ((x % 1) + 1) % 1;
     },
     setLight(e) { // art:light
-      uniforms.uTwilight.value = e.twilight ? 1 : 0;
       uniforms.uCloudShadow.value = e.cloudShadow ? 1 : 0;
     },
     dispose() {

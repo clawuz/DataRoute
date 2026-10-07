@@ -23,7 +23,7 @@ Globe'u "veri işi olduğu ilk bakışta anlaşılan, sanatsal" bir sahneye yakl
 
 ## 4. Işık ve atmosfer
 Hepsi Earth shader'ına ve küçük yeni katmanlara eklenir; Dünya'nın fiziksel güneş yönü (`sunDirection`) tek kaynaktır.
-- **Alacakaranlık (`earth.ts`, `atmosphere.ts`):** `ndl = dot(N, sun)`; `twilight = smoothstep(-0.18, 0.0, ndl) * (1 - smoothstep(0.0, 0.12, ndl))`; yüzeye `vec3(1.0, 0.55, 0.35) * twilight * 0.35` eklenir; atmosfer rim rengi aynı bantta ısınır. Parlaklık sabitleri yerel tarayıcı kontrolüyle ayarlanır.
+- **Alacakaranlık:** alacakaranlık bandı denendi, kullanıcı beğenmedi, kaldırıldı. (Bulut gölgesi ve güneş parlaması kalır.)
 - **Bulut gölgesi (`earth.ts`):** gündüz tarafında `cloudShadow = texture(clouds, uv - sunTangentOffset)`; gölge `day *= 1 - 0.35 * shadow * dayAmt`. Ofset güneşin yüzey teğetsel bileşenine göre küçük sabit ölçekli (bulutun yüksekliği gösteriminde abartılı, fiziksel ölçek değil; bu bir görsel ipucudur).
 - **Güneş parlaması (`scene/sun-glare.ts`):** güneş yönünde, Dünya'nın arkasında kalınca derinlik testiyle gizlenen additive sprite + hafif halka; kamera güneşe baktığında bloom'u besler.
 - **Yıldız haritası (`space.ts`):** prosedürel yıldızların yerine/yanında NASA Deep Star Maps (veya eşdeğer kamu malı) dokusu; dokunun kullanılamadığı durumda mevcut prosedürel yıldızlara düşer. İndirme onayı gerekir (§2).

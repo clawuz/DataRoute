@@ -401,8 +401,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setEffects(e) {
       const prev = effects; // art:corridors
       effects = e; // art:core
-      earth.setLight({ twilight: e.twilight, cloudShadow: e.cloudShadow }); // art:light
-      atmosphere.setTwilight(e.twilight); // art:light
+      earth.setLight({ cloudShadow: e.cloudShadow }); // art:light
       glare.setVisible(e.glare); // art:light
       if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
     },

@@ -1,17 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { cloudShadowShift, smoothstep, twilightAmount } from "../src/scene/light";
+import { cloudShadowShift, smoothstep } from "../src/scene/light";
 
-describe("twilightAmount", () => {
-  it("is zero deep in day and night, peaks at the terminator", () => {
-    expect(twilightAmount(-0.4)).toBe(0);
-    expect(twilightAmount(0.3)).toBe(0);
-    expect(twilightAmount(0)).toBeCloseTo(1, 9);
-  });
-  it("rises through the night side and falls through the day side, continuously", () => {
-    expect(twilightAmount(-0.09)).toBeGreaterThan(twilightAmount(-0.15));
-    expect(twilightAmount(0.06)).toBeLessThan(twilightAmount(0.0));
-    expect(twilightAmount(0.06)).toBeGreaterThan(twilightAmount(0.11));
-  });
+describe("light", () => {
   it("smoothstep clamps", () => {
     expect(smoothstep(0, 1, -1)).toBe(0);
     expect(smoothstep(0, 1, 2)).toBe(1);

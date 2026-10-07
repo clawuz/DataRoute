@@ -673,6 +673,8 @@ git commit -m "art(corridors): one corridor per route, width/colour by traffic, 
 
 ### Task 3: Light — twilight band, cloud shadows, sun glare
 
+> Not: alacakaranlık bandı (twilight) uygulandı, kullanıcı beğenmedi ve kaldırıldı (`art(light): remove the twilight band`); aşağıdaki twilight adımları tarihçe olarak kalır, bulut gölgesi ve güneş parlaması geçerlidir.
+
 **Files:**
 - Create: `globe/src/scene/light.ts`, `globe/src/scene/sun-glare.ts`
 - Modify: `globe/src/scene/earth.ts`, `globe/src/scene/atmosphere.ts`, `globe/src/scene/engine.ts`

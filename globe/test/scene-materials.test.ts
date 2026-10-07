@@ -88,27 +88,14 @@ describe("earth uniforms", () => {
 });
 
 describe("art:light", () => {
-  it("earth exposes twilight / cloud-shadow uniforms driven by setLight", () => {
+  it("earth exposes a cloud-shadow uniform driven by setLight", () => {
     const e = createEarth();
-    expect(e.uniforms.uTwilight.value).toBe(0);
     expect(e.uniforms.uCloudShadow.value).toBe(0);
-    e.setLight({ twilight: false, cloudShadow: true });
-    expect(e.uniforms.uTwilight.value).toBe(0);
+    e.setLight({ cloudShadow: true });
     expect(e.uniforms.uCloudShadow.value).toBe(1);
-    e.setLight({ twilight: true, cloudShadow: false });
-    expect(e.uniforms.uTwilight.value).toBe(1);
+    e.setLight({ cloudShadow: false });
     expect(e.uniforms.uCloudShadow.value).toBe(0);
     e.dispose();
-  });
-  it("atmosphere has a twilight toggle", () => {
-    const a = createAtmosphere();
-    const m = a.mesh.material as import("three").ShaderMaterial;
-    expect(m.uniforms.uTwilight.value).toBe(0);
-    a.setTwilight(true);
-    expect(m.uniforms.uTwilight.value).toBe(1);
-    a.setTwilight(false);
-    expect(m.uniforms.uTwilight.value).toBe(0);
-    a.dispose();
   });
   it("sun glare is hidden by default, toggles, and sits 30 units along the sun direction", () => {
     const g = createSunGlare();

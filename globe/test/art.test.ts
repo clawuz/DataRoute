@@ -40,11 +40,11 @@ describe("toggleArt / persistArt", () => {
 describe("effectsFor", () => {
   const on = { enabled: true, corridors: true, aurora: true, sound: true };
   it("everything at quality 0", () => {
-    expect(effectsFor(on, 0)).toEqual({ twilight: true, cloudShadow: true, glare: true, aurora: true, corridors: true, sound: true, starMap: true });
+    expect(effectsFor(on, 0)).toEqual({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: true, starMap: true });
   });
   it("aurora goes first (level 1), then cloud shadows (level 2); others never gate", () => {
-    expect(effectsFor(on, 1)).toMatchObject({ aurora: false, cloudShadow: true, glare: true, twilight: true });
-    expect(effectsFor(on, 2)).toMatchObject({ aurora: false, cloudShadow: false, glare: true, twilight: true, corridors: true });
+    expect(effectsFor(on, 1)).toMatchObject({ aurora: false, cloudShadow: true, glare: true });
+    expect(effectsFor(on, 2)).toMatchObject({ aurora: false, cloudShadow: false, glare: true, corridors: true });
   });
   it("aurora needs both the toggle and a good quality level", () => {
     expect(effectsFor({ ...on, aurora: false }, 0).aurora).toBe(false);
