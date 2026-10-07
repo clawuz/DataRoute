@@ -19,6 +19,8 @@ export interface TrackNote {
 }
 export interface TrackData {
   duration: number;
+  /** 21 quantiles (km) of the route lengths of the day the track was composed for */
+  lenQ?: number[];
   notes: TrackNote[];
 }
 

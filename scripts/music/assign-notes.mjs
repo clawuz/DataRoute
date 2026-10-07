@@ -5,7 +5,8 @@
 //
 // Replay clock: music second t  <->  day time  window.from + t / duration * 86400.
 // Each route owns a stable pitch class (hash of "FROM-TO") and each flight a register that follows its altitude, so a route
-// keeps coming back on "its" notes and climbing flights sound higher. A note goes to the airborne flight whose pitch class and
+// keeps coming back on "its" notes, climbing flights sound higher, and long notes go to long routes (a note's length
+// rank matches its route's length rank, great-circle km). A note goes to the airborne flight whose pitch class and
 // register fit best (with a short rest per flight so one flight cannot hog the line) — the same route plays the same colour.
 
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -20,6 +21,29 @@ export const routeHash = (s) => {
   return (h >>> 0) % 997;
 };
 export const pcOf = (route) => routeHash(route) % 12;
+
+const rad = (x) => (x * Math.PI) / 180;
+/** great-circle km between two airports of day.airports, null when one is unknown */
+export function routeKm(airports, a, b) {
+  const A = airports[a], B = airports[b];
+  if (!A || !B) return null;
+  const c = Math.sin(rad(A.lat)) * Math.sin(rad(B.lat)) + Math.cos(rad(A.lat)) * Math.cos(rad(B.lat)) * Math.cos(rad(B.lon - A.lon));
+  return 6371 * Math.acos(Math.min(1, Math.max(-1, c)));
+}
+/** value → 0..1 position in a sorted sample */
+export const rankIn = (sorted) => (v) => {
+  if (sorted.length < 2) return 0.5;
+  let lo = 0, hi = sorted.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (sorted[m] < v) lo = m + 1; else hi = m; }
+  return lo / (sorted.length - 1);
+};
+/** weight of the |length rank − duration rank| term (4 = a full mismatch costs a major third in pitch class) */
+export const W_DUR = 4;
+/** 21 quantiles of the day's route lengths (the site ranks live routes against them) */
+export function lengthQuantiles(day) {
+  const km = day.flights.filter((f) => f.s?.length && f.from && f.to).map((f) => routeKm(day.airports, f.from, f.to)).filter((x) => x != null).sort((a, b) => a - b);
+  return Array.from({ length: 21 }, (_, i) => Math.round(km[Math.floor((i / 20) * (km.length - 1))] ?? 0));
+}
 const pcDist = (a, b) => { const d = Math.abs(a - b) % 12; return Math.min(d, 12 - d); };
 
 /** altitude (ft) at day time T by linear interpolation of the flight's samples ([offset s, flight level (hundreds of ft), lat, lon]); null if not airborne */
@@ -39,6 +63,9 @@ export function altitudeAt(f, T) {
 export function assignNotes(notes, day, duration) {
   const span = day.window.to - day.window.from;
   const flights = day.flights.filter((f) => f.s && f.s.length > 0 && f.from && f.to);
+  const kmOf = new Map(flights.map((f) => [f.id, routeKm(day.airports, f.from, f.to)]));
+  const lenRank = rankIn([...kmOf.values()].filter((x) => x != null).sort((a, b) => a - b));
+  const durRank = rankIn(notes.map((n) => n.d).sort((a, b) => a - b));
   const lastPlayed = new Map();
   const out = [];
   for (const n of notes) {
@@ -52,12 +79,14 @@ export function assignNotes(notes, day, duration) {
       const route = `${f.from}-${f.to}`;
       // register follows altitude: ground ≈ MIDI 48, cruise (40 000 ft) ≈ MIDI 84
       const regP = 48 + Math.min(alt, 41000) / 41000 * 36;
-      const score = pcDist(pcOf(route), n.p % 12) * 1.0 + Math.abs(regP - n.p) / 12 * 0.6;
+      const L = kmOf.get(f.id);
+      const durMiss = L == null ? 0.25 : Math.abs(lenRank(L) - durRank(n.d)); // unknown length: a neutral cost
+      const score = pcDist(pcOf(route), n.p % 12) * 1.0 + Math.abs(regP - n.p) / 12 * 0.6 + W_DUR * durMiss;
       if (!best || score < best.score) best = { f, route, alt, score };
     }
     if (best) {
       lastPlayed.set(best.f.id, n.t);
-      out.push({ ...n, flight: best.f.id, route: best.route, from: best.f.from, to: best.f.to, alt: Math.round(best.alt), fit: Number(best.score.toFixed(2)) });
+      out.push({ ...n, flight: best.f.id, route: best.route, from: best.f.from, to: best.f.to, alt: Math.round(best.alt), km: Math.round(kmOf.get(best.f.id) ?? 0), fit: Number(best.score.toFixed(2)) });
     } else out.push({ ...n, flight: null });
   }
   return out;
@@ -78,7 +107,7 @@ async function main() {
     const ck = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`);
     const notesOut = assigned.filter((n) => n.flight).map((n) => ({ t: n.t, d: n.d, p: n.p, v: n.v, k: ck(n.from, n.to), from: n.from, to: n.to, alt: n.alt }));
     await mkdir(bundleDir, { recursive: true });
-    await writeFile(`${bundleDir}/notes.json`, JSON.stringify({ duration: Math.max(duration, 180), source, notes: notesOut }));
+    await writeFile(`${bundleDir}/notes.json`, JSON.stringify({ duration: Math.max(duration, 180), source, lenQ: lengthQuantiles(day), notes: notesOut }));
     await copyFile(notesFile.replace(/\.notes\.json$/, ".mp3"), `${bundleDir}/track.mp3`);
     console.log(`bundled ${notesOut.length} notes + track.mp3 -> ${bundleDir}`);
   }

@@ -19,7 +19,7 @@ import {
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
 import { createDayTrack, type DayTrack, type TrackNote } from "../audio/day-track"; // art:track
-import { bestRoute } from "../audio/route-fit"; // art:track
+import { bestRoute, ranksOf, type Ranks } from "../audio/route-fit"; // art:track
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -110,6 +110,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let soundOn = false; // art:sound
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
+  let trackRanks: { data: object; ranks: Ranks } | null = null; // art:track — length/duration ranks of the loaded track
   const recentRoutes = new Map<string, number>(); // art:track — LIVE: the route that last played a note of the recording
   let lastSky: SkyFlight[] = []; // art:track
   let airRange: { model: GlobeModel; lo: number; hi: number; curve: number[] } | null = null; // art:track — the day's own quietest/busiest airborne counts
@@ -400,7 +401,9 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       const live = mode !== "REPLAY";
       const remap = live
         ? (n: TrackNote): TrackNote | null => {
-            const f = bestRoute(n, lastSky, recentRoutes, clock());
+            const td = track.data();
+            if (td && trackRanks?.data !== td) trackRanks = { data: td, ranks: ranksOf(td.notes, td.lenQ) };
+            const f = bestRoute(n, lastSky, recentRoutes, clock(), 1.2, trackRanks?.ranks);
             if (!f) return null;
             recentRoutes.set(f.key, clock());
             return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };

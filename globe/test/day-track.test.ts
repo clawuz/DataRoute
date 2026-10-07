@@ -57,7 +57,7 @@ describe("now playing", () => {
   });
 });
 
-import { bestRoute, pcOfRoute } from "../src/audio/route-fit";
+import { bestRoute, pcOfRoute, rankIn, ranksOf, routeKm } from "../src/audio/route-fit";
 import type { SkyFlight } from "../src/audio/lines";
 
 describe("route fit (LIVE)", () => {
@@ -107,5 +107,27 @@ describe("track publishing", () => {
     for (let t = 0; t <= 9.5; t += 0.05) { audio.currentTime = t; tr.update(t / 60, true); }
     g.Audio = prevAudio; g.fetch = prevFetch;
     expect(published.length).toBe(5); // each note exactly once
+  });
+});
+
+describe("duration ~ route length (LIVE)", () => {
+  const far = (key: string, farLat: number, farLon: number): SkyFlight => ({ id: key, key, regionIdx: 0, alt100: 350, vsFpm: 0, farLat, farLon });
+  it("measures km from Istanbul and ranks values in a sorted sample", () => {
+    expect(Math.round(routeKm(far("IST-JFK", 40.64, -73.78))!)).toBeGreaterThan(8000);
+    expect(routeKm({ ...far("IST-JFK", 0, 0), farLat: undefined })).toBeNull();
+    const r = rankIn([0, 10, 20, 30]);
+    expect([r(0), r(30), r(15)]).toEqual([0, 1, 2 / 3]);
+  });
+  it("gives a long note to the long route and a short note to the short one", () => {
+    const notes = [0.1, 0.2, 0.3, 2, 3].map((d, i) => ({ ...n(i, 60), d }));
+    const ranks = ranksOf(notes, [0, 500, 1000, 2000, 4000, 8000, 11000]);
+    // two routes of the same colour and level, one short (Ankara-like) one long (Houston-like)
+    const near = far("IST-ESB", 40.13, 32.99);
+    const longhaul = far("IST-IAH", 29.98, -95.34);
+    const rt = new Map<string, number>();
+    const longNote = { ...n(0, 60), d: 3 };
+    const shortNote = { ...n(0, 60), d: 0.1 };
+    expect(bestRoute(longNote, [near, longhaul], rt, 5, 1.2, ranks)?.key).toBe("IST-IAH");
+    expect(bestRoute(shortNote, [near, longhaul], rt, 5, 1.2, ranks)?.key).toBe("IST-ESB");
   });
 });
