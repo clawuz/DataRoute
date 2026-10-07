@@ -37,6 +37,8 @@ export interface TrailPoint {
   t: number;
   y: number;
   dur: number;
+  /** note velocity 0..1 (art:track: strong notes get a route label on the ribbon) */
+  v: number;
 }
 
 /** One trace of the pitch ribbon: the notes of a flight line (or of an Istanbul instrument), oldest first. */
@@ -75,7 +77,7 @@ export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: strin
     trails.set(id, t);
   }
   t.color = color;
-  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0) });
+  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0), v: n.vel });
   if (t.points.length > maxPoints) t.points.splice(0, t.points.length - maxPoints);
   t.lastHit = Math.max(t.lastHit, n.at);
 }

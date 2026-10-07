@@ -97,7 +97,7 @@ describe("trails", () => {
     pushTrail(trails, note({ at: 1, pitch: 220, durSec: 1.03 }), "#fff");
     pushTrail(trails, note({ at: 2, pitch: 440 }), "#fff");
     const t = trails.get("f1")!;
-    expect(t).toEqual({ lineId: "f1", color: "#fff", points: [{ t: 1, y: 0.25, dur: 1.03 }, { t: 2, y: 0.5, dur: 0.25 }], lastHit: 2 });
+    expect(t).toEqual({ lineId: "f1", color: "#fff", points: [{ t: 1, y: 0.25, dur: 1.03, v: 0.5 }, { t: 2, y: 0.5, dur: 0.25, v: 0.5 }], lastHit: 2 });
   });
 
   it("noteBar (v5): a note is a bar durSec · px/s long, at least 3 px × DPR", () => {

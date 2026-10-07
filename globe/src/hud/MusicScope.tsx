@@ -176,10 +176,11 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       const pxPerSec = w / ribbonSec;
       const xOf = (t: number) => w - (now - t) * pxPerSec;
       const yOf = (y: number) => (1 - y) * ribbonH;
+      const labels: { x: number; y: number; text: string; color: string }[] = [];
       for (const tr of trails.values()) {
         const age = Math.max(0, now - tr.lastHit);
-        const wide = ribbonSec > RIBBON_SEC; // recorded track: no connecting lines, just the flowing bars
-        g.globalAlpha = base * (wide ? Math.max(0.35, 1 - age / ribbonSec) : Math.max(0.15, 1 - age / ribbonSec));
+        const wide = ribbonSec > RIBBON_SEC; // recorded track: no connecting lines, just glowing bars (ribbon+)
+        g.globalAlpha = base * (wide ? Math.max(0.18, 1 - age / ribbonSec) : Math.max(0.15, 1 - age / ribbonSec));
         g.strokeStyle = tr.color;
         if (!wide) {
           g.beginPath();
@@ -190,12 +191,25 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
           g.stroke();
         }
         g.fillStyle = tr.color;
-        const barH = NOTE_BAR_H_PX * dpr * (wide ? 1.7 : 1);
+        const barH = NOTE_BAR_H_PX * dpr * (wide ? 1.9 : 1);
         for (const p of tr.points) {
           const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
           if (x + bw < 0) continue;
+          const fresh = wide && p.t <= now && now - p.t < 0.4; // ribbon+: a note glows while it strikes
+          if (wide) g.globalAlpha = base * Math.max(0.12, 1 - (now - p.t) / ribbonSec) * (fresh ? 1.4 : 1);
+          g.shadowColor = tr.color;
+          g.shadowBlur = fresh ? 14 * dpr : 0;
           g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
+          if (wide && p.v > 0.8 && p.t <= now && now - p.t < 1.6) labels.push({ x, y: yOf(p.y) - barH, text: tr.lineId.replace("-", "→"), color: tr.color });
         }
+        g.shadowBlur = 0;
+      }
+      // ribbon+: the strongest notes name their route
+      g.globalAlpha = 1;
+      g.font = `${Math.round(9 * dpr)}px ui-monospace, monospace`;
+      for (const l of labels.slice(-5)) {
+        g.fillStyle = l.color;
+        g.fillText(l.text, Math.min(l.x, w - 54 * dpr), Math.max(10 * dpr, l.y));
       }
 
       if (m.day) { // art:track — the day's traffic curve replaces the (silent) rhythm strip
@@ -270,7 +284,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
             <li key={p.route} style={{ borderLeftColor: routeColor(p.route) }}>
               <span className="route">{p.route.replace("-", " → ")}</span>
               <span className="note">{p.note}</span>
-              {p.alt !== undefined && <span className="alt">{Math.round(p.alt / 100) * 100} ft</span>}
+              {p.alt !== undefined && <span className="np-alt">{Math.round(p.alt / 100) * 100} ft</span>}
             </li>
           ))}
         </ul>

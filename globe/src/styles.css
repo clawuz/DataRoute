@@ -51,12 +51,12 @@ body { background: #02030a; }
 }
 
 /* art:sound — ROUTES → MUSIC scope (bottom right, above the region bars) */
-.music-scope { position: absolute; left: 3vmin; bottom: 17.5vmin; width: 40vmin; padding: 1vmin 1.2vmin; background: rgba(2, 4, 12, 0.6); border: 1px solid var(--line); backdrop-filter: blur(4px); pointer-events: none; }
-.music-scope-wave { position: relative; height: 16vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
+.music-scope { position: absolute; left: 3vmin; bottom: 17.5vmin; width: 44vmin; padding: 1vmin 1.2vmin; background: rgba(2, 4, 12, 0.6); border: 1px solid var(--line); backdrop-filter: blur(4px); pointer-events: none; }
+.music-scope-wave { position: relative; height: 17.6vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
 .music-scope-canvas { display: block; width: 100%; height: 100%; }
 .music-scope-off { position: absolute; left: 0; right: 0; top: 0; text-align: right; font-size: calc(0.8 * var(--u)); color: var(--ink-dim); text-shadow: 0 0 0.6vmin #000, 0 0 1.4vmin #000; }
 .music-scope-chord { text-transform: none; } /* "Am" must not read as "AM" */
-.music-scope-label { margin-top: 0.8vmin; font-size: calc(1 * var(--u)); letter-spacing: 0.12em; white-space: normal; line-height: 1.5; }
+.music-scope-label { margin-top: 0.9vmin; font-size: calc(1.1 * var(--u)); letter-spacing: 0.12em; white-space: normal; line-height: 1.5; }
 .music-scope-meter { position: absolute; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4vmin; } /* over the rhythm strip */
 .music-scope-level { display: flex; gap: 0.25vmin; }
 .music-scope-level .seg { width: 0.9vmin; height: 0.5vmin; background: rgba(242, 244, 248, 0.15); }
@@ -64,12 +64,12 @@ body { background: #02030a; }
 .music-scope-layers { display: flex; gap: 0.4vmin; min-height: 0.7vmin; }
 .music-scope-layers .dot { width: 0.7vmin; height: 0.7vmin; border-radius: 50%; }
 /* art:track — NOW PLAYING: the routes sounding right now, in their ribbon colours */
-.music-scope-now { list-style: none; margin: 0.8vmin 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 2.6vmin; gap: 0.5vmin 0.8vmin; height: calc(3 * 2.6vmin + 2 * 0.5vmin); overflow: hidden; } /* fixed height: the box must not grow and shrink with the routes playing */
-.music-scope-now li { display: flex; gap: 0.7vmin; align-items: center; padding-left: 0.8vmin; border-left: 0.35vmin solid; font-size: calc(0.95 * var(--u)); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; }
+.music-scope-now { list-style: none; margin: 0.8vmin 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 2.86vmin; gap: 0.55vmin 0.9vmin; height: calc(3 * 2.86vmin + 2 * 0.55vmin); overflow: hidden; } /* fixed height: the box must not grow and shrink with the routes playing */
+.music-scope-now li { display: flex; gap: 0.7vmin; align-items: center; padding-left: 0.8vmin; border-left: 0.35vmin solid; font-size: calc(1.05 * var(--u)); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; }
 .music-scope-now .route { color: var(--ink); }
 .music-scope-now .note { color: var(--ink-dim); }
-.music-scope-now .alt { color: var(--ink-dim); margin-left: auto; font-size: calc(0.8 * var(--u)); }
+.music-scope-now .np-alt { color: var(--ink-dim); margin-left: auto; font-size: calc(0.88 * var(--u)); }
 @media (max-aspect-ratio: 1/1) {
-  .music-scope { bottom: 14vmin; width: 36vmin; }
-  .music-scope-wave { height: 15vmin; }
+  .music-scope { bottom: 17vmin; width: 40vmin; }
+  .music-scope-wave { height: 16.5vmin; }
 }
