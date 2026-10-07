@@ -1,5 +1,5 @@
 import type { PlannedNote } from "./score";
-import type { RegionName } from "./theory";
+import type { Instrument } from "./theory";
 
 export interface NoteOpts {
   gainScale: number;
@@ -22,6 +22,8 @@ interface Voice {
   from?: number;
   glide?: number;
   detune?: number;
+  /** node whose output (cents) modulates `detune` */
+  vibrato?: AudioNode;
   peak: number;
   attack: number;
   decay: number;
@@ -39,6 +41,7 @@ function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void):
     osc.frequency.setValueAtTime(v.freq, v.at);
   }
   if (v.detune) osc.detune.setValueAtTime(v.detune, v.at);
+  v.vibrato?.connect(osc.detune);
   const g = ctx.createGain();
   env(g, v.at, v.peak, v.attack, v.decay);
   let filt: BiquadFilterNode | null = null;
@@ -80,7 +83,7 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
   const land = n.kind === "arr";
   const k = land ? 2 : 1;
   const peak = 0.22 * n.vel * o.gainScale;
-  const r: RegionName = n.region;
+  const r: Instrument = n.instrument;
   switch (r) {
     case "DOM":
       v({ type: "sine", freq: f, from: 2 * f, glide: 0.06, peak, attack: 0.005, decay: 0.45 * k, at: t });
@@ -116,7 +119,81 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
           lowpass: { start: 900 * o.cutoffScale, q: 0.8 },
         });
       break;
+    case "PNO": {
+      const lp = { start: 5000 * o.cutoffScale, q: 0.7 };
+      v({ type: "triangle", freq: f, peak, attack: 0.003, decay: 2.0 * k, at: t, lowpass: lp });
+      v({ type: "sine", freq: 2 * f, peak: peak * 0.4, attack: 0.003, decay: 1.2 * k, at: t, lowpass: lp });
+      v({ type: "sine", freq: 3 * f, peak: peak * 0.15, attack: 0.003, decay: 0.7 * k, at: t, lowpass: lp });
+      break;
+    }
+    case "NEY": {
+      const decay = 1.4 * k;
+      const lp = { start: 2400 * o.cutoffScale, q: 0.8 };
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.setValueAtTime(5, t);
+      lfoGain.gain.setValueAtTime(0, t);
+      lfoGain.gain.setValueAtTime(0, t + 0.15);
+      lfoGain.gain.linearRampToValueAtTime(12, t + 0.35);
+      lfo.connect(lfoGain);
+      const pair: Voice[] = [
+        { type: "sine", freq: f, from: 0.97 * f, glide: 0.08, peak, attack: 0.12, decay, at: t, lowpass: lp },
+        { type: "triangle", freq: f, from: 0.97 * f, glide: 0.08, peak: peak * 0.5, attack: 0.12, decay, at: t, lowpass: lp },
+      ];
+      live += 2; // the LFO and the breath source also hold the panner open
+      const release = () => {
+        if (--live === 0) pan.disconnect();
+      };
+      for (const vc of pair) v({ ...vc, vibrato: lfoGain });
+      lfo.onended = () => {
+        lfo.disconnect();
+        lfoGain.disconnect();
+        release();
+      };
+      lfo.start(t);
+      lfo.stop(t + 0.12 + decay + 0.1);
+      breath(ctx, pan, f, t, 0.18 * peak, decay, release);
+      break;
+    }
     default:
       break;
   }
+}
+
+const noiseBuffers = new WeakMap<AudioContext, AudioBuffer>();
+
+function noiseBuffer(ctx: AudioContext): AudioBuffer {
+  let b = noiseBuffers.get(ctx);
+  if (!b) {
+    const len = Math.floor(0.5 * ctx.sampleRate);
+    b = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    noiseBuffers.set(ctx, b);
+  }
+  return b;
+}
+
+/** Ney breath: looped white noise through a bandpass at the pitch. */
+function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: number, decay: number, onEnd: () => void): void {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(ctx);
+  src.loop = true;
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.Q.setValueAtTime(2, t);
+  bp.frequency.setValueAtTime(f, t);
+  const g = ctx.createGain();
+  env(g, t, peak, 0.12, decay);
+  src.connect(bp);
+  bp.connect(g);
+  g.connect(out);
+  src.onended = () => {
+    src.disconnect();
+    bp.disconnect();
+    g.disconnect();
+    onEnd();
+  };
+  src.start(t);
+  src.stop(t + 0.12 + decay + 0.1);
 }

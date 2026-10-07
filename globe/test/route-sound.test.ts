@@ -17,6 +17,7 @@ class Osc extends Node { type = "sine"; frequency = new P(); detune = new P(); s
 class Gain extends Node { gain = new P(); }
 class Filt extends Node { type = "lowpass"; frequency = new P(); Q = new P(); }
 class Pan extends Node { pan = new P(); }
+class Src extends Node { buffer: unknown = null; loop = false; start = vi.fn(); stop = vi.fn(); onended: (() => void) | null = null; }
 class Conv extends Node { buffer: unknown = null; }
 class Comp extends Node { threshold = new P(); ratio = new P(); attack = new P(); release = new P(); knee = new P(); }
 
@@ -27,9 +28,11 @@ function fakeCtx() {
     sampleRate: 48000,
     destination: new Node(),
     oscs: [] as Osc[],
+    srcs: [] as Src[],
     gains: [] as Gain[],
     pans: [] as Pan[],
     createOscillator() { const o = new Osc(); c.oscs.push(o); return o; },
+    createBufferSource() { const b = new Src(); c.srcs.push(b); return b; },
     createGain() { const g = new Gain(); c.gains.push(g); return g; },
     createBiquadFilter: () => new Filt(),
     createStereoPanner() { const p = new Pan(); c.pans.push(p); return p; },
@@ -48,7 +51,7 @@ const make = () => {
   return { ctx, s };
 };
 const BED_OSCS = 3;
-const ev = (regionIdx: number, o: Partial<ScoreEvent> = {}): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx, distKm: 2000, at: 0, ...o });
+const ev = (regionIdx: number, o: Partial<ScoreEvent> = {}): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx, distKm: 2000, at: 0, istanbul: false, ...o });
 
 describe("route sound engine", () => {
   it("creates no audio context until enabled (autoplay rule); scheduling while disabled does nothing", () => {
@@ -80,6 +83,41 @@ describe("route sound engine", () => {
       s.dispose();
     }
     expect(counts).toEqual({ DOM: 1, EUR: 2, MEA: 2, AFR: 2, ASI: 1, AME: 2 });
+  });
+
+  it("piano (west Europe) has three partials; the Istanbul ney has two voices, a vibrato LFO and one breath source", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    const o0 = ctx.oscs.length;
+    s.schedule([ev(1, { farLat: 51.5, farLon: -0.5 })]);
+    expect(ctx.oscs.length - o0).toBe(3);
+    expect(ctx.srcs).toHaveLength(0);
+    s.dispose();
+    const n = make();
+    n.s.setEnabled(true);
+    const before = n.ctx.oscs.length;
+    n.s.schedule([ev(6, { istanbul: true })]);
+    expect(n.ctx.oscs.length - before).toBe(3); // sine + triangle + vibrato LFO
+    expect(n.ctx.srcs).toHaveLength(1);
+    n.s.dispose();
+  });
+
+  it("a followed European flight boosts the piano; the ney ignores focus", () => {
+    const peaks = (e: ScoreEvent, focus: number | null) => {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      const before = ctx.gains.length;
+      s.schedule([e], { regionIdx: focus, alt100: 300 });
+      const lin = ctx.gains.slice(before).flatMap((g) => g.gain.calls.filter((c) => c.fn === "lin").map((c) => c.args[0]));
+      s.dispose();
+      return Math.max(...lin);
+    };
+    const pno = ev(1, { farLat: 51.5, farLon: -0.5 });
+    expect(peaks(pno, 1)).toBeGreaterThan(peaks(pno, null));
+    expect(peaks(pno, null)).toBeGreaterThan(peaks(pno, 4));
+    const ney = ev(6, { istanbul: true });
+    expect(peaks(ney, 1)).toBeCloseTo(peaks(ney, null), 12);
+    expect(peaks(ney, 4)).toBeCloseTo(peaks(ney, null), 12);
   });
 
   it("unknown-region events stay silent", () => {
@@ -114,11 +152,11 @@ describe("route sound engine", () => {
     s.dispose();
   });
 
-  it("the chord bed follows the progression: Am → F after 16 beats", () => {
+  it("the chord bed follows the progression: Am → F after 8 beats", () => {
     const { ctx, s } = make();
     s.setEnabled(true);
     s.setEnergy(0.6);
-    ctx.currentTime = 16 * BEAT_SEC + 0.1;
+    ctx.currentTime = 8 * BEAT_SEC + 0.1;
     s.setEnergy(0.6);
     const rootTargets = ctx.oscs[0].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
     expect(rootTargets.some((f) => Math.abs(f - freqOf(2, 8)) < 1e-6)).toBe(true); // F root, octave 2

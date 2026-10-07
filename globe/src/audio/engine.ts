@@ -1,7 +1,7 @@
 import { REGIONS } from "@web/data/palette";
 import { playNote } from "./instruments";
 import { planNotes, type ScoreEvent } from "./score";
-import { chordAtTime, freqOf } from "./theory";
+import { chordAtTime, freqOf, type Instrument } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
@@ -16,6 +16,12 @@ export interface RouteSound {
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
+
+/** Region index whose focus boost applies to an instrument; the ney ignores focus. */
+export function instrumentRegionIdx(i: Instrument): number | null {
+  if (i === "NEY") return null;
+  return REGIONS.indexOf(i === "PNO" ? "EUR" : i);
+}
 
 const defaultCreate = (): AudioContext => {
   const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
@@ -154,7 +160,8 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     const { ctx, bus } = g;
     safe(() => {
       for (const n of planNotes(events, ctx.currentTime)) {
-        const match = focus?.regionIdx != null && REGIONS.indexOf(n.region) === focus.regionIdx;
+        // art:sound
+        const match = focus?.regionIdx != null && instrumentRegionIdx(n.instrument) === focus.regionIdx;
         const p = pans?.get(n.key);
         playNote(ctx, bus, n, {
           gainScale: (focus?.regionIdx == null ? 1 : match ? 1.6 : 0.7) * (p?.visible === false ? 0.3 : 1),
