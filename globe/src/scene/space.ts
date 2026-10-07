@@ -50,7 +50,7 @@ void main() {
     vec2 dxA = dFdx(uv), dyA = dFdy(uv), dxB = dFdx(uvB), dyB = dFdy(uvB);
     bool useB = max(abs(dxA.x), abs(dyA.x)) > max(abs(dxB.x), abs(dyB.x));
     vec3 map = textureGrad(uStarMap, uv, useB ? dxB : dxA, useB ? dyB : dyA).rgb;
-    col = map * 1.15;
+    col = pow(map, vec3(1.45)) * 0.85; // darker faint speckle so the Milky Way and bright stars read
   }
   gl_FragColor = vec4(col, 1.0);
 }
