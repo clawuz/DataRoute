@@ -11,3 +11,4 @@ globe/public/fonts/
 globe/dist/
 
 tmp-music/
+.env.local

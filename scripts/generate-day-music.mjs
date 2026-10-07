@@ -7,10 +7,12 @@
 // Options: --file <day.json>  --url <day.json url>  --program <classical|beethoven|baroque|romantic|impressionist|ottoman|jazz>
 //          --model <music_v1|music_v2|music_v2_5>  --out <dir>  --seed <int>  --dry-run
 //
-// The key is only read from the environment and never printed or written to disk.
+// The key is read from ELEVENLABS_API_KEY or, if unset, from a git-ignored .env.local file (line: ELEVENLABS_API_KEY=...)
+// that you create yourself; it is never printed or written anywhere by this script.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { existsSync } from "node:fs";
 
 const DAY_URL = "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media";
 const API = "https://api.elevenlabs.io/v1/music?output_format=mp3_44100_128";
@@ -121,9 +123,13 @@ async function main() {
     console.log(JSON.stringify({ composition_plan: { chunks: plan.chunks }, model_id: arg("model", "music_v2_5") }, null, 2));
     return;
   }
-  const key = process.env.ELEVENLABS_API_KEY;
+  let key = process.env.ELEVENLABS_API_KEY;
+  if (!key && existsSync(".env.local")) {
+    const m = (await readFile(".env.local", "utf8")).match(/^\s*ELEVENLABS_API_KEY\s*=\s*["']?([^"'\s#]+)/m);
+    if (m) key = m[1];
+  }
   if (!key) {
-    console.error("\nSet ELEVENLABS_API_KEY in your environment (never paste it into chat). Use --dry-run to see the plan without it.");
+    console.error("\nSet ELEVENLABS_API_KEY in your environment or in a .env.local file (never paste it into chat). Use --dry-run to see the plan without it.");
     process.exit(1);
   }
   const body = { composition_plan: { chunks: plan.chunks }, model_id: arg("model", "music_v2_5") };
