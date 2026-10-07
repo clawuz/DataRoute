@@ -18,7 +18,10 @@ import {
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/engine"; // art:sound
-import { eventsBetween } from "../audio/score"; // art:sound
+import { eventsBetween, farOf } from "../audio/score"; // art:sound
+import type { SkyFlight } from "../audio/lines"; // art:sound
+import { routeKey } from "../audio/theory"; // art:sound
+import { headState } from "../model/dead-reckon"; // art:sound
 import { istanbulHour } from "../audio/form"; // art:sound
 import { routeMidpoints, type RouteMidpoint } from "../audio/pans"; // art:sound
 import type { NoteBus } from "../audio/notes-bus"; // art:sound
@@ -28,6 +31,24 @@ export const GLOBE_CYCLE: CycleConfig = { replaySec: 180, liveSec: Number.POSITI
 export const HUD_TICK_SEC = 0.25;
 export const PICK_INTERVAL_MS = 100;
 export const FIXTURE_LIVE_LOOP_SEC = 240;
+
+/** The flights with a head at `cur` for the music lines: head altitude, vertical speed, route key, region, far end. */ // art:sound
+export function skyFlights(m: GlobeModel, cur: number): SkyFlight[] {
+  const out: SkyFlight[] = [];
+  for (const f of m.flights) {
+    const h = headState(f, cur);
+    if (!h) continue;
+    out.push({
+      id: f.id,
+      key: routeKey(f.from, f.to, f.id),
+      regionIdx: f.regionIdx,
+      alt100: h.alt100,
+      vsFpm: telemetryAt(f, cur, m.from)?.vsFpm ?? null, // the flight profile is cached per flight (profileOf)
+      ...farOf(f),
+    });
+  }
+  return out;
+}
 
 export interface GlobeControllerDeps {
   engine: GlobeEngine;
@@ -114,6 +135,11 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     const tel = telemetryAt(f, follow.clock.u, model.from);
     return { regionIdx: f.regionIdx, alt100: tel?.alt100 ?? 0 };
   };
+  function feedSky() { // art:sound — the music lines follow the sky (also while muted: the scope)
+    if (!model) return;
+    const cur = currentCur(d.nowMs() / 1000);
+    sound.setSky(skyFlights(model, cur), follow?.id ?? null, istanbulHour(model.from + cur));
+  }
   function refreshPans() { // art:sound
     if (!model) return;
     if (panModel !== model) {
@@ -301,6 +327,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       pushHud();
       if (model) { // art:sound — planned also while muted (scope, route flashes)
         refreshPans();
+        feedSky(); // art:sound
         sound.setEnergy(Math.min(1, Math.max(0, (d.store.get().counters.airborne ?? 0) / 150)));
       }
     }
@@ -370,6 +397,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     hoverIdx = -1;
     pending = null;
     pushHud();
+    feedSky(); // art:sound — new flights reach the lines without waiting for the next HUD tick
   };
 
   const poller = createPoller({

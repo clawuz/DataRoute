@@ -6,7 +6,7 @@ import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../
 import type { FollowHud } from "../src/app/follow-hud";
 import { MusicScope } from "../src/hud/MusicScope";
 import { createNoteBus } from "../src/audio/notes-bus";
-import { INSTRUMENT_COLOR } from "../src/audio/scope";
+import { INSTRUMENT_COLOR, LANE_ORDER } from "../src/audio/scope";
 import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
@@ -209,26 +209,40 @@ describe("MusicScope", () => {
     r.unmount();
     spy.mockRestore();
   });
-  it("draws one trace per ensemble lane in the instrument colours and stops its loop on unmount", () => {
+  it("draws the pitch ribbon (a trail per flight line in its instrument colour) over the four rhythm lanes; stops on unmount", () => {
     const strokes: string[] = [];
+    const fills: string[] = [];
+    const ys: number[] = [];
     const ctx = {
-      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(),
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn((_x: number, y: number) => ys.push(y)), lineTo: vi.fn(),
+      arc: vi.fn(),
       stroke: vi.fn(function (this: { strokeStyle: string }) { strokes.push(this.strokeStyle); }),
-      strokeStyle: "", lineWidth: 1, globalAlpha: 1, globalCompositeOperation: "source-over",
+      fill: vi.fn(function (this: { fillStyle: string }) { fills.push(this.fillStyle); }),
+      strokeStyle: "", fillStyle: "", lineWidth: 1, globalAlpha: 1, globalCompositeOperation: "source-over",
     };
     const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+    const cw = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(200);
+    const ch = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(100);
     const frames: FrameRequestCallback[] = [];
     const raf = vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => frames.push(cb));
     const caf = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     const bus = createNoteBus();
     const r = render(<MusicScope bus={bus} music={music()} />);
-    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 1, kind: "line", key: "IST-FRA", at: 0, lineId: "f1" }));
-    act(() => frames.at(-1)!(performance.now() + 100));
-    expect(strokes).toEqual([INSTRUMENT_COLOR.NEY, INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.DOM]);
+    const now = performance.now() / 1000;
+    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.5, lineId: "f1" }));
+    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.2, lineId: "f1" }));
+    act(() => bus.emit({ instrument: "KICK", lane: "KICK", freq: 60, pitch: 60, vel: 1, kind: "groove", key: "", at: now - 0.2 }));
+    act(() => frames.at(-1)!(performance.now()));
+    expect(strokes).toEqual([INSTRUMENT_COLOR.EUR, ...LANE_ORDER.map((i) => INSTRUMENT_COLOR[i])]);
+    expect(fills).toEqual([INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.EUR]); // the two note hits
+    // the trail starts at A4 (pitchY 0.5) inside the top 70 % band: y = 0.7·h·(1 − 0.5)
+    expect(ys[0]).toBeCloseTo(0.7 * 100 * (window.devicePixelRatio || 1) * 0.5, 6);
     expect(ctx.globalCompositeOperation).toBe("lighter");
     r.unmount();
     expect(caf).toHaveBeenCalled();
     spy.mockRestore();
+    cw.mockRestore();
+    ch.mockRestore();
     raf.mockRestore();
     caf.mockRestore();
   });

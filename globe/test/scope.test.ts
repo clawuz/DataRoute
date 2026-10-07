@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, laneSample, stepLane, visualHz, type Lane } from "../src/audio/scope";
+import {
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, MAX_TRAILS, PITCH_MAX, PITCH_MIN, laneSample, pitchY, pruneTrails, pushTrail, stepLane,
+  trailIdOf, visualHz, type Lane, type Trail,
+} from "../src/audio/scope";
+import type { NoteEvent } from "../src/audio/notes-bus";
+import { freqOf } from "../src/audio/theory";
 
 const TAU = 2 * Math.PI;
 
@@ -60,17 +65,86 @@ describe("laneSample", () => {
   });
 });
 
+describe("pitchY", () => {
+  it("spans A2 (freqOf(2, 0)) to A6 (freqOf(5, 12)) on a log scale, clamped to [0, 1]", () => {
+    expect(PITCH_MIN).toBe(freqOf(2, 0));
+    expect(PITCH_MAX).toBe(freqOf(5, 12));
+    expect(pitchY(PITCH_MIN)).toBe(0);
+    expect(pitchY(PITCH_MAX)).toBe(1);
+    expect(pitchY(220)).toBeCloseTo(0.25, 12); // one octave of four
+    expect(pitchY(20)).toBe(0);
+    expect(pitchY(20000)).toBe(1);
+  });
+  it("is monotone in pitch", () => {
+    const fs = [30, 110, 150, 220, 300, 440, 700, 880, 1500, 1760, 5000];
+    for (let i = 1; i < fs.length; i++) expect(pitchY(fs[i])).toBeGreaterThanOrEqual(pitchY(fs[i - 1]));
+  });
+});
+
+describe("trails", () => {
+  const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({
+    instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 0.5, kind: "line", key: "IST-FRA", at: 1, lineId: "f1", ...o,
+  });
+
+  it("the trail id is the line id; Istanbul notes trail per instrument; groove notes have none", () => {
+    expect(trailIdOf(note())).toBe("f1");
+    expect(trailIdOf(note({ instrument: "NEY", lane: "NEY", kind: "dep", lineId: undefined }))).toBe("NEY");
+    expect(trailIdOf(note({ instrument: "KICK", lane: "KICK", kind: "groove", key: "", lineId: undefined }))).toBeNull();
+  });
+
+  it("pushTrail appends {t: at, y: pitchY(pitch)} and keeps the colour and last hit", () => {
+    const trails = new Map<string, Trail>();
+    pushTrail(trails, note({ at: 1, pitch: 220 }), "#fff");
+    pushTrail(trails, note({ at: 2, pitch: 440 }), "#fff");
+    const t = trails.get("f1")!;
+    expect(t).toEqual({ lineId: "f1", color: "#fff", points: [{ t: 1, y: 0.25 }, { t: 2, y: 0.5 }], lastHit: 2 });
+  });
+
+  it("trims each trail to maxPoints (oldest points first)", () => {
+    const trails = new Map<string, Trail>();
+    for (let i = 0; i < 10; i++) pushTrail(trails, note({ at: i }), "#fff", 4);
+    expect(trails.get("f1")!.points.map((p) => p.t)).toEqual([6, 7, 8, 9]);
+  });
+
+  it(`keeps at most ${MAX_TRAILS} trails, dropping the one hit longest ago`, () => {
+    expect(MAX_TRAILS).toBe(12);
+    const trails = new Map<string, Trail>();
+    for (let i = 0; i < 12; i++) pushTrail(trails, note({ lineId: `L${i}`, at: 10 + i }), "#fff");
+    pushTrail(trails, note({ lineId: "L0", at: 30 }), "#fff"); // L0 is now the freshest
+    pushTrail(trails, note({ lineId: "new", at: 31 }), "#fff");
+    expect(trails.size).toBe(12);
+    expect(trails.has("L1")).toBe(false);
+    expect(trails.has("L0")).toBe(true);
+    expect(trails.has("new")).toBe(true);
+  });
+
+  it("pruneTrails removes trails not hit within the ttl", () => {
+    const trails = new Map<string, Trail>();
+    pushTrail(trails, note({ lineId: "old", at: 1 }), "#fff");
+    pushTrail(trails, note({ lineId: "fresh", at: 8 }), "#fff");
+    pruneTrails(trails, 10);
+    expect([...trails.keys()]).toEqual(["fresh"]);
+    pruneTrails(trails, 100, 200);
+    expect(trails.size).toBe(1);
+    pruneTrails(trails, 15);
+    expect(trails.size).toBe(0);
+  });
+});
+
 describe("lane palette", () => {
-  it("every lane instrument has a colour and a visual decay", () => {
-    expect(LANE_ORDER).toEqual(["NEY", "CLA", "SAX", "TPT", "PNO", "EUR", "MEA", "AFR", "ASI", "AME", "DOM"]);
-    for (const i of LANE_ORDER) {
-      expect(INSTRUMENT_COLOR[i]).toMatch(/^#[0-9a-fA-F]{6}$/);
-      expect(DECAY_SEC[i]).toBeGreaterThan(0);
-    }
+  it("the rhythm strip has the four groove lanes with their visual decays", () => {
+    expect(LANE_ORDER).toEqual(["KICK", "SNARE", "HAT", "BASS"]);
+    expect(DECAY_SEC).toEqual({ KICK: 0.3, SNARE: 0.2, HAT: 0.08, BASS: 0.5 });
+    for (const i of LANE_ORDER) expect(INSTRUMENT_COLOR[i]).toMatch(/^#[0-9a-fA-F]{6}$/);
+  });
+  it("every instrument (lines, Istanbul ensemble, groove) has a colour", () => {
+    for (const c of Object.values(INSTRUMENT_COLOR)) expect(c).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(INSTRUMENT_COLOR).toMatchObject({
+      EP: "#c9a7ff", BASS: "#f2f4f8", KICK: "#f2f4f8", SNARE: "#d9dce3", HAT: "#b6bcc9", OHAT: "#b6bcc9",
+      KEYS: "#c9a7ff", BRASS: "#fff1cf", SAXPAD: "#e8b64a",
+    });
     expect(INSTRUMENT_COLOR.NEY).toBe("#E30A17");
     expect(INSTRUMENT_COLOR.EUR).toBe("#3FC8F2");
     expect(INSTRUMENT_COLOR.UNK).toBe("#6B7280");
-    expect(DECAY_SEC.AME).toBe(2.2);
-    expect(DECAY_SEC.DOM).toBe(0.45);
   });
 });

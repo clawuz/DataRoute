@@ -7,6 +7,9 @@ import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
 import type { RouteSound } from "../src/audio/engine";
 import { createNoteBus, type NoteBus, type NoteEvent } from "../src/audio/notes-bus";
 import { istanbulHour } from "../src/audio/form";
+import type { SkyFlight } from "../src/audio/lines";
+import { headState } from "../src/model/dead-reckon";
+import { buildGlobeModel } from "../src/model/globe-model";
 import { FROM, flight, makeDay } from "./helpers";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -592,6 +595,22 @@ describe("globe controller", () => {
       expect(got).toHaveLength(3); // the three notes before dispose only
     });
 
+    it("flashes the corridor of Istanbul ney notes like line notes", async () => {
+      const sound = stub();
+      const wall = { t: 10 };
+      const h = setup({ sound, clock: () => wall.t });
+      await flush();
+      vi.useFakeTimers();
+      try {
+        sound.play(note({ instrument: "NEY", lane: "NEY", kind: "dep", key: "IST-JFK", lineId: undefined, at: 10.1 }));
+        vi.advanceTimersByTime(100);
+        expect(h.engine.pulseRoute).toHaveBeenCalledWith("IST-JFK");
+      } finally {
+        vi.useRealTimers();
+      }
+      h.c.dispose();
+    });
+
     it("publishes the music state (section, chord, tempo, ensemble, on) in the snapshot", async () => {
       const sound = stub();
       const h = setup({ sound });
@@ -649,6 +668,60 @@ describe("globe controller", () => {
       expect(e).toBeGreaterThanOrEqual(0);
       expect(e).toBeLessThanOrEqual(1);
       h.c.dispose();
+    });
+
+    describe("sky feed", () => {
+      const lastSky = (sound: ReturnType<typeof stub>) => sound.setSky.mock.calls.at(-1) as [SkyFlight[], string | null, number];
+
+      it("feeds the airborne flights at every HUD tick, muted too: head altitude, route key, region and far end", async () => {
+        const sound = stub();
+        const h = setup({ sound });
+        await flush();
+        const f = h.frame(0.3); // one HUD tick, sound off
+        expect(sound.setEnabled).not.toHaveBeenCalled();
+        expect(sound.setSky).toHaveBeenCalled();
+        const [sky, followed, hour] = lastSky(sound);
+        expect(followed).toBeNull();
+        expect(hour).toBe(istanbulHour(f.absTime));
+        const m = buildGlobeModel(dayAt(G1, [airborne("AIRBORNE", null)]));
+        expect(sky).toHaveLength(1);
+        expect(sky[0]).toMatchObject({ id: "a", key: "IST-JFK", regionIdx: 5, alt100: headState(m.flights[0], f.cur)!.alt100 });
+        expect(sky[0].farLat).toBeCloseTo(40.6398, 3); // the non-Istanbul end: JFK
+        expect(sky[0].farLon).toBeCloseTo(-73.7789, 3);
+        const calls = sound.setSky.mock.calls.length;
+        h.frame(0.1); // not a HUD tick: no extra work
+        expect(sound.setSky.mock.calls.length).toBe(calls);
+        h.c.dispose();
+      });
+
+      it("passes the followed flight id while following (climbing: positive vertical speed) and null after", async () => {
+        const sound = stub();
+        const h = setup({ sound });
+        await flush();
+        h.c.onClick(10, 10);
+        h.frame(REWIND_SEC);
+        h.frame(1);
+        const f = h.frame(0.3); // a HUD tick at u ≈ dep + 151 s: inside the 300 → 370 climb
+        const [sky, followed] = lastSky(sound);
+        expect(followed).toBe("a");
+        const m = buildGlobeModel(dayAt(G1, [airborne("AIRBORNE", null)]));
+        expect(sky[0].alt100).toBeCloseTo(headState(m.flights[0], f.cur)!.alt100, 6);
+        expect(sky[0].vsFpm).toBeGreaterThan(0);
+        h.c.onKey("Escape");
+        h.frame(0.3);
+        expect(lastSky(sound)[1]).toBeNull();
+        h.c.dispose();
+      });
+
+      it("skips flights without a head at the displayed time", async () => {
+        const sound = stub();
+        const future = flight({ id: "z", from: "IST", to: "JFK", region: "AME", dep: G1 + 5000, s: [[0, 300, 41, 29], [600, 370, 45, 20]] });
+        const h = setup({ sound, days: [dayAt(G1, [airborne("AIRBORNE", null), future])] });
+        await flush();
+        h.frame(0.3);
+        expect(lastSky(sound)[0].map((s) => s.id)).toEqual(["a"]);
+        h.c.dispose();
+      });
     });
 
     it("jumps (scrubs, rewinds) never flood the score", async () => {

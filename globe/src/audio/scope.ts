@@ -1,21 +1,72 @@
-import type { Instrument } from "./theory";
+import type { NoteEvent } from "./notes-bus";
+import { freqOf, type Instrument } from "./theory";
 
-/** Lane colours of the music scope: the continent palette, the THY-red ney and the warm wind ensemble. */
+/**
+ * Colours of the ROUTES → MUSIC scope: the continent palette for the flight lines (and the Rhodes of domestic/unknown
+ * lines), the THY-red ney and the warm wind ensemble, and the groove voices of the rhythm strip.
+ */
 export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   EUR: "#3FC8F2", PNO: "#9fe3ff", MEA: "#F7C548", AFR: "#7BD389", ASI: "#F2508F", AME: "#A98BFF",
   DOM: "#F2F4F8", NEY: "#E30A17", CLA: "#ff9f43", SAX: "#e8b64a", TPT: "#fff1cf", UNK: "#6B7280",
-  // v3: the Rhodes of domestic/unknown lines and the groove voices (their lanes arrive with the v3 panel, Task 14)
-  EP: "#d9e4ff", BASS: "#7f8cff", KICK: "#ff7a59", SNARE: "#ffd166", HAT: "#c9f4ff", OHAT: "#8fe8ff",
-  KEYS: "#b8f2e6", BRASS: "#ffcf70", SAXPAD: "#e8b64a",
+  EP: "#c9a7ff", BASS: "#f2f4f8", KICK: "#f2f4f8", SNARE: "#d9dce3", HAT: "#b6bcc9", OHAT: "#b6bcc9",
+  KEYS: "#c9a7ff", BRASS: "#fff1cf", SAXPAD: "#e8b64a",
 };
 
-/** Top-to-bottom lane order (melody and winds first, then piano, the continents, the domestic pulse). */
-export const LANE_ORDER: Instrument[] = ["NEY", "CLA", "SAX", "TPT", "PNO", "EUR", "MEA", "AFR", "ASI", "AME", "DOM"];
+/** Top-to-bottom lanes of the rhythm strip (the open hat shares the hat lane, see `laneOf`). */
+export const LANE_ORDER: Instrument[] = ["KICK", "SNARE", "HAT", "BASS"];
 
-/** Visual decay time constants (s), close to each instrument's audible decay (pads slow, plucks fast). */
-export const DECAY_SEC: Partial<Record<Instrument, number>> = {
-  DOM: 0.45, EUR: 1.2, PNO: 1.6, MEA: 0.8, AFR: 0.45, ASI: 0.6, AME: 2.2, NEY: 1.1, CLA: 0.9, SAX: 1.4, TPT: 0.8,
-};
+/** Visual decay time constants (s) of the rhythm lanes, close to each voice's audible decay. */
+export const DECAY_SEC: Partial<Record<Instrument, number>> = { KICK: 0.3, SNARE: 0.2, HAT: 0.08, BASS: 0.5 };
+
+/** Pitch range of the ribbon: A2 … A6, logarithmic. */
+export const PITCH_MIN = freqOf(2, 0);
+export const PITCH_MAX = freqOf(5, 12);
+
+/** Height of a pitch in the ribbon, 0 = lowest (A2), 1 = highest (A6), clamped. */
+export const pitchY = (freq: number): number =>
+  Math.min(1, Math.max(0, Math.log2(freq / PITCH_MIN) / Math.log2(PITCH_MAX / PITCH_MIN)));
+
+/** One trace of the pitch ribbon: the note hits of a flight line (or of an Istanbul instrument), oldest first. */
+export interface Trail {
+  lineId: string;
+  color: string;
+  points: { t: number; y: number }[];
+  /** `at` of the latest note */
+  lastHit: number;
+}
+
+export const MAX_TRAILS = 12;
+export const TRAIL_TTL_SEC = 6;
+
+/** Trail of a note: its flight line, the instrument for Istanbul (ney, winds) notes, none for groove voices. */
+export const trailIdOf = (n: NoteEvent): string | null =>
+  n.lineId ?? (n.kind === "dep" || n.kind === "arr" ? n.instrument : null);
+
+/** Appends the note to its trail (trimmed to `maxPoints`); a new trail beyond 12 drops the one hit longest ago. */
+export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: string, maxPoints = 90): void {
+  const id = trailIdOf(n);
+  if (id === null) return;
+  let t = trails.get(id);
+  if (!t) {
+    while (trails.size >= MAX_TRAILS) {
+      let oldest: string | null = null;
+      let min = Infinity;
+      for (const [k, v] of trails) if (v.lastHit < min) [oldest, min] = [k, v.lastHit];
+      trails.delete(oldest!);
+    }
+    t = { lineId: id, color, points: [], lastHit: n.at };
+    trails.set(id, t);
+  }
+  t.color = color;
+  t.points.push({ t: n.at, y: pitchY(n.pitch) });
+  if (t.points.length > maxPoints) t.points.splice(0, t.points.length - maxPoints);
+  t.lastHit = Math.max(t.lastHit, n.at);
+}
+
+/** Drops the trails not hit for `ttl` seconds. */
+export function pruneTrails(trails: Map<string, Trail>, now: number, ttl = TRAIL_TTL_SEC): void {
+  for (const [k, v] of trails) if (now - v.lastHit > ttl) trails.delete(k);
+}
 
 export interface Lane {
   amp: number;

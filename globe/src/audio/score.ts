@@ -1,4 +1,4 @@
-import type { GlobeModel } from "../model/globe-model";
+import type { GlobeFlight, GlobeModel } from "../model/globe-model";
 import { isIstanbul } from "@collector/regions";
 import { chordAtStep, nextChordAtStep, stepDur, swingDelay, type Section } from "./form";
 import { grooveStep, type Voice } from "./groove";
@@ -30,6 +30,14 @@ export interface ScoreEvent {
   istanbul: boolean;
 }
 
+/** The far (non-Istanbul) end of a flight's planned route: the `to` end unless only `to` is Istanbul; {} without a plan. */
+export function farOf(f: GlobeFlight): { farLat?: number; farLon?: number } {
+  const p = f.planned;
+  if (!p) return {};
+  const farToEnd = (!!f.from && isIstanbul(f.from)) || !(!!f.to && isIstanbul(f.to));
+  return farToEnd ? { farLat: p.toLat, farLon: p.toLon } : { farLat: p.fromLat, farLon: p.fromLon };
+}
+
 /** Departures and landings (landed flights only) inside (from, to]; big jumps and rewinds yield nothing. */
 export function eventsBetween(m: GlobeModel, from: number, to: number): ScoreEvent[] {
   if (!(to > from) || to - from > MAX_RANGE_SEC) return [];
@@ -37,11 +45,9 @@ export function eventsBetween(m: GlobeModel, from: number, to: number): ScoreEve
   for (const f of m.flights) {
     const key = routeKey(f.from, f.to, f.id);
     const distKm = f.planned?.distKm ?? 1500;
-    const p = f.planned;
     const fromIst = !!f.from && isIstanbul(f.from);
     const toIst = !!f.to && isIstanbul(f.to);
-    const farToEnd = fromIst || !toIst; // far end is the `to` end unless only `to` is Istanbul
-    const far = p ? (farToEnd ? { farLat: p.toLat, farLon: p.toLon } : { farLat: p.fromLat, farLon: p.fromLon }) : {};
+    const far = farOf(f);
     if (f.dep > from && f.dep <= to) out.push({ kind: "dep", key, regionIdx: f.regionIdx, distKm, at: f.dep, ...far, istanbul: fromIst });
     if (f.status === "LANDED" && f.end > from && f.end <= to) out.push({ kind: "arr", key, regionIdx: f.regionIdx, distKm, at: f.end, ...far, istanbul: toIst });
   }
