@@ -56,7 +56,7 @@ const { DAY, NIGHT } = SECTIONS;
 const D = 60 / 116 / 4; // DAY 16th step
 const DN = 60 / 84 / 4; // NIGHT 16th step
 const NIGHT_H = 2;
-const BED_OSCS = 4;
+const BED_OSCS = 0; // the continuous pad bed was removed: music is discrete notes only
 
 /** an engine on a manual clock (no interval); `ctx` is created on enable */
 function make(t0 = 0) {
@@ -263,25 +263,21 @@ describe("route sound engine: the step clock", () => {
   });
 });
 
-describe("route sound engine: graph, bed, info, dynamics", () => {
-  it("enabling builds the graph, resumes the context and starts the four-voice Dm9 bed", () => {
+describe("route sound engine: graph, info, dynamics", () => {
+  it("enabling builds the graph and resumes the context; no oscillator exists until a note is played", () => {
     const h = make(0);
     h.s.setEnabled(true);
     expect(h.ctx.resume).toHaveBeenCalled();
     expect(h.ctx.oscs).toHaveLength(BED_OSCS);
-    // root D (oct 2), fifth A (oct 3), seventh C (oct 3), ninth E (oct 4)
-    expect(h.ctx.oscs.map((o) => o.frequency.value)).toEqual([freqOf(2, 5), freqOf(3, 0), freqOf(3, 3), freqOf(4, 7)]);
     h.s.dispose();
     expect(h.ctx.close).toHaveBeenCalled();
   });
 
-  it("the bed follows the chord of the step clock: Bbmaj7 in bar 1 by day", () => {
+  it("info() chord follows the step clock: Dm9 in bar 0, Bbmaj7 in bar 1 by day", () => {
     const h = make(0);
-    h.s.setEnabled(true);
-    h.at(0);
-    h.at(16 * D + 0.01);
-    const targets = (i: number) => h.ctx.oscs[i].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
-    expect([0, 1, 2, 3].map(targets)).toEqual([[freqOf(2, 1)], [freqOf(3, 8)], [freqOf(3, 0)], [freqOf(4, 8)]]); // no ninth → fifth
+    expect(h.s.info().chord).toBe("Dm9");
+    h.clock.t = 16 * D + 0.01;
+    expect(h.s.info().chord).toBe("Bbmaj7");
     h.s.dispose();
   });
 

@@ -1,11 +1,11 @@
 import { playNote } from "./instruments";
-import { CHORDS, type Chord } from "./harmony";
+import { CHORDS } from "./harmony";
 import { chordAtStep, sectionAt, stepDur, type Section, type SectionId } from "./form";
 import { selectLines, type SkyFlight } from "./lines";
 import { createNoteBus, laneOf, type NoteEvent } from "./notes-bus";
 import { initNey, type NeyState } from "./melody";
 import { planNotes, planStep, stepTime, type PlannedNote, type ScoreEvent } from "./score";
-import { freqOf, type Instrument } from "./theory";
+import { type Instrument } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
@@ -27,7 +27,7 @@ export interface RouteSound {
    * flight given to `setSky` instead.
    */
   schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Pans, localHour?: number): void;
-  /** traffic energy 0..1: velocities × (0.6 + 0.4·e) and the pad bed level */
+  /** traffic energy 0..1: velocities × (0.6 + 0.4·e) (the reverb returns to the section's level) */
   setEnergy(e: number): void;
   /** advances the 16th-step clock (plans every step up to `now + LOOKAHEAD_SEC`); runs every 40 ms unless `autoTick: false` */
   tick(): void;
@@ -56,14 +56,6 @@ export const TICK_MS = 40;
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
-/** The four bed voices of a chord: root (oct 2), fifth (oct 3), seventh or third (oct 3), ninth or fifth (oct 4). */
-export const bedVoicing = (c: Chord): [number, number][] => [
-  [2, c.root],
-  [3, c.tones[2]],
-  [3, c.tones[3] ?? c.tones[1]],
-  [4, c.tones[4] ?? c.tones[2]],
-];
-
 const defaultCreate = (): AudioContext => {
   const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
   const Ctor = w.AudioContext ?? w.webkitAudioContext;
@@ -74,11 +66,7 @@ interface Graph {
   ctx: AudioContext;
   master: GainNode;
   bus: GainNode;
-  bedGain: GainNode;
-  bed: OscillatorNode[];
   wet: GainNode;
-  /** section id + progression index of the bed's chord */
-  chordKey: string;
 }
 
 const defaultNow = (): number => performance.now() / 1000;
@@ -120,12 +108,6 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   /** the step sounding at wall time `t` of the current section (0 before the epoch) */
   const stepAt = (t: number): number => Math.max(0, Math.floor((t - epoch) / stepDur(section)));
 
-  function bedChord(t: number): { chord: Chord; key: string } {
-    const bar = Math.floor(stepAt(t) / 16);
-    const idx = Math.floor(bar / section.barsPerChord) % section.progression.length;
-    return { chord: chordAtStep(stepAt(t), section), key: `${section.id}:${idx}` };
-  }
-
   function switchSection(localHour: number | undefined): void {
     if (localHour === undefined) return;
     const sec = sectionAt(localHour); // art:sound
@@ -164,24 +146,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     convolver.connect(wet);
     wet.connect(master);
 
-    const bedGain = ctx.createGain();
-    bedGain.gain.value = 0;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 500;
-    lp.connect(bedGain);
-    bedGain.connect(bus);
-    const { chord, key } = bedChord(now());
-    const types: OscillatorType[] = ["sine", "sine", "triangle", "sine"];
-    const bed = bedVoicing(chord).map(([oct, semis], i) => {
-      const o = ctx.createOscillator();
-      o.type = types[i];
-      o.frequency.value = freqOf(oct, semis);
-      o.connect(lp);
-      o.start();
-      return o;
-    });
-    return { ctx, master, bus, bedGain, bed, wet, chordKey: key };
+    return { ctx, master, bus, wet };
   }
 
   function setEnabled(on: boolean): void {
@@ -270,12 +235,6 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       for (; stepTime(nextStep, epoch, sec) <= t + LOOKAHEAD_SEC; nextStep++) planned.push(...planStep(nextStep, { epoch, section: sec }, lines, followedId));
       emit(planned, t);
       if (!enabled || !g) return;
-      const { chord, key } = bedChord(t);
-      if (key !== g.chordKey) {
-        g.chordKey = key;
-        const at = g.ctx.currentTime;
-        bedVoicing(chord).forEach(([oct, semis], i) => g!.bed[i].frequency.setTargetAtTime(freqOf(oct, semis), at, 1.2));
-      }
     });
   }
 
@@ -302,10 +261,9 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     if (disposed) return;
     energy = clamp(e, 0, 1);
     if (!enabled || !g) return;
-    const { ctx, bedGain, wet } = g;
+    const { ctx, wet } = g;
     safe(() => {
       const at = ctx.currentTime;
-      bedGain.gain.setTargetAtTime(0.035 * energy ** 0.7, at, 0.8);
       wet.gain.setTargetAtTime(section.wet, at, 1.5);
     });
   }
@@ -333,10 +291,6 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     g = null;
     if (!cur) return;
     safe(() => {
-      for (const o of cur.bed) {
-        safe(() => o.stop());
-        safe(() => o.disconnect());
-      }
       void cur.ctx.close()?.catch?.(() => {});
     });
   }
