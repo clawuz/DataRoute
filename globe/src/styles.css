@@ -58,6 +58,12 @@ body { background: #02030a; }
 .music-scope-off { position: absolute; left: 0; right: 0; top: 0; text-align: right; font-size: calc(0.8 * var(--u)); color: var(--ink-dim); text-shadow: 0 0 0.6vmin #000, 0 0 1.4vmin #000; }
 .music-scope-chord { text-transform: none; } /* "Am" must not read as "AM" */
 .music-scope-label { margin-top: 0.8vmin; font-size: calc(1 * var(--u)); letter-spacing: 0.12em; white-space: nowrap; }
+.music-scope-meter { position: absolute; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.4vmin; } /* over the rhythm strip */
+.music-scope-level { display: flex; gap: 0.25vmin; }
+.music-scope-level .seg { width: 0.9vmin; height: 0.5vmin; background: rgba(242, 244, 248, 0.15); }
+.music-scope-level .seg.cur { box-shadow: 0 0 0.6vmin rgba(255, 255, 255, 0.55); }
+.music-scope-layers { display: flex; gap: 0.4vmin; min-height: 0.7vmin; }
+.music-scope-layers .dot { width: 0.7vmin; height: 0.7vmin; border-radius: 50%; }
 @media (max-aspect-ratio: 1/1) {
   .music-scope { bottom: 30vmin; }
   .music-scope.compact { bottom: 2vmin; width: 24vmin; }

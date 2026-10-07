@@ -6,7 +6,7 @@ import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../
 import type { FollowHud } from "../src/app/follow-hud";
 import { MusicScope } from "../src/hud/MusicScope";
 import { createNoteBus } from "../src/audio/notes-bus";
-import { INSTRUMENT_COLOR, LANE_ORDER } from "../src/audio/scope";
+import { INSTRUMENT_COLOR, LANE_ORDER, SECTION_COLOR } from "../src/audio/scope";
 import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
@@ -189,22 +189,40 @@ describe("ModeLine / notice with FOLLOW", () => {
 
 describe("MusicScope", () => {
   const music = (o: Partial<GlobeHudSnapshot["music"]> = {}): GlobeHudSnapshot["music"] => ({
-    on: true, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR", "DOM"], ...o,
+    on: true, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR", "DOM"], level: 2, layers: [], ...o,
   });
-  it("labels the panel with the section, chord and tempo", () => {
+  it("labels the panel with the section, chord, tempo and rhythm level", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music()} />);
     expect(container.querySelector("canvas")).not.toBeNull();
-    expect(text(container)).toBe("ROUTES → MUSIC · DAY · C · 96 BPM");
+    expect(text(container)).toBe("ROUTES → MUSIC · DAY · C · 96 BPM · L2");
+  });
+  it("shows the level bar (five segments, the current level filled in the section colour) and one dot per region layer", () => {
+    const { container } = render(<MusicScope bus={createNoteBus()} music={music({ section: "NIGHT", level: 1, layers: ["DOM", "MEA", "AME"] })} />);
+    const segs = Array.from(container.querySelectorAll<HTMLElement>(".music-scope-level .seg"));
+    expect(segs).toHaveLength(5);
+    expect(segs.map((s) => s.classList.contains("on"))).toEqual([true, true, false, false, false]);
+    expect(segs.map((s) => s.classList.contains("cur"))).toEqual([false, true, false, false, false]);
+    const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ")})`;
+    expect(segs[0].style.background).toBe(rgb(SECTION_COLOR.NIGHT));
+    expect(segs[2].style.background).toBe("");
+    const dots = Array.from(container.querySelectorAll<HTMLElement>(".music-scope-layers .dot"));
+    expect(dots.map((d) => d.dataset.region)).toEqual(["DOM", "MEA", "AME"]);
+    expect(dots.map((d) => d.style.background)).toEqual([INSTRUMENT_COLOR.EP, INSTRUMENT_COLOR.DARBUKA, INSTRUMENT_COLOR.TIMP].map(rgb));
+    expect(text(container)).toContain("· L1");
+    const none = render(<MusicScope bus={createNoteBus()} music={music({ layers: [] })} />).container;
+    expect(none.querySelectorAll(".music-scope-layers .dot")).toHaveLength(0);
   });
   it("says SOUND OFF · PRESS M while muted (the scope keeps running)", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music({ on: false, section: "NIGHT", chord: "Am9", bpm: 72 })} />);
     expect(text(container)).toContain("SOUND OFF · PRESS M");
-    expect(text(container)).toContain("ROUTES → MUSIC · NIGHT · Am9 · 72 BPM");
+    expect(text(container)).toContain("ROUTES → MUSIC · NIGHT · Am9 · 72 BPM · L2");
   });
   it("does not throw without a 2D context (jsdom) and accepts notes", () => {
     const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     const bus = createNoteBus();
-    const r = render(<MusicScope bus={bus} music={music()} />);
+    const r = render(<MusicScope bus={bus} music={music({ level: 4, layers: ["EUR", "ASI"] })} />);
+    expect(r.container.querySelectorAll(".music-scope-level .seg.on")).toHaveLength(5); // the DOM meter needs no canvas
+    expect(r.container.querySelectorAll(".music-scope-layers .dot")).toHaveLength(2);
     expect(() => bus.emit({ instrument: "NEY", lane: "NEY", freq: 440, pitch: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0 })).not.toThrow();
     r.unmount();
     spy.mockRestore();

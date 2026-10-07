@@ -8,6 +8,7 @@ import type { RouteSound } from "../src/audio/engine";
 import { createNoteBus, type NoteBus, type NoteEvent } from "../src/audio/notes-bus";
 import { istanbulHour } from "../src/audio/form";
 import type { SkyFlight } from "../src/audio/lines";
+import type { RegionName } from "../src/audio/theory";
 import { headState } from "../src/model/dead-reckon";
 import { buildGlobeModel } from "../src/model/globe-model";
 import { FROM, flight, makeDay } from "./helpers";
@@ -536,7 +537,10 @@ describe("globe controller", () => {
           subs.add(fn);
           return () => void subs.delete(fn);
         }),
-        info: vi.fn((_hour?: number) => ({ section: "DAY" as const, chord: "C", bpm: 96, instruments: ["NEY", "EUR"] as NoteEvent["instrument"][] })),
+        info: vi.fn((_hour?: number) => ({
+          section: "DAY" as const, chord: "C", bpm: 96, instruments: ["NEY", "EUR"] as NoteEvent["instrument"][],
+          level: 3 as const, layers: ["MEA"] as RegionName[], phase: "none" as const,
+        })),
         play: (n: NoteEvent) => subs.forEach((fn) => fn(n)),
         subs,
       };
@@ -611,12 +615,12 @@ describe("globe controller", () => {
       h.c.dispose();
     });
 
-    it("publishes the music state (section, chord, tempo, ensemble, on) in the snapshot", async () => {
+    it("publishes the music state (section, chord, tempo, ensemble, level, layers, on) in the snapshot", async () => {
       const sound = stub();
       const h = setup({ sound });
       await flush();
       h.frame(0.3);
-      expect(h.store.get().music).toEqual({ on: false, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR"] });
+      expect(h.store.get().music).toEqual({ on: false, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR"], level: 3, layers: ["MEA"] });
       // the label follows the Istanbul hour of the displayed time, events or not
       const f = h.frame(0.01);
       expect(sound.info).toHaveBeenLastCalledWith(istanbulHour(f.absTime));
@@ -671,7 +675,25 @@ describe("globe controller", () => {
     });
 
     describe("sky feed", () => {
-      const lastSky = (sound: ReturnType<typeof stub>) => sound.setSky.mock.calls.at(-1) as [SkyFlight[], string | null, number];
+      const lastSky = (sound: ReturnType<typeof stub>) =>
+        sound.setSky.mock.calls.at(-1) as [SkyFlight[], string | null, number, boolean, number];
+
+      it("passes replay (true only in REPLAY, for the build-ups) and the airborne count of the sky", async () => {
+        const sound = stub();
+        const h = setup({ sound });
+        await flush();
+        h.frame(0.3);
+        let [sky, , , replay, airborne] = lastSky(sound);
+        expect(replay).toBe(false);
+        expect(airborne).toBe(sky.length);
+        h.c.onKey("r");
+        h.frame(0.3);
+        [sky, , , replay, airborne] = lastSky(sound);
+        expect(h.store.get().mode).toBe("REPLAY");
+        expect(replay).toBe(true);
+        expect(airborne).toBe(sky.length);
+        h.c.dispose();
+      });
 
       it("feeds the airborne flights at every HUD tick, muted too: head altitude, route key, region and far end", async () => {
         const sound = stub();

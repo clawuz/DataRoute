@@ -14,10 +14,10 @@ import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
   CREDIT, LABEL_COUNT, addEvents, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
-  type AirportLabel, type EventLine, type GlobeHudSnapshot,
+  type AirportLabel, type EventLine, type GlobeHudSnapshot, type MusicHud,
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
-import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/engine"; // art:sound
+import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -138,8 +138,12 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   function feedSky() { // art:sound — the music lines follow the sky (also while muted: the scope)
     if (!model) return;
     const cur = currentCur(d.nowMs() / 1000);
-    sound.setSky(skyFlights(model, cur), follow?.id ?? null, istanbulHour(model.from + cur));
+    const sky = skyFlights(model, cur);
+    sound.setSky(sky, follow?.id ?? null, istanbulHour(model.from + cur), mode === "REPLAY", sky.length); // art:sound — v4 build-ups, level
   }
+  const musicHud = (i: SoundInfo): MusicHud => ({ // art:sound
+    on: soundOn, section: i.section, chord: i.chord, bpm: i.bpm, instruments: i.instruments, level: i.level, layers: i.layers,
+  });
   function refreshPans() { // art:sound
     if (!model) return;
     if (panModel !== model) {
@@ -274,7 +278,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
       art, // art:core
-      music: { on: soundOn, ...sound.info(model ? istanbulHour(model.from + cur) : undefined) }, // art:sound
+      music: musicHud(sound.info(model ? istanbulHour(model.from + cur) : undefined)), // art:sound
     });
   }
 

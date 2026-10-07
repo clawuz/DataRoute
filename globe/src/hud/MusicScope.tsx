@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 import type { MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
-  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, TRAIL_TTL_SEC, laneSample, pruneTrails, pushTrail, stepLane, trailIdOf,
-  type Lane, type Trail,
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, SECTION_COLOR, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments, pruneTrails,
+  pushTrail, scopeLabel, stepLane, trailIdOf, type Lane, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -165,13 +165,28 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
     return () => cancelAnimationFrame(raf);
   }, []);
 
+  const [head, chord, tail] = scopeLabel(music);
+  const segColor = SECTION_COLOR[music.section] ?? SECTION_COLOR.DAY;
   return (
     <div className={`music-scope${compact ? " compact" : ""}`}>
       <div className="music-scope-wave" aria-hidden="true">
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
+        {/* v4: the rhythm level (five segments) and one dot per active region layer, over the rhythm strip */}
+        <div className="music-scope-meter">
+          <div className="music-scope-level">
+            {levelSegments(music.level).map((on, i) => (
+              <span key={i} className={`seg${on ? " on" : ""}${i === music.level ? " cur" : ""}`} style={on ? { background: segColor } : undefined} />
+            ))}
+          </div>
+          <div className="music-scope-layers">
+            {music.layers.map((r) => (
+              <span key={r} className="dot" data-region={r} style={{ background: layerColor(r) }} />
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="music-scope-label label">{`ROUTES → MUSIC · ${music.section} · `}<span className="music-scope-chord">{music.chord}</span>{` · ${music.bpm} BPM`}</div>
+      <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>
     </div>
   );
 }

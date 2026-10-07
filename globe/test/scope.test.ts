@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, MAX_TRAILS, PITCH_MAX, PITCH_MIN, laneSample, pitchY, pruneTrails, pushTrail, stepLane,
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, LEVEL_SEGMENTS, MAX_TRAILS, SECTION_COLOR, layerColor, layerInstrument, levelSegments, scopeLabel, PITCH_MAX, PITCH_MIN, laneSample, pitchY, pruneTrails, pushTrail, stepLane,
   trailIdOf, visualHz, type Lane, type Trail,
 } from "../src/audio/scope";
 import type { NoteEvent } from "../src/audio/notes-bus";
@@ -141,7 +141,7 @@ describe("lane palette", () => {
     for (const c of Object.values(INSTRUMENT_COLOR)) expect(c).toMatch(/^#[0-9a-fA-F]{6}$/);
     expect(INSTRUMENT_COLOR).toMatchObject({
       EP: "#c9a7ff", BASS: "#f2f4f8", KICK: "#f2f4f8", SNARE: "#d9dce3", HAT: "#b6bcc9", OHAT: "#b6bcc9",
-      KEYS: "#c9a7ff", BRASS: "#fff1cf", SAXPAD: "#e8b64a",
+      KEYS: "#c9a7ff", BRASS: "#fff1cf",
     });
     expect(INSTRUMENT_COLOR.NEY).toBe("#E30A17");
     expect(INSTRUMENT_COLOR.EUR).toBe("#3FC8F2");
@@ -155,5 +155,27 @@ describe("lane palette", () => {
     expect([INSTRUMENT_COLOR.DARBUKA, INSTRUMENT_COLOR.CONGA, INSTRUMENT_COLOR.TAIKO, INSTRUMENT_COLOR.TIMP, INSTRUMENT_COLOR.SHAKER]).toEqual([
       INSTRUMENT_COLOR.MEA, INSTRUMENT_COLOR.AFR, INSTRUMENT_COLOR.ASI, INSTRUMENT_COLOR.AME, INSTRUMENT_COLOR.EUR,
     ]);
+  });
+});
+
+describe("level bar, layer dots and label (v4)", () => {
+  it("five segments, filled up to the current level (level 0 lights the first)", () => {
+    expect(LEVEL_SEGMENTS).toBe(5);
+    expect(levelSegments(0)).toEqual([true, false, false, false, false]);
+    expect(levelSegments(2)).toEqual([true, true, true, false, false]);
+    expect(levelSegments(4)).toEqual([true, true, true, true, true]);
+    expect(levelSegments(9)).toEqual([true, true, true, true, true]); // clamped
+    expect(levelSegments(-1)).toEqual([true, false, false, false, false]);
+  });
+  it("a layer's dot is the colour of its instrument: the continent percussion, Rhodes for domestic/unknown", () => {
+    expect(["EUR", "MEA", "AFR", "ASI", "AME", "DOM", "UNK"].map(layerInstrument)).toEqual(["SHAKER", "DARBUKA", "CONGA", "TAIKO", "TIMP", "EP", "EP"]);
+    expect(layerColor("MEA")).toBe(INSTRUMENT_COLOR.DARBUKA);
+    expect(layerColor("DOM")).toBe(INSTRUMENT_COLOR.EP);
+    expect(layerColor("???")).toBe(INSTRUMENT_COLOR.EP);
+  });
+  it("every section has a colour; the label ends with the level", () => {
+    for (const c of Object.values(SECTION_COLOR)) expect(c).toMatch(/^#[0-9a-fA-F]{6}$/);
+    expect(Object.keys(SECTION_COLOR).sort()).toEqual(["DAY", "EVENING", "MORNING", "NIGHT"]);
+    expect(scopeLabel({ section: "DAY", chord: "Dm9", bpm: 116, level: 2 })).toEqual(["ROUTES → MUSIC · DAY · ", "Dm9", " · 116 BPM · L2"]);
   });
 });

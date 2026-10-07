@@ -8,7 +8,7 @@ import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from 
 import { graceAbove, initNey, neyCell, type NeyState } from "../src/audio/melody";
 import {
   DRUM_PITCH, MAX_RANGE_SEC, NEY_LEAD_SEC, eventsBetween, planNotes as plan, planStep, stepTime, velocityFor, type PlanContext, type PlannedNote,
-  type ScoreEvent,
+  type ScoreEvent, type StepArrangement,
 } from "../src/audio/score";
 import { FROM, flight, makeDay } from "./helpers";
 
@@ -210,30 +210,83 @@ describe("planNotes: Istanbul events → ney cells and winds on the step clock",
   });
 });
 
-describe("planStep: the groove and the flight lines of one 16th step", () => {
+describe("planStep (v4): the arranged groove and the flight lines of one 16th step", () => {
   const sky = (id: string, o: Partial<SkyFlight> = {}): SkyFlight => ({ id, key: `IST-${id}`, regionIdx: 1, alt100: 350, vsFpm: 0, ...o });
-  it("drums and bass of DAY step 0 at the epoch; voices are the instruments, without a route key", () => {
-    const hits = planStep(0, { epoch: 5, section: DAY }, [], null);
-    expect(hits.map((h) => h.instrument).sort()).toEqual(["BASS", "HAT", "KICK"]);
+  const arr = (o: Partial<StepArrangement> = {}): StepArrangement => ({ level: 2, layers: new Set(), phase: "none", amount: 0, buildBar: 0, ...o });
+  const ins = (hits: PlannedNote[]) => hits.map((h) => h.instrument).sort();
+  it("level 2, DAY step 0 at the epoch: kick, hat and bass; voices are the instruments, without a route key", () => {
+    const hits = planStep(0, { epoch: 5, section: DAY }, arr(), [], null);
+    expect(ins(hits)).toEqual(["BASS", "HAT", "KICK"]);
     for (const h of hits) expect([h.when, h.kind, h.key]).toEqual([5, "groove", ""]);
     expect(hits.find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 5)); // D1 under Dm9
     expect(hits.find((h) => h.instrument === "KICK")!.freq).toBe(DRUM_PITCH.KICK);
   });
   it("odd steps swing late; the step's chord and the next chord drive keys and the bass approach", () => {
-    const [hat] = planStep(1, { epoch: 0, section: DAY }, [], null);
-    expect([hat.instrument, hat.vel]).toEqual(["HAT", 0.3]);
+    const [hat] = planStep(1, { epoch: 0, section: DAY }, arr(), [], null);
+    expect(hat.instrument).toBe("HAT");
+    expect(hat.vel).toBeCloseTo(0.3 * 0.9, 12); // off-16th hat × level-2 scale
     expect(hat.when).toBeCloseTo(1.1 * D, 12);
-    const keys = planStep(18, { epoch: 0, section: DAY }, [], null).find((h) => h.instrument === "KEYS")!; // bar 1: Bbmaj7
+    const keys = planStep(18, { epoch: 0, section: DAY }, arr(), [], null).find((h) => h.instrument === "KEYS")!; // bar 1: Bbmaj7
     expect(keys.freqs).toEqual(keysVoicing(CHORDS.Bbmaj7).map(ladderFreq));
     expect(keys.freq).toBe(keys.freqs![0]);
     // bar 7 (A7b9) step 11 approaches the next chord (Dm9, wrapping): C# = pc 4 in octave 1
-    expect(planStep(16 * 7 + 11, { epoch: 0, section: DAY }, [], null).find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 4));
+    expect(planStep(16 * 7 + 11, { epoch: 0, section: DAY }, arr(), [], null).find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 4));
+  });
+  it("the level picks the pattern: level 0 by night, level 4 adds kick 3 and brass", () => {
+    const voicesAt = (k: number, level: StepArrangement["level"]) => ins(planStep(k, { epoch: 0, section: DAY }, arr({ level }), [], null));
+    expect(voicesAt(3, 0)).toEqual([]);
+    expect(voicesAt(3, 2)).toEqual(["BASS", "HAT"]);
+    expect(voicesAt(3, 4)).toEqual(["BASS", "BRASS", "HAT", "HAT", "KICK", "SHAKER"]);
+  });
+  it("level 4 hat 32nds: the second hat sits half-way to the next (swung) step", () => {
+    // even step 0 → step 1 is 1.1·D later: +0.55·D; odd step 1 → step 2 is 0.9·D later: 1.1·D + 0.45·D
+    const hats = (k: number) => planStep(k, { epoch: 0, section: DAY }, arr({ level: 4 }), [], null).filter((h) => h.instrument === "HAT").map((h) => h.when);
+    expect(hats(0)).toHaveLength(2);
+    expect(hats(0)[0]).toBe(0);
+    expect(hats(0)[1]).toBeCloseTo(0.55 * D, 12);
+    expect(hats(1)[1]).toBeCloseTo(1.1 * D + 0.45 * D, 12);
+  });
+  it("region layers add their percussion (unpitched groove voices with a nominal pitch); the EUR shaker yields to the level-3 shaker", () => {
+    const steps = (inst: string, o: Partial<StepArrangement>) =>
+      Array.from({ length: 16 }, (_, k) => k).filter((k) => planStep(k, { epoch: 0, section: DAY }, arr(o), [], null).some((h) => h.instrument === inst));
+    expect(steps("DARBUKA", { layers: new Set(["MEA"]) })).toEqual([0, 4, 6, 10, 12]);
+    expect(steps("DARBUKA", {})).toEqual([]);
+    expect(steps("TIMP", { layers: new Set(["AME"]) })).toEqual([0, 8]);
+    const darbuka = planStep(0, { epoch: 0, section: DAY }, arr({ layers: new Set(["MEA"]) }), [], null).find((h) => h.instrument === "DARBUKA")!;
+    expect([darbuka.kind, darbuka.key, darbuka.freq]).toEqual(["groove", "", DRUM_PITCH.DARBUKA]);
+    const shakers = (level: StepArrangement["level"]) =>
+      planStep(0, { epoch: 0, section: DAY }, arr({ level, layers: new Set(["EUR"]) }), [], null).filter((h) => h.instrument === "SHAKER").length;
+    expect([shakers(2), shakers(3), shakers(4)]).toEqual([1, 1, 1]);
+  });
+  it("build: the riser on step 0 of the first build bar, a snare roll, drums and the bass pulse only (keys, brass, layers, lines muted)", () => {
+    const f = sky("TK1");
+    const b = (k: number, buildBar: number) =>
+      planStep(k, { epoch: 0, section: DAY }, arr({ level: 2, layers: new Set(["MEA", "EUR"]), phase: "build", amount: 0.5, buildBar }), [f], null);
+    expect(ins(b(0, 0))).toEqual(["BASS", "HAT", "KICK", "RISER", "SNARE"]); // level-2 kick kept; its hat and bass give way to the roll and the pulse
+    expect(ins(b(0, 1))).not.toContain("RISER");
+    for (let k = 0; k < 16; k++) {
+      const hits = b(k, 0);
+      expect(hits.filter((h) => h.instrument === "SNARE").map((h) => h.vel)).toEqual([0.3 + 0.7 * 0.5]); // one roll hit, no second snare
+      expect(hits.filter((h) => h.instrument === "HAT")).toHaveLength(1);
+      for (const h of hits) expect(["KEYS", "BRASS", "DARBUKA", "SHAKER", "TIMP", "CONGA", "TAIKO"]).not.toContain(h.instrument);
+      expect(hits.some((h) => h.kind === "line")).toBe(false);
+    }
+  });
+  it("hit: crash, one full-velocity kick and the tutti brass on step 0, over the full groove", () => {
+    const f = sky("TK1");
+    const hits = planStep(0, { epoch: 0, section: DAY }, arr({ phase: "hit", amount: 1, layers: new Set(["MEA"]) }), [f], null);
+    expect(hits.filter((h) => h.instrument === "KICK").map((h) => h.vel)).toEqual([1]);
+    expect(hits.filter((h) => h.instrument === "CRASH")).toHaveLength(1);
+    expect(hits.find((h) => h.instrument === "BRASS")!.freqs).toHaveLength(4);
+    expect(ins(hits)).toEqual(expect.arrayContaining(["BASS", "HAT", "DARBUKA"]));
+    expect(hits.filter((h) => h.kind === "line")).toHaveLength(linePattern("TK1")[0] ? 1 : 0);
+    expect(planStep(1, { epoch: 0, section: DAY }, arr({ phase: "hit", amount: 1 }), [], null).some((h) => h.instrument === "CRASH")).toBe(false);
   });
   it("a flight line plays on its euclidean steps only, at its altitude on the chord ladder", () => {
     const f = sky("TK1", { alt100: 330, vsFpm: 1200, farLat: 51.5, farLon: -0.5 });
     const pat = linePattern("TK1");
     for (let k = 0; k < 32; k++) {
-      const lines = planStep(k, { epoch: 0, section: DAY }, [f], null).filter((h) => h.kind === "line");
+      const lines = planStep(k, { epoch: 0, section: DAY }, arr(), [f], null).filter((h) => h.kind === "line");
       expect(lines.length).toBe(pat[k % 16] ? 1 : 0);
       for (const l of lines) {
         expect(l).toMatchObject({ instrument: lineInstrument(f), key: "IST-TK1", lineId: "TK1" });
@@ -247,7 +300,7 @@ describe("planStep: the groove and the flight lines of one 16th step", () => {
   it("line velocity: 0.55 · lineGain(N), the followed flight × 1.4", () => {
     const fs = [sky("A"), sky("B"), sky("C")];
     const vels = new Map<string, number>();
-    for (let k = 0; k < 16; k++) for (const h of planStep(k, { epoch: 0, section: DAY }, fs, "B")) if (h.lineId) vels.set(h.lineId, h.vel);
+    for (let k = 0; k < 16; k++) for (const h of planStep(k, { epoch: 0, section: DAY }, arr(), fs, "B")) if (h.lineId) vels.set(h.lineId, h.vel);
     expect(vels.get("A")).toBeCloseTo(0.55 * lineGain(3), 12);
     expect(vels.get("B")).toBeCloseTo(1.4 * 0.55 * lineGain(3), 12);
   });

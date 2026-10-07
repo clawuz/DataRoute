@@ -1,68 +1,37 @@
 import type { BuildPhase, Level } from "./arrangement";
-import type { Section, SectionId } from "./form";
 import { ladderFreq, type Chord } from "./harmony";
 import { rotate } from "./lines";
 import { euclid, freqOf, type RegionName } from "./theory";
 
 /**
- * Music v3 rhythm section (spec §4e): pure 16-step patterns per section, Farandole in spirit
- * (driving bass ostinato, syncopated Rhodes comping, brass stabs, kick/snare/hats).
+ * The rhythm section, pure, Farandole in spirit (driving bass ostinato, syncopated Rhodes comping, brass stabs,
+ * kick/snare/hats): v4 16-step patterns per traffic-driven rhythm level, region-layer percussion and the REPLAY
+ * build-up (spec §4f; the section only bounds the level, see `Section.levelRange`).
  */
 export type Voice =
-  | "KICK" | "SNARE" | "HAT" | "OHAT" | "BASS" | "KEYS" | "BRASS" | "SAXPAD"
+  | "KICK" | "SNARE" | "HAT" | "OHAT" | "BASS" | "KEYS" | "BRASS"
   | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP";
 
 export interface GrooveHit {
   voice: Voice;
   vel: number;
-  /** single pitch (bass, keys arpeggio, sax pad) */
+  /** single pitch (bass, keys arpeggio) */
   freq?: number;
   /** chord voicing (keys comping, brass stab) */
   freqs?: number[];
-  /** sustained note (night bass, evening sax pad) */
+  /** sustained note (the level-0 bass) */
   long?: boolean;
   /** v4: play this many steps after the step (0.5 = the second 32nd of a level-4 hat double); absent = on the step */
   offsetSteps?: number;
 }
 
-interface Pattern {
-  kick: number[];
-  snare: number[];
-  /** closed hat steps (the open-hat step is never also a closed hat) */
-  hat: number[];
-  ohat: number[];
-  bass: number[];
-  keys: number[];
-  /** keys play the voicing one tone at a time instead of a chord */
-  arpeggio?: boolean;
-  brass: number[];
-  /** sustained bass notes */
-  longBass?: boolean;
-  /** long sax pad on step 0 */
-  saxPad?: boolean;
-  /** velocity scale of the section */
-  scale: number;
-}
-
 const ALL16 = Array.from({ length: 16 }, (_, i) => i);
 const EIGHTHS = ALL16.filter((s) => s % 2 === 0);
-
-const PATTERNS: Record<SectionId, Pattern> = {
-  DAY: {
-    kick: [0, 6, 10], snare: [4, 12], hat: ALL16.filter((s) => s !== 14), ohat: [14],
-    bass: [0, 3, 6, 8, 11, 14], keys: [2, 7, 10], brass: [3, 11], scale: 1,
-  },
-  MORNING: { kick: [0, 10], snare: [4, 12], hat: EIGHTHS, ohat: [], bass: [0, 6, 8, 14], keys: [2, 10], brass: [], scale: 0.8 },
-  NIGHT: { kick: [0, 8], snare: [], hat: [4, 12], ohat: [], bass: [0], longBass: true, keys: [0, 6, 10], arpeggio: true, brass: [], scale: 0.45 },
-  EVENING: { kick: [0, 8], snare: [12], hat: EIGHTHS, ohat: [], bass: [0, 8, 11], keys: [2, 8], brass: [], saxPad: true, scale: 0.7 },
-};
-
-const VEL = { KICK: 1, SNARE: 0.9, HAT: 0.55, GHOST: 0.3, OHAT: 0.5, BASS: 0.8, KEYS: 0.6, BRASS: 0.8, SAXPAD: 0.6 };
 
 const mod = (x: number, m: number): number => ((x % m) + m) % m;
 const interval = (c: Chord, tone: number): number => mod(tone - c.root, 12);
 
-/** Bass degree of each ostinato step (DAY's full pattern; the other sections use subsets of these steps). */
+/** Bass degree of each ostinato step (the level-2 ostinato; levels 0, 1 use subsets of these steps). */
 type Degree = "root" | "fifth" | "rootOct" | "seventhOrApproach";
 const BASS_DEGREE: Record<number, Degree> = { 0: "root", 3: "root", 6: "fifth", 8: "rootOct", 11: "seventhOrApproach", 14: "fifth" };
 
@@ -98,34 +67,6 @@ function stack(pcs: number[], floor: number, ceil: number): number[] {
 export const keysVoicing = (c: Chord): number[] => stack([c.tones[1], c.tones[3], c.tones[4] ?? c.tones[1], c.tones[2]], 12, 36);
 /** Brass stab: 3rd, 7th, 9th in octaves 4–5 (semitones 24…48). */
 export const brassVoicing = (c: Chord): number[] => stack([c.tones[1], c.tones[3], c.tones[4] ?? c.tones[1]], 24, 48);
-
-/**
- * v3 groove hits of one 16th step of a bar: pure and deterministic.
- * Still used by `score.planStep` until the v4 engine (Task 16) switches to the level functions below; remove it then.
- */
-export function grooveStep(stepInBar: number, chord: Chord, next: Chord, sec: Section): GrooveHit[] {
-  const s = mod(stepInBar, 16);
-  const p = PATTERNS[sec.id];
-  const k = p.scale;
-  const hits: GrooveHit[] = [];
-  if (p.kick.includes(s)) hits.push({ voice: "KICK", vel: VEL.KICK * k });
-  if (p.snare.includes(s)) hits.push({ voice: "SNARE", vel: VEL.SNARE * k });
-  if (p.hat.includes(s)) hits.push({ voice: "HAT", vel: (s % 2 === 0 ? VEL.HAT : VEL.GHOST) * k });
-  if (p.ohat.includes(s)) hits.push({ voice: "OHAT", vel: VEL.OHAT * k });
-  if (p.bass.includes(s)) {
-    const hit: GrooveHit = { voice: "BASS", vel: VEL.BASS * k, freq: freqOf(1, bassSemis(BASS_DEGREE[s], chord, next)) };
-    if (p.longBass) hit.long = true;
-    hits.push(hit);
-  }
-  const ki = p.keys.indexOf(s);
-  if (ki >= 0) {
-    const v = keysVoicing(chord).map(ladderFreq);
-    hits.push(p.arpeggio ? { voice: "KEYS", vel: VEL.KEYS * k, freq: v[ki % v.length] } : { voice: "KEYS", vel: VEL.KEYS * k, freqs: v });
-  }
-  if (p.brass.includes(s)) hits.push({ voice: "BRASS", vel: VEL.BRASS * k, freqs: brassVoicing(chord).map(ladderFreq) });
-  if (p.saxPad && s === 0) hits.push({ voice: "SAXPAD", vel: VEL.SAXPAD * k, freq: freqOf(3, chord.tones[1]), long: true });
-  return hits;
-}
 
 // ---------------------------------------------------------------- v4 (spec §4f): rhythm levels, layers, build-up
 

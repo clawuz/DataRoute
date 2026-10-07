@@ -1,16 +1,18 @@
 import type { GlobeFlight, GlobeModel } from "../model/globe-model";
 import { isIstanbul } from "@collector/regions";
+import { REGIONS } from "@web/data/palette";
+import type { BuildPhase, Level } from "./arrangement";
 import { chordAtStep, nextChordAtStep, stepDur, swingDelay, type Section } from "./form";
-import { grooveStep, type Voice } from "./groove";
+import { bassHits, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "./groove";
 import { ladderFreq, snapToScale } from "./harmony";
 import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from "./lines";
 import { graceAbove, neyCell, windParts, type NeyState } from "./melody";
 import type { NoteKind } from "./notes-bus";
-import { routeKey, type Instrument } from "./theory";
+import { routeKey, type Instrument, type RegionName } from "./theory";
 
 /**
- * Music v3 planning (spec §4e), pure: the continuous 16th-step clock (`planStep`: groove and flight lines) and the
- * Istanbul ney cells with their winds (`planNotes`). The engine turns the planned notes into sound.
+ * Music planning, pure: the continuous 16th-step clock (`planStep`: the v4 arranged groove of spec §4f and the flight
+ * lines) and the Istanbul ney cells with their winds (`planNotes`, spec §4e). The engine turns the planned notes into sound.
  */
 export const MAX_RANGE_SEC = 600;
 /** the ney's first note is at least this far after `now` (scheduling margin) */
@@ -76,7 +78,10 @@ export interface PlannedNote {
 }
 
 /** Nominal pitch of the unpitched drum voices (the scope draws a burst at this "frequency"). */
-export const DRUM_PITCH: Record<"KICK" | "SNARE" | "HAT" | "OHAT", number> = { KICK: 60, SNARE: 180, HAT: 8000, OHAT: 8000 };
+export const DRUM_PITCH = {
+  KICK: 60, SNARE: 180, HAT: 8000, OHAT: 8000, TOM: 160, CRASH: 6000, SHAKER: 9000, RISER: 400,
+  DARBUKA: 190, CONGA: 330, TAIKO: 110, TIMP: 98,
+} as const satisfies Partial<Record<Voice, number>>;
 
 export interface PlanContext {
   /** wall-clock time of step 0 of the current section */
@@ -136,18 +141,69 @@ export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext
 
 const drumPitch = (v: Voice): number => (v in DRUM_PITCH ? DRUM_PITCH[v as keyof typeof DRUM_PITCH] : 0);
 
+/** The arrangement state of a step, kept by the engine (spec §4f). */
+export interface StepArrangement {
+  /** rhythm level (changes only at bar boundaries) */
+  level: Level;
+  /** active region layers */
+  layers: ReadonlySet<RegionName>;
+  /** REPLAY transition phase of the bar: `build` mutes keys, brass, layers and lines; `hit` adds the tutti on step 0 */
+  phase: BuildPhase;
+  /** build amount 0 → 1 */
+  amount: number;
+  /** bar index inside the build phase (0 = the first build bar, which starts the riser) */
+  buildBar: number;
+}
+
+/** Drum voices of the level that the build-up's own snare roll and rising hats replace. */
+const BUILD_REPLACES: ReadonlySet<Voice> = new Set<Voice>(["SNARE", "HAT"]);
+
 /**
- * Every note of global 16th step `k`: the section's groove hits (`grooveStep` on the step's chord and the next one) and
- * the active flight lines (each line's euclidean pattern; pitch = altitude on the chord ladder). Pure.
+ * The groove hits of global 16th step `k` under an arrangement:
+ * - `none` / `hit`: the level's drums, bass and comping and the percussion of every active layer (in `REGIONS` order;
+ *   the EUR shaker is left out from level 3, where the drums already play a 16th shaker); at `hit` step 0 the tutti
+ *   (crash, kick 1.0, brass full voicing) replaces the level's kick.
+ * - `build`: the roll (`fillAndBuild`: snare and hat every step, the riser, the bass pulse) plus the level's other drums
+ *   (kick, open hat, shaker, toms); keys, brass and layers are silent.
  */
-export function planStep(k: number, ctx: { epoch: number; section: Section }, lines: SkyFlight[], followedId: string | null): PlannedNote[] {
+function grooveHits(k: number, sec: Section, arr: StepArrangement): GrooveHit[] {
+  const s = k % 16;
+  const bar = Math.floor(k / 16);
+  const chord = chordAtStep(k, sec);
+  const drums = drumHits(arr.level, bar, s);
+  if (arr.phase === "build")
+    return [...fillAndBuild("build", arr.amount, s, arr.buildBar, chord), ...drums.filter((h) => !BUILD_REPLACES.has(h.voice))];
+  const tutti = arr.phase === "hit" ? fillAndBuild("hit", 1, s, 0, chord) : [];
+  const hits = [
+    ...tutti,
+    ...(tutti.length ? drums.filter((h) => h.voice !== "KICK") : drums),
+    ...bassHits(arr.level, bar, s, chord, nextChordAtStep(k, sec)),
+    ...compHits(arr.level, s, chord),
+  ];
+  for (const r of REGIONS) {
+    if (!arr.layers.has(r) || (r === "EUR" && arr.level >= 3)) continue; // one shaker, not two
+    hits.push(...layerHits(r, s, bar));
+  }
+  return hits;
+}
+
+/**
+ * Every note of global 16th step `k`: the arranged groove (`grooveHits`; a hit's `offsetSteps` places it that fraction
+ * of the way to the next, swung, step) and the given flight lines (each line's euclidean pattern; pitch = altitude on
+ * the chord ladder) — silent during a build. Pure.
+ */
+export function planStep(
+  k: number, ctx: { epoch: number; section: Section }, arr: StepArrangement, lines: SkyFlight[], followedId: string | null,
+): PlannedNote[] {
   const { epoch, section: sec } = ctx;
   const when = stepTime(k, epoch, sec);
+  const gap = stepTime(k + 1, epoch, sec) - when;
   const chord = chordAtStep(k, sec);
-  const out: PlannedNote[] = grooveStep(k % 16, chord, nextChordAtStep(k, sec), sec).map((h) => ({
-    when, instrument: h.voice, freq: h.freq ?? h.freqs?.[0] ?? drumPitch(h.voice), vel: h.vel, kind: "groove" as const, key: "",
-    ...(h.freqs ? { freqs: h.freqs } : {}), ...(h.long ? { long: true } : {}),
+  const out: PlannedNote[] = grooveHits(k, sec, arr).map((h) => ({
+    when: h.offsetSteps ? when + h.offsetSteps * gap : when, instrument: h.voice, freq: h.freq ?? h.freqs?.[0] ?? drumPitch(h.voice),
+    vel: h.vel, kind: "groove" as const, key: "", ...(h.freqs ? { freqs: h.freqs } : {}), ...(h.long ? { long: true } : {}),
   }));
+  if (arr.phase === "build") return out;
   const gain = LINE_VEL * lineGain(lines.length);
   for (const f of lines) {
     if (!linePattern(f.id)[k % 16]) continue;

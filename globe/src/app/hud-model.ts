@@ -50,6 +50,10 @@ export interface MusicHud {
   chord: string;
   bpm: number;
   instruments: Instrument[];
+  /** v4 rhythm level 0 … 4 */
+  level: number;
+  /** active region layers */
+  layers: string[];
 }
 
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
@@ -66,7 +70,7 @@ export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
   notice: "",
   tour: true,
   art: { enabled: true, corridors: true, aurora: false, sound: false },
-  music: { on: false, section: "DAY", chord: "Dm9", bpm: 116, instruments: [] }, // art:sound
+  music: { on: false, section: "DAY", chord: "Dm9", bpm: 116, instruments: [], level: 2, layers: [] }, // art:sound
 };
 
 export function eventText(e: FlightEvent): string {

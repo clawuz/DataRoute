@@ -1,3 +1,4 @@
+import type { SectionId } from "./form";
 import type { NoteEvent } from "./notes-bus";
 import { freqOf, type Instrument } from "./theory";
 
@@ -10,7 +11,7 @@ export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   EUR: "#3FC8F2", PNO: "#9fe3ff", MEA: "#F7C548", AFR: "#7BD389", ASI: "#F2508F", AME: "#A98BFF",
   DOM: "#F2F4F8", NEY: "#E30A17", CLA: "#ff9f43", SAX: "#e8b64a", TPT: "#fff1cf", UNK: "#6B7280",
   EP: "#c9a7ff", BASS: "#f2f4f8", KICK: "#f2f4f8", SNARE: "#d9dce3", HAT: "#b6bcc9", OHAT: "#b6bcc9",
-  KEYS: "#c9a7ff", BRASS: "#fff1cf", SAXPAD: "#e8b64a",
+  KEYS: "#c9a7ff", BRASS: "#fff1cf",
   DARBUKA: "#F7C548", CONGA: "#7BD389", TAIKO: "#F2508F", TIMP: "#A98BFF", SHAKER: "#3FC8F2",
   TOM: "#d9dce3", CRASH: "#fff1cf", RISER: "#fff1cf",
 };
@@ -96,3 +97,40 @@ export function stepLane(l: Lane, dt: number, decaySec: number, hit?: { freq: nu
 }
 
 export const laneSample = (l: Lane): number => l.amp * Math.sin(l.phase);
+
+// ---------------------------------------------------------------- v4 (spec §4f): level bar, layer dots, label
+
+/** Segments of the level bar (rhythm levels 0 … 4). */
+export const LEVEL_SEGMENTS = 5;
+
+/** The lit segments of the level bar: 0 … level (level 0 lights the first one), clamped to the bar. */
+export const levelSegments = (level: number): boolean[] =>
+  Array.from({ length: LEVEL_SEGMENTS }, (_, i) => i <= Math.min(LEVEL_SEGMENTS - 1, Math.max(0, level)));
+
+/** Colour of the level bar per section: night blue, morning amber, day sky, evening orange. */
+export const SECTION_COLOR: Record<SectionId, string> = { NIGHT: "#7f8cff", MORNING: "#ffd27a", DAY: "#3FC8F2", EVENING: "#ff9f43" };
+
+/** The instrument a region layer adds: its percussion, or the Rhodes of the domestic/unknown lines. */
+export function layerInstrument(region: string): Instrument {
+  switch (region) {
+    case "EUR":
+      return "SHAKER";
+    case "MEA":
+      return "DARBUKA";
+    case "AFR":
+      return "CONGA";
+    case "ASI":
+      return "TAIKO";
+    case "AME":
+      return "TIMP";
+    default:
+      return "EP";
+  }
+}
+
+export const layerColor = (region: string): string => INSTRUMENT_COLOR[layerInstrument(region)];
+
+/** The scope label in three parts (the chord is set apart so it keeps its case): `ROUTES → MUSIC · <SECTION> · <CHORD> · <BPM> BPM · L<level>`. */
+export const scopeLabel = (m: { section: string; chord: string; bpm: number; level: number }): [string, string, string] => [
+  `ROUTES → MUSIC · ${m.section} · `, m.chord, ` · ${m.bpm} BPM · L${m.level}`,
+];

@@ -126,8 +126,8 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
     osc.stop(at + dur + 0.1);
     return depth;
   };
-  /** white noise through a filter (breath, snare, hats) */
-  const noise = (filter: { type: BiquadFilterType; freq: number; q: number }, t: number, peak: number, attack: number, decay: number, onEnd?: () => void) => {
+  /** white noise through a filter (breath, snare, hats, shaker, crash, riser) */
+  const noise = (filter: NoiseFilter, t: number, peak: number, attack: number, decay: number, onEnd?: () => void) => {
     live++;
     noiseBurst(ctx, pan, filter, t, peak, attack, decay, () => {
       onEnd?.();
@@ -233,7 +233,6 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
       break;
     }
     case "SAX":
-    case "SAXPAD":
       sax(f, t, peak, 1.6 * k * (n.long ? 2.5 : 1));
       break;
     case "TPT":
@@ -271,10 +270,52 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
       if (fs[2] !== undefined) sax(fs[2], t, peak, 0.3);
       break;
     }
+    // v4 fill/build voices and region-layer percussion (spec §4f); unpitched: `f` is ignored
+    case "DARBUKA":
+      v({ type: "sine", freq: 120, from: 190, glide: 0.04, peak, attack: 0.002, decay: 0.18, at: t });
+      noise(CLICK, t, 0.5 * peak, 0.001, 0.006);
+      break;
+    case "CONGA":
+      v({ type: "sine", freq: 250, from: 330, glide: 0.03, peak, attack: 0.002, decay: 0.22, at: t });
+      noise(CLICK, t, 0.5 * peak, 0.001, 0.006);
+      break;
+    case "TAIKO":
+      v({ type: "sine", freq: 55, from: 110, glide: 0.12, peak, attack: 0.002, decay: 0.55, at: t });
+      break;
+    case "TIMP":
+      v({ type: "sine", freq: 82, from: 98, glide: 0.12, peak, attack: 0.002, decay: 0.9, at: t });
+      v({ type: "sine", freq: 196, peak: 0.3 * peak, attack: 0.002, decay: 0.9, at: t });
+      break;
+    case "TOM":
+      v({ type: "sine", freq: 90, from: 160, glide: 0.09, peak, attack: 0.002, decay: 0.3, at: t });
+      break;
+    case "SHAKER":
+      noise({ type: "bandpass", freq: 9000, q: 1.2 }, t, peak, 0.002, 0.04);
+      break;
+    case "CRASH":
+      noise({ type: "highpass", freq: 5000, q: 0.7 }, t, peak, 0.002, 1.4);
+      break;
+    case "RISER":
+      // a 3.5 s swell: the bandpass sweeps up while the gain rises linearly to half the standard peak, then a release
+      noise({ type: "bandpass", freq: 400, q: 1.5, sweepTo: 6000, sweepOver: RISER_SEC }, t, 0.5 * peak, RISER_SEC, 0.3);
+      break;
     default:
       break;
   }
 }
+
+/** A filter for a noise burst; `sweepTo` ramps its frequency exponentially over `sweepOver` seconds (the riser). */
+interface NoiseFilter {
+  type: BiquadFilterType;
+  freq: number;
+  q: number;
+  sweepTo?: number;
+  sweepOver?: number;
+}
+
+/** The darbuka/conga click: 6 ms of noise around 2.5 kHz. */
+const CLICK: NoiseFilter = { type: "bandpass", freq: 2500, q: 1 };
+export const RISER_SEC = 3.5;
 
 const noiseBuffers = new WeakMap<AudioContext, AudioBuffer>();
 
@@ -290,9 +331,9 @@ function noiseBuffer(ctx: AudioContext): AudioBuffer {
   return b;
 }
 
-/** Looped white noise through a filter (ney/sax breath: bandpass at the pitch; snare and hats: highpass). */
+/** Looped white noise (the context's one cached buffer) through a filter (breath, shaker: bandpass; snare, hats, crash: highpass). */
 function noiseBurst(
-  ctx: AudioContext, out: AudioNode, filter: { type: BiquadFilterType; freq: number; q: number },
+  ctx: AudioContext, out: AudioNode, filter: NoiseFilter,
   t: number, peak: number, attack: number, decay: number, onEnd: () => void,
 ): void {
   const src = ctx.createBufferSource();
@@ -301,6 +342,7 @@ function noiseBurst(
   const bp = ctx.createBiquadFilter();
   bp.type = filter.type;
   bp.frequency.setValueAtTime(filter.freq, t);
+  if (filter.sweepTo !== undefined && filter.sweepOver) bp.frequency.exponentialRampToValueAtTime(filter.sweepTo, t + filter.sweepOver);
   bp.Q.setValueAtTime(filter.q, t);
   const g = ctx.createGain();
   env(g, t, peak, attack, decay);

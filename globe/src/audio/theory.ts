@@ -8,7 +8,7 @@ export type RegionName = (typeof REGIONS)[number];
  */
 export type Instrument =
   | RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT"
-  | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS" | "SAXPAD"
+  | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS"
   | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP";
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */

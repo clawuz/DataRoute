@@ -96,8 +96,9 @@ describe("route sound engine: the step clock", () => {
     expect(h.create).not.toHaveBeenCalled();
     // horizon 10.25: steps 0 (10) and 1 (10 + 1.1 · 0.1293); step 2 (10.259) is later
     expect([...new Set(h.notes.map((n) => n.at))]).toEqual([10, stepTime(1, 10, DAY)]);
+    // DAY level 2 (one flight), the EUR layer (100 % share) adds its shaker, and A's line when its pattern starts on 0
     expect(h.notes.filter((n) => n.at === 10).map((n) => n.instrument).sort()).toEqual(
-      ["BASS", "HAT", "KICK", ...(linePattern("A")[0] ? ["EUR"] : [])].sort(),
+      ["BASS", "HAT", "KICK", "SHAKER", ...(linePattern("A")[0] ? ["EUR"] : [])].sort(),
     );
     h.s.dispose();
   });
@@ -114,19 +115,31 @@ describe("route sound engine: the step clock", () => {
     h.s.dispose();
   });
 
-  it("drum and bass hits land on the groove steps (DAY bar 0: kick 0, 6, 10)", () => {
+  it("drum and bass hits land on the groove steps (DAY bar 0 with an empty sky: level 2, kick 0, 6, 10)", () => {
     const h = make(0);
     h.at(0);
     h.run(16 * D - 0.3); // the whole first bar is planned (horizon 0.25 s ahead), not the next downbeat
     expect(stepsOf(h.notes, "KICK")).toEqual([0, 6, 10]);
     expect(stepsOf(h.notes, "SNARE")).toEqual([4, 12]);
-    expect(stepsOf(h.notes, "OHAT")).toEqual([14]);
+    expect(stepsOf(h.notes, "OHAT")).toEqual([]);
     expect(stepsOf(h.notes, "BASS")).toEqual([0, 3, 6, 8, 11, 14]);
     expect(stepsOf(h.notes, "KEYS")).toEqual([2, 7, 10]);
-    expect(stepsOf(h.notes, "BRASS")).toEqual([3, 11]);
+    expect(stepsOf(h.notes, "BRASS")).toEqual([]);
     const kick = h.notes.find((n) => n.instrument === "KICK")!;
-    expect(kick).toMatchObject({ lane: "KICK", kind: "groove", key: "", vel: 1 });
-    expect(h.notes.find((n) => n.instrument === "OHAT")!.lane).toBe("HAT"); // the open hat shares the hat lane
+    expect(kick).toMatchObject({ lane: "KICK", kind: "groove", key: "" });
+    expect(kick.vel).toBeCloseTo(0.9, 12); // × the level-2 scale
+    expect(h.s.info()).toMatchObject({ level: 2, layers: [], phase: "none" });
+    h.s.dispose();
+  });
+
+  it("the open hat shares the hat lane (level 3: 112 flights)", () => {
+    const h = make(0);
+    h.s.setSky(Array.from({ length: 112 }, (_, i) => sky(`D${i}`, { regionIdx: 0 })), null);
+    h.at(0);
+    h.run(16 * D - 0.3);
+    expect(h.s.info().level).toBe(3); // round(112 / 150 · 4) = round(2.99)
+    expect(stepsOf(h.notes, "OHAT")).toEqual([14]);
+    expect(h.notes.find((n) => n.instrument === "OHAT")!.lane).toBe("HAT");
     h.s.dispose();
   });
 
@@ -142,6 +155,9 @@ describe("route sound engine: the step clock", () => {
     const ids = new Set(lines.map((n) => n.lineId));
     expect(ids.size).toBe(12);
     expect(ids.has("SOLO")).toBe(true);
+    // shares: EUR 5/25, the others 4/25 (≥ 14 %): four layers at most, EUR then DOM, MEA, AFR (REGIONS order breaks ties)
+    expect(h.s.info().layers).toEqual(["DOM", "EUR", "MEA", "AFR"]);
+    for (const id of ids) expect([0, 1, 2, 3]).toContain(flights.find((f) => f.id === id)!.regionIdx);
     for (const n of lines) {
       expect(linePattern(n.lineId!)[stepOf(n) % 16]).toBe(true);
       expect(n.lane).toBe(n.instrument);
@@ -212,14 +228,22 @@ describe("route sound engine: the step clock", () => {
     expect(h.s.info()).toMatchObject({ section: "NIGHT", bpm: 84, chord: "Dm9" });
     h.notes.length = 0;
     h.at(3);
-    // NIGHT step 0 at the new epoch 3: kick, the long bass and the first arpeggio note; step 1 (3.205) has no hits
-    expect(h.notes.map((n) => [n.instrument, n.at]).sort()).toEqual([["BASS", 3], ["KEYS", 3], ["KICK", 3]]);
-    expect(h.notes.find((n) => n.instrument === "BASS")!.long).toBe(true);
+    // NIGHT step 0 at the new epoch 3: DAY's level 2 falls one level and is clamped into NIGHT's [0, 1] → level 1
+    // (kick, 8th hat, bass); step 1 (3.205) has no hits
+    expect(h.notes.map((n) => [n.instrument, n.at]).sort()).toEqual([["BASS", 3], ["HAT", 3], ["KICK", 3]]);
+    expect(h.s.info().level).toBe(1);
     h.notes.length = 0;
     h.s.schedule([ev()], null, undefined, NIGHT_H);
     const ney = h.notes.filter((n) => n.instrument === "NEY");
     expect(ney.map((n) => stepOf(n, 3, DN))).toEqual([2, 4, 6]); // even steps of the NIGHT clock from epoch 3
     for (const n of ney) expect(12 * Math.log2(n.freq / 110)).toBeLessThanOrEqual(31 + 1e-9); // the night ney window A3 … E5
+    // the next bar falls to level 0: the kick, the long bass and the first arpeggio note
+    h.notes.length = 0;
+    h.run(3 + 16 * DN - 0.2); // bar 1 (5.857) is planned by the tick at 5.64
+    const bar1 = h.notes.filter((n) => stepOf(n, 3, DN) === 16);
+    expect(bar1.map((n) => n.instrument).sort()).toEqual(["BASS", "KEYS", "KICK"]);
+    expect(bar1.find((n) => n.instrument === "BASS")!.long).toBe(true);
+    expect(h.s.info().level).toBe(0);
     h.s.schedule([ev()], null, undefined, 13); // back to DAY via schedule
     expect(h.s.info().section).toBe("DAY");
     h.s.dispose();
@@ -294,7 +318,9 @@ describe("route sound engine: graph, info, dynamics", () => {
 
   it("info() reports the section, the chord at the wall-clock now, the tempo and the ensemble; info(hour) is read-only", () => {
     const h = make(0);
-    expect(h.s.info()).toEqual({ section: "DAY", chord: "Dm9", bpm: 116, instruments: [...DAY.instruments] });
+    expect(h.s.info()).toEqual({
+      section: "DAY", chord: "Dm9", bpm: 116, instruments: [...DAY.instruments], level: 2, layers: [], phase: "none",
+    });
     h.clock.t = 3 * 16 * D + 0.01;
     expect(h.s.info().chord).toBe("C7(9)");
     expect(h.s.info(2)).toMatchObject({ section: "NIGHT", bpm: 84, chord: "Dm9" });
@@ -358,6 +384,152 @@ describe("route sound engine: graph, info, dynamics", () => {
   });
 });
 
+describe("route sound engine v4: rhythm levels, region layers, build-ups (spec §4f)", () => {
+  const BAR = 16 * D;
+  /** n domestic flights (the DOM layer has no percussion: the drums alone show the level) */
+  const dom = (n: number, pre = "D") => Array.from({ length: n }, (_, i) => sky(`${pre}${i}`, { regionIdx: 0 }));
+  /** plan the whole of bar `b` (DAY clock from epoch 0) */
+  const planBar = (h: ReturnType<typeof make>, b: number) => h.run((b + 1) * BAR - 0.3);
+  const inBar = (notes: NoteEvent[], b: number, inst: string) =>
+    notes.filter((n) => n.instrument === inst && Math.floor(stepOf(n) / 16) === b).map((n) => stepOf(n) % 16);
+  /** the rhythm level of bar `b` read off its drums: kick 3 → 4, open hat → 3, kick [0,6,10] → 2, [0,8] → 1, [0] → 0 */
+  const levelOf = (notes: NoteEvent[], b: number) => {
+    const k = inBar(notes, b, "KICK").join();
+    if (k === "0,3,6,10") return 4;
+    if (k === "0,6,10") return inBar(notes, b, "OHAT").length ? 3 : 2;
+    return k === "0,8" ? 1 : 0;
+  };
+
+  it("the level follows the traffic: 150 flights by day → level 4, 10 flights → level 2 (airborne / 150, round(· 4), DAY [2, 4])", () => {
+    for (const [n, want] of [[150, 4], [10, 2]] as const) {
+      const h = make(0);
+      h.s.setSky(dom(n), null);
+      h.at(0);
+      for (let b = 0; b < 3; b++) planBar(h, b);
+      expect([0, 1, 2].map((b) => levelOf(h.notes, b))).toEqual([want, want, want]);
+      expect(h.s.info().level).toBe(want);
+      h.s.dispose();
+    }
+  });
+
+  it("the level changes only at bar boundaries; rising is smoothed over the wall-clock time, falling drops one level a bar", () => {
+    const h = make(0);
+    h.s.setSky(dom(10), null);
+    h.at(0);
+    h.run(1); // mid bar 0 (ticking every 40 ms: no stall)
+    h.s.setSky(dom(150), null);
+    for (let b = 0; b < 4; b++) planBar(h, b);
+    // the first update (t = 0) snaps to 10/150 = 0.067; bars are updated by the ticks at 1.84, 3.92, 5.96, 8.04 s (τ = 2 s):
+    // bar 1: 1 − 0.933·e^−0.92 ≈ 0.63 → round(2.51) = 3; bar 2: 1 − 0.372·e^−1.04 ≈ 0.87 → round(3.47) = 3;
+    // bar 3: 1 − 0.132·e^−1.02 ≈ 0.95 → round(3.81) = 4
+    expect([0, 1, 2, 3].map((b) => levelOf(h.notes, b))).toEqual([2, 3, 3, 4]);
+    h.s.setSky(dom(10), null); // before bar 4 is planned
+    for (let b = 4; b < 7; b++) planBar(h, b);
+    // bar 4: 0.067 + 0.886·e^−1.04 ≈ 0.38 → wanted 2, but only one level down → 3; bar 5: ≈ 0.18 → 1 → clamped 2
+    expect([4, 5, 6].map((b) => levelOf(h.notes, b))).toEqual([3, 2, 2]);
+    h.s.dispose();
+  });
+
+  it("setSky's airborne count (the unfiltered sky) drives the intensity instead of the passed flights", () => {
+    const h = make(0);
+    h.s.setSky(dom(10), null, undefined, false, 150);
+    h.at(0);
+    planBar(h, 0);
+    expect(levelOf(h.notes, 0)).toBe(4);
+    h.s.dispose();
+  });
+
+  it("region layers enter at ≥ 14 % and leave under 8 %: the darbuka plays only while MEA is active", () => {
+    const mix = (mea: number) => [...dom(100 - mea), ...Array.from({ length: mea }, (_, i) => sky(`M${i}`, { regionIdx: 2 }))];
+    const h = make(0);
+    h.s.setSky(mix(10), null); // 10 %: not enough to enter
+    h.at(0);
+    planBar(h, 0);
+    expect(inBar(h.notes, 0, "DARBUKA")).toEqual([]);
+    const plan = (b: number, mea: number) => {
+      h.s.setSky(mix(mea), null); // after bar b − 1, before bar b is planned
+      planBar(h, b);
+      return { darbuka: inBar(h.notes, b, "DARBUKA"), layers: h.s.info().layers };
+    };
+    expect(plan(1, 20)).toEqual({ darbuka: [0, 4, 6, 10, 12], layers: ["DOM", "MEA"] }); // enters at 20 %
+    expect(plan(2, 10)).toEqual({ darbuka: [0, 4, 6, 10, 12], layers: ["DOM", "MEA"] }); // stays at 10 % (≥ 8 %)
+    expect(plan(3, 5)).toEqual({ darbuka: [], layers: ["DOM"] }); // leaves under 8 %
+    expect(h.notes.filter((n) => n.instrument === "DARBUKA").every((n) => n.lane === "DARBUKA" && n.kind === "groove")).toBe(true);
+    h.s.dispose();
+  });
+
+  it("lines of inactive regions never play, except the followed flight's", () => {
+    const h = make(0);
+    // AME has 2 / 22 ≈ 9 %: never enters; G stays silent, the followed F plays its AME line
+    h.s.setSky([...dom(20), sky("F", { regionIdx: 5, key: "IST-JFK" }), sky("G", { regionIdx: 5, key: "IST-LAX" })], "F");
+    h.at(0);
+    planBar(h, 0);
+    planBar(h, 1);
+    const ids = new Set(h.notes.filter((n) => n.kind === "line").map((n) => n.lineId));
+    expect(ids.has("F")).toBe(true);
+    expect(ids.has("G")).toBe(false);
+    expect(h.s.info().layers).toEqual(["DOM"]);
+    h.s.dispose();
+  });
+
+  const BUILD_SKY = [...dom(60), ...Array.from({ length: 20 }, (_, i) => sky(`M${i}`, { regionIdx: 2 }))];
+  const DM = 60 / 100 / 4; // MORNING 16th step
+
+  it("REPLAY build-up (≤ 0.55 h before 12:00): a riser on the first build step, a snare roll, keys/brass/layers/lines silent", () => {
+    const h = make(0);
+    h.s.setSky(BUILD_SKY, null, 11.6, true); // MORNING, 0.4 h to the boundary
+    h.at(0);
+    h.run(16 * DM - 0.3);
+    const notes = h.notes.filter((n) => stepOf(n, 0, DM) < 16);
+    expect(notes.filter((n) => n.instrument === "RISER").map((n) => stepOf(n, 0, DM))).toEqual([0]);
+    expect(stepsOf(notes, "SNARE", 0, DM)).toEqual(Array.from({ length: 16 }, (_, i) => i));
+    expect(notes.filter((n) => ["KEYS", "BRASS", "DARBUKA"].includes(n.lane) || n.kind === "line")).toEqual([]);
+    expect(stepsOf(notes, "BASS", 0, DM)).toEqual([0, 4, 8, 12]);
+    expect(h.s.info().phase).toBe("build");
+    // the next build bar: no second riser
+    h.run(32 * DM - 0.3);
+    expect(h.notes.filter((n) => n.instrument === "RISER")).toHaveLength(1);
+    h.s.dispose();
+  });
+
+  it("REPLAY tutti just after the boundary (< 0.1 h): crash + kick + brass on step 0 of the new section, once", () => {
+    const h = make(0);
+    h.s.setSky(BUILD_SKY, null, 11.6, true);
+    h.at(0);
+    h.clock.t = 1;
+    h.notes.length = 0;
+    h.s.setSky(BUILD_SKY, null, 12.05, true); // the boundary: DAY from epoch 1
+    expect(h.s.info().section).toBe("DAY");
+    h.at(1);
+    const step0 = h.notes.filter((n) => n.at === 1).map((n) => n.instrument);
+    expect(step0).toEqual(expect.arrayContaining(["CRASH", "KICK", "BRASS"]));
+    expect(step0.filter((i) => i === "KICK")).toHaveLength(1);
+    expect(h.notes.find((n) => n.instrument === "BRASS" && n.at === 1)!.vel).toBe(1);
+    expect(h.s.info().phase).toBe("hit");
+    h.run(1 + 2 * BAR - 0.3); // still 12.05 (a paused replay): the hit is not repeated
+    expect(h.notes.filter((n) => n.instrument === "CRASH")).toHaveLength(1);
+    expect(h.s.info().phase).toBe("none");
+    h.s.dispose();
+  });
+
+  it("LIVE (replay false or omitted): no build-up or tutti at the same hours", () => {
+    for (const replay of [false, undefined]) {
+      const h = make(0);
+      h.s.setSky(BUILD_SKY, null, 11.6, replay);
+      h.at(0);
+      h.run(16 * DM - 0.3);
+      h.clock.t = 3;
+      h.s.setSky(BUILD_SKY, null, 12.05, replay);
+      h.run(3 + BAR - 0.3);
+      expect(h.notes.filter((n) => ["RISER", "CRASH"].includes(n.instrument))).toEqual([]);
+      expect(stepsOf(h.notes.filter((n) => n.at < 16 * DM - 0.3), "SNARE", 0, DM).length).toBeLessThan(16);
+      expect(h.notes.some((n) => n.lane === "DARBUKA")).toBe(true);
+      expect(h.s.info().phase).toBe("none");
+      h.s.dispose();
+    }
+  });
+});
+
 describe("instrument recipes (one scheduled hit each)", () => {
   const layout = (instrument: SynthNote["instrument"], o: Partial<SynthNote> = {}) => {
     const ctx = fakeCtx();
@@ -417,7 +589,59 @@ describe("instrument recipes (one scheduled hit each)", () => {
     expect([brass.oscs, brass.srcs]).toEqual([2 * 2 + 3, 1]);
     expect(brass.ctx.oscs.filter((o) => o.type === "sawtooth").length).toBe(5);
     expect(Math.max(...decays(brass.ctx))).toBeLessThanOrEqual(0.35 + 0.05 + 1e-9); // short: decay ≤ 0.35 after the attack
-    expect(layout("SAXPAD", { long: true })).toMatchObject({ oscs: 3, srcs: 1 });
+  });
+  it("v4 percussion: darbuka and conga = a falling sine + a bandpassed noise click; taiko, tom: falling sines; timpani: two sines", () => {
+    const glide = (r: ReturnType<typeof layout>) => {
+      const f = r.ctx.oscs[0].frequency.calls;
+      return [f[0].args[0], f[1].args[0], +(f[1].args[1] - 1).toFixed(4)];
+    };
+    const d = layout("DARBUKA");
+    expect([d.oscs, d.srcs, d.filters]).toEqual([1, 1, ["bandpass:2500"]]);
+    expect(glide(d)).toEqual([190, 120, 0.04]);
+    expect(decays(d.ctx)).toEqual([0.182, 0.007]); // attack 2 ms + 0.18; the 6 ms click (1 ms attack)
+    const c = layout("CONGA");
+    expect([c.oscs, c.srcs, c.filters]).toEqual([1, 1, ["bandpass:2500"]]);
+    expect(glide(c)).toEqual([330, 250, 0.03]);
+    expect(decays(c.ctx)[0]).toBe(0.222);
+    const t = layout("TAIKO");
+    expect([t.oscs, t.srcs, t.filters]).toEqual([1, 0, []]);
+    expect(glide(t)).toEqual([110, 55, 0.12]);
+    expect(decays(t.ctx)).toEqual([0.552]);
+    const tom = layout("TOM");
+    expect([tom.oscs, tom.srcs]).toEqual([1, 0]);
+    expect(glide(tom)).toEqual([160, 90, 0.09]);
+    expect(decays(tom.ctx)).toEqual([0.302]);
+    const tp = layout("TIMP");
+    expect([tp.oscs, tp.srcs]).toEqual([2, 0]);
+    expect(glide(tp).slice(0, 2)).toEqual([98, 82]);
+    expect(tp.ctx.oscs[1].frequency.calls[0].args[0]).toBe(196);
+    const pk = tp.ctx.gains.flatMap((g) => g.gain.calls.filter((x) => x.fn === "lin").map((x) => +x.args[0].toFixed(6)));
+    expect(pk).toEqual([0.22, 0.066]); // the octave partial at 0.3 of the peak
+    expect(decays(tp.ctx)[0]).toBe(0.902);
+  });
+  it("v4 noise voices: shaker (bandpass 9 kHz, Q 1.2), crash (highpass 5 kHz, 1.4 s), riser (bandpass sweeping 400 → 6000 Hz over 3.5 s)", () => {
+    const sh = layout("SHAKER");
+    expect([sh.oscs, sh.srcs, sh.filters]).toEqual([0, 1, ["bandpass:9000"]]);
+    expect(sh.ctx.filts[0].Q.calls[0].args[0]).toBe(1.2);
+    expect(decays(sh.ctx)).toEqual([0.042]);
+    const cr = layout("CRASH");
+    expect([cr.oscs, cr.srcs, cr.filters]).toEqual([0, 1, ["highpass:5000"]]);
+    expect(decays(cr.ctx)).toEqual([1.402]);
+    const ri = layout("RISER", { vel: 0.8 });
+    expect([ri.oscs, ri.srcs, ri.filters]).toEqual([0, 1, ["bandpass:400"]]);
+    const sweep = ri.ctx.filts[0].frequency.calls[1];
+    expect(sweep.fn).toBe("exp");
+    expect(sweep.args[0]).toBe(6000);
+    expect(sweep.args[1]).toBeCloseTo(1 + 3.5, 12);
+    const g = ri.ctx.gains.flatMap((x) => x.gain.calls.filter((c) => c.fn === "lin"));
+    expect(g).toHaveLength(1);
+    expect(g[0].args[0]).toBeCloseTo(0.5 * 0.22 * 0.8, 12); // swells to half the standard peak …
+    expect(g[0].args[1]).toBeCloseTo(4.5, 12); // … over the 3.5 s sweep, then released
+    // every noise voice reuses the one cached noise buffer of the context
+    const ctx = fakeCtx();
+    for (const i of ["SHAKER", "CRASH", "RISER", "DARBUKA"] as const)
+      playNote(ctx as unknown as AudioContext, new Node() as unknown as AudioNode, { when: 1, instrument: i, freq: 0, vel: 1 }, { gainScale: 1, cutoffScale: 1, pan: 0 });
+    expect(new Set(ctx.srcs.map((x) => x.buffer)).size).toBe(1);
   });
   it("the kept recipes: line instruments, ney (grace adds one oscillator) and winds", () => {
     const n = (i: SynthNote["instrument"], o: Partial<SynthNote> = {}) => {

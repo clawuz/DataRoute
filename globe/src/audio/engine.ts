@@ -1,11 +1,15 @@
 import { playNote } from "./instruments";
 import { CHORDS } from "./harmony";
-import { chordAtStep, sectionAt, stepDur, type Section, type SectionId } from "./form";
-import { selectLines, type SkyFlight } from "./lines";
+import { REGIONS } from "@web/data/palette";
+import {
+  activeLayers, buildup, intensityOf, levelFor, nextLevel, regionShares, smoothIntensity, type BuildPhase, type Level,
+} from "./arrangement";
+import { chordAtStep, hoursToBoundary, sectionAt, stepDur, type Section, type SectionId } from "./form";
+import { MAX_LINES, selectLines, type SkyFlight } from "./lines";
 import { createNoteBus, laneOf, type NoteEvent } from "./notes-bus";
 import { initNey, type NeyState } from "./melody";
-import { planNotes, planStep, stepTime, type PlannedNote, type ScoreEvent } from "./score";
-import { type Instrument } from "./theory";
+import { planNotes, planStep, stepTime, type PlannedNote, type ScoreEvent, type StepArrangement } from "./score";
+import { type Instrument, type RegionName } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
@@ -17,10 +21,12 @@ export type Pans = Map<string, { pan: number; visible: boolean }>;
 export interface RouteSound {
   setEnabled(on: boolean): void;
   /**
-   * The airborne flights (the 12 lines are re-selected from the latest sky on every tick) and the followed flight id;
-   * `localHour` (Istanbul local hour of the flight time), when given, selects the section.
+   * The airborne flights (the 12 lines are re-selected from the latest sky on every tick, among the active region
+   * layers) and the followed flight id; `localHour` (Istanbul local hour of the flight time), when given, selects the
+   * section and times the build-ups; `replay` (default false) enables the build-ups into each section boundary;
+   * `airborne` (default `flights.length`) is the unfiltered airborne count that drives the rhythm level.
    */
-  setSky(flights: SkyFlight[], followedId: string | null, localHour?: number): void;
+  setSky(flights: SkyFlight[], followedId: string | null, localHour?: number, replay?: boolean, airborne?: number): void;
   /**
    * Istanbul-end events → ney cells and winds; `pans` (route key → stereo pan) is kept for the flight lines;
    * `localHour`, when given, selects the section. `focus` is accepted for compatibility: v3 emphasises the followed
@@ -35,7 +41,8 @@ export interface RouteSound {
   onNote(fn: (n: NoteEvent) => void): () => void;
   /**
    * The section, the chord at the wall-clock now, the tempo and the ensemble — of `localHour`'s section when given
-   * (read-only: planning switches its section on the next `schedule`/`setSky` with an hour), else of the planning section.
+   * (read-only: planning switches its section on the next `schedule`/`setSky` with an hour), else of the planning section;
+   * the rhythm level, the active region layers (in `REGIONS` order) and the build phase of the latest planned bar.
    */
   info(localHour?: number): SoundInfo;
   dispose(): void;
@@ -46,6 +53,9 @@ export interface SoundInfo {
   chord: string;
   bpm: number;
   instruments: Instrument[];
+  level: Level;
+  layers: RegionName[];
+  phase: BuildPhase;
 }
 
 /** The planner looks this far ahead of the wall clock. */
@@ -74,7 +84,9 @@ const defaultNow = (): number => performance.now() / 1000;
 /**
  * The planner runs on the wall clock (`now()`, seconds) as a continuous 16th-step clock (spec §4e) and always plans,
  * also while muted, publishing every note through `onNote`; notes are played only when enabled with an audio context,
- * at `ctx.currentTime + (when − now())`.
+ * at `ctx.currentTime + (when − now())`. At every bar boundary (spec §4f) it smooths the traffic intensity over the
+ * wall time since the previous bar, moves the rhythm level (up at once, down one level a bar, within the section's
+ * range), updates the region layers (and the lines among them) and latches the REPLAY build-up phase of the bar.
  */
 export function createRouteSound(opts: { createContext?: () => AudioContext; now?: () => number; autoTick?: boolean } = {}): RouteSound {
   const create = opts.createContext ?? defaultCreate;
@@ -95,6 +107,19 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   let sky: SkyFlight[] = [];
   let followedId: string | null = null;
   let pans: Pans | undefined;
+  // v4 arrangement (spec §4f), updated at every bar boundary of the planner
+  let airborne = 0;
+  let hour: number | undefined;
+  let replay = false;
+  let intensity: number | null = null; // null until the first bar: the first update snaps to the traffic
+  let lastBarWall = 0;
+  let level: Level = levelFor(section, 0);
+  let layers: Set<RegionName> = new Set();
+  let phase: BuildPhase = "none";
+  let buildAmount = 0;
+  let buildBar = 0;
+  let hitDone = false; // the tutti plays once per section entry (a paused replay must not repeat it)
+  let lines: SkyFlight[] = [];
 
   const safe = (fn: () => void) => {
     try {
@@ -116,6 +141,42 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     epoch = now();
     nextStep = 0;
     neyState = initNey(sec);
+    hitDone = false;
+  }
+
+  /** the build-up of the current hour (none in LIVE or without an hour) */
+  function buildNow(): { phase: BuildPhase; amount: number } {
+    if (hour === undefined) return { phase: "none", amount: 0 };
+    const h = ((hour % 24) + 24) % 24;
+    const since = (h - Math.floor(h / 6) * 6 + 24) % 24; // hours since the last boundary 0/6/12/18
+    return buildup(hoursToBoundary(h), since, replay);
+  }
+
+  /** bar boundary at wall time `t`: smoothed intensity → level (one level down at most), layers, lines, build phase */
+  function onBar(t: number): void {
+    const target = intensityOf(airborne);
+    intensity = intensity === null ? target : smoothIntensity(intensity, target, Math.max(0, t - lastBarWall));
+    lastBarWall = t;
+    const [lo, hi] = section.levelRange;
+    level = clamp(nextLevel(level, levelFor(section, intensity)), lo, hi) as Level;
+    layers = activeLayers(layers, regionShares(sky));
+    lines = selectLines(sky, followedId, MAX_LINES, layers);
+    const b = buildNow();
+    if (b.phase === "build") {
+      buildBar = phase === "build" ? buildBar + 1 : 0;
+      phase = "build";
+      buildAmount = b.amount;
+    } else if (b.phase === "hit" && !hitDone) {
+      phase = "hit";
+      hitDone = true;
+    } else phase = "none";
+  }
+
+  /** the arrangement of the next step to plan (the build amount keeps rising inside the bar) */
+  function arrangement(): StepArrangement {
+    const b = phase === "build" ? buildNow() : null;
+    if (b?.phase === "build") buildAmount = b.amount;
+    return { level, layers, phase, amount: buildAmount, buildBar };
   }
 
   function build(): Graph {
@@ -230,18 +291,24 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       const sec = section;
       // after a stall, skip the steps that are already late instead of playing them in a burst
       if (stepTime(nextStep, epoch, sec) < t - LATE_SEC) nextStep = Math.max(nextStep, Math.ceil((t - LATE_SEC - epoch) / stepDur(sec) - 1e-9));
-      const lines = selectLines(sky, followedId);
+      lines = selectLines(sky, followedId, MAX_LINES, layers);
       const planned: PlannedNote[] = [];
-      for (; stepTime(nextStep, epoch, sec) <= t + LOOKAHEAD_SEC; nextStep++) planned.push(...planStep(nextStep, { epoch, section: sec }, lines, followedId));
+      for (; stepTime(nextStep, epoch, sec) <= t + LOOKAHEAD_SEC; nextStep++) {
+        if (nextStep % 16 === 0) onBar(t);
+        planned.push(...planStep(nextStep, { epoch, section: sec }, arrangement(), lines, followedId));
+      }
       emit(planned, t);
       if (!enabled || !g) return;
     });
   }
 
-  function setSky(flights: SkyFlight[], followed: string | null, localHour?: number): void {
+  function setSky(flights: SkyFlight[], followed: string | null, localHour?: number, isReplay = false, count?: number): void {
     if (disposed) return;
     sky = flights;
     followedId = followed;
+    airborne = count ?? flights.length;
+    replay = isReplay;
+    if (localHour !== undefined) hour = localHour;
     switchSection(localHour);
   }
 
@@ -272,7 +339,10 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     const sec = localHour === undefined ? section : sectionAt(localHour);
     // a section the planner has not switched to yet starts at its first chord
     const chord = sec.id === section.id ? chordAtStep(stepAt(now()), sec) : CHORDS[sec.progression[0]];
-    return { section: sec.id, chord: chord.name, bpm: sec.bpm, instruments: [...sec.instruments] };
+    return {
+      section: sec.id, chord: chord.name, bpm: sec.bpm, instruments: [...sec.instruments],
+      level, layers: REGIONS.filter((r) => layers.has(r)), phase,
+    };
   }
 
   const timer = opts.autoTick === false ? null : setInterval(tick, TICK_MS);
