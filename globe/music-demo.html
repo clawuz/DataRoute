@@ -1,0 +1,36 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Müzik – rota eşleşmesi (deneme)</title>
+<style>
+body{margin:0;background:#05070d;color:#cfe0ff;font:13px/1.4 ui-monospace,Menlo,monospace}
+header{padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{background:#12306a;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;font:inherit}
+#now{padding:0 16px 8px;min-height:3.2em}
+.chip{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:10px;background:#16264a}
+canvas{display:block;width:100%;height:calc(100vh - 150px)}
+</style>
+<header><button id=go>▶ Çal</button><span id=t>0:00</span><span id=hint>Şerit: her nota, onu "çalan" rotanın rengiyle. Gün saati: <b id=clock></b></span></header>
+<div id=now></div><canvas id=c></canvas>
+<audio id=a src="/music-demo/track.mp3"></audio>
+<script>
+const a=document.getElementById('a'),cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let data,i0=0;const WIN=12; // seconds visible, playhead at 25 %
+const hue=r=>{let h=0;for(const ch of r)h=(h*31+ch.charCodeAt(0))%360;return h};
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],nn=p=>NAMES[p%12]+(Math.floor(p/12)-1);
+fetch('/music-demo/assigned.json').then(r=>r.json()).then(d=>{data=d;draw()});
+document.getElementById('go').onclick=()=>{a.paused?a.play():a.pause()};
+function size(){cv.width=cv.clientWidth*devicePixelRatio;cv.height=cv.clientHeight*devicePixelRatio}addEventListener('resize',size);size();
+function draw(){requestAnimationFrame(draw);if(!data)return;const t=a.currentTime,W=cv.width,H=cv.height,px=W/WIN,x0=W*.25;
+ ctx.fillStyle='#05070d';ctx.fillRect(0,0,W,H);
+ const y=p=>H-((p-36)/(96-36))*H*.92-H*.04;
+ ctx.strokeStyle='#1b2540';ctx.lineWidth=1;for(let p=36;p<=96;p+=12){ctx.beginPath();ctx.moveTo(0,y(p));ctx.lineTo(W,y(p));ctx.stroke()}
+ const active=[];
+ for(const n of data.notes){if(!n.flight)continue;if(n.t>t+WIN*.75)break;if(n.t+n.d<t-WIN*.25)continue;
+  const x=x0+(n.t-t)*px,w=Math.max(3,n.d*px),on=n.t<=t&&t<n.t+n.d;
+  ctx.fillStyle=`hsla(${hue(n.route)},80%,${on?72:55}%,${on?1:.75})`;ctx.fillRect(x,y(n.p)-5,w,10*devicePixelRatio/1.5);
+  if(on)active.push(n)}
+ ctx.fillStyle='#ffffff55';ctx.fillRect(x0,0,2,H);
+ const now=document.getElementById('now');
+ now.innerHTML=active.sort((p,q)=>q.v-p.v).slice(0,8).map(n=>`<span class=chip style="border-left:4px solid hsl(${hue(n.route)},80%,60%)">${n.from}→${n.to} · ${nn(n.p)} · ${n.alt} ft</span>`).join('');
+ const T=data.window.from+t/data.duration*86400,d=new Date((T+3*3600)*1000);document.getElementById('clock').textContent=d.toISOString().slice(11,16)+' (İstanbul)';
+ document.getElementById('t').textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');}
+</script></html>
