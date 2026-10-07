@@ -16,6 +16,7 @@ import { HeadSmoother } from "../model/head-smoother";
 import { createAirports, type Airports } from "./airports";
 import { ARC_BASE_LIFT, createArcs, type Arcs } from "./arcs";
 import { createCorridors, type Corridors } from "./corridors"; // art:corridors
+import { createAurora } from "./aurora"; // art:aurora
 import { createAtmosphere } from "./atmosphere";
 import { createEarth } from "./earth";
 import { createHeads, headLatLons } from "./heads";
@@ -119,6 +120,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   scene.add(atmosphere.mesh);
   const glare = createSunGlare(); // art:light
   scene.add(glare.mesh); // art:light (inertial frame, not in earthGroup)
+  const aurora = createAurora(); // art:aurora
+  earthGroup.add(aurora.mesh); // art:aurora (Earth-fixed child, hidden by default)
   const heads = createHeads();
   earthGroup.add(heads.points);
 
@@ -273,6 +276,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     earth.setSun(sun);
     atmosphere.setSun(sun);
     glare.setSun(sun); // art:light
+    aurora.setSun(sun); // art:aurora
+    aurora.setTime(rel(f.nowSec)); // art:aurora
     earth.setCloudDrift(shownAbs * 1.5e-6);
 
     if (arcs) {
@@ -414,6 +419,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       effects = e; // art:core
       earth.setLight({ cloudShadow: e.cloudShadow }); // art:light
       glare.setVisible(e.glare); // art:light
+      aurora.setVisible(e.aurora); // art:aurora
       space.setStarMap(e.starMap ? starTex : null); // art:stars
       if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
     },
@@ -454,6 +460,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       earth.dispose();
       atmosphere.dispose();
       glare.dispose(); // art:light
+      aurora.dispose(); // art:aurora
       space.dispose();
       composer.dispose();
       renderer.dispose();
