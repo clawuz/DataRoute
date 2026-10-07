@@ -22,6 +22,9 @@ describe("keyToCommand", () => {
     expect(keyToCommand("M")).toBe("toggleSound");
     expect(keyToCommand("T")).toBe("toggleTour");
     expect(keyToCommand("[")).toBe("slower");
+    expect(keyToCommand("-")).toBe("slower"); // reachable on every layout
+    expect(keyToCommand("+")).toBe("faster");
+    expect(keyToCommand("=")).toBe("faster");
     expect(keyToCommand("]")).toBe("faster");
     expect(keyToCommand("x")).toBeNull();
   });

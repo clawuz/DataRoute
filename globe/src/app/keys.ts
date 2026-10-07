@@ -31,8 +31,12 @@ export function keyToCommand(key: string): GlobeCommand | null {
     case "T":
       return "toggleTour";
     case "[":
-      return "slower";
+    case "-":
+    case "_":
+      return "slower"; // art:track — "-" / "+" are on every keyboard layout, "[" / "]" need AltGr on a Turkish one
     case "]":
+    case "+":
+    case "=":
       return "faster";
     case "c":
     case "C":

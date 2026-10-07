@@ -72,6 +72,9 @@ function Profile({ profile, cursor }: { profile: number[]; cursor: number }) {
   );
 }
 
+/** Presses a key as the keyboard would (the buttons use the one command path of the keyboard). */
+const pressKey = (key: string) => window.dispatchEvent(new KeyboardEvent("keydown", { key }));
+
 export function FlightPanel({ f }: { f: FollowHud }) {
   const [from, to] = f.route.split(" → ");
   return (
@@ -96,7 +99,12 @@ export function FlightPanel({ f }: { f: FollowHud }) {
         ))}
       </dl>
       <Profile profile={f.profile} cursor={f.cursor} />
-      <div className="fp-speed label">{f.speed}</div>
+      <div className="fp-controls" role="group" aria-label="Follow controls"> {/* art:track — reachable buttons instead of [ ] */}
+        <button type="button" className="fp-btn" aria-label="Slower" title="Slower (−)" onClick={() => pressKey("-")}>−</button>
+        <span className="fp-speed label">{f.speed}</span>
+        <button type="button" className="fp-btn" aria-label="Faster" title="Faster (+)" onClick={() => pressKey("+")}>+</button>
+        <button type="button" className="fp-btn fp-leave label" aria-label="Leave follow" title="Leave follow (G / Esc)" onClick={() => pressKey("Escape")}>✕ LEAVE</button>
+      </div>
       <div className="fp-notes label">{f.notes.map((n) => <div key={n}>{n}</div>)}</div>
     </div>
   );
@@ -132,7 +140,7 @@ export const KEYS: [string, string][] = [
   ["C", "Route density on / off"],
   ["A", "Aurora on / off"],
   ["T", "Auto tour"],
-  ["[ ]", "Follow speed slower / faster"],
+  ["− +", "Follow speed slower / faster"],
   ["G · ESC", "Leave follow"],
   ["H", "Hide / show the HUD"],
   ["F", "Fullscreen"],

@@ -313,3 +313,21 @@ describe("KeysHelp", () => {
     expect(keyToCommand(" ")).toBe("togglePause");
   });
 });
+
+describe("follow controls", () => {
+  it("buttons press the same keys as the keyboard (− slower, + faster, leave = Escape)", async () => {
+    const { FlightPanel } = await import("../src/hud/GlobeHud");
+    const { fireEvent } = await import("@testing-library/react");
+    const pressed: string[] = [];
+    const on = (e: Event) => pressed.push((e as KeyboardEvent).key);
+    window.addEventListener("keydown", on);
+    const f = { tk: "TK1", state: "OBSERVED", aircraft: "A", route: "IST → GRU", progress: 0.5, speed: "×240", profile: [], cursor: 0, notes: [] } as unknown as Parameters<typeof FlightPanel>[0]["f"];
+    const { container } = render(<FlightPanel f={f} />);
+    const btn = (label: string) => container.querySelector(`button[aria-label="${label}"]`) as HTMLElement;
+    fireEvent.click(btn("Slower"));
+    fireEvent.click(btn("Faster"));
+    fireEvent.click(btn("Leave follow"));
+    window.removeEventListener("keydown", on);
+    expect(pressed).toEqual(["-", "+", "Escape"]);
+  });
+});
