@@ -1901,7 +1901,46 @@ git commit -m "art(sound): music v2 — four-section form, data-born ney melody,
 
 ---
 
-### Task 11: Docs, notes table, deploy
+### Task 11: Music scope — routes → waves (replaces "AIRBORNE BY AIRCRAFT")
+
+**Files:**
+- Create: `globe/src/audio/notes-bus.ts`, `globe/src/audio/scope.ts`, `globe/src/hud/MusicScope.tsx`
+- Modify: `globe/src/audio/engine.ts` (wall-clock planning, dry run, `onNote`, `info`), `globe/src/audio/instruments.ts` (only if needed for the time offset), `globe/src/scene/corridors.ts` (pulse), `globe/src/scene/engine.ts` (`pulseRoute`), `globe/src/app/controller.ts`, `globe/src/app/hud-model.ts` (remove `aircraftAirborne`/`aircraftBreakdown`/`TYPE_NAMES`, add `music`), `globe/src/hud/GlobeHud.tsx` (remove `AircraftBars`, add the scope), `globe/src/App.tsx` (create the bus), `globe/src/styles.css`
+- Test: `globe/test/scope.test.ts`, `globe/test/notes-bus.test.ts` (new); `globe/test/route-sound.test.ts`, `globe/test/corridors.test.ts`, `globe/test/controller.test.ts`, `globe/test/hud.test.tsx`, `globe/test/follow-hud.test.ts` (update: it contains the `aircraftBreakdown` tests)
+
+Spec: §4d. The `audio/` files still must not import from `globe/src/scene/*` or Three.js; `MusicScope.tsx` imports only audio-side pure modules and React.
+
+**Interfaces:**
+- `notes-bus.ts`: `interface NoteEvent { instrument: Instrument; freq: number; vel: number; kind: "dep" | "arr"; key: string; at: number; long?: boolean }` (`at` = wall-clock seconds when it sounds); `interface NoteBus { subscribe(fn: (n: NoteEvent) => void): () => void; emit(n: NoteEvent): void }`; `createNoteBus(): NoteBus` (same shape as `createLabelBus`).
+- `scope.ts` (pure): `INSTRUMENT_COLOR: Record<Instrument, string>` (hex; EUR `#3FC8F2`, PNO `#9fe3ff`, MEA `#F7C548`, AFR `#7BD389`, ASI `#F2508F`, AME `#A98BFF`, DOM `#F2F4F8`, NEY `#E30A17`, CLA `#ff9f43`, SAX `#e8b64a`, TPT `#fff1cf`, UNK `#6B7280`); `LANE_ORDER: Instrument[]` (NEY, CLA, SAX, TPT, PNO, EUR, MEA, AFR, ASI, AME, DOM); `DECAY_SEC: Partial<Record<Instrument, number>>` (visual time constants: DOM 0.45, EUR 1.2, PNO 1.6, MEA 0.8, AFR 0.45, ASI 0.6, AME 2.2, NEY 1.1, CLA 0.9, SAX 1.4, TPT 0.8); `interface Lane { amp: number; phase: number; hz: number }`; `visualHz(freq: number): number` = `2 + 2 · log2(freq / 110)` clamped to `[1, 14]` (monotonic in pitch); `stepLane(l: Lane, dt: number, decaySec: number, hit?: { freq: number; vel: number }): Lane` — `amp *= exp(−dt / decaySec)`; a hit sets `amp = max(amp, vel)` and `hz = visualHz(freq)`; `phase += 2π · hz · dt` (phase continuous, wrapped to `[0, 2π)`); `laneSample(l: Lane): number` = `l.amp · sin(l.phase)`.
+- `audio/engine.ts` (`RouteSound`): `createRouteSound({ createContext?, now? })` where `now: () => number` is wall-clock seconds (default `performance.now() / 1000`). `schedule(events, focus, pans, localHour)` **always plans** (section/epoch, `NeyState`, `PianoState` advance on the wall clock `now()`), emits a `NoteEvent` to subscribers for every planned note (`at = note.when`), and plays the notes **only when enabled and a context exists**, translating times: `ctxTime = ctx.currentTime + (note.when − now())` (clamped to `≥ ctx.currentTime`). `setEnergy` likewise records the energy always. New: `onNote(fn: (n: NoteEvent) => void): () => void` and `info(): { section: SectionId; chord: string; bpm: number; instruments: Instrument[] }` (chord = the chord name at the wall-clock now). Existing behaviours (no context before enable, autoplay resume, dispose idempotent, errors swallowed) stay.
+- `corridors.ts`: instanced attribute `aPulse` (1 float per instance, dynamic), `Corridors.pulse(index: number, amount?: number)` (adds `amount`, default 1, clamped to 1.5), `Corridors.indexOfKey(key: string): number`, `Corridors.update(dt: number)` (decays all active pulses by `exp(−dt / 0.6)`, writes the instance buffers of changed corridors and sets `needsUpdate`, removes pulses below 0.01). The vertex shader scales width by `1 + 0.8·pulse`, alpha by `1 + 3·pulse`, and blends the colour toward white by `min(1, pulse)`.
+- `scene/engine.ts`: `GlobeEngine.pulseRoute(key: string): void` (no-op without corridors); `frameBody` calls `corridors.update(dt)`.
+- `controller.ts`: the sound wiring now calls `sound.schedule(...)` and `sound.setEnergy(...)` **always** (muted too; the engine decides what is audible); it subscribes once: `const off = sound.onNote((n) => { d.noteBus?.emit(n); d.engine.pulseRoute(n.key); })`, unsubscribes in `dispose()`; new optional dep `noteBus?: NoteBus`; the snapshot gets `music: { on: boolean; section: SectionId; chord: string; bpm: number; instruments: Instrument[] }` (from `sound.info()` at the HUD tick; `on` = sound enabled). Remove the aircraft breakdown from the snapshot.
+- `MusicScope.tsx`: `MusicScope({ bus, music }: { bus: NoteBus; music: GlobeHudSnapshot["music"] })` — a `<canvas>` (class `music-scope`) with its own `requestAnimationFrame` loop (started in an effect, cancelled on unmount); one `Lane` per instrument in `LANE_ORDER` that is in `music.instruments`; bus notes call `stepLane` hits (queued and applied at `note.at`); lanes are drawn as horizontal scrolling traces: keep a ring buffer of `laneSample` values (≈ 160 samples at 30 Hz), draw a polyline per lane in `INSTRUMENT_COLOR` with `globalCompositeOperation = "lighter"`, line width 1.2 px × DPR, alpha 0.9, lane height `100 % / lanes`; the sound-off state dims lines to 0.55 alpha and shows `SOUND OFF · PRESS M` over the canvas; below the canvas a label `ROUTES → MUSIC · <SECTION> · <CHORD> · <BPM> BPM`. Must not throw when `canvas.getContext("2d")` is null (jsdom) — it simply renders the label.
+- `GlobeHud.tsx`: remove `AircraftBars`; render `<MusicScope bus={noteBus} music={s.music} />` in its place (always visible, also while following; the region bars keep hiding while following); `GlobeHud` gets an optional `noteBus` prop (`App.tsx` creates it with `useMemo(createNoteBus, [])` and passes it to the controller and to `GlobeHud`).
+- `styles.css`: remove the aircraft-bars rules; `.music-scope` block at the former position (bottom-right above the region bars: width ≈ 26vmin, height ≈ 15vmin, label font like the region labels), portrait position adjusted so it does not overlap the region bars.
+
+- [ ] **Step 1: Failing tests:**
+  - `scope.test.ts`: `visualHz` monotonic in frequency and clamped to `[1, 14]` (`visualHz(110) === 2`, `visualHz(220) === 4`); `stepLane` — a hit sets `amp = max(amp, vel)` and `hz`; with no hit `amp` decays exponentially (`amp(t = decaySec) ≈ amp0 / e` within 1e-9); phase advances `2π·hz·dt` and wraps into `[0, 2π)`; `laneSample` bounded by `amp`; every `LANE_ORDER` instrument has a colour and a decay.
+  - `notes-bus.test.ts`: subscribe/emit/unsubscribe (like the label bus).
+  - `route-sound.test.ts`: while disabled `schedule` creates **no** context but emits `NoteEvent`s through `onNote` (with `at` on the instrument grid relative to the wall-clock epoch); while enabled the oscillator start times equal `ctx.currentTime + (when − now())` for an injected `now`; `info()` reports section/chord/bpm/instruments for a given `localHour`; unsubscribe stops events; existing tests keep passing (adapt only where the old API assumed an audio clock for planning).
+  - `corridors.test.ts` (extend; `createCorridors` works under jsdom/vitest for geometry only): `indexOfKey("IST-JFK")` matches `indexOf("IST","JFK")`; `pulse(i)` raises that corridor's instances in the `aPulse` attribute to 1 and leaves others at 0; `update(0.6)` decays to ≈ `1/e`; many `update` calls remove it; `pulse` clamps at 1.5.
+  - `controller.test.ts`: `schedule` and `setEnergy` are called **even while sound is off** (update the earlier "nothing is scheduled while off" expectations deliberately: while off only `setEnabled(false)`-state differs); `sound.onNote` handlers forward to `engine.pulseRoute(key)` and to the injected `noteBus`; `dispose()` unsubscribes; the snapshot has `music` with the `sound.info()` fields and `on` reflecting `M`; the aircraft breakdown field is gone.
+  - `hud.test.tsx`: `MusicScope` renders the label text for a given `music` (`ROUTES → MUSIC · DAY · C · 96 BPM`), shows `SOUND OFF · PRESS M` when `on` is false, does not throw under jsdom (no 2D context) and the old `AIRBORNE BY AIRCRAFT` text no longer appears; remove the `AircraftBars`/`aircraftBreakdown` tests everywhere (also in `follow-hud.test.ts`).
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; keep `scope.ts` pure; do not import scene/Three from `audio/` or `MusicScope.tsx`; mark integration lines `// art:sound`.
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): ROUTES → MUSIC scope panel and route-line pulses (replaces the aircraft bars)"
+```
+- [ ] **Step 6: Visual check (controller) and listening (user):** the bottom-right panel shows the instrument waves bursting with each note and the matching route corridor flashing on the globe; with `M` off the scope still animates and says `SOUND OFF · PRESS M`; the aircraft bars are gone; the panel does not overlap the region bars in desktop or portrait.
+
+---
+
+### Task 12: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
