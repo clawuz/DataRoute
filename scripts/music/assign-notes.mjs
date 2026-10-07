@@ -22,7 +22,7 @@ export const routeHash = (s) => {
 export const pcOf = (route) => routeHash(route) % 12;
 const pcDist = (a, b) => { const d = Math.abs(a - b) % 12; return Math.min(d, 12 - d); };
 
-/** altitude (ft) at day time T by linear interpolation of the flight's samples ([offset s, alt ft, lat, lon]); null if not airborne */
+/** altitude (ft) at day time T by linear interpolation of the flight's samples ([offset s, flight level (hundreds of ft), lat, lon]); null if not airborne */
 export function altitudeAt(f, T) {
   const s = f.s;
   if (!s || s.length === 0) return null;
@@ -32,7 +32,7 @@ export function altitudeAt(f, T) {
   while (i < s.length - 2 && s[i + 1][0] <= r) i++;
   const a = s[i], b = s[i + 1] ?? s[i];
   const k = b[0] === a[0] ? 0 : (r - a[0]) / (b[0] - a[0]);
-  return a[1] + (b[1] - a[1]) * k;
+  return (a[1] + (b[1] - a[1]) * k) * 100; // samples carry the flight level (hundreds of feet)
 }
 
 /** pure: assign notes ({t,d,p,v}) to flights of a day.json; returns notes with {flight,route,from,to,alt} added */

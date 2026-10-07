@@ -1,0 +1,119 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Müzik görünümleri (deneme)</title>
+<style>
+:root{--bg:#05070d;--ink:#cfe0ff;--dim:#6f84a8}
+body{margin:0;background:var(--bg);color:var(--ink);font:12px/1.4 ui-monospace,Menlo,monospace}
+header{padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:0;background:#05070dee;z-index:2}
+button{background:#12306a;color:#fff;border:0;padding:7px 14px;border-radius:6px;cursor:pointer;font:inherit}
+input[type=range]{width:260px}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:12px;padding:0 16px 24px}
+figure{margin:0;background:#0a0f1c;border:1px solid #1b2540;border-radius:6px;overflow:hidden}
+figcaption{padding:6px 10px;color:var(--dim)} figcaption b{color:var(--ink)}
+canvas{display:block;width:100%;height:210px}
+</style>
+<header><button id=go>▶ Çal</button><input id=seek type=range min=0 max=180 step=0.1 value=0><span id=t>0:00</span><span>İstanbul: <b id=clock></b></span><span id=info></span></header>
+<main id=grid></main>
+<audio id=a src="/music/track.mp3" loop></audio>
+<script>
+const REG={DOM:'#f2f4f8',EUR:'#5ec8ff',MEA:'#ffc247',AFR:'#7bd389',ASI:'#ff5fa8',AME:'#a98bff',UNK:'#8892a6'};
+const REGN=['EUR','MEA','AFR','ASI','AME','DOM'];
+const hue=r=>{let h=0;for(const c of r)h=(h*31+c.charCodeAt(0))%360;return h};
+const col=(r,l=62,a=1)=>`hsla(${hue(r)},80%,${l}%,${a})`;
+let D,N,regionOf={},dayFrom=0,span=86400;
+const a=document.getElementById('a');let playing=false,T=0,last=performance.now();
+const seek=document.getElementById('seek');
+document.getElementById('go').onclick=()=>{playing=!playing;document.getElementById('go').textContent=playing?'❚❚ Dur':'▶ Çal';if(playing){a.currentTime=T;a.play().catch(()=>{})}else a.pause()};
+seek.oninput=()=>{T=+seek.value;if(playing)a.currentTime=T};
+const VIEWS=[];
+function view(id,title,sub,draw){const f=document.createElement('figure');f.innerHTML=`<canvas></canvas><figcaption><b>${id} · ${title}</b> — ${sub}</figcaption>`;document.getElementById('grid').appendChild(f);VIEWS.push({c:f.querySelector('canvas'),draw})}
+const W=12; // seconds visible in flowing views
+const xr=(t,w,x0=.8)=>w*x0-(T-t)*(w*x0/W); // playhead at 80 %, flows right → left
+const inWin=(n,lo,hi)=>n.t+n.d>=lo&&n.t<=hi;
+const win=(lo,hi)=>{const out=[];for(const n of N){if(n.t>hi)break;if(n.t+n.d>=lo)out.push(n)}return out};
+const head=(g,w,h,x0=.8)=>{g.fillStyle='#fff6';g.fillRect(w*x0,0,1.5,h)};
+
+// A — current ribbon (pitch blocks, route colour)
+view('A','Şu anki şerit','perde ekseni, rota rengi',(g,w,h)=>{
+ for(const n of win(T-W*.8,T+W*.2)){const y=h-((n.p-40)/(88-40))*h*.9-h*.05;g.fillStyle=col(n.k,62,.85);g.fillRect(xr(n.t,w),y-3,Math.max(3,n.d*w*.8/W),6)}head(g,w,h)});
+
+// B — route rows (piano roll): the 12 routes with the latest notes
+view('B','Rota satırları','her rota kendi satırı, en son çalan üstte',(g,w,h)=>{
+ const ns=win(T-W*.8,T+W*.2).filter(n=>n.t<=T+.2);const last=new Map();for(const n of ns)last.set(n.k,Math.max(last.get(n.k)??0,n.t));
+ const rows=[...last].sort((x,y)=>y[1]-x[1]).slice(0,12).map(r=>r[0]);const rh=(h-8)/12;
+ g.font='10px ui-monospace';rows.forEach((k,i)=>{g.fillStyle='#ffffff08';g.fillRect(0,4+i*rh,w,rh-2)});
+ for(const n of ns){const i=rows.indexOf(n.k);if(i<0)continue;g.fillStyle=col(n.k,62,.95);g.fillRect(xr(n.t,w,.8)+60*0,4+i*rh+1,Math.max(3,n.d*w*.8/W),rh-4)}
+ rows.forEach((k,i)=>{g.fillStyle='#050912cc';g.fillRect(0,4+i*rh,62,rh-2);g.fillStyle=col(k);g.fillText(`${n_from(k)}→${n_to(k)}`,5,4+i*rh+rh*.7)});head(g,w,h)});
+const dirOf={};const n_from=k=>dirOf[k]?.[0]??k.slice(0,3),n_to=k=>dirOf[k]?.[1]??k.slice(4);
+
+// C — region bands
+view('C','Bölge bantları','y = bölge, renk = bölge, parlama = nota gücü',(g,w,h)=>{
+ const bh=h/REGN.length;REGN.forEach((r,i)=>{g.fillStyle=REG[r]+'12';g.fillRect(0,i*bh,w,bh-2);g.fillStyle=REG[r]+'aa';g.font='9px ui-monospace';g.fillText(r,4,i*bh+11)});
+ g.globalCompositeOperation='lighter';
+ for(const n of win(T-W*.8,T+W*.2)){const i=Math.max(0,REGN.indexOf(regionOf[n.k]||'EUR'));const y=i*bh+bh*(1-(n.p-40)/48)*.8+bh*.08;g.fillStyle=REG[REGN[i]]+Math.round(120+n.v*120).toString(16);g.fillRect(xr(n.t,w),y-2,Math.max(3,n.d*w*.8/W),5)}
+ g.globalCompositeOperation='source-over';head(g,w,h)});
+
+// D — altitude sky
+view('D','İrtifa gökyüzü','y = uçuşun irtifası, nota iz bırakır',(g,w,h)=>{
+ const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#0a1630');gr.addColorStop(1,'#0a0f1c');g.fillStyle=gr;g.fillRect(0,0,w,h);
+ g.strokeStyle='#ffffff14';[10,20,30,40].forEach(f=>{const y=h-(f/42)*h*.92-4;g.beginPath();g.moveTo(0,y);g.lineTo(w,y);g.stroke();g.fillStyle='#6f84a8';g.font='9px ui-monospace';g.fillText(f+'k ft',w-34,y-2)});
+ for(const n of win(T-W*.8,T+W*.2)){const x=xr(n.t,w),y=h-(Math.min(n.alt,41000)/41000)*h*.92-4;const age=Math.max(0,T-n.t)/(W*.8);
+  g.fillStyle=col(n.k,65,Math.max(.15,1-age));g.beginPath();g.arc(x,y,2.2+n.v*2,0,7);g.fill();g.strokeStyle=col(n.k,65,Math.max(.05,.4-age));g.beginPath();g.moveTo(x,y);g.lineTo(x+n.d*w*.8/W,y);g.stroke()}head(g,w,h)});
+
+// E — heat map (spectrogram of the day's notes)
+const heat=document.createElement('canvas');
+view('E','Isı haritası','x zaman, y perde, parlaklık = o anda kaç rota',(g,w,h)=>{
+ const bins=36,cols=Math.floor(W*.8*6);g.fillStyle='#050912';g.fillRect(0,0,w,h);
+ const cw=(w*.8)/(W*.8*6)*1,bh=h/bins;const cell=new Map();
+ for(const n of win(T-W*.8,T+W*.2)){const c=Math.floor(n.t*6),b=Math.floor((n.p-40)/48*bins);const key=c*100+b;cell.set(key,(cell.get(key)||0)+1)}
+ g.globalCompositeOperation='lighter';
+ for(const [key,v] of cell){const c=Math.floor(key/100),b=key%100;const x=xr(c/6,w),y=h-(b+1)*bh;const k=Math.min(1,v/3);g.fillStyle=`hsla(${210-k*170},90%,${40+k*30}%,${.25+k*.7})`;g.fillRect(x,y,cw+1,bh-.5)}
+ g.globalCompositeOperation='source-over';head(g,w,h)});
+
+// F — radial 24 h
+view('F','Dairesel 24 saat','açı = günün saati, yarıçap = perde; çalan notalar kalır',(g,w,h)=>{
+ const cx=w/2,cy=h/2,R=h*.46;g.strokeStyle='#1b2540';[.35,.7,1].forEach(f=>{g.beginPath();g.arc(cx,cy,R*f,0,7);g.stroke()});
+ for(let k=0;k<24;k++){const an=k/24*Math.PI*2-Math.PI/2;g.strokeStyle='#ffffff10';g.beginPath();g.moveTo(cx+Math.cos(an)*R*.3,cy+Math.sin(an)*R*.3);g.lineTo(cx+Math.cos(an)*R,cy+Math.sin(an)*R);g.stroke()}
+ for(const n of N){if(n.t>T)break;const an=n.t/180*Math.PI*2-Math.PI/2,r=R*(.3+.7*(n.p-40)/48),age=T-n.t;
+  g.fillStyle=col(n.k,62,Math.max(.12,1-age/40));g.beginPath();g.arc(cx+Math.cos(an)*r,cy+Math.sin(an)*r,1.4+n.v*1.8,0,7);g.fill()}
+ const an=T/180*Math.PI*2-Math.PI/2;g.strokeStyle='#fffc';g.lineWidth=1.5;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(an)*R,cy+Math.sin(an)*R);g.stroke();g.lineWidth=1;
+ g.fillStyle='#6f84a8';g.font='9px ui-monospace';g.fillText('İST '+ist(T),cx-18,cy+3)});
+
+// G — the whole day at once
+view('G','Tüm gün tek bakışta','2 125 notanın hepsi, çalanlar parlak, gelecek soluk',(g,w,h)=>{
+ for(const n of N){const x=n.t/180*w,y=h-((n.p-40)/48)*h*.92-4;const played=n.t<=T;g.fillStyle=col(n.k,played?66:40,played?Math.max(.45,1-(T-n.t)/30):.28);g.fillRect(x,y,Math.max(1.5,n.d/180*w),2.4)}
+ const px=T/180*w;g.fillStyle='#fff';g.fillRect(px,0,1.5,h);
+ g.fillStyle='#6f84a8';g.font='9px ui-monospace';for(let k=0;k<8;k++){g.fillText(String(Math.floor(((dayHour0+k*3)%24))).padStart(2,'0')+':00',k/8*w+3,h-3)}});
+
+// H — region streamgraph over the whole day
+let stream;
+view('H','Bölge akışı (stream)','gün boyu nota yoğunluğu bölge bölge, konum işaretli',(g,w,h)=>{
+ if(!stream){const B=60;stream=REGN.map(()=>new Array(B).fill(0));for(const n of N){const i=Math.max(0,REGN.indexOf(regionOf[n.k]||'EUR'));stream[i][Math.min(B-1,Math.floor(n.t/180*B))]++}}
+ const B=60,tot=Array.from({length:B},(_,b)=>stream.reduce((s,r)=>s+r[b],0)),mx=Math.max(...tot);
+ const cum=new Array(B).fill(0);REGN.forEach((r,i)=>{g.beginPath();for(let b=0;b<B;b++){const x=b/(B-1)*w,y=h/2-(tot[b]/2+0)/mx*h*.85+(cum[b]/mx)*h*.85;(b?g.lineTo(x,y):g.moveTo(x,y))}
+  for(let b=B-1;b>=0;b--){const x=b/(B-1)*w,y=h/2-(tot[b]/2)/mx*h*.85+((cum[b]+stream[i][b])/mx)*h*.85;g.lineTo(x,y)}g.closePath();g.fillStyle=REG[r]+'cc';g.fill();for(let b=0;b<B;b++)cum[b]+=stream[i][b]});
+ g.fillStyle='#05091288';g.fillRect(T/180*w,0,w,h);g.fillStyle='#fff';g.fillRect(T/180*w,0,1.5,h)});
+
+// I — A improved: pitch ribbon with route trails + glow + labels of the strongest notes
+view('I','Şerit+ (geliştirilmiş)','A\'nın gelişmişi: parlama, rota izi, güçlü notalara etiket',(g,w,h)=>{
+ g.globalCompositeOperation='lighter';const labels=[];
+ for(const n of win(T-W*.8,T+W*.2)){const x=xr(n.t,w),y=h-((n.p-40)/48)*h*.9-h*.05,bw=Math.max(4,n.d*w*.8/W),age=Math.max(0,T-n.t)/(W*.8);
+  g.fillStyle=col(n.k,62,Math.max(.12,.95-age*.8));g.shadowColor=col(n.k,62,1);g.shadowBlur=n.t<=T&&T-n.t<.4?14:0;g.fillRect(x,y-3.5,bw,7);g.shadowBlur=0;
+  if(n.v>.8&&n.t<=T&&age<.5)labels.push([x,y,n])}
+ g.globalCompositeOperation='source-over';g.font='9px ui-monospace';for(const [x,y,n] of labels.slice(-6)){g.fillStyle=col(n.k,78);g.fillText(`${n_from(n.k)}→${n_to(n.k)}`,x,y-7)}head(g,w,h)});
+
+// ---- data ----
+let dayHour0=0;
+const ist=t=>{const T0=dayFrom+t/180*span,d=new Date((T0+3*3600)*1000);return d.toISOString().slice(11,16)};
+(async()=>{
+ const [notes,day]=await Promise.all([fetch('/music/notes.json').then(r=>r.json()),fetch('https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media').then(r=>r.json())]);
+ N=notes.notes;D=notes;dayFrom=day.window.from;span=day.window.to-day.window.from;dayHour0=new Date((dayFrom+3*3600)*1000).getUTCHours();
+ for(const f of day.flights){const k=f.from<f.to?`${f.from}-${f.to}`:`${f.to}-${f.from}`;regionOf[k]??=f.region||'UNK'}
+ for(const n of N)dirOf[n.k]??=[n.from,n.to];
+ document.getElementById('info').textContent=`${N.length} nota · ${new Set(N.map(n=>n.k)).size} rota`;
+ requestAnimationFrame(loop)})();
+function loop(){const now=performance.now(),dt=(now-last)/1000;last=now;
+ if(playing){T=a.paused?T+dt:a.currentTime;if(T>=180){T=0;if(a.paused)a.currentTime=0}seek.value=T}
+ document.getElementById('t').textContent=Math.floor(T/60)+':'+String(Math.floor(T%60)).padStart(2,'0');document.getElementById('clock').textContent=ist(T);
+ for(const v of VIEWS){const c=v.c,dpr=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;if(c.width!==w*dpr){c.width=w*dpr;c.height=h*dpr}const g=c.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);g.fillStyle='#0a0f1c';g.fillRect(0,0,w,h);v.draw(g,w,h)}
+ requestAnimationFrame(loop)}
+</script></html>
