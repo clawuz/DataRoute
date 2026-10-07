@@ -531,6 +531,8 @@ describe("globe controller", () => {
         schedule: vi.fn(),
         setEnergy: vi.fn(),
         setSky: vi.fn(),
+        playNotes: vi.fn(),
+        setGenerative: vi.fn(),
         tick: vi.fn(),
         dispose: vi.fn(),
         onNote: vi.fn((fn: (n: NoteEvent) => void) => {

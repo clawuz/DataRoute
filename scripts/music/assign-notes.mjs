@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // Notes -> routes: give every transcribed note to the flight that "plays" it.
-//   node scripts/music/assign-notes.mjs tmp-music/day-music-<date>-<genre>.notes.json [day.json|url] [out.json]
+//   node scripts/music/assign-notes.mjs tmp-music/day-music-<date>-<genre>.notes.json [day.json|url] [out.json] [--bundle globe/public/music]
+//   --bundle writes the compact notes.json (+ the day's hourly airborne curve) and copies the mp3 next to it for the site.
 //
 // Replay clock: music second t  <->  day time  window.from + t / duration * 86400.
 // Each route owns a stable pitch class (hash of "FROM-TO") and each flight a register that follows its altitude, so a route
 // keeps coming back on "its" notes and climbing flights sound higher. A note goes to the airborne flight whose pitch class and
 // register fit best (with a short rest per flight so one flight cannot hog the line) — the same route plays the same colour.
 
-import { readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 
 const DAY_URL = "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media";
 const REST_S = 1.2; // a flight does not play again within this many music seconds
@@ -63,7 +64,9 @@ export function assignNotes(notes, day, duration) {
 }
 
 async function main() {
-  const [notesFile, dayArg, outArg] = process.argv.slice(2);
+  const bi = process.argv.indexOf("--bundle");
+  const bundleDir = bi >= 0 ? process.argv[bi + 1] : null;
+  const [notesFile, dayArg, outArg] = process.argv.slice(2).filter((a, i, all) => a !== "--bundle" && all[i - 1] !== "--bundle");
   if (!notesFile) { console.error("usage: assign-notes.mjs <x.notes.json> [day.json|url] [out.json]"); process.exit(1); }
   const { notes, duration, source } = JSON.parse(await readFile(notesFile, "utf8"));
   const raw = dayArg && !/^https?:/.test(dayArg) ? await readFile(dayArg, "utf8") : await (await fetch(dayArg ?? DAY_URL)).text();
@@ -71,6 +74,14 @@ async function main() {
   const assigned = assignNotes(notes, day, Math.max(duration, 180));
   const out = outArg ?? notesFile.replace(/\.notes\.json$/, ".assigned.json");
   await writeFile(out, JSON.stringify({ source, duration: Math.max(duration, 180), window: day.window, notes: assigned }));
+  if (bundleDir) {
+    const ck = (a, b) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+    const notesOut = assigned.filter((n) => n.flight).map((n) => ({ t: n.t, d: n.d, p: n.p, v: n.v, k: ck(n.from, n.to), from: n.from, to: n.to, alt: n.alt }));
+    await mkdir(bundleDir, { recursive: true });
+    await writeFile(`${bundleDir}/notes.json`, JSON.stringify({ duration: Math.max(duration, 180), source, notes: notesOut }));
+    await copyFile(notesFile.replace(/\.notes\.json$/, ".mp3"), `${bundleDir}/track.mp3`);
+    console.log(`bundled ${notesOut.length} notes + track.mp3 -> ${bundleDir}`);
+  }
   const ok = assigned.filter((n) => n.flight);
   const routes = new Set(ok.map((n) => n.route));
   console.log(`${ok.length}/${assigned.length} notes assigned · ${routes.size} distinct routes · mean fit ${(ok.reduce((a, n) => a + n.fit, 0) / ok.length).toFixed(2)} -> ${out}`);

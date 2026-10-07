@@ -20,7 +20,8 @@ import { join } from "node:path";
 
 const DAY_URL = "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media";
 const API = "https://api.elevenlabs.io/v1/music?output_format=mp3_44100_128";
-const CHUNK_MS = 45_000; // 4 × 45 s = 3 minutes = 24 h of replay
+const WINDOWS = 8; // 8 windows of 3 h → 8 × 22.5 s = 3 minutes = 24 h of replay: the music follows the traffic curve of the day
+const CHUNK_MS = 180_000 / WINDOWS;
 const IST_OFFSET_H = 3;
 
 /** Genre catalogue: descriptive style tags only (no artist names), a tempo range the day's energy moves through. */
@@ -94,10 +95,10 @@ const arg = (name, def) => {
 };
 
 /** Pure: summarise a day.json into four 6-hour windows (chronological), their energy and regional mix. */
-export function summarize(day) {
+export function summarize(day, windows = WINDOWS) {
   const from = day.window.from;
-  const q = 6 * 3600;
-  const chunks = Array.from({ length: 4 }, (_, i) => ({ start: from + i * q, end: from + (i + 1) * q, airborneHours: 0, regions: {}, to: {}, flights: 0 }));
+  const q = 86400 / windows;
+  const chunks = Array.from({ length: windows }, (_, i) => ({ start: from + i * q, end: from + (i + 1) * q, airborneHours: 0, regions: {}, to: {}, flights: 0 }));
   for (const f of day.flights) {
     if (!f.s || f.s.length === 0) continue;
     const t0 = f.dep + f.s[0][0];
@@ -114,17 +115,18 @@ export function summarize(day) {
     });
   }
   // contrast: scale between the quietest and busiest window of THIS day so the arc is audible even when traffic is fairly flat
-  const vals = chunks.map((c) => c.airborneHours / 6);
+  const vals = chunks.map((c) => c.airborneHours / (q / 3600));
   const lo = Math.min(...vals);
   const hi = Math.max(...vals);
   const norm = (v) => (hi - lo < 1e-6 ? 0.5 : (v - lo) / (hi - lo));
   return chunks.map((c) => {
-    const localHour = (((c.start + 3 * 1800) / 3600 + IST_OFFSET_H) % 24 + 24) % 24;
+    const localHour = (((c.start + q / 2) / 3600 + IST_OFFSET_H) % 24 + 24) % 24; // middle of the window, Istanbul time
     const label = localHour < 6 ? "night" : localHour < 12 ? "morning" : localHour < 18 ? "afternoon" : "evening";
     const total = Object.values(c.regions).reduce((a, b) => a + b, 0) || 1;
     const shares = Object.entries(c.regions).map(([r, v]) => [r, v / total]).sort((a, b) => b[1] - a[1]);
     const topTo = Object.entries(c.to).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
-    return { label, energy: norm(c.airborneHours / 6), shares, topTo, avgAirborne: c.airborneHours / 6 };
+    const avg = c.airborneHours / (q / 3600);
+    return { label, hour: Math.floor(localHour), energy: norm(avg), shares, topTo, avgAirborne: avg };
   });
 }
 
@@ -138,11 +140,13 @@ export const layersFor = (g, e) => (g.layers ? g.layers.slice(0, Math.min(g.laye
 export function buildPlan(summary, genre, dateIso) {
   const chunks = summary.map((s, i) => {
     const regionHints = s.shares.filter(([, v]) => v >= 0.14).slice(0, 2).flatMap(([r]) => REGION_HINTS[r] ?? []);
-    const name = `${s.label[0].toUpperCase()}${s.label.slice(1)}`;
+    const name = `${s.label[0].toUpperCase()}${s.label.slice(1)} ${String(s.hour).padStart(2, "0")}h`;
+    const next = summary[i + 1];
+    const motion = !next ? [] : next.energy - s.energy > 0.2 ? ["gradually building toward the next section"] : s.energy - next.energy > 0.2 ? ["gradually easing down"] : [];
     return {
       text: `[${name}]`,
       duration_ms: CHUNK_MS,
-      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), ...layersFor(genre, s.energy), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...regionHints, "instrumental"],
+      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), ...layersFor(genre, s.energy), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...motion, ...regionHints, "instrumental"],
       negative_styles: ["vocals", "lyrics", "singing", "spoken words"],
       context_adherence: "high",
     };

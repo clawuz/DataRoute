@@ -45,6 +45,10 @@ export interface RouteSound {
    * the rhythm level, the active region layers (in `REGIONS` order) and the build phase of the latest planned bar.
    */
   info(localHour?: number): SoundInfo;
+  /** art:track: plays (and publishes) notes planned elsewhere — the continuation of the recorded track */
+  playNotes(planned: PlannedNote[]): void;
+  /** art:track: false stops the generative planner (the continuation of the recorded track takes over) */
+  setGenerative(on: boolean): void;
   dispose(): void;
 }
 
@@ -122,6 +126,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   let lines: SkyFlight[] = [];
   // v5: the ney is monophonic — the held note still sounding (wall-clock end of its hold) is cut by the next ney note
   let neyHeld: { end: number; handle: NoteHandle } | null = null;
+  let generative = true; // art:track
 
   const safe = (fn: () => void) => {
     try {
@@ -265,7 +270,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       safe(() =>
         notes.emit({
           instrument: n.instrument, lane: laneOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when,
-          durSec: n.durSec, ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}),
+          durSec: n.durSec, ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}), ...(n.alt !== undefined ? { alt: n.alt } : {}),
         }),
       );
     }
@@ -294,6 +299,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     safe(() => {
       const t = now();
       const sec = section;
+      if (!generative) return; // art:track
       // after a stall, skip the steps that are already late instead of playing them in a burst
       if (stepTime(nextStep, epoch, sec) < t - LATE_SEC) nextStep = Math.max(nextStep, Math.ceil((t - LATE_SEC - epoch) / stepDur(sec) - 1e-9));
       lines = selectLines(sky, followedId, MAX_LINES, layers);
@@ -370,5 +376,13 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     });
   }
 
-  return { setEnabled, setSky, schedule, setEnergy, tick, onNote: (fn) => notes.subscribe(fn), info, dispose };
+  function playNotes(planned: PlannedNote[]): void {
+    if (disposed || planned.length === 0) return;
+    safe(() => emit(planned, now()));
+  }
+  function setGenerative(on: boolean): void {
+    generative = on;
+  }
+
+  return { setEnabled, setSky, schedule, setEnergy, tick, onNote: (fn) => notes.subscribe(fn), info, playNotes, setGenerative, dispose };
 }

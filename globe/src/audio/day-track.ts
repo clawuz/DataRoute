@@ -61,6 +61,10 @@ export interface DayTrack {
   ready(): boolean;
   /** `frac` = replay position 0..1; `playing` = the replay runs (not paused/following/live) */
   update(frac: number, playing: boolean): void;
+  /** the loaded notes (for the continuation after the track); null until loaded */
+  data(): TrackData | null;
+  /** loudness 0..1 of the recorded audio (follows the traffic of the hour) */
+  setGain(g: number): void;
   dispose(): void;
 }
 
@@ -108,6 +112,10 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       }
     },
     ready: () => !!(audio && data && audio.readyState >= 2),
+    data: () => data,
+    setGain(g) {
+      if (audio) audio.volume = Math.min(1, Math.max(0, g));
+    },
     update(frac, playing) {
       const a = audio;
       if (!a || !data || !enabled) return;

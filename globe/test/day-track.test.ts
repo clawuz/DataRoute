@@ -56,3 +56,35 @@ describe("now playing", () => {
     expect(routeColor("IST-JFK")).not.toBe(routeColor("KUL-SYD"));
   });
 });
+
+import { bestRoute, createContinuation, pcOfRoute, velocityFloor } from "../src/audio/track-continue";
+import type { SkyFlight } from "../src/audio/lines";
+
+describe("continuation after the track", () => {
+  const sky = (key: string, alt100 = 350): SkyFlight => ({ id: key, key, regionIdx: 0, alt100, vsFpm: 0 });
+  const notes = [n(0.5, 60), n(1.0, 64), n(1.5, 67), n(2.5, 72)].map((x, i) => ({ ...x, v: [0.9, 0.2, 0.9, 0.5][i] }));
+  it("thins by traffic: a quiet sky keeps only the strongest notes", () => {
+    expect(velocityFloor(1)).toBe(0);
+    expect(velocityFloor(0)).toBeCloseTo(0.7);
+    const c = createContinuation(notes, 3);
+    c.step(100, [sky("IST-JFK"), sky("IST-CDG"), sky("AYT-IST")], 1); // primes the clock
+    const quiet = c.step(103, [sky("IST-JFK"), sky("IST-CDG"), sky("AYT-IST")], 0);
+    expect(quiet.every((p) => p.vel >= 0.3 + 0.7 * 0.7 - 1e-9)).toBe(true);
+  });
+  it("hands every note to a live route and rests that route between notes", () => {
+    const one = [sky("IST-JFK")];
+    const recent = new Map<string, number>();
+    expect(bestRoute(n(0, 60), one, recent, 10)?.key).toBe("IST-JFK");
+    recent.set("IST-JFK", 10);
+    expect(bestRoute(n(0, 60), one, recent, 10.5)).toBeNull();
+    expect(bestRoute(n(0, 60), [sky("4bb0e9-1791287466")], new Map(), 10)).toBeNull();
+    expect(pcOfRoute("IST-JFK")).toBe(pcOfRoute("IST-JFK"));
+  });
+  it("loops the notes: after the last note the sequence starts over", () => {
+    const c = createContinuation(notes, 3);
+    const live = [sky("IST-JFK"), sky("IST-CDG"), sky("AYT-IST"), sky("SAW-ESB"), sky("IST-LHR")];
+    let total = 0;
+    for (let t = 0; t <= 7; t += 0.5) total += c.step(200 + t, live, 1).length;
+    expect(total).toBeGreaterThan(4); // more than one pass over four notes
+  });
+});

@@ -19,6 +19,7 @@ import {
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
 import { createDayTrack, type DayTrack } from "../audio/day-track"; // art:track
+import { createContinuation, type Continuation } from "../audio/track-continue"; // art:track
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -109,6 +110,24 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let soundOn = false; // art:sound
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
+  let cont: Continuation | null = null; // art:track — after the track: its notes go on, played by the live routes
+  let lastSky: SkyFlight[] = []; // art:track
+  let airRange: { model: GlobeModel; lo: number; hi: number } | null = null; // art:track — the day's own quietest/busiest airborne counts
+  const intensityNow = (): number => { // art:track — 0..1 between the quietest and busiest hour of the day
+    if (!model) return 0.5;
+    if (!airRange || airRange.model !== model) {
+      let lo = Infinity;
+      let hi = 0;
+      for (let i = 0; i < 48; i++) {
+        const c = skyFlights(model, (i / 47) * model.span).length;
+        lo = Math.min(lo, c);
+        hi = Math.max(hi, c);
+      }
+      airRange = { model, lo, hi };
+    }
+    const { lo, hi } = airRange;
+    return hi - lo < 1 ? 0.5 : Math.min(1, Math.max(0, (lastSky.length - lo) / (hi - lo)));
+  };
   const pulseTrack = (key: string) => { if (!disposed) d.engine.pulseRoute(key); }; // art:track
   const track: DayTrack = d.track ?? createDayTrack({ // art:track
     clock,
@@ -140,6 +159,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (e.sound !== soundOn) { // art:sound
       soundOn = e.sound;
       sound.setEnabled(e.sound && !trackActive);
+      if (!e.sound) cont?.reset(); // art:track
       track.setEnabled(e.sound); // art:track
       prevSoundCur = null;
     }
@@ -155,6 +175,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (!model) return;
     const cur = currentCur(d.nowMs() / 1000);
     const sky = skyFlights(model, cur);
+    lastSky = sky; // art:track
     sound.setSky(sky, follow?.id ?? null, istanbulHour(model.from + cur), mode === "REPLAY", sky.length); // art:sound — v4 build-ups, level
   }
   const musicHud = (i: SoundInfo): MusicHud => ({ // art:sound
@@ -348,7 +369,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (model) { // art:sound — planned also while muted (scope, route flashes)
         refreshPans();
         feedSky(); // art:sound
-        sound.setEnergy(Math.min(1, Math.max(0, (d.store.get().counters.airborne ?? 0) / 150)));
+        sound.setEnergy(track.data() ? 0.3 + 0.7 * intensityNow() : Math.min(1, Math.max(0, (d.store.get().counters.airborne ?? 0) / 150)));
       }
     }
     const cur = currentCur(nowSec);
@@ -359,7 +380,15 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         sound.setEnabled(soundOn && !want);
         prevSoundCur = null;
       }
+      track.setGain(0.4 + 0.6 * intensityNow()); // the recorded audio rises and falls with the traffic of the hour
       track.update(model.span > 0 ? cur / model.span : 0, want && !cycle.paused);
+      // after the track (LIVE, FOLLOW) the generative engine rests: the notes of the track go on, thinned by the traffic
+      const td = track.data();
+      sound.setGenerative(!td);
+      if (soundOn && !want && td) {
+        cont ??= createContinuation(td.notes, td.duration);
+        sound.playNotes(cont.step(clock(), lastSky, intensityNow()));
+      }
     }
     if (model) { // art:sound
       if (prevSoundCur !== null) {
