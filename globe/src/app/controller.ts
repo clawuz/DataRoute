@@ -374,14 +374,15 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     }
     const cur = currentCur(nowSec);
     if (model) { // art:track — in REPLAY the recorded track of the day replaces the generative music (LIVE and FOLLOW keep it)
-      const want = soundOn && mode === "REPLAY" && !follow && track.ready();
+      // while a flight is followed in REPLAY the recording keeps playing on its own clock (until it ends)
+      const want = soundOn && mode === "REPLAY" && track.ready() && !(follow && track.finished());
       if (want !== trackActive) {
         trackActive = want;
         sound.setEnabled(soundOn && !want);
         prevSoundCur = null;
       }
       track.setGain(0.4 + 0.6 * intensityNow()); // the recorded audio rises and falls with the traffic of the hour
-      track.update(model.span > 0 ? cur / model.span : 0, want && !cycle.paused);
+      track.update(model.span > 0 ? cur / model.span : 0, want && !(follow ? follow.clock.paused : cycle.paused), !!follow);
       // after the track (LIVE, FOLLOW) the generative engine rests: the notes of the track go on, thinned by the traffic
       const td = track.data();
       sound.setGenerative(!td);

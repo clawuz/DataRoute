@@ -59,8 +59,10 @@ export interface DayTrack {
   setEnabled(on: boolean): void;
   /** true once the audio and the notes are loaded and the track can take over from the generative music */
   ready(): boolean;
-  /** `frac` = replay position 0..1; `playing` = the replay runs (not paused/following/live) */
-  update(frac: number, playing: boolean): void;
+  /** `frac` = replay position 0..1; `playing` = the replay runs; `free` = do not chase `frac` (while a flight is followed the recording keeps its own clock) */
+  update(frac: number, playing: boolean, free?: boolean): void;
+  /** the recording has played to its end */
+  finished(): boolean;
   /** the loaded notes (for the continuation after the track); null until loaded */
   data(): TrackData | null;
   /** loudness 0..1 of the recorded audio (follows the traffic of the hour) */
@@ -116,7 +118,8 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
     setGain(g) {
       if (audio) audio.volume = Math.min(1, Math.max(0, g));
     },
-    update(frac, playing) {
+    finished: () => !!(audio && data && (audio.ended || audio.currentTime >= data.duration - 0.05)),
+    update(frac, playing, free = false) {
       const a = audio;
       if (!a || !data || !enabled) return;
       if (!playing) {
@@ -125,7 +128,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
         return;
       }
       const { t, seek } = targetTime(frac, data.duration, a.currentTime);
-      if (seek) {
+      if (seek && !free) {
         a.currentTime = t;
         prevT = t;
       }
