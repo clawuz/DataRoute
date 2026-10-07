@@ -76,6 +76,9 @@ export interface DayTrackDeps {
   clock: () => number;
 }
 
+/** Seconds ahead of the sound at which a note is published (the ribbon shows the notes about to be read). */
+export const LOOKAHEAD_SEC = 3;
+
 /** The recorded track of the day (public/music/track.mp3 + notes.json); fails silently — the generative music stays. */
 export function createDayTrack(d: DayTrackDeps): DayTrack {
   const base = d.base ?? "/music";
@@ -84,7 +87,8 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
   let loading = false;
   let enabled = false;
   let disposed = false;
-  let prevT: number | null = null;
+  let prevT: number | null = null; // media time up to which notes have been published
+  let lastNow: number | null = null; // media time at the previous update (jump detection)
 
   async function load() {
     if (loading || data || typeof Audio === "undefined") return;
@@ -111,6 +115,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       else {
         audio?.pause();
         prevT = null;
+        lastNow = null;
       }
     },
     ready: () => !!(audio && data && audio.readyState >= 2),
@@ -125,6 +130,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       if (!playing) {
         if (!a.paused) a.pause();
         prevT = null;
+        lastNow = null;
         return;
       }
       const out = (n: TrackNote, at: number) => {
@@ -139,13 +145,14 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       }
       if (a.paused) void a.play().catch(() => undefined); // blocked until a user gesture: the next tick retries
       const now = a.currentTime;
-      if (prevT !== null && now - prevT < 1.5) for (const n of notesBetween(data.notes, prevT, now)) out(n, d.clock() + (n.t - now));
-      else if (prevT !== null && free && now < prevT && data.duration - prevT < 1.5) {
-        // the loop wrapped: the tail of the recording, then its start
-        for (const n of notesBetween(data.notes, prevT, data.duration)) out(n, d.clock() + (n.t - prevT));
-        for (const n of notesBetween(data.notes, -1, now)) out(n, d.clock() + (n.t - now));
+      // the notes are published LOOKAHEAD seconds before they sound: the scope draws them ahead of its reading line
+      if (prevT === null || lastNow === null || now > lastNow + 1.5 || now < lastNow - 0.5) prevT = now; // start, stall, seek, loop wrap
+      lastNow = now;
+      const target = Math.min(data.duration, now + LOOKAHEAD_SEC);
+      if (target > prevT) {
+        for (const n of notesBetween(data.notes, prevT, target)) out(n, d.clock() + (n.t - now));
+        prevT = target;
       }
-      prevT = now;
     },
     dispose() {
       disposed = true;

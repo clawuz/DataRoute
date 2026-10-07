@@ -91,3 +91,21 @@ describe("day curve", () => {
     expect(windowAt(-1, 8)).toBe(0);
   });
 });
+
+describe("track publishing", () => {
+  it("publishes every note once, a few seconds ahead of the sound", async () => {
+    const { createDayTrack } = await import("../src/audio/day-track");
+    const published: number[] = [];
+    const audio = { currentTime: 0, paused: true, loop: false, readyState: 4, volume: 1, pause() {}, play() { this.paused = false; return Promise.resolve(); }, ended: false };
+    const g = globalThis as unknown as { Audio?: unknown; fetch?: unknown };
+    const prevAudio = g.Audio, prevFetch = g.fetch;
+    g.Audio = function () { return audio; };
+    g.fetch = async () => ({ ok: true, json: async () => ({ duration: 60, notes: [1, 2, 4, 5, 9].map((t) => ({ ...n(t), t })) }) });
+    const tr = createDayTrack({ clock: () => 100, onNote: (e) => published.push(Math.round(e.at - 100)) });
+    tr.setEnabled(true);
+    await new Promise((r) => setTimeout(r, 5));
+    for (let t = 0; t <= 9.5; t += 0.05) { audio.currentTime = t; tr.update(t / 60, true); }
+    g.Audio = prevAudio; g.fetch = prevFetch;
+    expect(published.length).toBe(5); // each note exactly once
+  });
+});

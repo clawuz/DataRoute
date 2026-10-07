@@ -82,6 +82,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
   const musicRef = useRef(music);
   musicRef.current = music;
   const queue = useRef<NoteEvent[]>([]);
+  const fresh = useRef<NoteEvent[]>([]); // art:track — recorded-track notes enter the ribbon when published (ahead of their sound)
   const playing = useRef<Playing[]>([]); // art:track — the routes sounding right now
   const [nowList, setNowList] = useState<Playing[]>([]);
 
@@ -91,6 +92,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         const q = queue.current;
         if (q.length >= MAX_QUEUE) q.shift();
         q.push(n);
+        if (routeOfNote(n)) fresh.current.push(n); // art:track
       }),
     [bus],
   );
@@ -120,19 +122,18 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       const now = wallSec();
       if (now - simT > 1) simT = now - 1; // after a hidden tab: catch up at most one second
       // sounding notes: flight lines (and the Istanbul ensemble) join their trail, groove voices wait for their sample
+      for (const n of fresh.current) { // art:track — recorded-track notes take their route's colour, drawn ahead of the reading line
+        lastTrackHit = now;
+        pushTrail(trails, n, routeColor(routeOfNote(n)!), TRACK_MAX_POINTS, TRACK_MAX_TRAILS);
+      }
+      fresh.current.length = 0;
       const q = queue.current;
       let keep = 0;
       for (const n of q) {
         if (n.at > now) q[keep++] = n;
         else if (traces.has(n.lane)) beats.push(n);
-        else if (trailIdOf(n) !== null) {
-          const route = routeOfNote(n); // art:track — recorded-track notes take their route's colour
-          if (route) {
-            lastTrackHit = now;
-            pushTrail(trails, n, routeColor(route), TRACK_MAX_POINTS, TRACK_MAX_TRAILS);
-          } else pushTrail(trails, n, INSTRUMENT_COLOR[n.instrument]);
-          playing.current = playingPush(playing.current, n, now);
-        }
+        else if (routeOfNote(n)) playing.current = playingPush(playing.current, n, now); // the list shows the notes that sound now
+        else if (trailIdOf(n) !== null) pushTrail(trails, n, INSTRUMENT_COLOR[n.instrument]);
       }
       q.length = keep;
       while (simT + STEP <= now) {
@@ -173,14 +174,15 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       // thick bar as long as the note (v5), over the thin trail line
       const now = wallSec();
       const ribbonH = (m.day ? 0.8 : RIBBON_SHARE) * h; // the recorded track gets a taller ribbon over a slimmer day curve
+      const wide = ribbonSec > RIBBON_SEC; // the recorded track: a reading line, notes flow through it
       const pxPerSec = w / ribbonSec;
-      const xOf = (t: number) => w - (now - t) * pxPerSec;
+      const px0 = wide ? 0.78 * w : w; // the reading line (generative: the right edge)
+      const xOf = (t: number) => px0 - (now - t) * pxPerSec;
       const yOf = (y: number) => (1 - y) * ribbonH;
       const labels: { x: number; y: number; text: string; color: string }[] = [];
       for (const tr of trails.values()) {
         const age = Math.max(0, now - tr.lastHit);
-        const wide = ribbonSec > RIBBON_SEC; // recorded track: no connecting lines, just glowing bars (ribbon+)
-        g.globalAlpha = base * (wide ? Math.max(0.18, 1 - age / ribbonSec) : Math.max(0.15, 1 - age / ribbonSec));
+        g.globalAlpha = base * (wide ? 1 : Math.max(0.15, 1 - age / ribbonSec));
         g.strokeStyle = tr.color;
         if (!wide) {
           g.beginPath();
@@ -191,18 +193,34 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
           g.stroke();
         }
         g.fillStyle = tr.color;
-        const barH = (wide ? 2.2 : NOTE_BAR_H_PX) * dpr; // thin, long lines: clearer than blocks
+        const barH = (wide ? 2.2 : NOTE_BAR_H_PX) * dpr; // thin, long lines
         for (const p of tr.points) {
           const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
-          if (x + bw < 0) continue;
-          const fresh = wide && p.t <= now && now - p.t < 0.4; // ribbon+: a note glows while it strikes
-          if (wide) g.globalAlpha = base * Math.max(0.12, 1 - (now - p.t) / ribbonSec) * (fresh ? 1.4 : 1);
-          g.shadowColor = tr.color;
-          g.shadowBlur = fresh ? 14 * dpr : 0;
-          g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
-          if (wide && p.v > 0.8 && p.t <= now && now - p.t < 1.6) labels.push({ x, y: yOf(p.y) - barH, text: tr.lineId.replace("-", "→"), color: tr.color });
+          if (x + bw < 0 || x > w) continue;
+          if (wide) {
+            // ahead of the line: dim · under the line (sounding): bright and glowing · behind: fading
+            const age = now - p.t;
+            const sounding = age >= 0 && age < Math.max(p.dur, 0.25);
+            g.globalAlpha = base * (age < 0 ? 0.4 : sounding ? 1 : Math.max(0.15, 1 - age / (ribbonSec * 0.78)));
+            g.shadowColor = tr.color;
+            g.shadowBlur = sounding ? 6 * dpr : 0; // a tight glow, not a blob (additive blending)
+            const hh = sounding ? barH * 1.7 : barH;
+            g.fillRect(x, yOf(p.y) - hh / 2, bw, hh);
+            if (sounding && p.v > 0.8) labels.push({ x, y: yOf(p.y) - barH * 2, text: tr.lineId.replace("-", "→"), color: tr.color });
+          } else g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
         }
         g.shadowBlur = 0;
+      }
+      if (wide) { // the reading line
+        g.globalAlpha = 0.9;
+        g.fillStyle = "#fff";
+        g.fillRect(px0 - 0.75 * dpr, 0, 1.5 * dpr, ribbonH);
+        g.beginPath();
+        g.moveTo(px0 - 4 * dpr, 0);
+        g.lineTo(px0 + 4 * dpr, 0);
+        g.lineTo(px0, 5 * dpr);
+        g.closePath();
+        g.fill();
       }
       // ribbon+: the strongest notes name their route
       g.globalAlpha = 1;
