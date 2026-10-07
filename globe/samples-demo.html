@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Örnekli çalgı denemesi</title>
+<style>
+  :root { color-scheme: dark; --bg:#0b0e1a; --card:#141a2e; --line:#26304f; --ink:#e8ecf8; --dim:#9aa6c7; --acc:#5b7cff; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 system-ui, sans-serif; padding:20px; max-width:1100px; margin-inline:auto; }
+  h1 { font-size:18px; margin:0 0 6px; } p.sub { color:var(--dim); margin:0 0 16px; }
+  .ctl { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:10px 0 16px; }
+  .ctl input[type=range] { width:240px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+  .ex { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  .ex h3 { margin:0 0 4px; font-size:15px; } .ex p { margin:0 0 8px; color:var(--dim); font-size:12px; }
+  button { background:#1d2750; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 14px; cursor:pointer; font-size:13px; }
+  button.on { background:var(--acc); } button:disabled { opacity:.5; cursor:wait; }
+  .st { color:var(--dim); font-size:12px; margin-left:8px; }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-top:16px; }
+  .layers { color:var(--dim); font-size:12px; }
+  a { color:#9fb4ff; }
+</style>
+</head>
+<body>
+<h1>Örnekli (gerçek kayıt) çalgılarla deneme</h1>
+<p class="sub">Aynı notalar, bu kez gerçek çalgı kayıtlarıyla (University of Iowa Musical Instrument Samples ve Salamander piyano örnekleri). İlk çalışta örnekler iner (her çalgı birkaç MB).</p>
+<div class="ctl"><label for="inten">Trafik yoğunluğu (veri)</label><input id="inten" type="range" min="0" max="100" value="55" /><span class="layers" id="lay"></span></div>
+<div class="grid" id="grid"></div>
+<div class="box">
+  <b>Gerçek MIDI dosyası dene</b>
+  <p class="sub" style="margin:4px 0 8px">Telifsiz bir MIDI indir (ör. <a href="https://www.mutopiaproject.org" target="_blank">Mutopia Project</a>), buradan seç; piyano ve yaylı örnekleriyle çalar. Tek iz = melodi, diğerleri eşlik.</p>
+  <input type="file" id="midi" accept=".mid,.midi" /> <button id="midiStop">Durdur</button> <span class="st" id="midiSt"></span>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script src="https://unpkg.com/@tonejs/midi@2.0.28/build/Midi.js"></script>
+<script>
+const BASE = 'https://nbrosowsky.github.io/tonejs-instruments/samples/';
+const SETS = {
+  piano: ['A1','A2','A3','A4','A5','A6','A7'],
+  violin: ['A3','A4','A5','A6','C4','C5','C6','E4','E5','G3','G4'],
+  cello: ['A2','A3','A4','C2','C3','C4','C5','B2','B3','B4'],
+  flute: ['A4','A5','A6','C4','C5','C6','E4','E5','E6'],
+  saxophone: ['A4','A5','As3','As4','B3','B4','C4','C5','Cs3','Cs4','Cs5','D3'],
+  harp: ['A2','A4','A6','B1','B3','B5','C3','C5','D2','D4','D6'],
+  'guitar-nylon': ['A2','A3','A4','A5','B2','B3','B4','Cs3','Cs4','Cs5'],
+  'french-horn': ['A1','A3','C2','C4','D3','D5','F3','G2'],
+  clarinet: ['As3','As4','As5','D3','D4','D5','F3','F4','F5'],
+  trumpet: ['A3','A5','As4','C4','C6','D5','Ds4','F3','F4','F5','G4'],
+  bassoon: ['A2','A3','A4','C3','C4','C5','E4','G2','G3','G4'],
+  contrabass: ['A2','As1','B3','C2','D2','E2','E3','G1']
+};
+const cache = {};
+function inst(name) {
+  if (cache[name]) return cache[name];
+  const urls = {};
+  SETS[name].forEach(n => { urls[n.replace(/^([A-G])s/, '$1#')] = n + '.mp3'; });
+  cache[name] = new Tone.Sampler({ urls, baseUrl: BASE + name + '/', release: 1.2 }).toDestination();
+  return cache[name];
+}
+const NN = {C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const nm = s => { const m = s.match(/^([A-G])(#|b)?(\d)$/); return 12*(+m[3]+1) + NN[m[1]] + (m[2]==='#'?1:m[2]==='b'?-1:0); };
+const hz = m => Tone.Frequency(m, 'midi').toFrequency();
+const seq = arr => { let b=0; const ev=[]; for (const [n,d] of arr) { if (n!=='R') ev.push({b,d,m:nm(n)}); b+=d; } return {ev,len:b}; };
+const chordEv = (bars,bpb,table,off=0,dur=null) => { const o=[]; bars.forEach((c,i)=>(table[c]||[]).forEach(n=>o.push({b:i*bpb+off,d:dur??bpb-off,m:nm(n)}))); return o; };
+const bassEv = (bars,bpb,table) => bars.map((c,i)=>({b:i*bpb,d:bpb,m:nm(table[c])}));
+
+const EX = [
+ { t:'Beethoven · Neşeye Övgü', d:'Piyano melodi; yaylılar zemin; korno melodiyi çiftler; kontrbas.', bpm:104, bpb:4,
+   mel: seq([['E4',1],['E4',1],['F4',1],['G4',1],['G4',1],['F4',1],['E4',1],['D4',1],['C4',1],['C4',1],['D4',1],['E4',1],['E4',1.5],['D4',.5],['D4',2],['E4',1],['E4',1],['F4',1],['G4',1],['G4',1],['F4',1],['E4',1],['D4',1],['C4',1],['C4',1],['D4',1],['E4',1],['D4',1.5],['C4',.5],['C4',2]]),
+   bars:['C','G','C','G','C','G','C','C'], tbl:{C:['C4','E4','G4'],G:['B3','D4','G3']}, bass:{C:'C2',G:'G1'},
+   build(e){ const bar=chordEv(e.bars,e.bpb,e.tbl); return [
+     {i:'piano',ev:e.mel.ev,min:0,vel:.8},
+     {i:'french-horn',ev:e.mel.ev.map(n=>({...n,m:n.m-12})),min:.7,vel:.7},
+     {i:'violin',ev:bar.filter(n=>n.m>=60),min:.3,vel:.5},{i:'cello',ev:bar.map(n=>({...n,m:n.m-24})),min:.3,vel:.6},
+     {i:'contrabass',ev:bassEv(e.bars,e.bpb,e.bass).map(n=>({...n,m:n.m+12})),min:.2,vel:.7}]; } },
+ { t:'Mozart · Rondo alla Turca (tema, yaklaşık)', d:'Piyano melodi + oom-pah eşlik, fagot bas, yaylılar yoğunlukta girer.', bpm:116, bpb:2,
+   mel: seq([['B4',.25],['A4',.25],['G#4',.25],['A4',.25],['C5',1],['D5',.25],['C5',.25],['B4',.25],['C5',.25],['E5',1],['F5',.25],['E5',.25],['D#5',.25],['E5',.25],['B5',.25],['A5',.25],['G#5',.25],['A5',.25],['B5',.25],['A5',.25],['G#5',.25],['A5',.25],['C6',1],['A5',2]]),
+   bars:['A','A','E','E','A','A','E','A'], tbl:{A:['A3','C4','E4'],E:['E3','G#3','B3']}, bass:{A:'A2',E:'E2'},
+   build(e){ return [
+     {i:'piano',ev:e.mel.ev,min:0,vel:.85},
+     {i:'piano',ev:chordEv(e.bars,e.bpb,e.tbl,1,1),min:0,vel:.5},
+     {i:'bassoon',ev:bassEv(e.bars,e.bpb,e.bass),min:.3,vel:.7},
+     {i:'violin',ev:chordEv(e.bars,e.bpb,e.tbl,0,2).map(n=>({...n,m:n.m+12})),min:.5,vel:.45}]; } },
+ { t:'Barok · Canon ilerleyişi (Pachelbel tarzı)', d:'Keman teması, çello bas hattı, arp arpejleri, flüt oktav çiftleme.', bpm:64, bpb:2,
+   mel: seq([['F#5',2],['E5',2],['D5',2],['C#5',2],['B4',2],['A4',2],['B4',2],['C#5',2],['F#5',2],['E5',2],['D5',2],['C#5',2],['B4',2],['A4',2],['B4',2],['C#5',2]]),
+   bars:['D','A','Bm','F#m','G','D','G','A','D','A','Bm','F#m','G','D','G','A'],
+   tbl:{D:['D4','F#4','A4'],A:['A3','C#4','E4'],Bm:['B3','D4','F#4'],'F#m':['F#3','A3','C#4'],G:['G3','B3','D4']},
+   bass:{D:'D3',A:'A2',Bm:'B2','F#m':'F#2',G:'G2'},
+   build(e){ const arp=[]; e.bars.forEach((c,i)=>(e.tbl[c]||[]).forEach((n,k)=>arp.push({b:i*e.bpb+k*.5,d:.6,m:nm(n)+12}))); return [
+     {i:'violin',ev:e.mel.ev,min:0,vel:.8},
+     {i:'cello',ev:bassEv(e.bars,e.bpb,e.bass),min:0,vel:.75},
+     {i:'harp',ev:arp,min:.3,vel:.6},
+     {i:'flute',ev:e.mel.ev.map(n=>({...n,m:n.m+12})),min:.7,vel:.45}]; } },
+ { t:'Empresyonist · Gymnopédie tarzı', d:'Yavaş 3/4: piyano akorları, flüt melodisi, çello pedalı. (Özgün kısa melodi.)', bpm:62, bpb:3,
+   mel: seq([['R',6],['F#5',2],['A5',1],['G5',2],['F#5',1],['E5',1],['C#5',1],['E5',1],['D5',3],['F#5',2],['A5',1],['B5',2],['A5',1],['G5',1],['F#5',1],['E5',1],['D5',3]]),
+   bars:['G','D','G','D','G','D','G','D','G','D'], tbl:{G:['B3','D4','F#4'],D:['A3','C#4','F#4']}, bass:{G:'G2',D:'D2'},
+   build(e){ const comp=[]; e.bars.forEach((c,i)=>(e.tbl[c]||[]).forEach(n=>comp.push({b:i*e.bpb+1,d:2,m:nm(n)}))); return [
+     {i:'flute',ev:e.mel.ev,min:0,vel:.7},
+     {i:'piano',ev:comp,min:0,vel:.5},{i:'piano',ev:bassEv(e.bars,e.bpb,e.bass),min:0,vel:.7},
+     {i:'cello',ev:bassEv(e.bars,e.bpb,e.bass).map(n=>({...n,m:n.m+12,d:3})),min:.4,vel:.5}]; } },
+ { t:'Osmanlı/Türk · Hicaz tarzı doğaçlama (özgün)', d:'Ney örneği olmadığından klarnet; ud yerine nylon gitar; düyek perküsyon sentez.', bpm:90, bpb:4,
+   mel: seq([['A4',1],['A#4',.5],['C#5',.5],['D5',1],['C#5',.5],['A#4',.5],['A4',2],['D5',1],['E5',.5],['F5',.5],['E5',1],['D5',.5],['C#5',.5],['A#4',1],['A4',1],['G#4',1],['A4',1],['R',1],['C#5',1],['D5',1],['E5',2],['F5',1],['E5',1],['D5',1],['C#5',.5],['A#4',.5],['A4',4]]),
+   bars:['A','A','A','A','A','A','A','A'], tbl:{A:['A2']}, bass:{A:'A2'}, perc:'duyek',
+   build(e){ const drone=[]; for(let b=0;b<e.mel.len;b+=2) drone.push({b,d:1,m:nm('A2')}); return [
+     {i:'clarinet',ev:e.mel.ev,min:0,vel:.8},
+     {i:'guitar-nylon',ev:drone,min:0,vel:.7},
+     {i:'cello',ev:e.mel.ev.map(n=>({...n,m:n.m-12})),min:.6,vel:.4}]; } },
+ { t:'Caz/Fusion · sadeleşmiş (şimdiki yapı)', d:'Saksafon lider, piyano komping, kontrbas, davul sentez; yoğunlukta trompet vuruşları.', bpm:108, bpb:4,
+   mel: seq([['A4',1.5],['C5',.5],['D5',1],['F5',1],['G5',2],['F5',1],['D5',1],['A#4',1.5],['D5',.5],['F5',2],['E5',1],['C5',1],['A4',2],['R',2]]),
+   bars:['Dm','Bb','Gm','A7','Dm','Bb','Gm','A7'], tbl:{Dm:['F3','A3','C4','E4'],Bb:['D3','F3','A3','C4'],Gm:['A#2','D3','F3','A3'],A7:['C#3','E3','G3','A#3']},
+   bass:{Dm:'D2',Bb:'A#1',Gm:'G1',A7:'A1'}, perc:'kit',
+   build(e){ const comp=[]; e.bars.forEach((c,i)=>(e.tbl[c]||[]).forEach(n=>[.5,2,3.5].forEach(o=>comp.push({b:i*e.bpb+o,d:.3,m:nm(n)})))); return [
+     {i:'saxophone',ev:e.mel.ev,min:0,vel:.8},{i:'piano',ev:comp,min:0,vel:.45},
+     {i:'contrabass',ev:bassEv(e.bars,e.bpb,e.bass).map(n=>({...n,m:n.m+12})),min:.2,vel:.8},
+     {i:'trumpet',ev:e.mel.ev.filter((_,i)=>i%3===0),min:.8,vel:.6}]; } }
+];
+const $ = id => document.getElementById(id);
+const I = () => +$('inten').value/100;
+const lay = () => { const i=I(); $('lay').textContent = 'bas '+(i>=.2?'●':'○')+'  yaylı '+(i>=.3?'●':'○')+'  perküsyon '+(i>=.5?'●':'○')+'  üfleme/pirinç '+(i>=.7?'●':'○')+'  tempo '+(Math.round((i-.5)*16))+'%'; };
+$('inten').oninput = lay; lay();
+let playing = null, stopFns = [];
+function stopAll() { Tone.Transport.stop(); Tone.Transport.cancel(); Object.values(cache).forEach(s => s.releaseAll && s.releaseAll()); document.querySelectorAll('.ex button').forEach(b => { b.classList.remove('on'); b.textContent='Çal'; }); playing=null; }
+async function play(i, btn, st) {
+  if (playing === i) { stopAll(); return; }
+  stopAll(); await Tone.start(); btn.disabled = true; st.textContent = 'örnekler iniyor…';
+  const e = EX[i], I0 = I(); const bpm = e.bpm*(1+(I0-.5)*.16), spb = 60/bpm;
+  const layers = e.build(e).filter(l => I0 >= l.min);
+  layers.forEach(l => inst(l.i));
+  await Tone.loaded(); btn.disabled = false; st.textContent = '';
+  const t0 = Tone.now() + .2;
+  const vel = .55 + .45*I0;
+  layers.forEach(l => { const s = inst(l.i); l.ev.forEach(n => { const dur = Math.max(.12, n.d*spb); s.triggerAttackRelease(hz(n.m), dur*.98, t0 + n.b*spb, Math.min(1, l.vel*vel)); }); });
+  // percussion (synth) for the jazz/hicaz demos
+  if (e.perc) {
+    const kick = new Tone.MembraneSynth({ pitchDecay:.04, octaves:6 }).toDestination(); const noise = new Tone.NoiseSynth({ envelope:{ attack:.001, decay:.12, sustain:0 } }).toDestination();
+    const hat = new Tone.NoiseSynth({ noise:{type:'white'}, envelope:{ attack:.001, decay:.04, sustain:0 } }).toDestination(); hat.volume.value = -14; noise.volume.value=-10; kick.volume.value=-6;
+    const total = Math.ceil(e.mel.len/.5);
+    for (let k=0;k<total;k++) { const b=k*.5, t=t0+b*spb, gb=b%e.bpb;
+      if (e.perc==='kit' && I0>=.5) { if (gb===0||gb===2) kick.triggerAttackRelease('C1','8n',t); if (gb===1||gb===3) noise.triggerAttackRelease('16n',t); hat.triggerAttackRelease('32n',t); }
+      if (e.perc==='duyek' && I0>=.4) { const pat=[1,0,.6,0,1,.8,.6,0]; const p=pat[k%8]; if (p) kick.triggerAttackRelease(k%4===0?'A1':'E2','16n',t,p); }
+    }
+  }
+  playing = i; btn.classList.add('on'); btn.textContent = 'Durdur';
+  setTimeout(() => { if (playing === i) stopAll(); }, (e.mel.len*spb + 4)*1000);
+}
+EX.forEach((e, i) => { const d = document.createElement('div'); d.className='ex'; d.innerHTML = `<h3>${e.t}</h3><p>${e.d}</p><button>Çal</button><span class="st"></span>`; $('grid').appendChild(d); const b=d.querySelector('button'), st=d.querySelector('.st'); b.onclick=()=>play(i,b,st); });
+// real MIDI file
+$('midi').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return; stopAll(); await Tone.start();
+  const midi = new Midi(await f.arrayBuffer()); $('midiSt').textContent = 'örnekler iniyor…';
+  const pno = inst('piano'), str = inst('violin'), cel = inst('cello'); await Tone.loaded(); $('midiSt').textContent = midi.name || f.name;
+  const t0 = Tone.now() + .3; const tracks = midi.tracks.filter(t => t.notes.length);
+  tracks.forEach((tr, k) => { const s = k === 0 ? pno : (k % 2 ? str : cel); tr.notes.forEach(n => { const m = n.midi; if (m < 28 || m > 100) return; s.triggerAttackRelease(hz(m), Math.max(.15, n.duration), t0 + n.time, Math.min(1, (n.velocity||.7)*.9)); }); });
+  const dur = Math.max(...tracks.map(t => t.duration || 0)); setTimeout(() => { $('midiSt').textContent = ''; }, (dur + 3) * 1000);
+};
+$('midiStop').onclick = () => { Object.values(cache).forEach(s => s.releaseAll && s.releaseAll()); $('midiSt').textContent = ''; };
+</script>
+</body>
+</html>

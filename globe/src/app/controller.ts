@@ -316,6 +316,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       mode,
       events,
       labels,
+      depFrom: model?.from ?? 0,
       extrapolated: d.engine.headsInfo().extrapolated,
       textureProgress: tex.progress,
       textureNote: tex.note,

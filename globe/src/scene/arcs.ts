@@ -126,6 +126,7 @@ uniform float uWindow;
 uniform vec2 uRes;
 uniform float uWidth;
 uniform float uHighlight;
+uniform vec3 uHub;
 uniform vec3 uColors[7];
 attribute vec2 aCorner;
 attribute vec3 aA;
@@ -170,6 +171,9 @@ void main() {
     float after = max(uCur - aT.y, 0.0) / uWindow;
     alpha = 0.34 * exp(-after * 8.0) * (hi ? 3.0 : 1.0);
   }
+  // ux: a soft cap around the Istanbul hub — hundreds of additive lines would otherwise burn into one white disc
+  float dh = acos(clamp(dot(normalize(pa), uHub), -1.0, 1.0));
+  alpha *= mix(0.5, 1.0, smoothstep(0.02, 0.14, dh));
   vec4 cA = projectionMatrix * modelViewMatrix * vec4(pa, 1.0);
   vec4 cB = projectionMatrix * modelViewMatrix * vec4(pb, 1.0);
   vec2 sA = cA.xy / cA.w * uRes;
@@ -177,7 +181,7 @@ void main() {
   vec2 dir = sB - sA;
   dir = length(dir) < 1e-4 ? vec2(1.0, 0.0) : normalize(dir);
   vec2 n = vec2(-dir.y, dir.x);
-  float w = uWidth * (hi ? 2.2 : 1.0) * (kind < 0.5 ? 1.0 : 0.85);
+  float w = uWidth * (hi ? 2.2 : 1.0) * (kind < 0.5 ? 1.0 : 0.85) * (aInfo.x < 0.5 ? 0.7 : 1.0); // domestic routes (region 0) are thinner
   vec4 c = mix(cA, cB, aCorner.y);
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
@@ -210,6 +214,7 @@ export type ArcUniforms = {
   uRes: { value: Vector2 };
   uWidth: { value: number };
   uHighlight: { value: number };
+  uHub: { value: Vector3 };
   uColors: { value: Vector3[] };
 };
 
@@ -240,6 +245,7 @@ export function createArcs(m: GlobeModel, opts: { planned?: boolean } = {}): Arc
     uRes: { value: new Vector2(1, 1) },
     uWidth: { value: ARC_WIDTH_PX },
     uHighlight: { value: -1 },
+    uHub: { value: new Vector3(...latLonToVec3(41.2613, 28.742, 1)).normalize() },
     uColors: { value: REGION_RGB.map(([r, g, b]) => new Vector3(r, g, b)) },
   };
   const material = new ShaderMaterial({

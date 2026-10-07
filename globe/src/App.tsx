@@ -133,7 +133,7 @@ export function App() {
 
   return (
     <>
-      <canvas ref={canvasRef} className="stage" />
+      <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
     </>
   );

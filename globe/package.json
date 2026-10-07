@@ -5,7 +5,7 @@
   "scripts": {
     "fonts": "node scripts/copy-fonts.mjs",
     "predev": "npm run fonts",
-    "dev": "vite --port 5174 --strictPort",
+    "dev": "vite --port ${PORT:-5174} --strictPort",
     "prebuild": "npm run fonts",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",

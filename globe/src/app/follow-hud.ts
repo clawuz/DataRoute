@@ -77,7 +77,7 @@ export function formatFollow(f: GlobeFlight, tel: Telemetry, clock: FollowClock)
     elapsed: fmtElapsed(tel.elapsedSec),
     remaining: tel.remainingSec === null ? "—" : `${fmtElapsed(tel.remainingSec)}${tel.etaEstimated ? " EST" : ""}`,
     utc: fmtUtc(tel.utcSec),
-    local: `${pad2(Math.floor(local))}:${pad2(Math.floor((local % 1) * 60))} LOCAL SOLAR`,
+    local: `${pad2(Math.floor(local))}:${pad2(Math.floor((local % 1) * 60))} LOCAL TIME`,
     speed: speedLabel(f, clock),
     progress: tel.totalKm && tel.totalKm > 0 ? Math.min(1, Math.max(0, tel.distKm / tel.totalKm)) : 0,
     profile,

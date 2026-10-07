@@ -29,6 +29,8 @@ export interface AirportLabel {
 
 export interface GlobeHudSnapshot extends HudSnapshot {
   mode: "LIVE" | "REPLAY";
+  /** ux: unix seconds of the first departures-per-hour bin (labels the hour axis) */
+  depFrom: number;
   events: EventLine[];
   labels: AirportLabel[];
   extrapolated: number;
@@ -75,6 +77,7 @@ export interface DayCurveHud {
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
   ...EMPTY_SNAPSHOT,
   mode: "LIVE",
+  depFrom: 0,
   events: [],
   labels: [],
   extrapolated: 0,
@@ -161,4 +164,24 @@ export function hoverNote(f: GlobeFlight, cur: number): string {
   }
   if (f.status === "LAST_CONTACT" && cur >= f.lastT) return "LAST CONTACT";
   return "";
+}
+
+/** ux: the screen box of an airport label (it sits up-right of its point); IST is bigger */
+export function labelBox(l: { iata: string; x: number; y: number }): { x0: number; y0: number; x1: number; y1: number } {
+  const w = l.iata === "IST" ? 46 : 34;
+  const h = l.iata === "IST" ? 20 : 16;
+  return { x0: l.x + 6, y0: l.y - h - 4, x1: l.x + 6 + w, y1: l.y - 4 };
+}
+
+/** ux: labels in priority order (IST first, then the busiest) — one that would overlap a label already placed is hidden. */
+export function resolveLabelOverlaps<T extends { iata: string; x: number; y: number; visible: boolean }>(labels: T[], pad = 3): T[] {
+  const placed: ReturnType<typeof labelBox>[] = [];
+  return labels.map((l) => {
+    if (!l.visible) return l;
+    const b = labelBox(l);
+    const hit = placed.some((p) => b.x0 < p.x1 + pad && b.x1 + pad > p.x0 && b.y0 < p.y1 + pad && b.y1 + pad > p.y0);
+    if (hit) return { ...l, visible: false };
+    placed.push(b);
+    return l;
+  });
 }

@@ -1,10 +1,11 @@
-import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine } from "@web/hud/Hud";
-import { useEffect, useMemo, useRef } from "react";
+import { Counters, FlightCardView, SourceLine } from "@web/hud/Hud";
+import { REGIONS, REGION_HEX, REGION_LABEL } from "@web/data/palette";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore, type Store } from "@web/hud/store";
 import type { FollowHud } from "../app/follow-hud";
 import { createNoteBus, type NoteBus } from "../audio/notes-bus"; // art:sound
 import { MusicScope } from "./MusicScope"; // art:sound
-import type { AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
+import { resolveLabelOverlaps, type AirportLabel, type EventLine, type GlobeHudSnapshot, type LabelBus } from "../app/hud-model";
 
 /** The globe's title with a hierarchy: TURKISH AIRLINES large, 24H OPERATIONS small and light beside it (the tunnel site keeps its one-line title). */
 export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
@@ -18,7 +19,7 @@ export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
         <span className="dot" />
         {s.ready ? (
           <span className="num">
-            {s.phase} {s.timeLabel}
+            {s.follow ? `FOLLOW ${s.follow.speed}` : s.phase} {s.timeLabel}
             {s.paused ? " · PAUSED" : ""}
           </span>
         ) : (
@@ -27,6 +28,104 @@ export function GlobeTitle({ s }: { s: GlobeHudSnapshot }) {
       </div>
     </div>
   );
+}
+
+/** ux: the project's name as a top-centre lockup (a light wide cut, the tagline in normal case) */
+export function MusicLockup() {
+  return (
+    <div className="lockup">
+      <div className="lockup-title">A WORLD OF MUSIC</div>
+      <div className="lockup-tag">All our routes, composing the music of the world.</div>
+    </div>
+  );
+}
+
+/** ux: departures per hour with an hour axis (00 / 06 / 12 / 18 UTC), a NOW marker and the value on hover */
+export function GlobeDepartures({ bins, playhead, from, live }: { bins: number[]; playhead: number; from: number; live: boolean }) {
+  const max = Math.max(1, ...bins);
+  const [hover, setHover] = useState<number | null>(null);
+  const startHour = Math.floor((((from % 86400) + 86400) % 86400) / 3600);
+  const hourOf = (i: number) => (startHour + i) % 24;
+  const n = Math.max(1, bins.length);
+  return (
+    <div className="dep dep-globe">
+      <div className="label">DEPARTURES / HOUR</div>
+      <div className="dep-plot" onMouseLeave={() => setHover(null)} onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        setHover(Math.min(n - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * n))));
+      }}>
+        <svg viewBox="0 0 240 40" preserveAspectRatio="none" className="dep-svg" role="img" aria-label="Departures per hour over the last 24 hours">
+          {bins.map((c, i) => (
+            <rect key={i} x={i * 10 + 1} y={40 - (c / max) * 38} width={8} height={(c / max) * 38} className={`bar${hover === i ? " hot" : ""}`} />
+          ))}
+          <line x1={playhead * 240} x2={playhead * 240} y1={0} y2={40} className="playhead" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <span className="dep-now label" style={{ left: `${playhead * 100}%` }}>{live ? "NOW" : "▼"}</span>
+        {hover !== null && (
+          <span className="dep-tip label" style={{ left: `${((hover + 0.5) / n) * 100}%` }}>
+            {String(hourOf(hover)).padStart(2, "0")}:00 UTC · {bins[hover]} DEPARTURES
+          </span>
+        )}
+      </div>
+      <div className="dep-axis label" aria-hidden="true">
+        {bins.map((_, i) => (hourOf(i) % 6 === 0 ? <span key={i} style={{ left: `${((i + 0.5) / n) * 100}%` }}>{String(hourOf(i)).padStart(2, "0")}</span> : null))}
+      </div>
+    </div>
+  );
+}
+
+/** ux: the region legend; the unknown bucket reads OTHER */
+export function GlobeRegions({ counts }: { counts: number[] }) {
+  const max = Math.max(1, ...counts);
+  return (
+    <div className="regions">
+      <div className="label">AIRBORNE BY REGION</div>
+      {REGIONS.map((r, i) => (
+        <div key={r} className="region-row">
+          <span className="region-name">{r === "UNK" ? "OTHER" : REGION_LABEL[r]}</span>
+          <span className="region-bar">
+            <span style={{ width: `${(counts[i] / max) * 100}%`, background: REGION_HEX[r] }} />
+          </span>
+          <span className="region-count num">{counts[i]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** ux: a one-time hint (fades after a few seconds, never again once seen or once a flight is followed) */
+const HINT_KEY = "dataroute.hint";
+export function FirstHint({ active }: { active: boolean }) {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    if (!active) return;
+    let seen = false;
+    try {
+      seen = localStorage.getItem(HINT_KEY) === "1";
+    } catch {
+      /* private mode: show it each visit */
+    }
+    if (seen) return;
+    setShown(true);
+    const t = setTimeout(() => {
+      setShown(false);
+      try {
+        localStorage.setItem(HINT_KEY, "1");
+      } catch {
+        /* ignore */
+      }
+    }, 9000);
+    return () => clearTimeout(t);
+  }, [active]);
+  if (!shown) return null;
+  const touch = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+  return <div className="first-hint label" role="status">{touch ? "TAP" : "CLICK"} ANY FLIGHT TO FOLLOW</div>;
+}
+
+/** ux: shown only while the HUD is hidden — the way back */
+export function HudRestore({ hidden }: { hidden: boolean }) {
+  if (!hidden) return null;
+  return <button type="button" className="hud-restore label" onClick={() => pressKey("h")}>SHOW HUD</button>;
 }
 
 export function EventFeed({ events }: { events: EventLine[] }) {
@@ -46,8 +145,8 @@ export function AirportLabels({ labels, bus }: { labels: AirportLabel[]; bus?: L
   const els = useRef(new Map<string, HTMLDivElement>());
   useEffect(() => {
     if (!bus) return;
-    return bus.subscribe((ls) => {
-      for (const l of ls) {
+    return bus.subscribe((all) => {
+      for (const l of resolveLabelOverlaps(all)) {
         const el = els.current.get(l.iata);
         if (!el) continue;
         el.style.left = `${l.x}px`;
@@ -177,6 +276,13 @@ export function QuickControls({ s }: { s: GlobeHudSnapshot }) {
     { label: s.mode === "REPLAY" ? "▶ LIVE" : "↺ REPLAY", key: "r", on: s.mode === "REPLAY", title: "Replay 24 h ↔ live (R)" },
     { label: "TOUR", key: "t", on: s.tour, title: "Auto tour (T)" },
     { label: s.paused ? "▶ PLAY" : "❚❚ PAUSE", key: " ", on: s.paused, title: "Pause / resume (Space)" },
+    ...(s.art.enabled
+      ? [
+          { label: "DENSITY", key: "c", on: s.art.corridors, title: "Route density (C)" },
+          { label: "AURORA", key: "a", on: s.art.aurora, title: "Aurora (A)" },
+        ]
+      : []),
+    { label: "HIDE HUD", key: "h", on: false, title: "Hide the HUD (H)" },
   ];
   return (
     <div className="quick-controls" role="group" aria-label="Controls">
@@ -224,13 +330,14 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
   return (
     <div className={`hud${s.hidden ? " hidden" : ""}`}>
       <GlobeTitle s={s} />
+      <MusicLockup />
       <ModeLine s={s} />
       <ArtNotes art={s.art} />
       {s.ready && (
         <>
           <Counters c={s.counters} animate={animate} />
-          <DepartureStrip bins={s.depHist} playhead={s.playhead} />
-          {!s.follow && <RegionBars counts={s.regionAirborne} />}
+          <GlobeDepartures bins={s.depHist} playhead={s.playhead} from={s.depFrom} live={s.mode === "LIVE"} />
+          {!s.follow && <GlobeRegions counts={s.regionAirborne} />}
           <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} footer={<QuickControls s={s} />} /> {/* art:sound */}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
@@ -240,6 +347,8 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
       <SourceLine s={s} />
       <Credit s={s} />
       <KeysHelp />
+      <FirstHint active={s.ready && !s.follow} />
+      <HudRestore hidden={s.hidden} />
       {s.notice && <div className="notice label">{s.notice}</div>}
       <FlightCardView key={"tip-" + (s.tooltip?.tk ?? "")} card={s.tooltip} kind="tooltip" />
       <LoadingOverlay s={s} />

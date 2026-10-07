@@ -285,8 +285,6 @@ export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteB
   const segColor = SECTION_COLOR[music.section] ?? SECTION_COLOR.DAY;
   return (
     <div className={`music-scope${compact ? " compact" : ""}`}>
-      {/* art:track — the project's name */}
-      <div className="music-scope-title">A WORLD OF MUSIC</div>
       <div className="music-scope-wave" aria-hidden="true">
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
@@ -304,7 +302,7 @@ export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteB
           </div>
         </div>}
       </div>
-      <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>
+      {music.on && <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>}
       {music.day && ( // art:track — always rendered at a fixed height
         <ul className="music-scope-now" aria-label="Routes playing now">
           {nowList.map((p) => (

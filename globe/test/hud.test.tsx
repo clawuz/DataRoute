@@ -192,10 +192,10 @@ describe("MusicScope", () => {
     on: true, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR", "DOM"], level: 2, layers: [], ...o,
   });
   it("labels the panel with the section, chord, tempo and rhythm level", () => {
-    const { container } = render(<MusicScope bus={createNoteBus()} music={music()} />);
+    const { container } = render(<MusicScope bus={createNoteBus()} music={music({ on: true })} />);
     expect(container.querySelector("canvas")).not.toBeNull();
     expect(container.querySelector(".music-scope-label")!.textContent).toBe("ROUTES → MUSIC · DAY · C · 96 BPM · L2");
-    expect(container.querySelector(".music-scope-title")!.textContent).toBe("A WORLD OF MUSIC"); // the project's name
+    expect(container.querySelector(".music-scope-title")).toBeNull(); // the name lives in the top-centre lockup now
   });
   it("shows the level bar (five segments, the current level filled in the section colour) and one dot per region layer", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music({ section: "NIGHT", level: 1, layers: ["DOM", "MEA", "AME"] })} />);
@@ -216,7 +216,7 @@ describe("MusicScope", () => {
   it("says SOUND OFF · PRESS M while muted (the scope keeps running)", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music({ on: false, section: "NIGHT", chord: "Am9", bpm: 72 })} />);
     expect(text(container)).toContain("SOUND OFF · PRESS M");
-    expect(text(container)).toContain("ROUTES → MUSIC · NIGHT · Am9 · 72 BPM · L2");
+    expect(text(container)).not.toContain("ROUTES → MUSIC"); // the technical line shows only while the sound is on
   });
   it("does not throw without a 2D context (jsdom) and accepts notes", () => {
     const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
@@ -343,9 +343,49 @@ describe("QuickControls", () => {
     const snap = { ...EMPTY_GLOBE_SNAPSHOT, mode: "REPLAY" as const, paused: false, tour: false, music: { ...EMPTY_GLOBE_SNAPSHOT.music, on: true } };
     const { container } = render(<QuickControls s={snap} />);
     const labels = Array.from(container.querySelectorAll("button")).map((b) => b.textContent);
-    expect(labels).toEqual(["SOUND ON", "▶ LIVE", "TOUR", "❚❚ PAUSE"]);
+    expect(labels).toEqual(["SOUND ON", "▶ LIVE", "TOUR", "❚❚ PAUSE", "DENSITY", "AURORA", "HIDE HUD"]);
     container.querySelectorAll("button").forEach((b) => fireEvent.click(b));
     window.removeEventListener("keydown", on);
-    expect(pressed).toEqual(["m", "r", "t", " "]);
+    expect(pressed).toEqual(["m", "r", "t", " ", "c", "a", "h"]);
+  });
+});
+
+describe("ux pass", () => {
+  it("the lockup carries the name and the tagline", async () => {
+    const { MusicLockup } = await import("../src/hud/GlobeHud");
+    const { container } = render(<MusicLockup />);
+    expect(container.querySelector(".lockup-title")!.textContent).toBe("A WORLD OF MUSIC");
+    expect(container.querySelector(".lockup-tag")!.textContent).toBe("All our routes, composing the music of the world.");
+  });
+  it("departures: an hour axis every 6 h (UTC), a NOW marker only live", async () => {
+    const { GlobeDepartures } = await import("../src/hud/GlobeHud");
+    const bins = Array.from({ length: 24 }, (_, i) => i);
+    // the window starts at 03:00 UTC: axis labels fall on bins 3, 9, 15, 21 → 06, 12, 18, 00
+    const from = 3 * 3600;
+    const { container, rerender } = render(<GlobeDepartures bins={bins} playhead={0.5} from={from} live />);
+    expect(Array.from(container.querySelectorAll(".dep-axis span")).map((x) => x.textContent)).toEqual(["06", "12", "18", "00"]);
+    expect(container.querySelector(".dep-now")!.textContent).toBe("NOW");
+    rerender(<GlobeDepartures bins={bins} playhead={0.5} from={from} live={false} />);
+    expect(container.querySelector(".dep-now")!.textContent).toBe("▼");
+  });
+  it("the legend calls the unknown region OTHER", async () => {
+    const { GlobeRegions } = await import("../src/hud/GlobeHud");
+    const { container } = render(<GlobeRegions counts={[1, 2, 3, 4, 5, 6, 7]} />);
+    const names = Array.from(container.querySelectorAll(".region-name")).map((x) => x.textContent);
+    expect(names).toContain("OTHER");
+    expect(names).not.toContain("UNKNOWN");
+  });
+});
+
+describe("airport label overlaps", () => {
+  it("hides the label that would sit on a higher-priority one (IST wins over SAW)", async () => {
+    const { resolveLabelOverlaps } = await import("../src/app/hud-model");
+    const out = resolveLabelOverlaps([
+      { iata: "IST", x: 100, y: 100, visible: true },
+      { iata: "SAW", x: 108, y: 104, visible: true }, // 8 px away: overlaps
+      { iata: "AYT", x: 300, y: 300, visible: true }, // far: stays
+      { iata: "ESB", x: 100, y: 100, visible: false }, // not visible: untouched
+    ]);
+    expect(out.map((l) => l.visible)).toEqual([true, false, true, false]);
   });
 });

@@ -185,6 +185,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     bloom.resolution.scale = level.bloomScale; // fires a size reset: must precede the explicit sizing below
     composer.setSize(w, h, false);
     camera.aspect = w / h;
+    // ux: the globe sits lower so the top-centre title lockup has room (picking and label projection use the same matrix)
+    camera.setViewOffset(w, h, 0, -Math.round(Math.min(56, Math.max(24, h * 0.06))), w, h);
     camera.updateProjectionMatrix();
     const pr = renderer.getPixelRatio();
     space.nebula.setSize(w * pr, h * pr, 0.35 * level.tunnelScale);
@@ -384,14 +386,29 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       }
     },
     async loadTextures(onProgress) {
-      const t = await loadEarthTextures(renderer, chooseTier(detectTierInputs(renderer)), onProgress);
+      // ux: progressive — the 4k set first (a few MB: the Earth and the data appear quickly), then the preferred tier in the background
+      const preferred = chooseTier(detectTierInputs(renderer));
+      const first = await loadEarthTextures(renderer, "4k", onProgress);
       if (disposed) {
-        if (t) for (const tex of [t.day, t.night, t.clouds]) tex.dispose();
+        if (first) for (const tex of [first.day, first.night, first.clouds]) tex.dispose();
         return null;
       }
-      texs = t;
-      earth.setTextures(t);
-      return t ? t.tier : null;
+      texs = first;
+      earth.setTextures(first);
+      if (first && preferred !== "4k") {
+        void loadEarthTextures(renderer, preferred, () => {}).then((hi) => {
+          if (!hi) return;
+          if (disposed || hi.tier === "4k") {
+            for (const tex of [hi.day, hi.night, hi.clouds]) tex.dispose();
+            return;
+          }
+          const old = texs;
+          texs = hi;
+          earth.setTextures(hi);
+          if (old) for (const tex of [old.day, old.night, old.clouds]) tex.dispose();
+        });
+      }
+      return first ? first.tier : null;
     },
     setFrameSource(fn) {
       source = fn;
