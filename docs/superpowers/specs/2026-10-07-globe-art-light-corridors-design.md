@@ -32,20 +32,25 @@ Hepsi Earth shader'ına ve küçük yeni katmanlara eklenir; Dünya'nın fizikse
 
 ## 4b. Rota müziği: kıta orkestrası (`audio/theory.ts`, `audio/score.ts`, `audio/instruments.ts`, `audio/engine.ts`)
 Veriye dayalı üretken müzik (sonifikasyon). **Hangi nota ne zaman çalar** gerçek kalkış/inişlerden gelir; **nasıl çaldığı** (çalgı, ritim, skala, armoni) müzik teorisiyle belirlenir. Sesin sabit bir "beste" olduğu iddiası yok; her açılışta gerçek uçuşlar neyse o çalar.
-- **Ortak çatı:** tek ana saat **96 BPM** (vuruş = 0,625 sn). Her kıtanın ritim ızgarası ana vuruşun **tam sayı bölümü** (poliritim kayma yapmaz). Armoni sabit dörtlü **Am – F – C – G**, her akor **16 vuruş** (≈ 10 sn), sürekli döner. Bütün skalalar a-minörün alt kümesi: akor değişince çarpışmaz.
+- **Ortak çatı:** tek ana saat **96 BPM** (vuruş = 0,625 sn). Her kıtanın ritim ızgarası ana vuruşun **tam sayı bölümü** (poliritim kayma yapmaz). Armoni 8 akorluk döngü **Am – F – C – G | Am – Dm – F – G**, her akor **8 vuruş** (≈ 5 sn), tam döngü 64 vuruş (40 sn), sürekli döner (24 saatlik tekrarda ≈ 4,5 kez). Bütün skalalar a-minörün alt kümesi: akor değişince çarpışmaz.
 - **Zaman kaynağı:** ekranda gösterilen zaman `cur` ilerledikçe, `(önceki cur, şimdiki cur]` aralığındaki **kalkışlar** (uçuşun `dep` zamanı) ve **inişler** (yalnızca `LANDED` uçuşların `end` zamanı) nota olur. REPLAY'de 24 saat 3 dk'da çalar; canlıda gerçek zamanda. Geri sarma, kaydırma ve rewind gibi büyük sıçramalarda (aralık > 600 sn ya da geriye) olay üretilmez.
 - **Kıtalar** (bölge dizini `REGIONS` sırasında):
 
 | Kıta | Çalgı (Web Audio sentezi) | Izgara (vuruş başına) | Skala (A'dan yarım ses) | Register |
 |---|---|---|---|---|
 | DOM yurt içi | derin sinüs "kalp atışı" (kick benzeri perde düşüşü) | 1 (çeyrek) | akor kökü (çift vuruş) / beşlisi (tek vuruş) | A1 (55 Hz) civarı |
-| EUR Avrupa | vibrafon/marimba: sinüs + 4× üst ton, kısa sönüm | 2 (sekizlik) | A minör pentatonik `[0,3,5,7,10]` | mesafeyle 3–5. oktav |
+| EUR doğu/güney Avrupa | vibrafon/marimba: sinüs + 4× üst ton, kısa sönüm | 2 (sekizlik) | A minör pentatonik `[0,3,5,7,10]` | mesafeyle 3–5. oktav |
+| EUR batı/kuzey Avrupa (**piyano**) | piyano: üçgen + 2× + 3× sinüs, çok kısa atak, uzun sönüm | 2 | akorun arpej tonları (kök, üçlü, beşli, kök+oktav) | mesafeyle 3–5. oktav |
+| **İSTANBUL ucu (ney)** | ney benzeri nefesli: sinüs+üçgen, vibrato, yukarıdan kayma, nefes gürültüsü | 1 (çeyrek), adımda tek nota | sabit 8 notalık motif `[0,3,2,0,7,10,0,5]`, güçlü vuruşlarda akor tonuna yaslanır | 4. oktav (inişte 3.) |
 | MEA Orta Doğu | ud: testere → alçak geçiren (kesim hızla iner) + önünde süsleme notası | 2, odd adımlar %25 gecikmeli (sallantı) | `[0,3,5,7,8]` (A C D E F) | 3–4. oktav |
 | AFR Afrika | kalimba: sinüs + 2,76× metalik üst ton, kısa | 3 (üçleme, 12/8 hissi) | `[0,3,5,7,10]` | 4–5. oktav |
 | ASI Asya-Pasifik | koto: üçgen dalga + hafif perde düşüşü, hızlı pluck | 4 (onaltılık) | `[0,2,3,7,8]` (A B C E F, Hirajoshi tadı) | 4–5. oktav |
 | AME Amerika | geniş yaylı pad: iki detune testere, yavaş atak/bırakış | 0,5 (iki vuruşta 1) | `[0,5,7,10]` (A D E G, açık beşliler) | 3. oktav |
 | UNK | sessiz | — | — | — |
 
+- **Avrupa bölünmesi:** varış (İstanbul'un karşı ucu) boylamı < 20°D ya da enlemi > 52°K olan Avrupa rotaları **piyano**, diğerleri vibrafon.
+- **İstanbul neyi (melodi hattı):** olayın İstanbul ucunda olduğu kalkışlar (`from` İstanbul) ve inişler (`to` İstanbul, yalnızca LANDED) ney notası olur; diğer ucun (ör. JFK) olayları ney çalmaz. Not, olay sayısıyla değil **zamanla** ilerler: `motif[çeyrek-nota ızgara indeksi mod 8]`; güçlü vuruşta (`beat % 4 == 0`) o anki akorun en yakın akor tonuna yaslanır (kök/üçlü/beşli; eşitlikte alçak olan). Yani ney sabit bir ezgiyi yürütür, olaylar ezginin hangi vuruşlarda duyulacağını belirler; aynı olay akışı aynı melodiyi verir. İniş: 3. oktav, daha yumuşak. Adımda tek nota; fazla olaylar velocity'ye eklenir.
+- **Roller / register:** bas = yurt içi kalp atışı + akor yatağı (A1–G2, yatak 2–3. oktav); armonik dolgu = Amerika pad'i (3. oktav); **melodi = ney**; karşı hat = piyano arpejleri; renk = vibrafon, ud, kalimba, koto. Ney 4. oktav merkezli, diğer pentatonik çalgılar kendi aralıklarında; hepsi a-minör içinde kaldığından akor değişince çarpışmaz (Dm de D F A = a-minör notaları).
 - **Nota seçimi (saf, testli):** `scale[routeHash(rota) % uzunluk]`; oktav mesafeye göre (kıtanın aralığına kıstırılır). DOM akor kökü/beşlisi çalar (armoniyi taşır).
 - **İniş:** bir oktav aşağıda (DOM'da akorun beşlisi), 0,6× velocity, uzun sönüm.
 - **Yoğunluk sınırı:** kıta başına adımda en çok 2 nota; fazla olaylar notayı atmaz, velocity'yi artırır (`min(1, 0,5 + 0,15·n)`).

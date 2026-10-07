@@ -1792,7 +1792,52 @@ git commit -m "art(sound): wire the continent orchestra into the controller (M)"
 
 ---
 
-### Task 9: Docs, notes table, deploy
+### Task 9: Ensemble extension — 8-chord harmony, piano (west/north Europe), Istanbul ney
+
+**Files:**
+- Modify: `globe/src/audio/theory.ts`, `globe/src/audio/score.ts`, `globe/src/audio/instruments.ts`, `globe/src/audio/engine.ts`
+- Test: `globe/test/theory.test.ts`, `globe/test/score.test.ts`, `globe/test/route-sound.test.ts`
+
+Spec: `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md` §4b (updated: progression, piano, ney, roles). The `audio/` files still must not import from `globe/src/scene/*` or Three.js (`@collector/regions` and `@collector/geo` are fine).
+
+**Interfaces:**
+- `theory.ts`:
+  - `BEATS_PER_CHORD = 8`; `PROGRESSION` = Am, F, C, G, Am, **Dm** (`{ name: "Dm", root: 5, third: 8, fifth: 0 }`), F, G (8 chords, period 64 beats); `chordAtBeat` / `chordAtTime` use the new length.
+  - `type Instrument = RegionName | "PNO" | "NEY"`; `REGION_MUSIC` is replaced by `INSTRUMENT_MUSIC: Partial<Record<Instrument, RegionMusic>>` (keep `REGION_MUSIC` as an alias export of the same object so existing imports keep working) with two new entries: `PNO: { scale: [], perBeat: 2, swing: 0, octaves: [3, 5], arpeggio: true }` and `NEY: { scale: [], perBeat: 1, swing: 0, octaves: [4, 4], melody: true }` (add optional `arpeggio?: boolean`, `melody?: boolean` to `RegionMusic`); `hasMusic(i: Instrument)`, `stepSec`, `slotIndex`, `slotTime` accept `Instrument`.
+  - `isWestNorth(lat: number, lon: number): boolean` = `lon < 20 || lat > 52`.
+  - `const NEY_MOTIF = [0, 3, 2, 0, 7, 10, 0, 5]` (semitones above A; A C B A E G A D).
+  - `snapToChord(semis: number, chord: Chord): number` — pitch class (0..11) of the chord tone (root/third/fifth, each `mod 12`) with the smallest circular distance to `semis mod 12`; ties → the lower pitch class.
+  - `neyNote(slot: number, beat: number, chord: Chord, kind: "dep" | "arr"): number` — `semis = NEY_MOTIF[((slot % 8) + 8) % 8]`; when `beat % 4 === 0` it is replaced by `snapToChord(semis, chord)`; frequency `freqOf(kind === "arr" ? 3 : 4, semis)`.
+  - `pianoNote(key: string, distKm: number, chord: Chord, kind): number` — tones `[chord.root, chord.third, chord.fifth, chord.root + 12]`, index `routeHash(key) % 4`, octave `clamp(octaveFor(distKm), 3, 5)`, `freqOf(oct, tone)`; landings an octave lower when that stays ≥ 55 Hz.
+  - `pickNote(instrument, key, distKm, chord, beat, kind)` keeps its signature but takes `Instrument`; for `PNO` it returns `pianoNote(...)`; `NEY` is handled by `neyNote` in the score (it needs the slot), so `pickNote("NEY", …)` returns `null`.
+- `score.ts`:
+  - `ScoreEvent` gains `farLat?: number; farLon?: number; istanbul: boolean`. In `eventsBetween`: `istanbul` is true for a departure whose `f.from` is an Istanbul airport (`isIstanbul` from `@collector/regions`) and for a landing whose `f.to` is one; `farLat/farLon` are the coordinates of the end that is NOT the Istanbul end taken from `f.planned` (`toLat/toLon` when `f.from` is Istanbul, otherwise `fromLat/fromLon`; if neither end is Istanbul use the `to` end; undefined without `planned`).
+  - `PlannedNote.region` becomes `instrument: Instrument` (rename the field everywhere: score, engine, tests).
+  - `instrumentFor(e: ScoreEvent): Instrument | null` — `REGIONS[e.regionIdx]`; when that is `"EUR"` and `farLat/farLon` are finite and `isWestNorth(farLat, farLon)` → `"PNO"`; `null` when the region has no music.
+  - `planNotes(events, nowSec)`: for every event, (1) the continent note exactly as before but with `instrumentFor(e)` (piano uses the same grid/grouping/`MAX_NOTES_PER_STEP`/velocity rules as the other instruments); (2) when `e.istanbul`, additionally a **NEY** note on the NEY grid: group by NEY slot, at most **1** ney note per slot (departures before landings, then key order), velocity `velocityFor(count)` (landings ×0.6), frequency `neyNote(slotIndex, beat, chord, e.kind)` where `slotIndex = slotIndex(start, "NEY")`, `when = slotTime("NEY", slotIndex)`, `beat = Math.floor(when / BEAT_SEC)`, `chord = chordAtBeat(beat)`. The ney melody therefore advances with **time**, not with the event count.
+- `instruments.ts`: two new recipes in `playNote` (same envelope helper; peak `0.22 · vel · gainScale`; landings' decay ×2):
+  - **PNO** (piano): triangle `f` (decay 2.0) + sine `2f` at 0.4 peak (decay 1.2) + sine `3f` at 0.15 peak (decay 0.7); attack 0.003; lowpass `5000 · cutoffScale` on the sum.
+  - **NEY**: a note-long vibrato oscillator pair — sine `f` and triangle `f` at 0.5 peak (frequency `0.97·f → f` over 80 ms), a vibrato LFO (5 Hz, depth 12 cents applied to `detune`, starting after 0.15 s), lowpass `2400 · cutoffScale`, plus **breath noise**: a short white-noise `AudioBufferSource` (0.5 s buffer built once per engine and cached in a WeakMap by context) through a bandpass at `f` (Q 2) at 0.18 peak; attack 0.12, decay 1.4 (landing 2.8).
+- `engine.ts`: `instrumentRegionIdx(i: Instrument): number | null` (`PNO` → the `EUR` index, `NEY` → `null`, regions → their `REGIONS.indexOf`) used for the focus boost (a followed European flight boosts both its vibraphone and piano; ney is never boosted but its filter still scales with altitude only when the followed flight has an Istanbul end — keep it simple: ney ignores focus).
+
+- [ ] **Step 1: Failing tests** (update the existing files; keep every still-valid assertion):
+  - `theory.test.ts`: progression names `["Am","F","C","G","Am","Dm","F","G"]`; `chordAtBeat(8).name === "F"`, `(16) "C"`, `(24) "G"`, `(32) "Am"`, `(40) "Dm"`, `(48) "F"`, `(56) "G"`, `(64) "Am"`; the "inside A minor" test now also covers `Dm` (root 5, third 8, fifth 0) and the scales of `PNO`/`NEY` (empty scales are fine; check `NEY_MOTIF` values are all in the A-minor pitch-class set); `chordAtTime(8 * BEAT_SEC + 0.01).name === "F"`; `isWestNorth`: London (51.5, −0.5) true, Madrid (40.4, −3.7) true, Stockholm (59.6, 18.0) true, Athens (37.9, 23.7) false, Bucharest (44.4, 26.1) false, Moscow (55.9, 37.4) true (lat > 52 — documents the rule), Belgrade (44.8, 20.3) false; `snapToChord`: against Am chord (0,3,7) → `snapToChord(2, Am) === 3`? (distance to 3 is 1, to 0 is 2 → 3), `snapToChord(10, Am) === 7` (G → E at 3 vs A at 2: A pc 0 distance 2, E pc 7 distance 3 → returns 0; compute by hand and assert the true result), tie rule; `neyNote`: weak beat keeps the motif note (`neyNote(1, 1, Am, "dep")` = `freqOf(4, 3)`), strong beat snaps (`neyNote(5, 4, Am, "dep")`: motif[5]=10 snapped to the nearest Am tone — assert by hand), slots wrap mod 8 and negative slots are safe, landings use octave 3; `pianoNote`: deterministic, the frequency is one of `[root, third, fifth, root+12]` at the clamped octave for the given chord, landings an octave lower; `pickNote("NEY", …)` is `null`; `hasMusic("PNO")`/`hasMusic("NEY")` true.
+  - `score.test.ts`: `eventsBetween` sets `istanbul` correctly (outbound dep true, its landing abroad false; an inbound flight's departure false, its landing at IST true) and `farLat/farLon` (IST→JFK: JFK coordinates for both events; JFK→IST: JFK coordinates too); `planNotes` routes a west-European event (far end London) to `"PNO"`, an east-European one (far end Athens) to `"EUR"`; an Istanbul-end event yields an extra `"NEY"` note whose `when` lies on the NEY (quarter-note) grid; at most one NEY note per slot; the NEY frequency for the same slot is identical whatever the route key (melody follows time); events without `istanbul` produce no NEY note; all previously valid expectations (grid alignment, ≤ 2 per step, arrivals softer/lower) still hold with the `instrument` field name.
+  - `route-sound.test.ts`: oscillator counts per instrument for a single event: `PNO` 3, `NEY` 2 (plus one `AudioBufferSourceNode` for the breath noise — extend the fake context with `createBufferSource()` and `createBuffer` already exists; count buffer sources separately), existing instruments unchanged; focus: a followed European flight (region idx 1) boosts a `PNO` note too; the NEY note ignores focus.
+
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the interfaces above (reuse `freqOf`, `octaveFor`, `routeHash`; keep functions pure; update the `REGIONS`-based lookups in `planNotes`/engine to `Instrument`).
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): 8-chord harmony, piano for west/north Europe and an Istanbul ney melody"
+```
+- [ ] **Step 6: Listening check (user):** with `M` on in a REPLAY, the ney should carry a recognisable 8-note tune on the beat whenever Istanbul traffic is busy, the piano should arpeggiate the current chord for west/north European routes, and the chord should move every ≈ 5 s through Am F C G Am Dm F G; record feedback and tweaks (ney breath/vibrato, piano brightness, levels) in the spec notes table.
+
+---
+
+### Task 10: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
