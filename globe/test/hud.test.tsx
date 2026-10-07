@@ -331,3 +331,21 @@ describe("follow controls", () => {
     expect(pressed).toEqual(["-", "+", "Escape"]);
   });
 });
+
+describe("QuickControls", () => {
+  it("shows the state and presses the keyboard's keys (M, R, T, Space)", async () => {
+    const { QuickControls } = await import("../src/hud/GlobeHud");
+    const { EMPTY_GLOBE_SNAPSHOT } = await import("../src/app/hud-model");
+    const { fireEvent } = await import("@testing-library/react");
+    const pressed: string[] = [];
+    const on = (e: Event) => pressed.push((e as KeyboardEvent).key);
+    window.addEventListener("keydown", on);
+    const snap = { ...EMPTY_GLOBE_SNAPSHOT, mode: "REPLAY" as const, paused: false, tour: false, music: { ...EMPTY_GLOBE_SNAPSHOT.music, on: true } };
+    const { container } = render(<QuickControls s={snap} />);
+    const labels = Array.from(container.querySelectorAll("button")).map((b) => b.textContent);
+    expect(labels).toEqual(["SOUND ON", "▶ LIVE", "TOUR", "❚❚ PAUSE"]);
+    container.querySelectorAll("button").forEach((b) => fireEvent.click(b));
+    window.removeEventListener("keydown", on);
+    expect(pressed).toEqual(["m", "r", "t", " "]);
+  });
+});

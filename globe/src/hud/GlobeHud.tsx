@@ -147,6 +147,25 @@ export const KEYS: [string, string][] = [
   ["CLICK", "Follow a flight"],
   ["DRAG", "Rotate the globe"],
 ];
+/** art:track — the keyboard's main actions as buttons (a phone has no keyboard): sound, replay / live, tour, pause */
+export function QuickControls({ s }: { s: GlobeHudSnapshot }) {
+  const items: { label: string; key: string; on: boolean; title: string }[] = [
+    { label: s.music.on ? "SOUND ON" : "SOUND OFF", key: "m", on: s.music.on, title: "Music on / off (M)" },
+    { label: s.mode === "REPLAY" ? "▶ LIVE" : "↺ REPLAY", key: "r", on: s.mode === "REPLAY", title: "Replay 24 h ↔ live (R)" },
+    { label: "TOUR", key: "t", on: s.tour, title: "Auto tour (T)" },
+    { label: s.paused ? "▶ PLAY" : "❚❚ PAUSE", key: " ", on: s.paused, title: "Pause / resume (Space)" },
+  ];
+  return (
+    <div className="quick-controls" role="group" aria-label="Controls">
+      {items.map((it) => (
+        <button key={it.key} type="button" className={`qc-btn label${it.on ? " on" : ""}`} title={it.title} aria-pressed={it.on} onClick={() => pressKey(it.key)}>
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function KeysHelp() {
   return (
     <div className="keys-help">
@@ -189,7 +208,7 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
           <Counters c={s.counters} animate={animate} />
           <DepartureStrip bins={s.depHist} playhead={s.playhead} />
           {!s.follow && <RegionBars counts={s.regionAirborne} />}
-          <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} /> {/* art:sound */}
+          <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} footer={<QuickControls s={s} />} /> {/* art:sound */}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />

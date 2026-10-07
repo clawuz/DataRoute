@@ -1,5 +1,5 @@
 // art:sound — the ROUTES → MUSIC scope: a pitch ribbon of the flight lines over a rhythm strip of the groove
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { DayCurveHud, MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
@@ -88,7 +88,7 @@ function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: nu
   g.fill();
 }
 
-export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; music: MusicHud; compact?: boolean }) {
+export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteBus; music: MusicHud; compact?: boolean; footer?: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const musicRef = useRef(music);
   musicRef.current = music;
@@ -316,6 +316,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
           ))}
         </ul>
       )}
+      {footer}
     </div>
   );
 }
