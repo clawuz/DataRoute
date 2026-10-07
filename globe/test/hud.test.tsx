@@ -195,7 +195,7 @@ describe("MusicScope", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music()} />);
     expect(container.querySelector("canvas")).not.toBeNull();
     expect(container.querySelector(".music-scope-label")!.textContent).toBe("ROUTES → MUSIC · DAY · C · 96 BPM · L2");
-    expect(container.querySelector(".music-scope-title")!.textContent).toBe("A WORLD OFMUSIC"); // the project's name
+    expect(container.querySelector(".music-scope-title")!.textContent).toBe("A WORLD OF MUSIC"); // the project's name
   });
   it("shows the level bar (five segments, the current level filled in the section colour) and one dot per region layer", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music({ section: "NIGHT", level: 1, layers: ["DOM", "MEA", "AME"] })} />);

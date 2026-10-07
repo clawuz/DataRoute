@@ -286,11 +286,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
   return (
     <div className={`music-scope${compact ? " compact" : ""}`}>
       {/* art:track — the project's name */}
-      <div className="music-scope-title" aria-label="A World of Music">
-        <span className="mst-small label">A WORLD OF</span>
-        <span className="mst-big">MUSIC</span>
-        <span className="mst-eq" aria-hidden="true">{[0, 1, 2, 3, 4].map((i) => <i key={i} style={{ animationDelay: `${i * 0.17}s` }} />)}</span>
-      </div>
+      <div className="music-scope-title">A WORLD OF MUSIC</div>
       <div className="music-scope-wave" aria-hidden="true">
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
