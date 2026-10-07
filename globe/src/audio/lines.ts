@@ -1,11 +1,10 @@
 import { REGIONS } from "@web/data/palette";
 import { scaleLadder, snapToTones, type Chord } from "./harmony";
-import { euclid, isWestNorth, routeHash, type Instrument, type RegionName } from "./theory";
+import { isWestNorth, routeHash, type Instrument, type RegionName } from "./theory";
 
 /**
  * Flight lines. v5 (spec §4g): one line per route — the newest flight of each route represents it and carries the
  * route's airborne count; every route plays its own four-note motif (`phrase`) on its continent's instrument menu.
- * The v3/v4 helpers (`continentInstrument`, `linePattern`, `lineNote`) stay while the engine still uses them.
  */
 export interface SkyFlight {
   id: string;
@@ -74,23 +73,6 @@ export function selectLines(
     take(f);
   }
   return out;
-}
-
-/** v3/v4 continent instrument (kept for the engine until it moves to `lineInstrument`): west/north Europe piano, the
- * rest of Europe vibraphone (EUR), DOM/UNK Rhodes (EP). */
-export function continentInstrument(f: SkyFlight): Instrument {
-  const region = REGIONS[f.regionIdx];
-  switch (region) {
-    case "EUR":
-      return f.farLat !== undefined && f.farLon !== undefined && isWestNorth(f.farLat, f.farLon) ? "PNO" : "EUR";
-    case "MEA":
-    case "AFR":
-    case "ASI":
-    case "AME":
-      return region;
-    default:
-      return "EP";
-  }
 }
 
 export type MenuId = "EUR_W" | "EUR_E" | "MEA" | "AFR" | "ASI" | "AME" | "DOM" | "UNK";
@@ -194,16 +176,10 @@ export interface PhraseNote {
   vel: number;
 }
 
-/** Rotate a pattern `r` steps later (wrapping): `out[i] = p[i − r]`. */
+/** Rotate a pattern `r` steps later (wrapping): `out[i] = p[i − r]` (the AFR conga layer). */
 export function rotate(p: boolean[], r: number): boolean[] {
   const n = p.length;
   return p.map((_, i) => p[(((i - r) % n) + n) % n]);
-}
-
-/** A line's 16-step rhythm: E(3 + h % 4, 16) rotated by h % 16, h = routeHash(flight id). */
-export function linePattern(id: string): boolean[] {
-  const h = routeHash(id);
-  return rotate(euclid(3 + (h % 4), 16), h % 16);
 }
 
 const CLIMB_FPM = 300;
@@ -221,19 +197,6 @@ function baseRung(f: SkyFlight, n: number): number {
 }
 
 const isAme = (f: SkyFlight): boolean => REGIONS[f.regionIdx] === "AME";
-
-/**
- * Pitch (absolute semitones above A2) of a line at a 16th step: altitude picks the rung of the chord-scale ladder
- * (octaves 3–5), climbing/descending leans one rung up/down, America sits 7 rungs lower, strong steps snap to a chord tone.
- * (v3/v4; the engine uses it until it moves to `phrase`.)
- */
-export function lineNote(f: SkyFlight, chord: Chord, step: number): number {
-  const ladder = scaleLadder(chord, 3, 5);
-  let i = baseRung(f, ladder.length);
-  if (isAme(f)) i = Math.max(0, i - AME_DROP);
-  const semis = ladder[i];
-  return step % 4 === 0 ? snapToTones(semis, chord) : semis;
-}
 
 const FIRST_VEL = 0.5;
 const NOTE_VEL = 0.42;

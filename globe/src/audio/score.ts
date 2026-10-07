@@ -3,16 +3,16 @@ import { isIstanbul } from "@collector/regions";
 import { REGIONS } from "@web/data/palette";
 import type { BuildPhase, Level } from "./arrangement";
 import { chordAtStep, nextChordAtStep, stepDur, swingDelay, type Section } from "./form";
-import { bassHits, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "./groove";
+import { bassHits, chordSwell, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "./groove";
 import { ladderFreq, snapToScale } from "./harmony";
-import { continentInstrument, lineGain, lineNote, linePattern, type SkyFlight } from "./lines";
+import { isPhraseStart, lineGain, lineInstrument, phrase, type SkyFlight } from "./lines";
 import { graceAbove, neyCell, windParts, type NeyState } from "./melody";
 import type { NoteKind } from "./notes-bus";
 import { routeKey, type Instrument, type RegionName } from "./theory";
 
 /**
- * Music planning, pure: the continuous 16th-step clock (`planStep`: the v4 arranged groove of spec §4f and the flight
- * lines) and the Istanbul ney cells with their winds (`planNotes`, spec §4e). The engine turns the planned notes into sound.
+ * Music planning, pure: the continuous 16th-step clock (`planStep`: the v4 arranged groove of spec §4f, the v5 route
+ * phrases and string swells of spec §4g) and the Istanbul ney cells with their winds (`planNotes`, spec §4e). The engine turns the planned notes into sound.
  */
 export const MAX_RANGE_SEC = 600;
 /** the ney's first note is at least this far after `now` (scheduling margin) */
@@ -73,8 +73,10 @@ export interface PlannedNote {
   lineId?: string;
   /** ney: a short grace note at this pitch (one chord-scale degree above), just before the note */
   graceFreq?: number;
-  /** ney cadence / held wind / sustained groove note: longer decay */
+  /** ney cadence / held wind / sustained groove note (the level-0 bass rings longer) */
   long?: boolean;
+  /** v5: the note's real length in seconds (sustained instruments hold it, plucked ones ring up to it) */
+  durSec: number;
 }
 
 /** Nominal pitch of the unpitched drum voices (the scope draws a burst at this "frequency"). */
@@ -112,6 +114,7 @@ export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext
   const neyEvs = sec.instruments.has("NEY") ? events.filter((e) => e.istanbul).sort(byKindThenKey) : [];
   if (neyEvs.length === 0) return { notes: [], ney: ctx.ney };
   const d = stepDur(sec);
+  const slotSec = 2 * d; // the ney's grid: one eighth note = two 16th steps
   const k = 2 * Math.max(0, Math.ceil((nowSec + NEY_LEAD_SEC - epoch) / (2 * d) - 1e-9));
   const e = neyEvs[0];
   const r = neyCell(e, ctx.ney, chordAtStep(k, sec), k / 4, sec);
@@ -125,7 +128,7 @@ export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext
     const { when, chord } = at(n.slotOffset);
     const s = snapToScale(n.semis, chord);
     out.push({
-      when, instrument: "NEY", freq: ladderFreq(s), vel: n.vel * vel, kind: e.kind, key: e.key,
+      when, instrument: "NEY", freq: ladderFreq(s), vel: n.vel * vel, kind: e.kind, key: e.key, durSec: n.durSlots * slotSec,
       ...(n.grace ? { graceFreq: ladderFreq(graceAbove(s, chord)) } : {}), ...(n.long ? { long: true } : {}),
     });
   }
@@ -133,7 +136,7 @@ export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext
     const { when, chord } = at(w.slotOffset);
     out.push({
       when, instrument: w.instrument, freq: ladderFreq(snapToScale(w.semis, chord)), vel: w.vel * vel, kind: e.kind, key: e.key,
-      ...(w.long ? { long: true } : {}),
+      durSec: w.durSlots * slotSec, ...(w.long ? { long: true } : {}),
     });
   }
   return { notes: out.sort((a, b) => a.when - b.when || a.instrument.localeCompare(b.instrument)), ney: r.state };
@@ -147,7 +150,7 @@ export interface StepArrangement {
   level: Level;
   /** active region layers */
   layers: ReadonlySet<RegionName>;
-  /** REPLAY transition phase of the bar: `build` mutes keys, brass, layers and lines; `hit` adds the tutti on step 0 */
+  /** REPLAY transition phase of the bar: `build` mutes keys, brass, layers, lines and strings; `hit` adds the tutti on step 0 */
   phase: BuildPhase;
   /** build amount 0 → 1 */
   amount: number;
@@ -187,30 +190,51 @@ function grooveHits(k: number, sec: Section, arr: StepArrangement): GrooveHit[] 
   return hits;
 }
 
+/** v5 line velocity scale of a route with `routeCount` airborne flights: 1 + 0.1 · min(routeCount, 5). */
+export const routeCountScale = (routeCount: number): number => 1 + 0.1 * Math.min(Math.max(0, routeCount), 5);
+
 /**
- * Every note of global 16th step `k`: the arranged groove (`grooveHits`; a hit's `offsetSteps` places it that fraction
- * of the way to the next, swung, step) and the given flight lines (each line's euclidean pattern; pitch = altitude on
- * the chord ladder) — silent during a build. Pure.
+ * Every note planned on global 16th step `k` (a hit's `offsetSteps` places it that fraction of the way to the next,
+ * swung, step):
+ * - the arranged groove (`grooveHits`); `durSec` = `durSteps` (default 1) · stepDur — drums keep their own length;
+ * - v5 (spec §4g), except during a build: the `STR` swell at a chord change (`chordSwell`), and for every line (one per
+ *   route) whose phrase starts on `k` (`isPhraseStart`) the whole phrase at once — note j at step `k + stepOffset_j`
+ *   (swung like any step) on `lineInstrument`, `durSec = durSteps · stepDur`, velocity
+ *   `phraseNote.vel · LINE_VEL · lineGain(N) · routeCountScale(routeCount)` (the followed route × `FOLLOW_BOOST`).
+ *   Each step is planned once by the engine, and a route appears once per step here, so a phrase (route, step) is
+ *   planned exactly once. Pure.
  */
 export function planStep(
   k: number, ctx: { epoch: number; section: Section }, arr: StepArrangement, lines: SkyFlight[], followedId: string | null,
 ): PlannedNote[] {
   const { epoch, section: sec } = ctx;
+  const d = stepDur(sec);
   const when = stepTime(k, epoch, sec);
   const gap = stepTime(k + 1, epoch, sec) - when;
   const chord = chordAtStep(k, sec);
-  const out: PlannedNote[] = grooveHits(k, sec, arr).map((h) => ({
+  const groove = (h: GrooveHit): PlannedNote => ({
     when: h.offsetSteps ? when + h.offsetSteps * gap : when, instrument: h.voice, freq: h.freq ?? h.freqs?.[0] ?? drumPitch(h.voice),
-    vel: h.vel, kind: "groove" as const, key: "", ...(h.freqs ? { freqs: h.freqs } : {}), ...(h.long ? { long: true } : {}),
-  }));
+    vel: h.vel, kind: "groove" as const, key: "", durSec: (h.durSteps ?? 1) * d, ...(h.freqs ? { freqs: h.freqs } : {}),
+    ...(h.long ? { long: true } : {}),
+  });
+  const out: PlannedNote[] = grooveHits(k, sec, arr).map(groove);
   if (arr.phase === "build") return out;
+  const swell = chordSwell(k % 16, Math.floor(k / 16), chord, sec, arr.level); // art:sound — v5 string swell
+  if (swell) out.push(groove(swell));
   const gain = LINE_VEL * lineGain(lines.length);
+  const seen = new Set<string>();
   for (const f of lines) {
-    if (!linePattern(f.id)[k % 16]) continue;
-    out.push({
-      when, instrument: continentInstrument(f), freq: ladderFreq(lineNote(f, chord, k)), vel: gain * (f.id === followedId ? FOLLOW_BOOST : 1),
-      kind: "line", key: f.key, lineId: f.id,
-    });
+    const count = f.routeCount ?? 1;
+    if (seen.has(f.key) || !isPhraseStart(f.key, count, k)) continue;
+    seen.add(f.key);
+    const instrument = lineInstrument(f);
+    const vel = gain * routeCountScale(count) * (f.id === followedId ? FOLLOW_BOOST : 1);
+    for (const p of phrase(f, (off) => chordAtStep(k + off, sec))) {
+      out.push({
+        when: stepTime(k + p.stepOffset, epoch, sec), instrument, freq: ladderFreq(p.semis), vel: p.vel * vel,
+        kind: "line", key: f.key, lineId: f.id, durSec: p.durSteps * d,
+      });
+    }
   }
   return out;
 }

@@ -32,7 +32,8 @@ export const HUD_TICK_SEC = 0.25;
 export const PICK_INTERVAL_MS = 100;
 export const FIXTURE_LIVE_LOOP_SEC = 240;
 
-/** The flights with a head at `cur` for the music lines: head altitude, vertical speed, route key, region, far end. */ // art:sound
+/** The flights with a head at `cur` for the music lines: head altitude, vertical speed, route key, region, far end and
+ * (v5) seconds since departure. */ // art:sound
 export function skyFlights(m: GlobeModel, cur: number): SkyFlight[] {
   const out: SkyFlight[] = [];
   for (const f of m.flights) {
@@ -45,6 +46,7 @@ export function skyFlights(m: GlobeModel, cur: number): SkyFlight[] {
       alt100: h.alt100,
       vsFpm: telemetryAt(f, cur, m.from)?.vsFpm ?? null, // the flight profile is cached per flight (profileOf)
       ...farOf(f),
+      ageSec: Math.max(0, cur - f.dep), // art:sound — v5: the newest flight represents its route
     });
   }
   return out;

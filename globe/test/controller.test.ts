@@ -546,7 +546,7 @@ describe("globe controller", () => {
       };
     };
     const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({
-      instrument: "AME", lane: "AME", freq: 220, pitch: 220, vel: 0.65, kind: "line", key: "IST-JFK", at: 1, lineId: "f1", ...o,
+      instrument: "AME", lane: "AME", freq: 220, pitch: 220, vel: 0.65, kind: "line", key: "IST-JFK", at: 1, durSec: 0.25, lineId: "f1", ...o,
     });
 
     it("M turns the sound on and off through the stub; the score is planned also while it is off", async () => {
@@ -710,6 +710,9 @@ describe("globe controller", () => {
         expect(sky[0]).toMatchObject({ id: "a", key: "IST-JFK", regionIdx: 5, alt100: headState(m.flights[0], f.cur)!.alt100 });
         expect(sky[0].farLat).toBeCloseTo(40.6398, 3); // the non-Istanbul end: JFK
         expect(sky[0].farLon).toBeCloseTo(-73.7789, 3);
+        // v5: seconds since departure (the newest flight represents its route)
+        expect(f.cur - m.flights[0].dep).toBeGreaterThan(0);
+        expect(sky[0].ageSec).toBeCloseTo(f.cur - m.flights[0].dep, 9);
         const calls = sound.setSky.mock.calls.length;
         h.frame(0.1); // not a HUD tick: no extra work
         expect(sound.setSky.mock.calls.length).toBe(calls);

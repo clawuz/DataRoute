@@ -223,19 +223,22 @@ describe("MusicScope", () => {
     const r = render(<MusicScope bus={bus} music={music({ level: 4, layers: ["EUR", "ASI"] })} />);
     expect(r.container.querySelectorAll(".music-scope-level .seg.on")).toHaveLength(5); // the DOM meter needs no canvas
     expect(r.container.querySelectorAll(".music-scope-layers .dot")).toHaveLength(2);
-    expect(() => bus.emit({ instrument: "NEY", lane: "NEY", freq: 440, pitch: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0 })).not.toThrow();
+    expect(() => bus.emit({ instrument: "NEY", lane: "NEY", freq: 440, pitch: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0, durSec: 0.5 })).not.toThrow();
     r.unmount();
     spy.mockRestore();
   });
-  it("draws the pitch ribbon (a trail per flight line in its instrument colour) over the four rhythm lanes; stops on unmount", () => {
+  it("draws the pitch ribbon (a trail per flight line in its instrument colour, its notes as bars as long as the notes) over the four rhythm lanes; stops on unmount", () => {
     const strokes: string[] = [];
     const fills: string[] = [];
+    const bars: number[][] = [];
     const ys: number[] = [];
     const ctx = {
       setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn((_x: number, y: number) => ys.push(y)), lineTo: vi.fn(),
-      arc: vi.fn(),
       stroke: vi.fn(function (this: { strokeStyle: string }) { strokes.push(this.strokeStyle); }),
-      fill: vi.fn(function (this: { fillStyle: string }) { fills.push(this.fillStyle); }),
+      fillRect: vi.fn(function (this: { fillStyle: string }, x: number, y: number, w: number, hh: number) {
+        fills.push(this.fillStyle);
+        bars.push([x, y, w, hh]);
+      }),
       strokeStyle: "", fillStyle: "", lineWidth: 1, globalAlpha: 1, globalCompositeOperation: "source-over",
     };
     const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
@@ -247,12 +250,18 @@ describe("MusicScope", () => {
     const bus = createNoteBus();
     const r = render(<MusicScope bus={bus} music={music()} />);
     const now = performance.now() / 1000;
-    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.5, lineId: "f1" }));
-    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.2, lineId: "f1" }));
-    act(() => bus.emit({ instrument: "KICK", lane: "KICK", freq: 60, pitch: 60, vel: 1, kind: "groove", key: "", at: now - 0.2 }));
+    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.5, durSec: 1.2, lineId: "f1" }));
+    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 1, kind: "line", key: "IST-FRA", at: now - 0.2, durSec: 0, lineId: "f1" }));
+    act(() => bus.emit({ instrument: "KICK", lane: "KICK", freq: 60, pitch: 60, vel: 1, kind: "groove", key: "", at: now - 0.2, durSec: 0.13 }));
     act(() => frames.at(-1)!(performance.now()));
     expect(strokes).toEqual([INSTRUMENT_COLOR.EUR, ...LANE_ORDER.map((i) => INSTRUMENT_COLOR[i])]);
-    expect(fills).toEqual([INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.EUR]); // the two note hits
+    expect(fills).toEqual([INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.EUR]); // the two notes
+    // bars: durSec · px/s long (200·dpr px over 6 s), the zero-length note at the 3 px minimum; 3 px high around the pitch
+    const dpr = window.devicePixelRatio || 1;
+    expect(bars[0][2]).toBeCloseTo(1.2 * (200 * dpr) / 6, 6);
+    expect(bars[1][2]).toBe(3 * dpr);
+    expect(bars.map((b) => b[3])).toEqual([3 * dpr, 3 * dpr]);
+    expect(bars[0][1] + 1.5 * dpr).toBeCloseTo(0.7 * 100 * dpr * 0.5, 6); // centred on A4
     // the trail starts at A4 (pitchY 0.5) inside the top 70 % band: y = 0.7·h·(1 − 0.5)
     expect(ys[0]).toBeCloseTo(0.7 * 100 * (window.devicePixelRatio || 1) * 0.5, 6);
     expect(ctx.globalCompositeOperation).toBe("lighter");

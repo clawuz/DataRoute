@@ -3,11 +3,12 @@ import { buildGlobeModel } from "../src/model/globe-model";
 import { freqOf } from "../src/audio/theory";
 import { SECTIONS, chordAtStep, stepDur, type Section } from "../src/audio/form";
 import { CHORDS, ladderFreq } from "../src/audio/harmony";
-import { keysVoicing } from "../src/audio/groove";
-import { continentInstrument, lineGain, lineNote, linePattern, type SkyFlight } from "../src/audio/lines";
+import { keysVoicing, swellVoicing } from "../src/audio/groove";
+import { isPhraseStart, lineGain, lineInstrument, phrase, type SkyFlight } from "../src/audio/lines";
 import { graceAbove, initNey, neyCell, type NeyState } from "../src/audio/melody";
 import {
-  DRUM_PITCH, MAX_RANGE_SEC, NEY_LEAD_SEC, eventsBetween, planNotes as plan, planStep, stepTime, velocityFor, type PlanContext, type PlannedNote,
+  DRUM_PITCH, LINE_VEL, MAX_RANGE_SEC, NEY_LEAD_SEC, eventsBetween, planNotes as plan, planStep, routeCountScale, stepTime, velocityFor,
+  type PlanContext, type PlannedNote,
   type ScoreEvent, type StepArrangement,
 } from "../src/audio/score";
 import { FROM, flight, makeDay } from "./helpers";
@@ -204,6 +205,18 @@ describe("planNotes: Istanbul events → ney cells and winds on the step clock",
     const sax = all.find((n) => n.instrument === "SAX")!;
     expect([sax.when, sax.long]).toEqual([neyWhen[0], true]);
   });
+  it("v5 note lengths: durSec = durSlots · one eighth (2 steps) — cell 1, 1, 3 slots, the cadence 8; winds follow", () => {
+    const e = ev({ istanbul: true, regionIdx: 6, ...JFK });
+    const all = notesOf([e], 0, EVENING);
+    const DE = 60 / 92 / 4; // EVENING step
+    const dur = (inst: string) => all.filter((n) => n.instrument === inst).map((n) => +(n.durSec / (2 * DE)).toFixed(9));
+    expect(dur("NEY")).toEqual([1, 1, 3]);
+    expect(dur("CLA")).toEqual([1, 1, 3]); // the clarinet copies each ney note
+    expect(dur("SAX")).toEqual([2]); // twice the cell's first note
+    expect(ney(all)[2].durSec).toBeCloseTo(6 * DE, 12);
+    const cadence = notesOf([e], 0, DAY, { ney: { last: 29, cell: 3, restUntilBeat: 0 } });
+    expect(cadence.map((n) => [n.instrument, +(n.durSec / D).toFixed(9)])).toEqual([["NEY", 16], ["TPT", 16]]); // 8 eighths each
+  });
   it("is deterministic", () => {
     const e = [ev({}), ev({ regionIdx: 2, key: "IST-DXB", distKm: 3000, istanbul: true }), ev({ ...LONDON, istanbul: true })];
     expect(plan(e, 1.234, ctxFor(EVENING))).toEqual(plan(e, 1.234, ctxFor(EVENING)));
@@ -214,9 +227,9 @@ describe("planStep (v4): the arranged groove and the flight lines of one 16th st
   const sky = (id: string, o: Partial<SkyFlight> = {}): SkyFlight => ({ id, key: `IST-${id}`, regionIdx: 1, alt100: 350, vsFpm: 0, ...o });
   const arr = (o: Partial<StepArrangement> = {}): StepArrangement => ({ level: 2, layers: new Set(), phase: "none", amount: 0, buildBar: 0, ...o });
   const ins = (hits: PlannedNote[]) => hits.map((h) => h.instrument).sort();
-  it("level 2, DAY step 0 at the epoch: kick, hat and bass; voices are the instruments, without a route key", () => {
+  it("level 2, DAY step 0 at the epoch: kick, hat, bass and the chord's string swell; voices are the instruments, without a route key", () => {
     const hits = planStep(0, { epoch: 5, section: DAY }, arr(), [], null);
-    expect(ins(hits)).toEqual(["BASS", "HAT", "KICK"]);
+    expect(ins(hits)).toEqual(["BASS", "HAT", "KICK", "STR"]);
     for (const h of hits) expect([h.when, h.kind, h.key]).toEqual([5, "groove", ""]);
     expect(hits.find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 5)); // D1 under Dm9
     expect(hits.find((h) => h.instrument === "KICK")!.freq).toBe(DRUM_PITCH.KICK);
@@ -279,29 +292,75 @@ describe("planStep (v4): the arranged groove and the flight lines of one 16th st
     expect(hits.filter((h) => h.instrument === "CRASH")).toHaveLength(1);
     expect(hits.find((h) => h.instrument === "BRASS")!.freqs).toHaveLength(4);
     expect(ins(hits)).toEqual(expect.arrayContaining(["BASS", "HAT", "DARBUKA"]));
-    expect(hits.filter((h) => h.kind === "line")).toHaveLength(linePattern("TK1")[0] ? 1 : 0);
+    expect(isPhraseStart("IST-TK1", 1, 0)).toBe(true); // TK1: start step 0, bar parity 0
+    expect(hits.filter((h) => h.kind === "line")).toHaveLength(4); // the tutti bar keeps the lines …
+    expect(hits.filter((h) => h.instrument === "STR")).toHaveLength(1); // … and the strings
     expect(planStep(1, { epoch: 0, section: DAY }, arr({ phase: "hit", amount: 1 }), [], null).some((h) => h.instrument === "CRASH")).toBe(false);
   });
-  it("a flight line plays on its euclidean steps only, at its altitude on the chord ladder", () => {
-    const f = sky("TK1", { alt100: 330, vsFpm: 1200, farLat: 51.5, farLon: -0.5 });
-    const pat = linePattern("TK1");
-    for (let k = 0; k < 32; k++) {
+  it("v5: a route's whole phrase is planned on its start step, four notes at the cumulative offsets with their lengths", () => {
+    // IST-LHR: motif m8 ([0,2,3,2] / [8,2,2,4]), start step 4, bar parity 1, EUR west menu index 2 = FLUTE
+    const f = sky("TK1", { key: "IST-LHR", alt100: 330, vsFpm: 1200, farLat: 51.5, farLon: -0.5 });
+    const starts: number[] = [];
+    for (let k = 0; k < 64; k++) {
       const lines = planStep(k, { epoch: 0, section: DAY }, arr(), [f], null).filter((h) => h.kind === "line");
-      expect(lines.length).toBe(pat[k % 16] ? 1 : 0);
-      for (const l of lines) {
-        expect(l).toMatchObject({ instrument: continentInstrument(f), key: "IST-TK1", lineId: "TK1" });
-        expect(l.instrument).toBe("PNO");
-        expect(l.freq).toBeCloseTo(ladderFreq(lineNote(f, chordAtStep(k, DAY), k)), 9);
-        expect(l.vel).toBeCloseTo(0.55 * lineGain(1), 12);
-        expect(l.when).toBeCloseTo(stepTime(k, 0, DAY), 12);
-      }
+      if (lines.length === 0) continue;
+      starts.push(k);
+      const ps = phrase(f, (o) => chordAtStep(k + o, DAY));
+      expect(lines.map((l) => stepOf(l))).toEqual([k, k + 8, k + 10, k + 12]);
+      lines.forEach((l, j) => {
+        expect(l).toMatchObject({ instrument: "FLUTE", key: "IST-LHR", lineId: "TK1", kind: "line" });
+        expect(l.when).toBeCloseTo(stepTime(k + ps[j].stepOffset, 0, DAY), 12);
+        expect(l.durSec).toBeCloseTo(ps[j].durSteps * D, 12);
+        expect(l.freq).toBeCloseTo(ladderFreq(ps[j].semis), 9);
+        // phrase velocity (0.5 first, 0.42 the rest) · 0.55 · lineGain(1) · (1 + 0.1 · 1)
+        expect(l.vel).toBeCloseTo(ps[j].vel * LINE_VEL * lineGain(1) * 1.1, 12);
+      });
+      expect(lines.map((l) => +(l.durSec / D).toFixed(9))).toEqual([8, 2, 2, 4]);
     }
+    expect(lineInstrument(f)).toBe("FLUTE");
+    expect(starts).toEqual([20, 52]); // every second bar (bars 1, 3), on step 4
+    // a busy route (≥ 3 flights) phrases every bar
+    const busy: number[] = [];
+    for (let k = 0; k < 64; k++)
+      if (planStep(k, { epoch: 0, section: DAY }, arr(), [{ ...f, routeCount: 3 }], null).some((h) => h.kind === "line")) busy.push(k);
+    expect(busy).toEqual([4, 20, 36, 52]);
   });
-  it("line velocity: 0.55 · lineGain(N), the followed flight × 1.4", () => {
-    const fs = [sky("A"), sky("B"), sky("C")];
+  it("line velocity: phrase vel · 0.55 · lineGain(N) · (1 + 0.1 · min(routeCount, 5)), the followed route × 1.4; a route plays once a step", () => {
+    expect([0, 1, 3, 5, 9].map(routeCountScale)).toEqual([1, 1.1, 1.3, 1.5, 1.5]);
+    // IST-A, IST-B: start step 0; A on odd bars, B on even bars; C: IST-TK1 start 0, even bars
+    const fs = [sky("A", { routeCount: 2 }), sky("B", { routeCount: 9 }), sky("C", { key: "IST-TK1" })];
     const vels = new Map<string, number>();
-    for (let k = 0; k < 16; k++) for (const h of planStep(k, { epoch: 0, section: DAY }, arr(), fs, "B")) if (h.lineId) vels.set(h.lineId, h.vel);
-    expect(vels.get("A")).toBeCloseTo(0.55 * lineGain(3), 12);
-    expect(vels.get("B")).toBeCloseTo(1.4 * 0.55 * lineGain(3), 12);
+    for (const k of [0, 16]) for (const h of planStep(k, { epoch: 0, section: DAY }, arr(), fs, "B")) if (h.lineId && !vels.has(h.lineId)) vels.set(h.lineId, h.vel);
+    const g = LINE_VEL * lineGain(3);
+    expect(vels.get("A")).toBeCloseTo(0.5 * g * 1.2, 12);
+    expect(vels.get("B")).toBeCloseTo(0.5 * g * 1.5 * 1.4, 12); // the followed route, 9 flights (capped at 5)
+    expect(vels.get("C")).toBeCloseTo(0.5 * g * 1.1, 12); // no routeCount: counts as one flight
+  });
+  it("a route key given twice plays one phrase", () => {
+    const twice = planStep(0, { epoch: 0, section: DAY }, arr(), [sky("X", { key: "IST-TK1" }), sky("Y", { key: "IST-TK1" })], null);
+    expect(twice.filter((h) => h.kind === "line").map((h) => h.lineId)).toEqual(["X", "X", "X", "X"]);
+  });
+  it("v5 string swell: STR on each chord change from level 1 (vel 0.3/0.35/0.4/0.5), held 0.92 of the chord; none at level 0 or in a build", () => {
+    const str = (k: number, sec: Section, o: Partial<StepArrangement> = {}) =>
+      planStep(k, { epoch: 0, section: sec }, arr(o), [], null).filter((h) => h.instrument === "STR");
+    const [s0] = str(0, DAY);
+    expect(s0).toMatchObject({ kind: "groove", key: "", vel: 0.35, freqs: swellVoicing(CHORDS.Dm9).map(ladderFreq) });
+    expect(s0.freq).toBe(s0.freqs![0]);
+    expect(s0.durSec).toBeCloseTo(15 * D, 12); // round(16 · 0.92) = 15 steps
+    expect(str(16, DAY)[0].freqs).toEqual(swellVoicing(CHORDS.Bbmaj7).map(ladderFreq));
+    expect([1, 3, 4].map((level) => str(0, DAY, { level: level as StepArrangement["level"] })[0].vel)).toEqual([0.3, 0.4, 0.5]);
+    expect(str(0, DAY, { level: 0 })).toEqual([]);
+    expect(str(4, DAY)).toEqual([]);
+    expect(str(0, DAY, { phase: "build", amount: 0.5 })).toEqual([]);
+    // NIGHT: two bars a chord → swells on bars 0, 2, held round(32 · 0.92) = 29 steps
+    const DN = 60 / 84 / 4;
+    expect(str(0, NIGHT, { level: 1 })[0].durSec).toBeCloseTo(29 * DN, 12);
+    expect(str(16, NIGHT, { level: 1 })).toEqual([]);
+    expect(str(32, NIGHT, { level: 1 })).toHaveLength(1);
+  });
+  it("groove notes last one step (drums keep their own sound); the level-0 bass stays long", () => {
+    const hits = planStep(0, { epoch: 0, section: DAY }, arr({ level: 0 }), [], null);
+    for (const h of hits) expect(h.durSec).toBeCloseTo(D, 12);
+    expect(hits.find((h) => h.instrument === "BASS")!.long).toBe(true);
   });
 });

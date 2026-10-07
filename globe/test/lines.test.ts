@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  INSTRUMENT_MENU, MOTIFS, continentInstrument, isPhraseStart, lineGain, lineInstrument, lineNote, linePattern, motifFor, phrase, rotate, selectLines,
+  INSTRUMENT_MENU, MOTIFS, isPhraseStart, lineGain, lineInstrument, motifFor, phrase, rotate, selectLines,
   type PhraseNote, type SkyFlight,
 } from "../src/audio/lines";
-import { CHORDS, scaleLadder } from "../src/audio/harmony";
+import { CHORDS } from "../src/audio/harmony";
 import { euclid, routeHash } from "../src/audio/theory";
 
 const pc = (s: number) => ((s % 12) + 12) % 12;
@@ -74,19 +74,6 @@ describe("selectLines: one line per route (spec §4g)", () => {
   it("empty sky → no lines", () => {
     expect(selectLines([], null)).toEqual([]);
     expect(selectLines([], "x")).toEqual([]);
-  });
-});
-
-describe("continentInstrument (v4, kept for the engine until Task 19)", () => {
-  it("maps regions to instruments; west/north Europe plays the piano; domestic and unknown play the Rhodes", () => {
-    expect(continentInstrument(fl("x", "k", EUR, { farLat: 51.5, farLon: -0.1 }))).toBe("PNO");
-    expect(continentInstrument(fl("x", "k", EUR, { farLat: 59.9, farLon: 30.3 }))).toBe("PNO");
-    expect(continentInstrument(fl("x", "k", EUR, { farLat: 37.9, farLon: 23.7 }))).toBe("EUR");
-    expect(continentInstrument(fl("x", "k", EUR))).toBe("EUR");
-    expect([MEA, AFR, ASI, AME].map((r) => continentInstrument(fl("x", "k", r)))).toEqual(["MEA", "AFR", "ASI", "AME"]);
-    expect(continentInstrument(fl("x", "k", DOM))).toBe("EP");
-    expect(continentInstrument(fl("x", "k", UNK))).toBe("EP");
-    expect(continentInstrument(fl("x", "k", 99))).toBe("EP");
   });
 });
 
@@ -223,72 +210,37 @@ describe("phrase: the route motif on the chord-scale ladders", () => {
   });
 });
 
-describe("linePattern", () => {
+describe("rotate (the AFR conga layer)", () => {
   it("rotate shifts later by r steps (wrapping)", () => {
     expect(rotate([true, false, false, false], 1)).toEqual([false, true, false, false]);
     expect(rotate([true, false, true, false], 3)).toEqual([false, true, false, true]);
     expect(rotate([true, false, false], -1)).toEqual([false, false, true]);
-  });
-  it("is a rotated E(3 + hash % 4, 16): 16 steps, the right number of onsets, deterministic", () => {
-    for (const id of ["THY1", "BAW22", "UAE7", "abc", "4ba9f2", ""]) {
-      const h = routeHash(id);
-      const p = linePattern(id);
-      expect(p.length).toBe(16);
-      expect(p.filter(Boolean).length).toBe(3 + (h % 4));
-      expect(p).toEqual(rotate(euclid(3 + (h % 4), 16), h % 16));
-      expect(linePattern(id)).toEqual(p);
-    }
+    expect(rotate(euclid(3, 8), 8)).toEqual(euclid(3, 8));
   });
 });
 
-describe("lineNote: altitude is pitch", () => {
+describe("phrase base rung: altitude is pitch (v5; was lineNote)", () => {
   const { Dm9 } = CHORDS;
-  // Dm9 ladder: 12 14 15 17 19 20 22 | 24 26 27 29 31 32 34 | 36 38 39 41 43 44 46 (21 rungs)
-  it("hand-checked rungs: FL350 → rung 17 (41 = D5); climbing +1, descending −1", () => {
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350 }), Dm9, 1)).toBe(41); // round(350/410 · 20) = round(17.07) = 17
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350, vsFpm: 1500 }), Dm9, 1)).toBe(43);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350, vsFpm: -1500 }), Dm9, 1)).toBe(39);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350, vsFpm: 300 }), Dm9, 1)).toBe(41); // threshold is strict
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350, vsFpm: null }), Dm9, 1)).toBe(41);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 0 }), Dm9, 1)).toBe(12);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 500 }), Dm9, 1)).toBe(46); // clamped to the top rung
-    expect(lineNote(fl("x", "k", EUR, { alt100: 410, vsFpm: 2000 }), Dm9, 1)).toBe(46);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 0, vsFpm: -2000 }), Dm9, 1)).toBe(12);
+  // Dm9 ladder: 12 14 15 17 19 20 22 | 24 26 27 29 31 32 34 | 36 38 39 41 43 44 46 (21 rungs). IST-LHR (m8, offsets
+  // [0,2,3,2]) plays its third note on step 10 (not snapped): rung = base + 3, clamped to 20.
+  const third = (o: Partial<SkyFlight>, region = EUR) => phrase(fl("x", "IST-LHR", region, o), () => Dm9)[2].semis;
+  it("hand-checked: FL200 → base 10 (rung 13 = 34); climbing +1, descending −1, the 300 ft/min threshold is strict", () => {
+    expect(third({ alt100: 200 })).toBe(34); // round(200/410 · 20) = round(9.76) = 10
+    expect(third({ alt100: 200, vsFpm: 1500 })).toBe(36);
+    expect(third({ alt100: 200, vsFpm: -1500 })).toBe(32);
+    expect(third({ alt100: 200, vsFpm: 300 })).toBe(34);
+    expect(third({ alt100: 200, vsFpm: -300 })).toBe(34);
+    expect(third({ alt100: 200, vsFpm: null })).toBe(34);
   });
-  it("strong steps (step % 4 = 0) lean on the nearest chord tone", () => {
-    // alt 21: round(21/410 · 20) = round(1.02) = 1 → 14 (B, not a Dm9 tone); nearest tone C (15)
-    expect(lineNote(fl("x", "k", EUR, { alt100: 21 }), Dm9, 1)).toBe(14);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 21 }), Dm9, 4)).toBe(15);
-    expect(lineNote(fl("x", "k", EUR, { alt100: 350 }), Dm9, 0)).toBe(41); // D is already a tone
+  it("clamps: ground level → base 0 (rung 3 = 17), also descending; above FL410 → the top rung", () => {
+    expect(third({ alt100: 0 })).toBe(17);
+    expect(third({ alt100: 0, vsFpm: -2000 })).toBe(17);
+    expect(third({ alt100: 500 })).toBe(46);
+    expect(third({ alt100: 410, vsFpm: 2000 })).toBe(46);
   });
-  it("America sits 7 rungs lower, clamped at the bottom", () => {
-    expect(lineNote(fl("x", "k", AME, { alt100: 350 }), Dm9, 1)).toBe(29); // rung 10
-    expect(lineNote(fl("x", "k", AME, { alt100: 50 }), Dm9, 1)).toBe(12); // round(2.44) = 2 → −5 → 0
-  });
-  it("monotone in altitude on weak steps; every pitch in the scale; climbing ≥ cruise ≥ descending", () => {
-    for (const chord of Object.values(CHORDS)) {
-      const ladder = scaleLadder(chord, 3, 5);
-      for (const region of [EUR, AME, DOM]) {
-        let prev = -Infinity;
-        for (let alt = 0; alt <= 410; alt += 5) {
-          const cruise = lineNote(fl("x", "k", region, { alt100: alt }), chord, 1);
-          expect(cruise).toBeGreaterThanOrEqual(prev);
-          prev = cruise;
-          expect(ladder).toContain(cruise);
-          const up = lineNote(fl("x", "k", region, { alt100: alt, vsFpm: 1200 }), chord, 1);
-          const down = lineNote(fl("x", "k", region, { alt100: alt, vsFpm: -1200 }), chord, 1);
-          expect(up).toBeGreaterThanOrEqual(cruise);
-          expect(down).toBeLessThanOrEqual(cruise);
-          for (const step of [0, 4, 8, 12]) {
-            const strong = lineNote(fl("x", "k", region, { alt100: alt, vsFpm: 800 }), chord, step);
-            expect(chord.tones.includes(pc(strong))).toBe(true);
-          }
-          for (const step of [1, 2, 3, 5, 15]) expect(chord.scale.includes(pc(lineNote(fl("x", "k", region, { alt100: alt }), chord, step)))).toBe(true);
-          if (region === EUR) expect(lineNote(fl("x", "k", AME, { alt100: alt }), chord, 1)).toBeLessThanOrEqual(cruise);
-        }
-      }
-      expect(lineNote(fl("x", "k", AME, { alt100: 350 }), chord, 1)).toBeLessThan(lineNote(fl("x", "k", EUR, { alt100: 350 }), chord, 1));
-    }
+  it("America sits 7 rungs lower, floored at rung 0", () => {
+    expect(third({ alt100: 200 }, AME)).toBe(22); // base 10 − 7 = 3 → rung 6
+    expect(third({ alt100: 50 }, AME)).toBe(17); // round(2.44) = 2 → −5 → 0 → rung 3
   });
 });
 

@@ -1,4 +1,4 @@
-import { playNote } from "./instruments";
+import { playNote, type NoteHandle } from "./instruments";
 import { CHORDS } from "./harmony";
 import { REGIONS } from "@web/data/palette";
 import {
@@ -28,7 +28,7 @@ export interface RouteSound {
    */
   setSky(flights: SkyFlight[], followedId: string | null, localHour?: number, replay?: boolean, airborne?: number): void;
   /**
-   * Istanbul-end events → ney cells and winds; `pans` (route key → stereo pan) is kept for the flight lines;
+   * Istanbul-end events → ney cells and winds (a new ney note cuts the held tail of the previous one); `pans` (route key → stereo pan) is kept for the flight lines;
    * `localHour`, when given, selects the section. `focus` is accepted for compatibility: v3 emphasises the followed
    * flight given to `setSky` instead.
    */
@@ -120,6 +120,8 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   let buildBar = 0;
   let hitDone = false; // the tutti plays once per section entry (a paused replay must not repeat it)
   let lines: SkyFlight[] = [];
+  // v5: the ney is monophonic — the held note still sounding (wall-clock end of its hold) is cut by the next ney note
+  let neyHeld: { end: number; handle: NoteHandle } | null = null;
 
   const safe = (fn: () => void) => {
     try {
@@ -263,7 +265,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       safe(() =>
         notes.emit({
           instrument: n.instrument, lane: laneOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when,
-          ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}),
+          durSec: n.durSec, ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}),
         }),
       );
     }
@@ -274,13 +276,16 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       // art:sound
       const p = n.key ? pans?.get(n.key) : undefined;
       const when = Math.max(ctx.currentTime, ctx.currentTime + (n.when - t)); // wall clock → audio clock
-      safe(() =>
-        playNote(ctx, bus, { ...n, when }, {
+      safe(() => {
+        // a new ney note cuts the previous one's held tail (the third cell note is held over the next cell's start)
+        if (n.instrument === "NEY" && neyHeld && n.when < neyHeld.end - 1e-6) neyHeld.handle.cut(when);
+        const handle = playNote(ctx, bus, { ...n, when }, {
           gainScale: dyn * (p?.visible === false ? 0.3 : 1),
           cutoffScale: 1,
           pan: clamp(p?.pan ?? 0, -1, 1),
-        }),
-      );
+        });
+        if (n.instrument === "NEY") neyHeld = { end: n.when + n.durSec, handle };
+      });
     }
   }
 

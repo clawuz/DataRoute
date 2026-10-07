@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, LEVEL_SEGMENTS, MAX_TRAILS, SECTION_COLOR, layerColor, layerInstrument, levelSegments, scopeLabel, PITCH_MAX, PITCH_MIN, laneSample, pitchY, pruneTrails, pushTrail, stepLane,
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, LEVEL_SEGMENTS, MAX_TRAILS, NOTE_BAR_H_PX, NOTE_BAR_MIN_PX, noteBar, SECTION_COLOR, layerColor, layerInstrument, levelSegments, scopeLabel, PITCH_MAX, PITCH_MIN, laneSample, pitchY, pruneTrails, pushTrail, stepLane,
   trailIdOf, visualHz, type Lane, type Trail,
 } from "../src/audio/scope";
 import type { NoteEvent } from "../src/audio/notes-bus";
@@ -83,7 +83,7 @@ describe("pitchY", () => {
 
 describe("trails", () => {
   const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({
-    instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 0.5, kind: "line", key: "IST-FRA", at: 1, lineId: "f1", ...o,
+    instrument: "EUR", lane: "EUR", freq: 220, pitch: 220, vel: 0.5, kind: "line", key: "IST-FRA", at: 1, durSec: 0.25, lineId: "f1", ...o,
   });
 
   it("the trail id is the line id; Istanbul notes trail per instrument; groove notes have none", () => {
@@ -92,12 +92,20 @@ describe("trails", () => {
     expect(trailIdOf(note({ instrument: "KICK", lane: "KICK", kind: "groove", key: "", lineId: undefined }))).toBeNull();
   });
 
-  it("pushTrail appends {t: at, y: pitchY(pitch)} and keeps the colour and last hit", () => {
+  it("pushTrail appends {t: at, y: pitchY(pitch), dur: durSec} and keeps the colour and last hit", () => {
     const trails = new Map<string, Trail>();
-    pushTrail(trails, note({ at: 1, pitch: 220 }), "#fff");
+    pushTrail(trails, note({ at: 1, pitch: 220, durSec: 1.03 }), "#fff");
     pushTrail(trails, note({ at: 2, pitch: 440 }), "#fff");
     const t = trails.get("f1")!;
-    expect(t).toEqual({ lineId: "f1", color: "#fff", points: [{ t: 1, y: 0.25 }, { t: 2, y: 0.5 }], lastHit: 2 });
+    expect(t).toEqual({ lineId: "f1", color: "#fff", points: [{ t: 1, y: 0.25, dur: 1.03 }, { t: 2, y: 0.5, dur: 0.25 }], lastHit: 2 });
+  });
+
+  it("noteBar (v5): a note is a bar durSec · px/s long, at least 3 px × DPR", () => {
+    expect([NOTE_BAR_MIN_PX, NOTE_BAR_H_PX]).toEqual([3, 3]);
+    expect(noteBar(50, 1.5, 40, 1)).toEqual([50, 60]);
+    expect(noteBar(50, 0.05, 40, 1)).toEqual([50, 3]); // 2 px → the minimum
+    expect(noteBar(50, 0.05, 40, 2)).toEqual([50, 6]);
+    expect(noteBar(-10, 0, 40, 1)).toEqual([-10, 3]);
   });
 
   it("trims each trail to maxPoints (oldest points first)", () => {

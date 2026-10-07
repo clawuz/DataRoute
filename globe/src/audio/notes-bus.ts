@@ -16,6 +16,8 @@ export interface NoteEvent {
   /** route key (same as the corridor key for routed flights); "" for groove voices */
   key: string;
   at: number;
+  /** v5: the note's real length in seconds (the scope draws a bar this long) */
+  durSec: number;
   long?: boolean;
   /** the flight id of a flight-line note */
   lineId?: string;

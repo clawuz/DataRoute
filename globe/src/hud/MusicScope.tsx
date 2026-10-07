@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 import type { MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
-  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, SECTION_COLOR, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments, pruneTrails,
-  pushTrail, scopeLabel, stepLane, trailIdOf, type Lane, type Trail,
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
+  noteBar, pruneTrails, pushTrail, scopeLabel, stepLane, trailIdOf, type Lane, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -17,7 +17,6 @@ const STEP = 1 / SCOPE_RATE;
 const MAX_QUEUE = 512;
 /** seconds of history across the ribbon's width (a trail fades out over the same time) */
 const RIBBON_SEC = TRAIL_TTL_SEC;
-const DOT_PX = 1.6;
 
 interface LaneTrace {
   lane: Lane;
@@ -106,7 +105,8 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       g.globalCompositeOperation = "lighter";
       g.lineWidth = 1.2 * dpr;
 
-      // pitch ribbon (top 70 %): x = right − age·px/s, y = (1 − pitchY)·height, alpha fading with age
+      // pitch ribbon (top 70 %): x = right − age·px/s, y = (1 − pitchY)·height, alpha fading with age; each note is a
+      // thick bar as long as the note (v5), over the thin trail line
       const now = wallSec();
       const ribbonH = RIBBON_SHARE * h;
       const pxPerSec = w / RIBBON_SEC;
@@ -123,12 +123,11 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         });
         g.stroke();
         g.fillStyle = tr.color;
+        const barH = NOTE_BAR_H_PX * dpr;
         for (const p of tr.points) {
-          const x = xOf(p.t);
-          if (x < 0) continue;
-          g.beginPath();
-          g.arc(x, yOf(p.y), DOT_PX * dpr, 0, 2 * Math.PI);
-          g.fill();
+          const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
+          if (x + bw < 0) continue;
+          g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
         }
       }
 

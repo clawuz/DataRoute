@@ -2,9 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { freqOf } from "../src/audio/theory";
 import { SECTIONS } from "../src/audio/form";
 import { createRouteSound } from "../src/audio/engine";
-import { playNote, type SynthNote } from "../src/audio/instruments";
-import { linePattern, lineGain, type SkyFlight } from "../src/audio/lines";
+import { PLUCKED, SUSTAINED, playNote, releaseOf, type SynthNote } from "../src/audio/instruments";
+import { isPhraseStart, lineGain, motifFor, type SkyFlight } from "../src/audio/lines";
 import { LINE_VEL, stepTime, type ScoreEvent } from "../src/audio/score";
+import type { Instrument } from "../src/audio/theory";
 import type { NoteEvent } from "../src/audio/notes-bus";
 
 class P {
@@ -96,10 +97,10 @@ describe("route sound engine: the step clock", () => {
     expect(h.create).not.toHaveBeenCalled();
     // horizon 10.25: steps 0 (10) and 1 (10 + 1.1 · 0.1293); step 2 (10.259) is later
     expect([...new Set(h.notes.map((n) => n.at))]).toEqual([10, stepTime(1, 10, DAY)]);
-    // DAY level 2 (one flight), the EUR layer (100 % share) adds its shaker, and A's line when its pattern starts on 0
-    expect(h.notes.filter((n) => n.at === 10).map((n) => n.instrument).sort()).toEqual(
-      ["BASS", "HAT", "KICK", "SHAKER", ...(linePattern("A")[0] ? ["EUR"] : [])].sort(),
-    );
+    // DAY level 2 (one flight), the EUR layer (100 % share) adds its shaker, the chord's string swell; A's phrase (IST-A:
+    // step 0 of odd bars) waits for bar 1
+    expect(isPhraseStart("IST-A", 1, 0)).toBe(false);
+    expect(h.notes.filter((n) => n.at === 10).map((n) => n.instrument).sort()).toEqual(["BASS", "HAT", "KICK", "SHAKER", "STR"]);
     h.s.dispose();
   });
 
@@ -143,7 +144,7 @@ describe("route sound engine: the step clock", () => {
     h.s.dispose();
   });
 
-  it("flight lines: notes only on each flight's euclidean steps, at most 12 lines, the followed flight always among them", () => {
+  it("flight lines: whole phrases from their start steps, at most 12 lines, the followed flight always among them", () => {
     const h = make(0);
     const flights: SkyFlight[] = [];
     // one route per flight (v5 `selectLines` plays one line per route)
@@ -159,16 +160,20 @@ describe("route sound engine: the step clock", () => {
     // shares: EUR 5/25, the others 4/25 (≥ 14 %): four layers at most, EUR then DOM, MEA, AFR (REGIONS order breaks ties)
     expect(h.s.info().layers).toEqual(["DOM", "EUR", "MEA", "AFR"]);
     for (const id of ids) expect([0, 1, 2, 3]).toContain(flights.find((f) => f.id === id)!.regionIdx);
-    for (const n of lines) {
-      expect(linePattern(n.lineId!)[stepOf(n) % 16]).toBe(true);
-      expect(n.lane).toBe(n.instrument);
-      expect(n.pitch).toBe(n.freq);
-      expect(n.key).toBe(flights.find((f) => f.id === n.lineId)!.key);
+    for (const id of ids) {
+      const ns = lines.filter((n) => n.lineId === id);
+      const key = flights.find((f) => f.id === id)!.key;
+      const { motif } = motifFor(key, 1);
+      expect(ns).toHaveLength(4); // one phrase in two bars (one flight per route: every second bar)
+      expect(isPhraseStart(key, 1, stepOf(ns[0]))).toBe(true);
+      expect(ns.map((n) => stepOf(n) - stepOf(ns[0]))).toEqual([0, motif.durs[0], motif.durs[0] + motif.durs[1], 16 - motif.durs[3]]);
+      ns.forEach((n, j) => expect(n.durSec).toBeCloseTo(motif.durs[j] * D, 12));
+      for (const n of ns) expect([n.lane, n.pitch, n.key]).toEqual([n.instrument, n.freq, key]);
     }
-    const vel = (id: string) => lines.find((n) => n.lineId === id)!.vel;
-    expect(vel("SOLO")).toBeCloseTo(1.4 * LINE_VEL * lineGain(12), 12);
+    const vel = (id: string) => lines.find((n) => n.lineId === id)!.vel; // the phrase's first note (0.5)
+    expect(vel("SOLO")).toBeCloseTo(0.5 * 1.4 * LINE_VEL * lineGain(12) * 1.1, 12);
     const other = [...ids].find((id) => id !== "SOLO")!;
-    expect(vel(other)).toBeCloseTo(LINE_VEL * lineGain(12), 12);
+    expect(vel(other)).toBeCloseTo(0.5 * LINE_VEL * lineGain(12) * 1.1, 12);
     h.s.dispose();
   });
 
@@ -177,7 +182,7 @@ describe("route sound engine: the step clock", () => {
     h.s.setSky([sky("A")], null);
     h.at(0);
     h.s.setSky([sky("B")], null);
-    h.run(16 * D - 0.3);
+    h.run(48 * D - 0.3); // A (IST-A) would phrase on step 16, B (IST-B) phrases on step 32
     const later = h.notes.filter((n) => n.kind === "line" && n.at > 0.25);
     expect(new Set(later.map((n) => n.lineId))).toEqual(new Set(["B"]));
     h.s.dispose();
@@ -230,8 +235,8 @@ describe("route sound engine: the step clock", () => {
     h.notes.length = 0;
     h.at(3);
     // NIGHT step 0 at the new epoch 3: DAY's level 2 falls one level and is clamped into NIGHT's [0, 1] → level 1
-    // (kick, 8th hat, bass); step 1 (3.205) has no hits
-    expect(h.notes.map((n) => [n.instrument, n.at]).sort()).toEqual([["BASS", 3], ["HAT", 3], ["KICK", 3]]);
+    // (kick, 8th hat, bass, the string swell of the first chord); step 1 (3.205) has no hits
+    expect(h.notes.map((n) => [n.instrument, n.at]).sort()).toEqual([["BASS", 3], ["HAT", 3], ["KICK", 3], ["STR", 3]]);
     expect(h.s.info().level).toBe(1);
     h.notes.length = 0;
     h.s.schedule([ev()], null, undefined, NIGHT_H);
@@ -366,7 +371,7 @@ describe("route sound engine: graph, info, dynamics", () => {
       return out;
     };
     const vis = run(true);
-    const steps = linePattern("A").filter(Boolean).length;
+    const steps = 4; // IST-JFK (ASI menu index 0 = ASI): one four-note phrase from step 4 of bar 0
     expect(vis.lines).toBe(steps);
     expect(vis.pans.filter((p) => p === -0.4)).toHaveLength(steps);
     expect(vis.pans.filter((p) => p !== -0.4).every((p) => p === 0)).toBe(true);
@@ -658,5 +663,214 @@ describe("instrument recipes (one scheduled hit each)", () => {
       CLA: [3, 0], SAX: [3, 1], TPT: [2, 0],
     });
     expect(n("DOM")).toEqual([0, 0]); // no event instrument for the domestic region any more (its lines are Rhodes)
+  });
+});
+
+describe("route sound engine v5: route phrases, string swells, the monophonic ney (spec §4g)", () => {
+  const BAR = 16 * D;
+  it("five flights on one route play one line: its newest flight, a four-note phrase every bar (≥ 3 flights), planned once", () => {
+    const h = make(0);
+    // IST-LHR: m8 ([0,2,3,2] / [8,2,2,4]), start step 4; five flights → every bar
+    const route = [5, 1, 9, 3, 7].map((age, i) => sky(`L${i}`, { key: "IST-LHR", ageSec: 100 * age }));
+    h.s.setSky([...route, sky("Z", { key: "IST-JFK", ageSec: 50 })], null);
+    h.at(0);
+    h.run(4 * BAR - 0.3);
+    h.run(4 * BAR); // more ticks: nothing is re-planned
+    const lines = h.notes.filter((n) => n.kind === "line");
+    const perKey = new Map<string, Set<string>>();
+    for (const n of lines) perKey.set(n.key, (perKey.get(n.key) ?? new Set()).add(n.lineId!));
+    expect(perKey.get("IST-LHR")).toEqual(new Set(["L1"])); // the newest (ageSec 100) represents the route
+    expect(perKey.size).toBeLessThanOrEqual(12);
+    const lhr = lines.filter((n) => n.key === "IST-LHR");
+    const starts = [4, 20, 36, 52];
+    expect(lhr.map((n) => stepOf(n))).toEqual(starts.flatMap((k) => [k, k + 8, k + 10, k + 12]));
+    expect(lhr.map((n) => +(n.durSec / D).toFixed(9))).toEqual(starts.flatMap(() => [8, 2, 2, 4]));
+    for (const n of lhr) expect(n.vel).toBeLessThanOrEqual(0.5 * LINE_VEL * lineGain(2) * 1.5 + 1e-12); // routeCount 5 → × 1.5
+    expect(lhr[0].vel).toBeCloseTo(0.5 * LINE_VEL * lineGain(2) * 1.5, 12);
+    // IST-JFK (one flight, start 4, even bars): every second bar
+    expect(lines.filter((n) => n.key === "IST-JFK").map((n) => stepOf(n)).filter((k, i) => i % 4 === 0)).toEqual([4, 36]);
+    h.s.dispose();
+  });
+
+  it("STR swells at chord starts (durSec ≈ 0.92 of the chord), none at level 0", () => {
+    const h = make(0);
+    h.at(0);
+    h.run(2 * BAR - 0.3);
+    const str = h.notes.filter((n) => n.instrument === "STR");
+    expect(str.map((n) => stepOf(n))).toEqual([0, 16]); // DAY: one bar a chord, level 2
+    for (const n of str) expect(n.durSec).toBeCloseTo(0.92 * BAR, 1);
+    expect(str[0].durSec).toBeCloseTo(15 * D, 12);
+    h.s.dispose();
+    // NIGHT with no traffic: bar 0 still level 1 (one level down from DAY's 2), then level 0 — no swell on bar 2's chord
+    const n = make(0);
+    n.s.setSky([], null, NIGHT_H);
+    n.at(0);
+    n.run(3 * 16 * DN - 0.2);
+    const nightStr = n.notes.filter((x) => x.instrument === "STR");
+    expect(nightStr.map((x) => stepOf(x, 0, DN))).toEqual([0]);
+    expect(nightStr[0].durSec).toBeCloseTo(29 * DN, 12);
+    expect(n.s.info().level).toBe(0);
+    n.s.dispose();
+  });
+
+  it("the ney's held note is cut when the next ney note starts (its gain fades at the new note's time)", () => {
+    const h = make(0);
+    h.s.setEnabled(true);
+    h.s.schedule([ev()]); // cell on steps 2, 4, 6; the third note is held 3 eighths (to step 12)
+    const third = h.notes.filter((n) => n.instrument === "NEY")[2];
+    expect(stepOf(third)).toBe(6);
+    expect(third.durSec).toBeCloseTo(6 * D, 12);
+    // the NEY envelope gains of the third note: the gains whose peak ramp ends at its attack (step 6 + 0.12 s)
+    const heldGains = h.ctx.gains.filter((g) => g.gain.calls.some((c) => c.fn === "lin" && Math.abs(c.args[1] - (6 * D + 0.12)) < 1e-9));
+    expect(heldGains).toHaveLength(3); // sine, triangle, breath noise
+    for (const g of heldGains) expect(g.gain.cancelScheduledValues).not.toHaveBeenCalled();
+    h.clock.t = 9 * D; // the next cell's first note falls on step 10, before the held note ends (step 12)
+    h.ctx.currentTime = 9 * D; // the audio clock runs with the wall clock (both from 0)
+    h.s.schedule([ev()]);
+    const next = h.notes.filter((n) => n.instrument === "NEY")[3];
+    expect(stepOf(next)).toBe(10);
+    for (const g of heldGains) {
+      expect(g.gain.cancelScheduledValues).toHaveBeenCalledTimes(1);
+      expect(g.gain.cancelScheduledValues.mock.calls[0][0]).toBeCloseTo(10 * D, 9);
+      const last = g.gain.calls.at(-1)!;
+      expect(last.fn).toBe("exp");
+      expect(last.args[1]).toBeCloseTo(10 * D + 0.04, 9);
+    }
+    h.s.dispose();
+  });
+
+  it("a ney note that ends before the next one starts is not cut", () => {
+    const h = make(0);
+    h.s.setEnabled(true);
+    h.s.schedule([ev()]);
+    const g0 = h.ctx.gains.length;
+    h.clock.t = 2; // the next cell starts well after step 12
+    h.s.schedule([ev()]);
+    expect(h.ctx.gains.slice(0, g0).some((g) => g.gain.cancelScheduledValues.mock.calls.length > 0)).toBe(false);
+    h.s.dispose();
+  });
+});
+
+describe("v5 instruments: real note lengths and the new recipes", () => {
+  const play = (instrument: Instrument, o: Partial<SynthNote> = {}) => {
+    const ctx = fakeCtx();
+    const handle = playNote(ctx as unknown as AudioContext, new Node() as unknown as AudioNode, { when: 1, instrument, freq: 220, vel: 1, ...o }, {
+      gainScale: 1, cutoffScale: 1, pan: 0,
+    });
+    return { ctx, handle };
+  };
+  const expEnds = (ctx: FakeCtx) => ctx.gains.flatMap((g) => g.gain.calls.filter((c) => c.fn === "exp").map((c) => c.args[1]));
+  const stops = (ctx: FakeCtx) => [...ctx.oscs, ...ctx.srcs].map((x) => x.stop.mock.calls[0][0] as number);
+
+  it("the sustained and plucked sets (spec §4g)", () => {
+    expect([...SUSTAINED].sort()).toEqual(["AME", "CELLO", "CLA", "FLUTE", "NEY", "ORGAN", "SAX", "STR", "TPT", "VIOLIN"]);
+    expect([...PLUCKED].sort()).toEqual(["AFR", "ASI", "EP", "EUR", "GUITAR", "HARP", "KANUN", "KEYS", "MARIMBA", "MEA", "PNO", "SAZ"]);
+    expect(releaseOf("NEY", 2)).toBe(0.6);
+    expect(releaseOf("CELLO", 0.5)).toBe(0.25);
+    expect(releaseOf("ORGAN", 2)).toBe(0.1);
+    expect(releaseOf("STR", 1.9)).toBe(0.9);
+  });
+
+  it("sustained: the envelope holds the peak until when + durSec, then releases; every source stops after the release", () => {
+    for (const inst of SUSTAINED) {
+      for (const dur of [0.26, 1.0, 2.4]) {
+        const { ctx } = play(inst, { durSec: dur, freqs: inst === "STR" ? [110, 220] : undefined });
+        const rel = releaseOf(inst, dur);
+        // the held voices: a set at max(attack end, 1 + dur) followed by the release ramp
+        const held = ctx.gains.filter((g) => g.gain.calls.length === 4 && g.gain.calls[2].fn === "set");
+        expect(held.length, inst).toBeGreaterThan(0);
+        for (const g of held) {
+          const [, peak, hold, end] = g.gain.calls;
+          expect(hold.args[0]).toBe(peak.args[0]); // stays at the peak
+          expect(hold.args[1]).toBeCloseTo(Math.max(1 + dur, peak.args[1]), 12);
+          expect(end.fn).toBe("exp");
+          expect(end.args[1]).toBeCloseTo(hold.args[1] + rel, 12);
+        }
+        for (const t of stops(ctx)) expect(t, inst).toBeGreaterThanOrEqual(1 + dur + rel);
+      }
+    }
+  });
+
+  it("plucked: a longer note rings longer (decay = max(own, min(durSec, 2.5))), capped at 2.5 s", () => {
+    const step = D;
+    for (const inst of PLUCKED) {
+      const short = Math.max(...expEnds(play(inst, { durSec: step }).ctx));
+      const long = Math.max(...expEnds(play(inst, { durSec: 10 * step }).ctx));
+      const huge = Math.max(...expEnds(play(inst, { durSec: 30 }).ctx));
+      expect(long, inst).toBeGreaterThanOrEqual(short);
+      expect(huge - 1, inst).toBeLessThanOrEqual(2.5 + 0.01); // attack ≤ 5 ms + 2.5 s
+      expect(huge - 1, inst).toBeGreaterThan(2.49);
+    }
+    // own decay shorter than 10 steps (1.29 s): strictly longer, the main voice exactly 10 steps
+    for (const inst of ["MEA", "AFR", "ASI", "GUITAR", "SAZ", "KANUN", "MARIMBA", "EP", "KEYS"] as const) {
+      const short = Math.max(...expEnds(play(inst, { durSec: step }).ctx));
+      const long = Math.max(...expEnds(play(inst, { durSec: 10 * step }).ctx));
+      expect(long, inst).toBeGreaterThan(short);
+    }
+    expect(Math.max(...expEnds(play("MARIMBA", { durSec: 10 * step }).ctx))).toBeCloseTo(1 + 0.003 + 10 * step, 12);
+    // a short note keeps the instrument's own decay (PNO triangle: 2.0 s)
+    expect(Math.max(...expEnds(play("PNO", { durSec: step }).ctx))).toBeCloseTo(1 + 0.003 + 2.0, 12);
+  });
+
+  it("drums ignore durSec", () => {
+    for (const inst of ["KICK", "SNARE", "HAT", "TOM", "CRASH"] as const)
+      expect(expEnds(play(inst, { durSec: 2 }).ctx)).toEqual(expEnds(play(inst).ctx));
+  });
+
+  it("node counts of the new recipes", () => {
+    const count = (inst: Instrument, o: Partial<SynthNote> = {}) => {
+      const { ctx } = play(inst, { durSec: 0.5, ...o });
+      return { oscs: ctx.oscs.map((x) => x.type), srcs: ctx.srcs.length, filters: ctx.filts.map((f) => f.type) };
+    };
+    expect(count("HARP")).toEqual({ oscs: ["triangle", "sine"], srcs: 0, filters: [] });
+    expect(count("GUITAR")).toEqual({ oscs: ["sawtooth"], srcs: 1, filters: ["lowpass", "bandpass"] });
+    expect(count("SAZ")).toEqual({ oscs: ["sawtooth", "sine"], srcs: 0, filters: ["lowpass"] });
+    expect(count("KANUN")).toEqual({ oscs: ["triangle", "sine"], srcs: 0, filters: [] });
+    expect(count("MARIMBA")).toEqual({ oscs: ["sine", "sine"], srcs: 0, filters: [] });
+    expect(count("CELLO")).toEqual({ oscs: ["sawtooth", "sawtooth"], srcs: 0, filters: ["lowpass", "lowpass"] });
+    expect(count("VIOLIN")).toEqual({ oscs: ["sawtooth", "sawtooth"], srcs: 0, filters: ["lowpass", "lowpass"] });
+    expect(count("FLUTE")).toEqual({ oscs: ["sine"], srcs: 1, filters: ["bandpass"] });
+    expect(count("ORGAN")).toEqual({ oscs: ["sine", "sine", "sine"], srcs: 0, filters: [] });
+    expect(count("STR")).toEqual({ oscs: ["sawtooth", "sawtooth"], srcs: 0, filters: ["lowpass", "lowpass"] });
+    expect(count("STR", { freqs: [55, 130, 165, 196] }).oscs).toHaveLength(8); // two saws per voicing tone
+  });
+
+  it("new recipe details: peaks 0.22 · vel · gainScale, cello/violin vibrato as detune automation, harmonics, the saz's pitch drop", () => {
+    const { ctx: harp } = play("HARP", { vel: 0.5 });
+    expect(harp.gains[0].gain.calls.find((c) => c.fn === "lin")!.args[0]).toBeCloseTo(0.11, 12);
+    expect(harp.oscs[1].frequency.calls[0].args[0]).toBe(440);
+    const { ctx: cello } = play("CELLO", { durSec: 1 });
+    expect(cello.filts[0].frequency.calls[0].args[0]).toBe(900);
+    const wob = cello.oscs[0].detune.calls.filter((c) => c.fn === "lin").map((c) => c.args[0]);
+    expect(Math.max(...wob)).toBe(-4 + 10); // ±10 cents around the −4 cent detune
+    expect(Math.min(...wob)).toBe(-4 - 10);
+    expect(cello.gains[0].gain.calls[1].args[1]).toBeCloseTo(1.12, 12); // attack 0.12 s
+    const { ctx: violin } = play("VIOLIN", { durSec: 1 });
+    expect(violin.filts[0].frequency.calls[0].args[0]).toBe(3200);
+    expect(Math.max(...violin.oscs[1].detune.calls.filter((c) => c.fn === "lin").map((c) => c.args[0]))).toBe(3 + 14);
+    const { ctx: saz } = play("SAZ");
+    expect(saz.oscs[0].frequency.calls[0].args[0]).toBeCloseTo(1.015 * 220, 9);
+    expect(saz.oscs[1].frequency.calls[0].args[0]).toBe(660);
+    const { ctx: kanun } = play("KANUN");
+    expect(kanun.oscs[1].frequency.calls[0].args[0]).toBe(880);
+    const { ctx: organ } = play("ORGAN");
+    expect(organ.oscs.map((o) => o.frequency.calls[0].args[0])).toEqual([220, 440, 660]);
+    const { ctx: str } = play("STR", { durSec: 2 });
+    expect(str.gains[0].gain.calls[1].args[1]).toBeCloseTo(1.5, 12); // attack 0.5 s
+    expect(str.gains[0].gain.calls[3].args[1]).toBeCloseTo(3 + 0.9, 12); // held to 3 s, released 0.9 s
+  });
+
+  it("cut ends only the held part of a sustained note; a plucked note's handle is a no-op", () => {
+    const { ctx, handle } = play("NEY", { durSec: 1 });
+    handle.cut(1.5);
+    const held = ctx.gains.filter((g) => g.gain.cancelScheduledValues.mock.calls.length > 0);
+    expect(held).toHaveLength(3);
+    for (const g of held) expect(g.gain.calls.slice(-2).map((c) => [c.fn, +c.args[1].toFixed(6)])).toEqual([["set", 1.5], ["exp", 1.54]]);
+    const late = play("NEY", { durSec: 1 });
+    late.handle.cut(2.5); // already releasing: untouched
+    expect(late.ctx.gains.some((g) => g.gain.cancelScheduledValues.mock.calls.length > 0)).toBe(false);
+    const p = play("PNO", { durSec: 1 });
+    p.handle.cut(1.2);
+    expect(p.ctx.gains.some((g) => g.gain.cancelScheduledValues.mock.calls.length > 0)).toBe(false);
   });
 });

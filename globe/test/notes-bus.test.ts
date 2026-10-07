@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createNoteBus, laneOf, type NoteEvent } from "../src/audio/notes-bus";
 
 const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({
-  instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 0.8, kind: "line", key: "IST-FRA", at: 1, lineId: "f1", ...o,
+  instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 0.8, kind: "line", key: "IST-FRA", at: 1, durSec: 0.25, lineId: "f1", ...o,
 });
 
 describe("note bus", () => {

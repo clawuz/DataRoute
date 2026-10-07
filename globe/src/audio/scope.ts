@@ -32,11 +32,18 @@ export const PITCH_MAX = freqOf(5, 12);
 export const pitchY = (freq: number): number =>
   Math.min(1, Math.max(0, Math.log2(freq / PITCH_MIN) / Math.log2(PITCH_MAX / PITCH_MIN)));
 
-/** One trace of the pitch ribbon: the note hits of a flight line (or of an Istanbul instrument), oldest first. */
+/** A note of a trail: its start `t` (wall s), pitch height `y` (`pitchY`) and v5 length `dur` (s). */
+export interface TrailPoint {
+  t: number;
+  y: number;
+  dur: number;
+}
+
+/** One trace of the pitch ribbon: the notes of a flight line (or of an Istanbul instrument), oldest first. */
 export interface Trail {
   lineId: string;
   color: string;
-  points: { t: number; y: number }[];
+  points: TrailPoint[];
   /** `at` of the latest note */
   lastHit: number;
 }
@@ -64,10 +71,19 @@ export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: strin
     trails.set(id, t);
   }
   t.color = color;
-  t.points.push({ t: n.at, y: pitchY(n.pitch) });
+  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0) });
   if (t.points.length > maxPoints) t.points.splice(0, t.points.length - maxPoints);
   t.lastHit = Math.max(t.lastHit, n.at);
 }
+
+/** Minimum length (px, × DPR) and height (× DPR) of a note bar on the pitch ribbon. */
+export const NOTE_BAR_MIN_PX = 3;
+export const NOTE_BAR_H_PX = 3;
+
+/** v5 note bar: `[x, width]` of a note starting at `x` lasting `dur` s at `pxPerSec`, at least `NOTE_BAR_MIN_PX · dpr` wide. */
+export const noteBar = (x: number, dur: number, pxPerSec: number, dpr: number): [number, number] => [
+  x, Math.max(NOTE_BAR_MIN_PX * dpr, dur * pxPerSec),
+];
 
 /** Drops the trails not hit for `ttl` seconds. */
 export function pruneTrails(trails: Map<string, Trail>, now: number, ttl = TRAIL_TTL_SEC): void {
