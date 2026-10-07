@@ -119,7 +119,7 @@ describe("neyCell on the chord-scale ladder", () => {
   it("the fourth cell of a phrase is one long cadence note on the root or fifth, then a two-beat rest", () => {
     // Dm9 root D / fifth A rungs: 0 (24), 3 (29), 7 (36), 10 (41); nearest to rung 6 → 7
     const r = neyCell(dep(JFK), { last: 34, cell: 3, restUntilBeat: 0 }, Dm9, 8, DAY);
-    expect(r.notes).toEqual([{ freq: ladderFreq(36), semis: 36, slotOffset: 0, vel: 1, grace: false, long: true }]);
+    expect(r.notes).toEqual([{ freq: ladderFreq(36), semis: 36, slotOffset: 0, durSlots: 8, vel: 1, grace: false, long: true }]);
     expect(r.state).toEqual({ last: 36, cell: 0, restUntilBeat: 10 });
     expect(neyCell(dep(ESB), r.state, Dm9, 9, DAY).notes).toEqual([]);
     expect(neyCell(dep(ESB), r.state, Dm9, 10, DAY).notes).toHaveLength(3);
@@ -175,7 +175,7 @@ describe("windParts: the ensemble follows the ney cell on the chord-scale ladder
   });
   it("winds stay in the chord scale; a rest gives no winds; rungs reflect at the ladder ends", () => {
     expect(windParts([], Dm9, DAY)).toEqual([]);
-    const at = (s: number[], long = false): NeyNote[] => s.map((x, k) => ({ freq: ladderFreq(x), semis: x, slotOffset: k, vel: 1, grace: false, long }));
+    const at = (s: number[], long = false): NeyNote[] => s.map((x, k) => ({ freq: ladderFreq(x), semis: x, slotOffset: k, durSlots: long ? 8 : 1, vel: 1, grace: false, long }));
     // rungs 0, 1, 2 (0, 2, 3): clarinet −2 reflects to 2, 1, 0; sax −4 reflects to 4 (7)
     expect(desc(windParts(at([0, 2, 3]), Dm9, EVENING)).map((d) => [d[0], d[1]])).toEqual([["CLA", 3], ["CLA", 2], ["CLA", 0], ["SAX", 7]]);
     // rung 25 (43) + 7 = 32 → reflected at 27 → 22 (38)
@@ -184,5 +184,21 @@ describe("windParts: the ensemble follows the ney cell on the chord-scale ladder
       const r = neyCell({ kind: "dep", distKm: 3000, ...ESB }, { last: 30, cell: 0, restUntilBeat: 0 }, c as Chord, 1, EVENING);
       for (const w of windParts(r.notes, c, EVENING)) expect(c.scale.includes(pc(w.semis))).toBe(true);
     }
+  });
+});
+
+describe("v5 note durations (spec §4g)", () => {
+  const JFKd = { kind: "dep" as const, distKm: 1000, ...JFK };
+  const cell = neyCell(JFKd, mid, Dm9, 1, DAY).notes;
+  const cadence = neyCell(JFKd, { last: 29, cell: 3, restUntilBeat: 0 }, Dm9, 8, DAY).notes;
+  it("ney cell notes last [1, 1, 3] slots (the third is held); the cadence note 8", () => {
+    expect(cell.map((n) => n.durSlots)).toEqual([1, 1, 3]);
+    expect(cadence.map((n) => n.durSlots)).toEqual([8]);
+  });
+  it("winds: the clarinet copies its note, the saxophone holds twice its source, the trumpet the cadence's 8", () => {
+    const d = (ps: ReturnType<typeof windParts>) => ps.map((p) => [p.instrument, p.durSlots]);
+    expect(d(windParts(cell, Dm9, EVENING))).toEqual([["CLA", 1], ["CLA", 1], ["CLA", 3], ["SAX", 2]]);
+    expect(d(windParts(cadence, Dm9, EVENING))).toEqual([["SAX", 16]]);
+    expect(d(windParts(cadence, Dm9, DAY))).toEqual([["TPT", 8]]);
   });
 });

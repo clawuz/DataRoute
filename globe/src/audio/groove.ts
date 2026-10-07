@@ -1,4 +1,5 @@
 import type { BuildPhase, Level } from "./arrangement";
+import type { Section } from "./form";
 import { ladderFreq, type Chord } from "./harmony";
 import { rotate } from "./lines";
 import { euclid, freqOf, type RegionName } from "./theory";
@@ -10,7 +11,7 @@ import { euclid, freqOf, type RegionName } from "./theory";
  */
 export type Voice =
   | "KICK" | "SNARE" | "HAT" | "OHAT" | "BASS" | "KEYS" | "BRASS"
-  | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP";
+  | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP" | "STR";
 
 export interface GrooveHit {
   voice: Voice;
@@ -23,6 +24,8 @@ export interface GrooveHit {
   long?: boolean;
   /** v4: play this many steps after the step (0.5 = the second 32nd of a level-4 hat double); absent = on the step */
   offsetSteps?: number;
+  /** v5: held for this many 16th steps (the string swell) */
+  durSteps?: number;
 }
 
 const ALL16 = Array.from({ length: 16 }, (_, i) => i);
@@ -247,4 +250,21 @@ export function fillAndBuild(phase: BuildPhase, amount: number, step: number, ba
   if (s === 0 && bar === 0) hits.push({ voice: "RISER", vel: 0.8 });
   if (s % 4 === 0) hits.push({ voice: "BASS", vel: V4.BASS, freq: freqOf(1, s % 8 === 0 ? chord.root : chord.root + 12) });
   return hits;
+}
+
+// ---------------------------------------------------------------- v5 (spec §4g): a string swell per chord
+
+/** Velocity of the string swell per rhythm level (none at level 0). */
+export const SWELL_VEL: Record<Level, number> = { 0: 0, 1: 0.3, 2: 0.35, 3: 0.4, 4: 0.5 };
+
+/** Strings voicing: the root in octave 2 (semitones 0…11 above A2), then 3rd, 7th, 9th (or the 5th) stacked in octaves 3–4 (12…35). */
+export const swellVoicing = (c: Chord): number[] => [c.root, ...stack([c.tones[1], c.tones[3], c.tones[4] ?? c.tones[2]], 12, 35)];
+
+/**
+ * The `STR` swell on every chord change (step 0 of a bar with `bar % barsPerChord == 0`) from level 1 up, held for
+ * `round(barsPerChord · 16 · 0.92)` steps (NIGHT 29, the others 15) so a short breath separates it from the next chord.
+ */
+export function chordSwell(stepInBar: number, bar: number, chord: Chord, sec: Section, level: Level): GrooveHit | null {
+  if (stepInBar !== 0 || mod(bar, sec.barsPerChord) !== 0 || level < 1) return null;
+  return { voice: "STR", vel: SWELL_VEL[level], freqs: swellVoicing(chord).map(ladderFreq), durSteps: Math.round(sec.barsPerChord * 16 * 0.92) };
 }

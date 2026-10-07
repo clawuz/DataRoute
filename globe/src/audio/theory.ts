@@ -4,12 +4,13 @@ export type RegionName = (typeof REGIONS)[number];
 /**
  * Every voice of the route music: the continent line instruments (EUR vibraphone, PNO piano, MEA oud, AFR kalimba,
  * ASI koto, AME pad, EP Rhodes), the Istanbul ney and its winds, the v3 groove voices and the v4 fill/build voices
- * and region-layer percussion.
+ * and region-layer percussion, and the v5 route-menu instruments and string swell (STR, spec §4g).
  */
 export type Instrument =
   | RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT"
   | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS"
-  | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP";
+  | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP"
+  | "HARP" | "GUITAR" | "SAZ" | "KANUN" | "MARIMBA" | "CELLO" | "VIOLIN" | "FLUTE" | "ORGAN" | "STR";
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */
 export function euclid(k: number, n: number): boolean[] {

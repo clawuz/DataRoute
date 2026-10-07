@@ -73,6 +73,8 @@ export interface NeyNote {
   semis: number;
   /** offset in eighth notes from the cell's first note */
   slotOffset: number;
+  /** v5: held for this many eighth-note slots (cell notes 1, 1, 3; the cadence 8) */
+  durSlots: number;
   vel: number;
   grace: boolean;
   long: boolean;
@@ -95,9 +97,13 @@ function nearestTone(ladder: number[], pcs: number[], target: number, avoid = -1
   return best < 0 ? clamp(target, 0, ladder.length - 1) : best;
 }
 
-const note = (ladder: number[], i: number, slotOffset: number, vel: number, grace = false, long = false): NeyNote => ({
-  freq: ladderFreq(ladder[i]), semis: ladder[i], slotOffset, vel, grace, long,
+const note = (ladder: number[], i: number, slotOffset: number, durSlots: number, vel: number, grace = false, long = false): NeyNote => ({
+  freq: ladderFreq(ladder[i]), semis: ladder[i], slotOffset, durSlots, vel, grace, long,
 });
+
+/** v5 durations (eighth-note slots): the cell's third note is held; the cadence lasts a bar of eighths. */
+export const CELL_DUR_SLOTS = [1, 1, 3] as const;
+export const CADENCE_DUR_SLOTS = 8;
 
 /**
  * One Istanbul-end event → a three-note ney cell shaped by the route (bearing → contour, distance → step in ladder rungs),
@@ -111,7 +117,7 @@ export function neyCell(e: NeyEvent, st: NeyState, chord: Chord, beat: number, s
   const last = nearestRung(L, st.last);
   if (st.cell === 3) {
     const i = nearestTone(L, [chord.tones[0], chord.tones[2]], last);
-    return { notes: [note(L, i, 0, 1.0, false, true)], state: { last: L[i], cell: 0, restUntilBeat: beat + 2 } };
+    return { notes: [note(L, i, 0, CADENCE_DUR_SLOTS, 1.0, false, true)], state: { last: L[i], cell: 0, restUntilBeat: beat + 2 } };
   }
   const arr = e.kind === "arr";
   const target = arr ? Math.max(0, last - 7) : last; // seven rungs = an octave
@@ -130,7 +136,8 @@ export function neyCell(e: NeyEvent, st: NeyState, chord: Chord, beat: number, s
     n1 = reflect(n0 + s * step, 0, hi);
     n2 = reflect(n1 + (step >= 2 ? -s : s), 0, hi); // after a leap, one degree back
   }
-  const notes = [note(L, n0, 0, 0.8, beat % 4 === 0), note(L, n1, 1, 0.9), note(L, n2, 2, 0.7)];
+  const [d0, d1, d2] = CELL_DUR_SLOTS;
+  const notes = [note(L, n0, 0, d0, 0.8, beat % 4 === 0), note(L, n1, 1, d1, 0.9), note(L, n2, 2, d2, 0.7)];
   // the cell spans three eighth notes (1.5 beats); the ney is monophonic, so the next cell waits two beats
   return { notes, state: { last: L[n2], cell: st.cell + 1, restUntilBeat: beat + 2 } };
 }
@@ -141,6 +148,8 @@ export interface WindPart {
   freq: number;
   semis: number;
   slotOffset: number;
+  /** v5: eighth-note slots held (clarinet = its note, saxophone twice its note, trumpet = the cadence) */
+  durSlots: number;
   vel: number;
   long: boolean;
 }
@@ -156,7 +165,8 @@ export function windParts(cell: NeyNote[], chord: Chord, sec: Section): WindPart
   const W = scaleLadder(chord, WIND_LADDER_OCTS[0], WIND_LADDER_OCTS[1]);
   const at = (instrument: Wind, n: NeyNote, rungs: number, vel: number, long: boolean): WindPart => {
     const s = W[reflect(nearestRung(W, n.semis) + rungs, 0, W.length - 1)];
-    return { instrument, freq: ladderFreq(s), semis: s, slotOffset: n.slotOffset, vel, long };
+    const durSlots = instrument === "SAX" ? 2 * n.durSlots : n.durSlots;
+    return { instrument, freq: ladderFreq(s), semis: s, slotOffset: n.slotOffset, durSlots, vel, long };
   };
   const cadence = cell.length === 1 && cell[0].long;
   const has = (w: Wind) => sec.instruments.has(w);

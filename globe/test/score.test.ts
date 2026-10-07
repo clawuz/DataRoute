@@ -4,7 +4,7 @@ import { freqOf } from "../src/audio/theory";
 import { SECTIONS, chordAtStep, stepDur, type Section } from "../src/audio/form";
 import { CHORDS, ladderFreq } from "../src/audio/harmony";
 import { keysVoicing } from "../src/audio/groove";
-import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from "../src/audio/lines";
+import { continentInstrument, lineGain, lineNote, linePattern, type SkyFlight } from "../src/audio/lines";
 import { graceAbove, initNey, neyCell, type NeyState } from "../src/audio/melody";
 import {
   DRUM_PITCH, MAX_RANGE_SEC, NEY_LEAD_SEC, eventsBetween, planNotes as plan, planStep, stepTime, velocityFor, type PlanContext, type PlannedNote,
@@ -289,7 +289,7 @@ describe("planStep (v4): the arranged groove and the flight lines of one 16th st
       const lines = planStep(k, { epoch: 0, section: DAY }, arr(), [f], null).filter((h) => h.kind === "line");
       expect(lines.length).toBe(pat[k % 16] ? 1 : 0);
       for (const l of lines) {
-        expect(l).toMatchObject({ instrument: lineInstrument(f), key: "IST-TK1", lineId: "TK1" });
+        expect(l).toMatchObject({ instrument: continentInstrument(f), key: "IST-TK1", lineId: "TK1" });
         expect(l.instrument).toBe("PNO");
         expect(l.freq).toBeCloseTo(ladderFreq(lineNote(f, chordAtStep(k, DAY), k)), 9);
         expect(l.vel).toBeCloseTo(0.55 * lineGain(1), 12);

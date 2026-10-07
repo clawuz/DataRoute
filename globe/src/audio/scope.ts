@@ -14,6 +14,8 @@ export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   KEYS: "#c9a7ff", BRASS: "#fff1cf",
   DARBUKA: "#F7C548", CONGA: "#7BD389", TAIKO: "#F2508F", TIMP: "#A98BFF", SHAKER: "#3FC8F2",
   TOM: "#d9dce3", CRASH: "#fff1cf", RISER: "#fff1cf",
+  HARP: "#9fe3ff", GUITAR: "#e8b64a", SAZ: "#F2508F", KANUN: "#F7C548", MARIMBA: "#7BD389", CELLO: "#A98BFF",
+  VIOLIN: "#c9a7ff", FLUTE: "#3FC8F2", ORGAN: "#d9dce3", STR: "#A98BFF",
 };
 
 /** Top-to-bottom lanes of the rhythm strip (the open hat shares the hat lane, see `laneOf`). */

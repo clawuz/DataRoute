@@ -5,7 +5,7 @@ import type { BuildPhase, Level } from "./arrangement";
 import { chordAtStep, nextChordAtStep, stepDur, swingDelay, type Section } from "./form";
 import { bassHits, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "./groove";
 import { ladderFreq, snapToScale } from "./harmony";
-import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from "./lines";
+import { continentInstrument, lineGain, lineNote, linePattern, type SkyFlight } from "./lines";
 import { graceAbove, neyCell, windParts, type NeyState } from "./melody";
 import type { NoteKind } from "./notes-bus";
 import { routeKey, type Instrument, type RegionName } from "./theory";
@@ -208,7 +208,7 @@ export function planStep(
   for (const f of lines) {
     if (!linePattern(f.id)[k % 16]) continue;
     out.push({
-      when, instrument: lineInstrument(f), freq: ladderFreq(lineNote(f, chord, k)), vel: gain * (f.id === followedId ? FOLLOW_BOOST : 1),
+      when, instrument: continentInstrument(f), freq: ladderFreq(lineNote(f, chord, k)), vel: gain * (f.id === followedId ? FOLLOW_BOOST : 1),
       kind: "line", key: f.key, lineId: f.id,
     });
   }

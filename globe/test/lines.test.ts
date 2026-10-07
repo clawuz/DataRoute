@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { lineGain, lineInstrument, lineNote, linePattern, rotate, selectLines, type SkyFlight } from "../src/audio/lines";
+import {
+  INSTRUMENT_MENU, MOTIFS, continentInstrument, isPhraseStart, lineGain, lineInstrument, lineNote, linePattern, motifFor, phrase, rotate, selectLines,
+  type PhraseNote, type SkyFlight,
+} from "../src/audio/lines";
 import { CHORDS, scaleLadder } from "../src/audio/harmony";
 import { euclid, routeHash } from "../src/audio/theory";
 
@@ -10,17 +13,43 @@ const fl = (id: string, key: string, regionIdx: number, extra: Partial<SkyFlight
 });
 const byHash = (a: string, b: string) => routeHash(a) - routeHash(b) || (a < b ? -1 : 1);
 
-describe("selectLines", () => {
-  it("orders by route count, then by the hash of the flight id", () => {
-    const fs = [fl("a1", "IST-LHR", EUR), fl("b1", "IST-JFK", AME), fl("a2", "IST-LHR", EUR), fl("c1", "IST-DXB", MEA), fl("b2", "IST-JFK", AME), fl("a3", "IST-LHR", EUR)];
-    const ids = selectLines(fs, null).map((f) => f.id);
-    expect(ids.slice(0, 3).sort(byHash)).toEqual(ids.slice(0, 3)); // the three IST-LHR flights (count 3), by hash
-    expect(new Set(ids.slice(0, 3))).toEqual(new Set(["a1", "a2", "a3"]));
-    expect(new Set(ids.slice(3, 5))).toEqual(new Set(["b1", "b2"])); // count 2
-    expect(ids.slice(3, 5)).toEqual(["b1", "b2"].sort(byHash));
-    expect(ids[5]).toBe("c1");
+describe("selectLines: one line per route (spec §4g)", () => {
+  // routeHash: IST-LHR 2309319524 < IST-DXB 3498824140 < IST-JFK 3711461931 < IST-NRT 3966011162
+  it("N flights sharing a key collapse to one line: routeCount = N, the representative is the newest (smallest ageSec)", () => {
+    const fs = [fl("a1", "IST-LHR", EUR, { ageSec: 900 }), fl("a2", "IST-LHR", EUR, { ageSec: 120 }), fl("a3", "IST-LHR", EUR, { ageSec: 4000 })];
+    const out = selectLines(fs, null);
+    expect(out.length).toBe(1);
+    expect(out[0].id).toBe("a2");
+    expect(out[0].routeCount).toBe(3);
+    expect(out[0]).toEqual({ ...fs[1], routeCount: 3 });
+    expect(fs[1].routeCount).toBeUndefined(); // inputs are not mutated
   });
-  it("caps at max (12 by default) and at 4 lines per region", () => {
+  it("orders by route count (descending), ties by routeHash(key); no key twice", () => {
+    const fs = [
+      fl("n1", "IST-NRT", ASI), fl("j1", "IST-JFK", AME), fl("l1", "IST-LHR", EUR), fl("d1", "IST-DXB", MEA),
+      fl("l2", "IST-LHR", EUR), fl("j2", "IST-JFK", AME), fl("d2", "IST-DXB", MEA), fl("l3", "IST-LHR", EUR),
+    ];
+    const out = selectLines(fs, null);
+    expect(out.map((f) => f.key)).toEqual(["IST-LHR", "IST-DXB", "IST-JFK", "IST-NRT"]);
+    expect(out.map((f) => f.routeCount)).toEqual([3, 2, 2, 1]);
+    expect(new Set(out.map((f) => f.key)).size).toBe(out.length);
+  });
+  it("the followed flight represents its route (even if not the newest) and comes first", () => {
+    const fs = [
+      fl("l1", "IST-LHR", EUR, { ageSec: 10 }), fl("l2", "IST-LHR", EUR, { ageSec: 20 }), fl("l3", "IST-LHR", EUR, { ageSec: 30 }),
+      fl("old", "IST-NRT", ASI, { ageSec: 9000 }), fl("new", "IST-NRT", ASI, { ageSec: 5 }),
+    ];
+    const out = selectLines(fs, "old");
+    expect(out.map((f) => [f.id, f.routeCount])).toEqual([["old", 2], ["l1", 3]]);
+    expect(selectLines(fs, "l3").map((f) => f.id)).toEqual(["l3", "new"]);
+    expect(selectLines(fs, "not-airborne").map((f) => f.id)).toEqual(["l1", "new"]);
+  });
+  it("without ageSec the representative is the lowest routeHash(id), then id (deterministic)", () => {
+    const fs = [fl("x2", "K", EUR), fl("x1", "K", EUR), fl("x3", "K", EUR)];
+    const first = ["x1", "x2", "x3"].sort(byHash)[0];
+    expect(selectLines(fs, null).map((f) => f.id)).toEqual([first]);
+  });
+  it("caps at max (12 by default) and at 4 routes per region, the followed route counting toward its region", () => {
     const fs: SkyFlight[] = [];
     for (const r of [DOM, EUR, MEA, AFR, ASI, AME]) for (let i = 0; i < 6; i++) fs.push(fl(`r${r}-${i}`, `K${r}-${i}`, r));
     const out = selectLines(fs, null);
@@ -29,28 +58,18 @@ describe("selectLines", () => {
     for (const f of out) perRegion.set(f.regionIdx, (perRegion.get(f.regionIdx) ?? 0) + 1);
     for (const n of perRegion.values()) expect(n).toBeLessThanOrEqual(4);
     expect(selectLines(fs, null, 5).length).toBe(5);
-    // a single region can contribute at most 4 even if nothing else is airborne
     expect(selectLines(fs.filter((f) => f.regionIdx === EUR), null).length).toBe(4);
-  });
-  it("the followed flight is always first, even with the lowest rank, and counts toward its region cap", () => {
-    const fs: SkyFlight[] = [];
-    for (let i = 0; i < 6; i++) fs.push(fl(`e${i}`, "IST-LHR", EUR));
-    fs.push(fl("lonely", "IST-OSL", EUR));
-    const out = selectLines(fs, "lonely");
-    expect(out[0].id).toBe("lonely");
-    expect(out.filter((f) => f.regionIdx === EUR).length).toBe(4); // lonely + 3 IST-LHR
-    expect(out.length).toBe(4);
-    expect(selectLines(fs, "not-airborne").map((f) => f.id)).not.toContain("not-airborne");
-    expect(selectLines(fs, "not-airborne").length).toBe(4);
+    const eur = fs.filter((f) => f.regionIdx === EUR);
+    const withFollow = selectLines(eur, "r1-5");
+    expect(withFollow[0].id).toBe("r1-5");
+    expect(withFollow.length).toBe(4); // r1-5 + 3 others
   });
   it("is deterministic and independent of the input order", () => {
-    const fs = Array.from({ length: 40 }, (_, i) => fl(`f${i}`, `K${i % 7}`, i % 7));
-    const a = selectLines(fs, "f13").map((f) => f.id);
-    const b = selectLines([...fs].reverse(), "f13").map((f) => f.id);
-    expect(a).toEqual(b);
-    expect(selectLines(fs, "f13").map((f) => f.id)).toEqual(a);
-    expect(a[0]).toBe("f13");
-    expect(new Set(a).size).toBe(a.length);
+    const fs = Array.from({ length: 40 }, (_, i) => fl(`f${i}`, `K${i % 9}`, i % 7, { ageSec: (i * 37) % 11 }));
+    const a = selectLines(fs, "f13");
+    expect(selectLines([...fs].reverse(), "f13")).toEqual(a);
+    expect(a[0].id).toBe("f13");
+    expect(new Set(a.map((f) => f.key)).size).toBe(a.length);
   });
   it("empty sky → no lines", () => {
     expect(selectLines([], null)).toEqual([]);
@@ -58,16 +77,149 @@ describe("selectLines", () => {
   });
 });
 
-describe("lineInstrument", () => {
+describe("continentInstrument (v4, kept for the engine until Task 19)", () => {
   it("maps regions to instruments; west/north Europe plays the piano; domestic and unknown play the Rhodes", () => {
-    expect(lineInstrument(fl("x", "k", EUR, { farLat: 51.5, farLon: -0.1 }))).toBe("PNO"); // London: west of 20°E
-    expect(lineInstrument(fl("x", "k", EUR, { farLat: 59.9, farLon: 30.3 }))).toBe("PNO"); // St Petersburg: north of 52°N
-    expect(lineInstrument(fl("x", "k", EUR, { farLat: 37.9, farLon: 23.7 }))).toBe("EUR"); // Athens
-    expect(lineInstrument(fl("x", "k", EUR))).toBe("EUR"); // no far end known
-    expect([MEA, AFR, ASI, AME].map((r) => lineInstrument(fl("x", "k", r)))).toEqual(["MEA", "AFR", "ASI", "AME"]);
-    expect(lineInstrument(fl("x", "k", DOM))).toBe("EP");
-    expect(lineInstrument(fl("x", "k", UNK))).toBe("EP");
-    expect(lineInstrument(fl("x", "k", 99))).toBe("EP");
+    expect(continentInstrument(fl("x", "k", EUR, { farLat: 51.5, farLon: -0.1 }))).toBe("PNO");
+    expect(continentInstrument(fl("x", "k", EUR, { farLat: 59.9, farLon: 30.3 }))).toBe("PNO");
+    expect(continentInstrument(fl("x", "k", EUR, { farLat: 37.9, farLon: 23.7 }))).toBe("EUR");
+    expect(continentInstrument(fl("x", "k", EUR))).toBe("EUR");
+    expect([MEA, AFR, ASI, AME].map((r) => continentInstrument(fl("x", "k", r)))).toEqual(["MEA", "AFR", "ASI", "AME"]);
+    expect(continentInstrument(fl("x", "k", DOM))).toBe("EP");
+    expect(continentInstrument(fl("x", "k", UNK))).toBe("EP");
+    expect(continentInstrument(fl("x", "k", 99))).toBe("EP");
+  });
+});
+
+describe("INSTRUMENT_MENU / lineInstrument: the route key picks from its continent's menu", () => {
+  it("menus as in spec §4g", () => {
+    expect(INSTRUMENT_MENU).toEqual({
+      EUR_W: ["PNO", "HARP", "FLUTE"], EUR_E: ["EUR", "MARIMBA", "GUITAR"], MEA: ["MEA", "KANUN", "VIOLIN"],
+      AFR: ["AFR", "MARIMBA", "GUITAR"], ASI: ["ASI", "FLUTE", "HARP"], AME: ["CELLO", "GUITAR", "ORGAN"],
+      DOM: ["SAZ", "EP", "ORGAN"], UNK: ["EP"],
+    });
+  });
+  it("hand-checked: routeHash % 3 picks the entry (IST-LHR 2, IST-JFK 0, IST-DXB 1)", () => {
+    expect(lineInstrument(fl("x", "IST-LHR", EUR, { farLat: 51.5, farLon: -0.1 }))).toBe("FLUTE"); // EUR_W[2]
+    expect(lineInstrument(fl("x", "IST-LHR", EUR, { farLat: 37.9, farLon: 23.7 }))).toBe("GUITAR"); // EUR_E[2]
+    expect(lineInstrument(fl("x", "IST-LHR", EUR))).toBe("GUITAR"); // no far end → EUR_E
+    expect(lineInstrument(fl("x", "IST-JFK", AME))).toBe("CELLO"); // AME[0]
+    expect(lineInstrument(fl("x", "IST-DXB", MEA))).toBe("KANUN"); // MEA[1]
+    expect(lineInstrument(fl("x", "IST-DXB", DOM))).toBe("EP"); // DOM[1]
+    expect(lineInstrument(fl("x", "IST-DXB", UNK))).toBe("EP");
+    expect(lineInstrument(fl("x", "IST-DXB", 99))).toBe("EP");
+  });
+  it("stable per key (independent of the flight id); 40 keys cover every entry of a menu", () => {
+    for (const r of [EUR, MEA, AFR, ASI, AME, DOM]) {
+      const seen = new Set<string>();
+      for (let i = 0; i < 40; i++) {
+        const a = lineInstrument(fl(`a${i}`, `IST-K${i}`, r));
+        expect(lineInstrument(fl(`b${i}`, `IST-K${i}`, r, { alt100: 12 }))).toBe(a);
+        seen.add(a);
+      }
+      expect(seen.size).toBe(3);
+    }
+  });
+});
+
+describe("MOTIFS / motifFor / isPhraseStart", () => {
+  it("twelve motifs of four offsets whose durations fill one bar (16 steps)", () => {
+    expect(MOTIFS.length).toBe(12);
+    for (const m of MOTIFS) {
+      expect(m.offsets.length).toBe(4);
+      expect(m.durs.length).toBe(4);
+      expect(m.durs.reduce((a, b) => a + b, 0)).toBe(16);
+    }
+    expect(MOTIFS[0]).toEqual({ offsets: [0, 2, 1, 0], durs: [4, 4, 4, 4] });
+    expect(MOTIFS[3]).toEqual({ offsets: [0, 2, 4, 2], durs: [2, 2, 2, 10] });
+    expect(MOTIFS[8]).toEqual({ offsets: [0, 2, 3, 2], durs: [8, 2, 2, 4] });
+    expect(MOTIFS[11]).toEqual({ offsets: [1, 0, 2, 4], durs: [2, 2, 4, 8] });
+  });
+  it("hand-checked: IST-LHR (0x89a56b64) → m8, start 4, parity 1; IST-JFK (0xdd386a2b) → m3, start 4, parity 0", () => {
+    expect(motifFor("IST-LHR", 1)).toEqual({ motif: MOTIFS[8], startStep: 4, everyBars: 2, barParity: 1 });
+    expect(motifFor("IST-LHR", 3)).toEqual({ motif: MOTIFS[8], startStep: 4, everyBars: 1, barParity: 1 });
+    expect(motifFor("IST-JFK", 2)).toEqual({ motif: MOTIFS[3], startStep: 4, everyBars: 2, barParity: 0 });
+    expect(motifFor("IST-DXB", 1).startStep).toBe(0); // 0xd08bd1cc: nibble c → 12 % 4 = 0
+    expect(motifFor("IST-NRT", 1).startStep).toBe(2); // 0xec64871a: nibble 1 → 1 % 4 = 1
+  });
+  it("start ∈ {0,2,4,6}, parity ∈ {0,1}, everyBars by route count, deterministic", () => {
+    const starts = new Set<number>();
+    for (let i = 0; i < 60; i++) {
+      const m = motifFor(`IST-K${i}`, 1);
+      expect([0, 2, 4, 6]).toContain(m.startStep);
+      expect([0, 1]).toContain(m.barParity);
+      expect(m.everyBars).toBe(2);
+      expect(motifFor(`IST-K${i}`, 3).everyBars).toBe(1);
+      expect(motifFor(`IST-K${i}`, 7).everyBars).toBe(1);
+      expect(motifFor(`IST-K${i}`, 1)).toEqual(m);
+      starts.add(m.startStep);
+    }
+    expect(starts.size).toBe(4);
+  });
+  it("isPhraseStart over 8 bars: exactly the expected global steps", () => {
+    const starts = (key: string, n: number) => Array.from({ length: 128 }, (_, k) => k).filter((k) => isPhraseStart(key, n, k));
+    expect(starts("IST-LHR", 1)).toEqual([20, 52, 84, 116]); // odd bars 1, 3, 5, 7 at step 4
+    expect(starts("IST-LHR", 3)).toEqual([4, 20, 36, 52, 68, 84, 100, 116]); // every bar at step 4
+    expect(starts("IST-JFK", 2)).toEqual([4, 36, 68, 100]); // even bars 0, 2, 4, 6 at step 4
+    expect(starts("IST-DXB", 1)).toEqual([16, 48, 80, 112]); // 0xd08bd1cc: parity d → 1, step 0
+  });
+});
+
+describe("phrase: the route motif on the chord-scale ladders", () => {
+  const { Dm9, A7b9 } = CHORDS;
+  const desc = (ns: PhraseNote[]) => ns.map((n) => [n.stepOffset, n.durSteps, n.semis, n.vel]);
+  it("hand-checked IST-LHR (m8) at FL350 on Dm9: rungs 17, 19, 20, 19", () => {
+    // Dm9 ladder rung 14 = 36 … 17 = 41 (D), 18 = 43, 19 = 44 (F), 20 = 46 (G); offsets [0,2,3,2] at steps 0, 8, 10, 12
+    expect(desc(phrase(fl("x", "IST-LHR", EUR, { alt100: 350 }), () => Dm9))).toEqual([
+      [0, 8, 41, 0.5], [8, 2, 44, 0.42], [10, 2, 46, 0.42], [12, 4, 44, 0.42],
+    ]);
+    // America: base rung 17 − 7 = 10 → rungs 10, 12, 13, 12 = 29, 32, 34, 32
+    expect(phrase(fl("x", "IST-LHR", AME, { alt100: 350 }), () => Dm9).map((n) => n.semis)).toEqual([29, 32, 34, 32]);
+    // IST-JFK (m3: [0,2,4,2] / [2,2,2,10]) climbing at FL100: round(100/410 · 20) = 5, +1 → 6 (22, G: snapped to F 20)
+    expect(desc(phrase(fl("x", "IST-JFK", EUR, { alt100: 100, vsFpm: 1500 }), () => Dm9))).toEqual([
+      [0, 2, 20, 0.5], [2, 2, 26, 0.42], [4, 2, 29, 0.42], [6, 10, 26, 0.42],
+    ]);
+  });
+  it("each note is placed on the chord sounding at its own step", () => {
+    const at: number[] = [];
+    phrase(fl("x", "IST-LHR", EUR), (o) => (at.push(o), Dm9));
+    expect(at).toEqual([0, 8, 10, 12]);
+  });
+  it("cumulative offsets, motif durations, scale and chord-tone rules for every chord, region, altitude", () => {
+    const chords = Object.values(CHORDS);
+    for (let i = 0; i < 24; i++) {
+      const key = `IST-K${i}`;
+      const { motif } = motifFor(key, 1);
+      for (const region of [EUR, AME, DOM]) for (const alt of [0, 60, 180, 350, 410]) for (const vs of [-1500, 0, 1500]) {
+        const chordAt = (o: number) => chords[(o + i) % chords.length];
+        const ns = phrase(fl("x", key, region, { alt100: alt, vsFpm: vs }), chordAt);
+        expect(ns.map((n) => n.durSteps)).toEqual(motif.durs);
+        expect(ns.map((n) => n.stepOffset)).toEqual([0, motif.durs[0], motif.durs[0] + motif.durs[1], motif.durs[0] + motif.durs[1] + motif.durs[2]]);
+        expect(ns.map((n) => n.vel)).toEqual([0.5, 0.42, 0.42, 0.42]);
+        for (const [k, n] of ns.entries()) {
+          const c = chordAt(n.stepOffset);
+          expect(c.scale.includes(pc(n.semis))).toBe(true);
+          if (k === 0 || n.stepOffset % 4 === 0) expect(c.tones.includes(pc(n.semis))).toBe(true);
+        }
+      }
+    }
+  });
+  it("pitch rises with altitude, America sits lower, the same input gives the same output", () => {
+    for (let i = 0; i < 24; i++) {
+      const key = `IST-K${i}`;
+      const chordAt = (o: number) => (o < 8 ? Dm9 : A7b9);
+      const low = phrase(fl("x", key, EUR, { alt100: 100 }), chordAt);
+      const high = phrase(fl("x", key, EUR, { alt100: 380 }), chordAt);
+      const ame = phrase(fl("x", key, AME, { alt100: 380 }), chordAt);
+      for (let k = 0; k < 4; k++) {
+        expect(high[k].semis).toBeGreaterThan(low[k].semis);
+        expect(ame[k].semis).toBeLessThan(high[k].semis);
+      }
+      expect(phrase(fl("x", key, EUR, { alt100: 380 }), chordAt)).toEqual(high);
+    }
+  });
+  it("routeCount does not change the notes (only when the phrase plays)", () => {
+    const f = fl("x", "IST-LHR", EUR);
+    expect(phrase({ ...f, routeCount: 5 }, () => Dm9)).toEqual(phrase(f, () => Dm9));
   });
 });
 
@@ -150,20 +302,18 @@ describe("lineGain", () => {
 });
 
 describe("selectLines with active region layers", () => {
-  const fs = [fl("e1", "IST-LHR", EUR), fl("e2", "IST-LHR", EUR), fl("m1", "IST-DXB", MEA), fl("a1", "IST-JFK", AME), fl("d1", "IST-ESB", DOM)];
-  it("only flights of active regions are candidates", () => {
+  const fs = [fl("e1", "IST-LHR", EUR), fl("e2", "IST-LHR", EUR, { ageSec: 1 }), fl("m1", "IST-DXB", MEA), fl("a1", "IST-JFK", AME), fl("d1", "IST-ESB", DOM)];
+  it("only routes of active regions are candidates", () => {
     const ids = selectLines(fs, null, 12, new Set(["EUR", "AME"])).map((f) => f.id);
-    expect(new Set(ids)).toEqual(new Set(["e1", "e2", "a1"]));
+    expect(ids).toEqual(["e2", "a1"]); // IST-LHR (2 flights, newest e2), then IST-JFK
     expect(selectLines(fs, null, 12, new Set())).toEqual([]);
   });
-  it("the followed flight plays even when its region is not active", () => {
-    const ids = selectLines(fs, "m1", 12, new Set(["EUR"])).map((f) => f.id);
-    expect(ids[0]).toBe("m1");
-    expect(new Set(ids)).toEqual(new Set(["m1", "e1", "e2"]));
+  it("the followed route plays even when its region is not active", () => {
+    expect(selectLines(fs, "m1", 12, new Set(["EUR"])).map((f) => f.id)).toEqual(["m1", "e2"]);
     expect(selectLines(fs, "m1", 12, new Set()).map((f) => f.id)).toEqual(["m1"]);
   });
   it("without `active` nothing is filtered", () => {
     expect(selectLines(fs, "m1", 12, undefined)).toEqual(selectLines(fs, "m1"));
-    expect(selectLines(fs, null).length).toBe(5);
+    expect(selectLines(fs, null).length).toBe(4);
   });
 });

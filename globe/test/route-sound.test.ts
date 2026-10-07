@@ -146,8 +146,9 @@ describe("route sound engine: the step clock", () => {
   it("flight lines: notes only on each flight's euclidean steps, at most 12 lines, the followed flight always among them", () => {
     const h = make(0);
     const flights: SkyFlight[] = [];
-    for (let i = 0; i < 24; i++) flights.push(sky(`F${i}`, { key: `IST-R${i % 6}`, regionIdx: i % 6, alt100: 50 + 15 * i }));
-    flights.push(sky("SOLO", { key: "IST-SOLO", regionIdx: 1 })); // alone on its route: last in the ranking
+    // one route per flight (v5 `selectLines` plays one line per route)
+    for (let i = 0; i < 24; i++) flights.push(sky(`F${i}`, { key: `IST-R${i}`, regionIdx: i % 6, alt100: 50 + 15 * i }));
+    flights.push(sky("SOLO", { key: "IST-SOLO", regionIdx: 1 })); // followed: always plays
     h.s.setSky(flights, "SOLO");
     h.at(0);
     h.run(32 * D - 0.3);

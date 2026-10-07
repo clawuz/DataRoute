@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bassHits, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "../src/audio/groove";
+import { bassHits, chordSwell, compHits, drumHits, fillAndBuild, layerHits, type GrooveHit, type Voice } from "../src/audio/groove";
 import type { Level } from "../src/audio/arrangement";
 import type { RegionName } from "../src/audio/theory";
 import { CHORDS, type Chord } from "../src/audio/harmony";
@@ -275,5 +275,40 @@ describe("v4 invariants over every level, bar and chord", () => {
               }
               if (level === 4) expect(bass.length).toBe(1);
             }
+  });
+});
+
+describe("v5 chordSwell: a string swell on every chord change (spec §4g)", () => {
+  it("fires only on step 0 of chord-start bars (NIGHT: every 2nd bar; DAY: every bar), never at level 0", () => {
+    const bars = (sec: typeof NIGHT) => Array.from({ length: 8 }, (_, b) => b).filter((b) => chordSwell(0, b, Dm9, sec, 1) !== null);
+    expect(bars(NIGHT)).toEqual([0, 2, 4, 6]);
+    expect(bars(DAY)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    for (let s = 1; s < 16; s++) expect(chordSwell(s, 0, Dm9, DAY, 2)).toBeNull();
+    expect(chordSwell(0, 0, Dm9, DAY, 0)).toBeNull();
+    expect(chordSwell(0, 1, Dm9, NIGHT, 4)).toBeNull();
+  });
+  it("velocities by level 1–4: 0.3, 0.35, 0.4, 0.5; durSteps = round(barsPerChord · 16 · 0.92): NIGHT 29, others 15", () => {
+    expect(([1, 2, 3, 4] as Level[]).map((l) => chordSwell(0, 0, Dm9, MORNING, l)!.vel)).toEqual([0.3, 0.35, 0.4, 0.5]);
+    expect(chordSwell(0, 0, Dm9, NIGHT, 1)!.durSteps).toBe(29); // round(29.44)
+    for (const sec of [MORNING, DAY, EVENING]) expect(chordSwell(0, 0, Dm9, sec, 2)!.durSteps).toBe(15); // round(14.72)
+    expect(chordSwell(0, 0, Dm9, DAY, 2)!.voice).toBe("STR");
+  });
+  it("voicing: the root in octave 2, then 3rd, 7th, 9th (or the 5th) stacked in octaves 3–4", () => {
+    // Dm9: D (5) | F 20, C 27, E 31 · Bbmaj7 (no 9th): Bb (1) | D 17, A 24, F 32
+    expect(chordSwell(0, 0, Dm9, DAY, 2)!.freqs!.map((f) => Math.round(semisOf(f)))).toEqual([5, 20, 27, 31]);
+    expect(chordSwell(0, 0, Bbmaj7, DAY, 2)!.freqs!.map((f) => Math.round(semisOf(f)))).toEqual([1, 17, 24, 32]);
+    for (const c of [Dm9, Bbmaj7, Gm9, Gm7, A7b9, C7_9, Fmaj7, Em7b5]) {
+      const fs = chordSwell(0, 0, c, DAY, 3)!.freqs!;
+      expect(fs.length).toBe(4);
+      expect(pcOf(fs[0])).toBe(c.root);
+      expect(semisOf(fs[0])).toBeGreaterThanOrEqual(-1e-9);
+      expect(semisOf(fs[0])).toBeLessThan(12);
+      for (const f of fs.slice(1)) {
+        expect(semisOf(f)).toBeGreaterThanOrEqual(12 - 1e-9);
+        expect(semisOf(f)).toBeLessThan(36);
+      }
+      expect(new Set(fs.slice(1).map(pcOf))).toEqual(new Set([c.tones[1], c.tones[3], c.tones[4] ?? c.tones[2]]));
+      for (const f of fs) expect(c.scale.includes(pcOf(f))).toBe(true);
+    }
   });
 });
