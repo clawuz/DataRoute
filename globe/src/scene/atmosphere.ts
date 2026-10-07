@@ -26,7 +26,7 @@ void main() {
   float rim = clamp(-dot(normalize(vN), vec3(0.0, 0.0, 1.0)) * uRimScale, 0.0, 1.0);
   float sunSide = clamp(dot(normalize(vWN), uSunDir) * 0.8 + 0.45, 0.0, 1.0);
   float nd = dot(normalize(vWN), uSunDir); // art:light
-  float tw = uTwilight * smoothstep(-0.18, 0.0, nd) * (1.0 - smoothstep(0.0, 0.12, nd)); // art:light
+  float tw = uTwilight * smoothstep(-0.12, 0.0, nd) * (1.0 - smoothstep(0.0, 0.10, nd)); // art:light
   float i = pow(rim, uPower) * uIntensity * max(sunSide, tw * 0.9); // art:light
   vec3 col = mix(uColor, vec3(1.0, 0.55, 0.35), tw * 0.7); // art:light
   gl_FragColor = vec4(col * i, 1.0);

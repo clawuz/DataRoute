@@ -65,7 +65,7 @@ void main() {
   vec2 gy = useB ? dyB : dyA;
   float ndl = dot(N, uSunDir);
   float dayAmt = smoothstep(-0.10, 0.22, ndl);
-  float tw = uTwilight * smooth01(-0.18, 0.0, ndl) * (1.0 - smooth01(0.0, 0.12, ndl)); // art:light
+  float tw = uTwilight * smooth01(-0.12, 0.0, ndl) * (1.0 - smooth01(0.0, 0.10, ndl)); // art:light
 
   vec3 dayCol = uHasTex > 0.5 ? textureGrad(uDay, uv, gx, gy).rgb : vec3(0.10, 0.22, 0.45);
   float cloud = uHasTex > 0.5 ? textureGrad(uClouds, vec2(uv.x + uCloudDrift, uv.y), gx, gy).r : 0.0;
@@ -93,7 +93,9 @@ void main() {
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   col += vec3(0.10, 0.32, 0.95) * fres * (0.10 + 0.9 * dayAmt) * 0.9;
 
-  col += vec3(1.0, 0.55, 0.35) * tw * 0.35; // art:light
+  // warm the light already there (a flat additive band reads as an opaque stripe on the dark side)
+  col *= mix(vec3(1.0), vec3(1.3, 0.85, 0.62), tw * 0.8); // art:light
+  col += vec3(1.0, 0.5, 0.3) * tw * 0.05; // art:light
 
   gl_FragColor = vec4(reinhard(col), 1.0);
 }
