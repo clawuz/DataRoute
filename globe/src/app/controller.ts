@@ -18,6 +18,7 @@ import {
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
+import { createDayTrack, type DayTrack } from "../audio/day-track"; // art:track
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -72,6 +73,7 @@ export interface GlobeControllerDeps {
   viewportWidth?: () => number;
   /** every planned note of the route music, for the scope panel */ // art:sound
   noteBus?: NoteBus;
+  track?: DayTrack; // art:track
   /** wall clock of the sound engine's planner (seconds; default performance.now() / 1000) */ // art:sound
   clock?: () => number;
 }
@@ -106,8 +108,19 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
+  let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
+  const pulseTrack = (key: string) => { if (!disposed) d.engine.pulseRoute(key); }; // art:track
+  const track: DayTrack = d.track ?? createDayTrack({ // art:track
+    clock,
+    onNote: (e) => {
+      d.noteBus?.emit(e);
+      const t = setTimeout(() => { pulseTimers.delete(t); pulseTrack(e.key); }, Math.max(0, (e.at - clock()) * 1000));
+      pulseTimers.add(t);
+    },
+  });
   const pulseTimers = new Set<ReturnType<typeof setTimeout>>(); // art:sound
   const offNote = sound.onNote((n) => { // art:sound
+    if (trackActive) return; // art:track
     d.noteBus?.emit(n);
     if (!n.key) return; // art:sound — groove voices have no route
     // flash the route's corridor when the note actually sounds
@@ -126,7 +139,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     d.engine.setEffects(e); // art:core
     if (e.sound !== soundOn) { // art:sound
       soundOn = e.sound;
-      sound.setEnabled(e.sound);
+      sound.setEnabled(e.sound && !trackActive);
+      track.setEnabled(e.sound); // art:track
       prevSoundCur = null;
     }
   };
@@ -338,6 +352,15 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       }
     }
     const cur = currentCur(nowSec);
+    if (model) { // art:track — in REPLAY the recorded track of the day replaces the generative music (LIVE and FOLLOW keep it)
+      const want = soundOn && mode === "REPLAY" && !follow && track.ready();
+      if (want !== trackActive) {
+        trackActive = want;
+        sound.setEnabled(soundOn && !want);
+        prevSoundCur = null;
+      }
+      track.update(model.span > 0 ? cur / model.span : 0, want && !cycle.paused);
+    }
     if (model) { // art:sound
       if (prevSoundCur !== null) {
         const ev = eventsBetween(model, prevSoundCur, cur);
@@ -540,6 +563,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       for (const t of pulseTimers) clearTimeout(t); // art:sound
       pulseTimers.clear(); // art:sound
       sound.dispose(); // art:sound
+      track.dispose(); // art:track
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);
       d.engine.setFrameSource(null);
