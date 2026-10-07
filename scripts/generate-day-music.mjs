@@ -32,6 +32,8 @@ export const GENRES = [
   { id: "impressionist", family: "classical", bpm: [54, 92], tags: ["impressionist", "soft piano", "color chords and extended harmony", "airy flute and harp", "dreamlike"] },
   { id: "minimalist", family: "classical", bpm: [80, 132], tags: ["minimalist repetitive patterns", "phasing marimba and piano", "pulsing strings", "gradual process", "hypnotic"],
     layers: ["vibraphone", "clarinet and bass clarinet", "flute", "cello ostinato", "harp arpeggios", "french horn pads", "glockenspiel", "soft timpani", "pizzicato violins", "wordless texture"] },
+  { id: "symphonic", family: "classical", bpm: [60, 120], tags: ["full symphony orchestra", "sweeping romantic symphonic writing", "lush string section", "brass chorale", "woodwind solos"],
+    layers: ["solo oboe melody", "violins in octaves", "cellos and double basses", "french horns", "flutes and clarinets", "harp glissandi", "timpani rolls", "trumpets fanfare", "trombones", "cymbal swells", "piccolo flourishes", "full tutti climax"] },
   { id: "cinematic", family: "classical", bpm: [60, 128], tags: ["cinematic orchestral score", "epic strings and brass", "taiko drums", "emotional swells", "film trailer build"] },
   // jazz & blues
   { id: "jazz-fusion", family: "jazz", bpm: [84, 120], tags: ["jazz fusion", "Fender Rhodes", "driving bass ostinato", "brass hits", "syncopated groove"] },
