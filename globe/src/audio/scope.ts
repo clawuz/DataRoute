@@ -53,7 +53,7 @@ export interface Trail {
 export const MAX_TRAILS = 12;
 export const TRAIL_TTL_SEC = 6;
 /** art:track — the recorded track fills the ribbon with many routes: a long window, many trails (a flowing field of colour). */
-export const TRACK_RIBBON_SEC = 26;
+export const TRACK_RIBBON_SEC = 14;
 export const TRACK_MAX_TRAILS = 120;
 export const TRACK_MAX_POINTS = 60;
 

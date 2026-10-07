@@ -172,7 +172,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       // pitch ribbon (top 70 %): x = right − age·px/s, y = (1 − pitchY)·height, alpha fading with age; each note is a
       // thick bar as long as the note (v5), over the thin trail line
       const now = wallSec();
-      const ribbonH = RIBBON_SHARE * h;
+      const ribbonH = (m.day ? 0.8 : RIBBON_SHARE) * h; // the recorded track gets a taller ribbon over a slimmer day curve
       const pxPerSec = w / ribbonSec;
       const xOf = (t: number) => w - (now - t) * pxPerSec;
       const yOf = (y: number) => (1 - y) * ribbonH;
@@ -191,7 +191,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
           g.stroke();
         }
         g.fillStyle = tr.color;
-        const barH = NOTE_BAR_H_PX * dpr * (wide ? 1.9 : 1);
+        const barH = (wide ? 2.2 : NOTE_BAR_H_PX) * dpr; // thin, long lines: clearer than blocks
         for (const p of tr.points) {
           const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
           if (x + bw < 0) continue;

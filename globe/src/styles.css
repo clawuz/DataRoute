@@ -52,7 +52,7 @@ body { background: #02030a; }
 
 /* art:sound — ROUTES → MUSIC scope (bottom right, above the region bars) */
 .music-scope { position: absolute; left: 3vmin; bottom: 17.5vmin; width: 44vmin; padding: 1vmin 1.2vmin; background: rgba(2, 4, 12, 0.6); border: 1px solid var(--line); backdrop-filter: blur(4px); pointer-events: none; }
-.music-scope-wave { position: relative; height: 17.6vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
+.music-scope-wave { position: relative; height: 22vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
 .music-scope-canvas { display: block; width: 100%; height: 100%; }
 .music-scope-off { position: absolute; left: 0; right: 0; top: 0; text-align: right; font-size: calc(0.8 * var(--u)); color: var(--ink-dim); text-shadow: 0 0 0.6vmin #000, 0 0 1.4vmin #000; }
 .music-scope-chord { text-transform: none; } /* "Am" must not read as "AM" */
@@ -71,5 +71,5 @@ body { background: #02030a; }
 .music-scope-now .np-alt { color: var(--ink-dim); margin-left: auto; font-size: calc(0.88 * var(--u)); }
 @media (max-aspect-ratio: 1/1) {
   .music-scope { bottom: 17vmin; width: 40vmin; }
-  .music-scope-wave { height: 16.5vmin; }
+  .music-scope-wave { height: 20vmin; }
 }
