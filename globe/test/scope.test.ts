@@ -147,4 +147,13 @@ describe("lane palette", () => {
     expect(INSTRUMENT_COLOR.EUR).toBe("#3FC8F2");
     expect(INSTRUMENT_COLOR.UNK).toBe("#6B7280");
   });
+  it("v4 layer percussion takes its continent's colour; fill/build voices are neutral", () => {
+    expect(INSTRUMENT_COLOR).toMatchObject({
+      DARBUKA: "#F7C548", CONGA: "#7BD389", TAIKO: "#F2508F", TIMP: "#A98BFF", SHAKER: "#3FC8F2",
+      TOM: "#d9dce3", CRASH: "#fff1cf", RISER: "#fff1cf",
+    });
+    expect([INSTRUMENT_COLOR.DARBUKA, INSTRUMENT_COLOR.CONGA, INSTRUMENT_COLOR.TAIKO, INSTRUMENT_COLOR.TIMP, INSTRUMENT_COLOR.SHAKER]).toEqual([
+      INSTRUMENT_COLOR.MEA, INSTRUMENT_COLOR.AFR, INSTRUMENT_COLOR.ASI, INSTRUMENT_COLOR.AME, INSTRUMENT_COLOR.EUR,
+    ]);
+  });
 });

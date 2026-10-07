@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SECTIONS, chordAtStep, istanbulHour, nextChordAtStep, sectionAt, stepDur, swingDelay, type SectionId } from "../src/audio/form";
+import { SECTIONS, chordAtStep, hoursToBoundary, istanbulHour, nextChordAtStep, sectionAt, stepDur, swingDelay, type SectionId } from "../src/audio/form";
 import { CHORDS } from "../src/audio/harmony";
 
 
@@ -83,5 +83,24 @@ describe("form: 16th-step clock and chord at step (v3)", () => {
     expect(nextChordAtStep(0, NIGHT).id).toBe("Bbmaj7");
     expect(nextChordAtStep(16, NIGHT).id).toBe("Bbmaj7"); // second bar of Dm9 → 32 steps later: bar 3 = Bbmaj7
     expect(nextChordAtStep(16 * 7, EVENING).id).toBe("Fmaj7");
+  });
+});
+
+describe("form: v4 level ranges and section boundaries", () => {
+  it("levelRange per section", () => {
+    expect(SECTIONS.NIGHT.levelRange).toEqual([0, 1]);
+    expect(SECTIONS.MORNING.levelRange).toEqual([1, 3]);
+    expect(SECTIONS.DAY.levelRange).toEqual([2, 4]);
+    expect(SECTIONS.EVENING.levelRange).toEqual([1, 3]);
+  });
+  it("hoursToBoundary: hours until the next of 6, 12, 18, 24 (a full 6 exactly on a boundary)", () => {
+    expect(hoursToBoundary(5.5)).toBeCloseTo(0.5, 12);
+    expect(hoursToBoundary(6)).toBe(6);
+    expect(hoursToBoundary(11.9)).toBeCloseTo(0.1, 12);
+    expect(hoursToBoundary(23.9)).toBeCloseTo(0.1, 12);
+    expect(hoursToBoundary(0)).toBe(6);
+    expect(hoursToBoundary(13)).toBe(5);
+    expect(hoursToBoundary(24)).toBe(6); // wraps
+    expect(hoursToBoundary(-1)).toBe(1); // 23:00
   });
 });

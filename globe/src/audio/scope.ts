@@ -3,13 +3,16 @@ import { freqOf, type Instrument } from "./theory";
 
 /**
  * Colours of the ROUTES → MUSIC scope: the continent palette for the flight lines (and the Rhodes of domestic/unknown
- * lines), the THY-red ney and the warm wind ensemble, and the groove voices of the rhythm strip.
+ * lines), the THY-red ney and the warm wind ensemble, the groove voices of the rhythm strip, and the v4 layer
+ * percussion in its continent's colour.
  */
 export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   EUR: "#3FC8F2", PNO: "#9fe3ff", MEA: "#F7C548", AFR: "#7BD389", ASI: "#F2508F", AME: "#A98BFF",
   DOM: "#F2F4F8", NEY: "#E30A17", CLA: "#ff9f43", SAX: "#e8b64a", TPT: "#fff1cf", UNK: "#6B7280",
   EP: "#c9a7ff", BASS: "#f2f4f8", KICK: "#f2f4f8", SNARE: "#d9dce3", HAT: "#b6bcc9", OHAT: "#b6bcc9",
   KEYS: "#c9a7ff", BRASS: "#fff1cf", SAXPAD: "#e8b64a",
+  DARBUKA: "#F7C548", CONGA: "#7BD389", TAIKO: "#F2508F", TIMP: "#A98BFF", SHAKER: "#3FC8F2",
+  TOM: "#d9dce3", CRASH: "#fff1cf", RISER: "#fff1cf",
 };
 
 /** Top-to-bottom lanes of the rhythm strip (the open hat shares the hat lane, see `laneOf`). */

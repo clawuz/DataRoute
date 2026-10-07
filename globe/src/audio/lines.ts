@@ -1,6 +1,6 @@
 import { REGIONS } from "@web/data/palette";
 import { scaleLadder, snapToTones, type Chord } from "./harmony";
-import { euclid, isWestNorth, routeHash, type Instrument } from "./theory";
+import { euclid, isWestNorth, routeHash, type Instrument, type RegionName } from "./theory";
 
 /**
  * Music v3 flight lines (spec §4e): up to 12 airborne flights each play a line whose pitch is their altitude
@@ -24,8 +24,13 @@ export interface SkyFlight {
 export const MAX_LINES = 12;
 export const REGION_CAP = 4;
 
-/** Followed flight first, then by route count (descending), ties by `routeHash(id)` then id; at most 4 per region. */
-export function selectLines(flights: SkyFlight[], followedId: string | null, max = MAX_LINES): SkyFlight[] {
+/**
+ * Followed flight first, then by route count (descending), ties by `routeHash(id)` then id; at most 4 per region.
+ * With `active` (v4 region layers), only flights of active regions are candidates — the followed flight always plays.
+ */
+export function selectLines(
+  flights: SkyFlight[], followedId: string | null, max = MAX_LINES, active?: ReadonlySet<RegionName>,
+): SkyFlight[] {
   const count = new Map<string, number>();
   for (const f of flights) count.set(f.key, (count.get(f.key) ?? 0) + 1);
   const out: SkyFlight[] = [];
@@ -37,7 +42,7 @@ export function selectLines(flights: SkyFlight[], followedId: string | null, max
   const followed = followedId === null ? undefined : flights.find((f) => f.id === followedId);
   if (followed && max > 0) take(followed);
   const rest = flights
-    .filter((f) => f !== followed && f.id !== followedId)
+    .filter((f) => f !== followed && f.id !== followedId && (!active || active.has(REGIONS[f.regionIdx])))
     .sort((a, b) => count.get(b.key)! - count.get(a.key)! || routeHash(a.id) - routeHash(b.id) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   for (const f of rest) {
     if (out.length >= max) break;

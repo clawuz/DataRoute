@@ -3,11 +3,13 @@ import { REGIONS } from "@web/data/palette";
 export type RegionName = (typeof REGIONS)[number];
 /**
  * Every voice of the route music: the continent line instruments (EUR vibraphone, PNO piano, MEA oud, AFR kalimba,
- * ASI koto, AME pad, EP Rhodes), the Istanbul ney and its winds, and the v3 groove voices.
+ * ASI koto, AME pad, EP Rhodes), the Istanbul ney and its winds, the v3 groove voices and the v4 fill/build voices
+ * and region-layer percussion.
  */
 export type Instrument =
   | RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT"
-  | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS" | "SAXPAD";
+  | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS" | "SAXPAD"
+  | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP";
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */
 export function euclid(k: number, n: number): boolean[] {

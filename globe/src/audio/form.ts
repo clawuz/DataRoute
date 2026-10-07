@@ -18,6 +18,8 @@ export interface Section {
   neyOct: number;
   /** the ney and the winds that join it (and the scope's lanes until the v3 panel) */
   instruments: ReadonlySet<Instrument>;
+  /** v4 rhythm-level range `[min, max]` of the section (spec §4f) */
+  levelRange: [number, number];
 }
 
 const set = (...xs: Instrument[]): ReadonlySet<Instrument> => new Set(xs);
@@ -27,19 +29,19 @@ const MORNING_INS: Instrument[] = [...NIGHT_INS, "EUR", "AFR", "ASI", "CLA"];
 export const SECTIONS: Record<SectionId, Section> = {
   NIGHT: {
     id: "NIGHT", bpm: 84, swing: 0.15, progression: ["Dm9", "Bbmaj7", "Gm9", "A7b9"], barsPerChord: 2,
-    wet: 0.45, neyOct: 3, instruments: set(...NIGHT_INS),
+    wet: 0.45, neyOct: 3, instruments: set(...NIGHT_INS), levelRange: [0, 1],
   },
   MORNING: {
     id: "MORNING", bpm: 100, swing: 0.12, progression: ["Dm9", "Bbmaj7", "Gm7", "A7b9", "Dm9", "Bbmaj7", "Em7b5", "A7b9"], barsPerChord: 1,
-    wet: 0.35, neyOct: 4, instruments: set(...MORNING_INS),
+    wet: 0.35, neyOct: 4, instruments: set(...MORNING_INS), levelRange: [1, 3],
   },
   DAY: {
     id: "DAY", bpm: 116, swing: 0.1, progression: ["Dm9", "Bbmaj7", "Gm9", "C7_9", "Fmaj7", "Bbmaj7", "Em7b5", "A7b9"], barsPerChord: 1,
-    wet: 0.25, neyOct: 4, instruments: set(...MORNING_INS, "MEA", "TPT"),
+    wet: 0.25, neyOct: 4, instruments: set(...MORNING_INS, "MEA", "TPT"), levelRange: [2, 4],
   },
   EVENING: {
     id: "EVENING", bpm: 92, swing: 0.12, progression: ["Fmaj7", "Gm9", "Em7b5", "A7b9", "Dm9", "Bbmaj7", "Gm9", "Dm9"], barsPerChord: 1,
-    wet: 0.4, neyOct: 4, instruments: set("NEY", "AME", "PNO", "EUR", "MEA", "DOM", "CLA", "SAX"),
+    wet: 0.4, neyOct: 4, instruments: set("NEY", "AME", "PNO", "EUR", "MEA", "DOM", "CLA", "SAX"), levelRange: [1, 3],
   },
 };
 
@@ -69,4 +71,10 @@ export function sectionAt(localHour: number): Section {
   if (h < 12) return SECTIONS.MORNING;
   if (h < 18) return SECTIONS.DAY;
   return SECTIONS.EVENING;
+}
+
+/** Hours until the next section boundary (6, 12, 18, 24); exactly on a boundary → the full 6. */
+export function hoursToBoundary(localHour: number): number {
+  const h = mod(localHour, 24);
+  return (Math.floor(h / 6) + 1) * 6 - h;
 }

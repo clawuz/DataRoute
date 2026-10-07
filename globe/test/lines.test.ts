@@ -148,3 +148,22 @@ describe("lineGain", () => {
     expect(lineGain(12)).toBeCloseTo(0.5 / Math.sqrt(12), 12);
   });
 });
+
+describe("selectLines with active region layers", () => {
+  const fs = [fl("e1", "IST-LHR", EUR), fl("e2", "IST-LHR", EUR), fl("m1", "IST-DXB", MEA), fl("a1", "IST-JFK", AME), fl("d1", "IST-ESB", DOM)];
+  it("only flights of active regions are candidates", () => {
+    const ids = selectLines(fs, null, 12, new Set(["EUR", "AME"])).map((f) => f.id);
+    expect(new Set(ids)).toEqual(new Set(["e1", "e2", "a1"]));
+    expect(selectLines(fs, null, 12, new Set())).toEqual([]);
+  });
+  it("the followed flight plays even when its region is not active", () => {
+    const ids = selectLines(fs, "m1", 12, new Set(["EUR"])).map((f) => f.id);
+    expect(ids[0]).toBe("m1");
+    expect(new Set(ids)).toEqual(new Set(["m1", "e1", "e2"]));
+    expect(selectLines(fs, "m1", 12, new Set()).map((f) => f.id)).toEqual(["m1"]);
+  });
+  it("without `active` nothing is filtered", () => {
+    expect(selectLines(fs, "m1", 12, undefined)).toEqual(selectLines(fs, "m1"));
+    expect(selectLines(fs, null).length).toBe(5);
+  });
+});
