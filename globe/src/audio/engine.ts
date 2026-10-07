@@ -45,9 +45,7 @@ export interface RouteSound {
    * the rhythm level, the active region layers (in `REGIONS` order) and the build phase of the latest planned bar.
    */
   info(localHour?: number): SoundInfo;
-  /** art:track: plays (and publishes) notes planned elsewhere — the continuation of the recorded track */
-  playNotes(planned: PlannedNote[]): void;
-  /** art:track: false stops the generative planner (the continuation of the recorded track takes over) */
+  /** art:track: false stops the generative planner (the recorded track is the music) */
   setGenerative(on: boolean): void;
   dispose(): void;
 }
@@ -270,7 +268,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
       safe(() =>
         notes.emit({
           instrument: n.instrument, lane: laneOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when,
-          durSec: n.durSec, ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}), ...(n.alt !== undefined ? { alt: n.alt } : {}),
+          durSec: n.durSec, ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}),
         }),
       );
     }
@@ -376,13 +374,9 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     });
   }
 
-  function playNotes(planned: PlannedNote[]): void {
-    if (disposed || planned.length === 0) return;
-    safe(() => emit(planned, now()));
-  }
   function setGenerative(on: boolean): void {
     generative = on;
   }
 
-  return { setEnabled, setSky, schedule, setEnergy, tick, onNote: (fn) => notes.subscribe(fn), info, playNotes, setGenerative, dispose };
+  return { setEnabled, setSky, schedule, setEnergy, tick, onNote: (fn) => notes.subscribe(fn), info, setGenerative, dispose };
 }

@@ -60,7 +60,7 @@ export interface DayTrack {
   /** true once the audio and the notes are loaded and the track can take over from the generative music */
   ready(): boolean;
   /** `frac` = replay position 0..1; `playing` = the replay runs; `free` = do not chase `frac` (while a flight is followed the recording keeps its own clock) */
-  update(frac: number, playing: boolean, free?: boolean): void;
+  update(frac: number, playing: boolean, free?: boolean, remap?: (n: TrackNote) => TrackNote | null): void;
   /** the recording has played to its end */
   finished(): boolean;
   /** the loaded notes (for the continuation after the track); null until loaded */
@@ -119,7 +119,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       if (audio) audio.volume = Math.min(1, Math.max(0, g));
     },
     finished: () => !!(audio && data && (audio.ended || audio.currentTime >= data.duration - 0.05)),
-    update(frac, playing, free = false) {
+    update(frac, playing, free = false, remap) {
       const a = audio;
       if (!a || !data || !enabled) return;
       if (!playing) {
@@ -127,6 +127,10 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
         prevT = null;
         return;
       }
+      const out = (n: TrackNote, at: number) => {
+        const m = remap ? remap(n) : n;
+        if (m) d.onNote(noteEventOf(m, at));
+      };
       a.loop = free; // following a flight: the recording keeps going round instead of ending
       const { t, seek } = targetTime(frac, data.duration, a.currentTime);
       if (seek && !free) {
@@ -135,11 +139,11 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       }
       if (a.paused) void a.play().catch(() => undefined); // blocked until a user gesture: the next tick retries
       const now = a.currentTime;
-      if (prevT !== null && now - prevT < 1.5) for (const n of notesBetween(data.notes, prevT, now)) d.onNote(noteEventOf(n, d.clock() + (n.t - now)));
+      if (prevT !== null && now - prevT < 1.5) for (const n of notesBetween(data.notes, prevT, now)) out(n, d.clock() + (n.t - now));
       else if (prevT !== null && free && now < prevT && data.duration - prevT < 1.5) {
         // the loop wrapped: the tail of the recording, then its start
-        for (const n of notesBetween(data.notes, prevT, data.duration)) d.onNote(noteEventOf(n, d.clock() + (n.t - prevT)));
-        for (const n of notesBetween(data.notes, -1, now)) d.onNote(noteEventOf(n, d.clock() + (n.t - now)));
+        for (const n of notesBetween(data.notes, prevT, data.duration)) out(n, d.clock() + (n.t - prevT));
+        for (const n of notesBetween(data.notes, -1, now)) out(n, d.clock() + (n.t - now));
       }
       prevT = now;
     },

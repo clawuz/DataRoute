@@ -18,8 +18,8 @@ import {
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
-import { createDayTrack, type DayTrack } from "../audio/day-track"; // art:track
-import { createContinuation, type Continuation } from "../audio/track-continue"; // art:track
+import { createDayTrack, type DayTrack, type TrackNote } from "../audio/day-track"; // art:track
+import { bestRoute } from "../audio/route-fit"; // art:track
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -110,7 +110,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let soundOn = false; // art:sound
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
-  let cont: Continuation | null = null; // art:track — after the track: its notes go on, played by the live routes
+  const recentRoutes = new Map<string, number>(); // art:track — LIVE: the route that last played a note of the recording
   let lastSky: SkyFlight[] = []; // art:track
   let airRange: { model: GlobeModel; lo: number; hi: number; curve: number[] } | null = null; // art:track — the day's own quietest/busiest airborne counts
   const intensityNow = (): number => { // art:track — 0..1 between the quietest and busiest hour of the day
@@ -161,7 +161,6 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (e.sound !== soundOn) { // art:sound
       soundOn = e.sound;
       sound.setEnabled(e.sound && !trackActive);
-      if (!e.sound) cont?.reset(); // art:track
       track.setEnabled(e.sound); // art:track
       prevSoundCur = null;
     }
@@ -384,22 +383,26 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     }
     const cur = currentCur(nowSec);
     if (model) { // art:track — in REPLAY the recorded track of the day replaces the generative music (LIVE and FOLLOW keep it)
-      // while a flight is followed in REPLAY the recording keeps playing on its own clock, looping if it runs out
-      const want = soundOn && mode === "REPLAY" && track.ready();
+      // the recording is the music in every mode: REPLAY follows the replay position; while a flight is followed and in
+      // LIVE it keeps going round on its own clock, and in LIVE its notes are handed to the routes flying right now
+      const want = soundOn && track.ready();
       if (want !== trackActive) {
         trackActive = want;
         sound.setEnabled(soundOn && !want);
         prevSoundCur = null;
       }
+      sound.setGenerative(!track.data());
       track.setGain(0.4 + 0.6 * intensityNow()); // the recorded audio rises and falls with the traffic of the hour
-      track.update(model.span > 0 ? cur / model.span : 0, want && !(follow ? follow.clock.paused : cycle.paused), !!follow);
-      // after the track (LIVE, FOLLOW) the generative engine rests: the notes of the track go on, thinned by the traffic
-      const td = track.data();
-      sound.setGenerative(!td);
-      if (soundOn && !want && td) {
-        cont ??= createContinuation(td.notes, td.duration);
-        sound.playNotes(cont.step(clock(), lastSky, intensityNow()));
-      }
+      const live = mode !== "REPLAY";
+      const remap = live
+        ? (n: TrackNote): TrackNote | null => {
+            const f = bestRoute(n, lastSky, recentRoutes, clock());
+            if (!f) return null;
+            recentRoutes.set(f.key, clock());
+            return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
+          }
+        : undefined;
+      track.update(model.span > 0 ? cur / model.span : 0, want && !(follow ? follow.clock.paused : cycle.paused), live || !!follow, remap);
     }
     if (model) { // art:sound
       if (prevSoundCur !== null) {

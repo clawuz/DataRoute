@@ -77,8 +77,6 @@ export interface PlannedNote {
   long?: boolean;
   /** v5: the note's real length in seconds (sustained instruments hold it, plucked ones ring up to it) */
   durSec: number;
-  /** art:track: altitude (ft) of the live flight playing a continuation note */
-  alt?: number;
 }
 
 /** Nominal pitch of the unpitched drum voices (the scope draws a burst at this "frequency"). */
