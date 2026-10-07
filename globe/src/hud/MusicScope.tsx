@@ -125,7 +125,7 @@ export function MusicScope({ bus, music }: { bus: NoteBus; music: MusicHud }) {
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
       </div>
-      <div className="music-scope-label label">{`ROUTES → MUSIC · ${music.section} · ${music.chord} · ${music.bpm} BPM`}</div>
+      <div className="music-scope-label label">{`ROUTES → MUSIC · ${music.section} · `}<span className="music-scope-chord">{music.chord}</span>{` · ${music.bpm} BPM`}</div>
     </div>
   );
 }
