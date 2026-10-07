@@ -194,7 +194,8 @@ describe("MusicScope", () => {
   it("labels the panel with the section, chord, tempo and rhythm level", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music()} />);
     expect(container.querySelector("canvas")).not.toBeNull();
-    expect(text(container)).toBe("ROUTES → MUSIC · DAY · C · 96 BPM · L2");
+    expect(container.querySelector(".music-scope-label")!.textContent).toBe("ROUTES → MUSIC · DAY · C · 96 BPM · L2");
+    expect(container.querySelector(".music-scope-title")!.textContent).toBe("A WORLD OFMUSIC"); // the project's name
   });
   it("shows the level bar (five segments, the current level filled in the section colour) and one dot per region layer", () => {
     const { container } = render(<MusicScope bus={createNoteBus()} music={music({ section: "NIGHT", level: 1, layers: ["DOM", "MEA", "AME"] })} />);
@@ -292,5 +293,23 @@ describe("ArtNotes", () => {
     expect(text(on)).toContain("SOUND ON");
     const off = render(<GlobeHud store={createStore(snap({ art: { enabled: false, corridors: false, aurora: false, sound: false } }))} />).container;
     expect(off.querySelector(".art-notes")).toBeNull();
+  });
+});
+
+describe("KeysHelp", () => {
+  it("is a button whose hover list names every shortcut the keyboard handles", async () => {
+    const { KeysHelp, KEYS } = await import("../src/hud/GlobeHud");
+    const { keyToCommand } = await import("../src/app/keys");
+    const { container } = render(<KeysHelp />);
+    expect(container.querySelector("button.keys-btn")).not.toBeNull();
+    const listed = Array.from(container.querySelectorAll(".keys-row kbd")).map((k) => k.textContent);
+    expect(listed.length).toBe(KEYS.length);
+    // every listed single-letter key really is a command (the list cannot drift from keys.ts)
+    for (const k of ["R", "M", "C", "A", "T", "H", "F"]) {
+      expect(listed).toContain(k);
+      expect(keyToCommand(k.toLowerCase())).not.toBeNull();
+    }
+    expect(listed).toContain("SPACE");
+    expect(keyToCommand(" ")).toBe("togglePause");
   });
 });

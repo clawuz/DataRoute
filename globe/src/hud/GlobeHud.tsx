@@ -123,6 +123,41 @@ export function ArtNotes({ art }: { art: GlobeHudSnapshot["art"] }) {
   return <div className="art-notes label">{lines.map((l) => <div key={l}>{l}</div>)}</div>;
 }
 
+/** art:track — a "?" button; hovering (or focusing) it lists the keyboard shortcuts */
+export const KEYS: [string, string][] = [
+  ["SPACE", "Pause / resume"],
+  ["← →", "Scrub 1 h (flight time while following)"],
+  ["R", "Replay 24 h ↔ live"],
+  ["M", "Music on / off"],
+  ["C", "Route density on / off"],
+  ["A", "Aurora on / off"],
+  ["T", "Auto tour"],
+  ["[ ]", "Follow speed slower / faster"],
+  ["G · ESC", "Leave follow"],
+  ["H", "Hide / show the HUD"],
+  ["F", "Fullscreen"],
+  ["CLICK", "Follow a flight"],
+  ["DRAG", "Rotate the globe"],
+];
+export function KeysHelp() {
+  return (
+    <div className="keys-help">
+      <button type="button" className="keys-btn label" aria-label="Keyboard shortcuts" aria-describedby="keys-pop">⌨ KEYS</button>
+      <div className="keys-pop" id="keys-pop" role="tooltip">
+        <div className="keys-title label">KEYBOARD SHORTCUTS</div>
+        <dl>
+          {KEYS.map(([k, d]) => (
+            <div key={k} className="keys-row">
+              <dt><kbd>{k}</kbd></dt>
+              <dd>{d}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </div>
+  );
+}
+
 export function Credit({ s }: { s: GlobeHudSnapshot }) {
   return <div className="source credit label">{s.textureNote ? `${s.credit} · ${s.textureNote}` : s.credit}</div>;
 }
@@ -154,6 +189,7 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
       )}
       <SourceLine s={s} />
       <Credit s={s} />
+      <KeysHelp />
       {s.notice && <div className="notice label">{s.notice}</div>}
       <FlightCardView key={"tip-" + (s.tooltip?.tk ?? "")} card={s.tooltip} kind="tooltip" />
       <LoadingOverlay s={s} />
