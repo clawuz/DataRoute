@@ -1,10 +1,10 @@
 // art:sound — the ROUTES → MUSIC scope: a pitch ribbon of the flight lines over a rhythm strip of the groove
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
   DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
-  noteBar, pruneTrails, pushTrail, scopeLabel, stepLane, trailIdOf, type Lane, type Trail,
+  noteBar, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, trailIdOf, type Lane, type Playing, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -30,6 +30,8 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
   const musicRef = useRef(music);
   musicRef.current = music;
   const queue = useRef<NoteEvent[]>([]);
+  const playing = useRef<Playing[]>([]); // art:track — the routes sounding right now
+  const [nowList, setNowList] = useState<Playing[]>([]);
 
   useEffect(
     () =>
@@ -69,7 +71,11 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       for (const n of q) {
         if (n.at > now) q[keep++] = n;
         else if (traces.has(n.lane)) beats.push(n);
-        else if (trailIdOf(n) !== null) pushTrail(trails, n, INSTRUMENT_COLOR[n.instrument]);
+        else if (trailIdOf(n) !== null) {
+          const route = routeOfNote(n); // art:track — recorded-track notes take their route's colour
+          pushTrail(trails, n, route ? routeColor(route) : INSTRUMENT_COLOR[n.instrument]);
+          playing.current = playingPush(playing.current, n, now);
+        }
       }
       q.length = keep;
       while (simT + STEP <= now) {
@@ -161,7 +167,14 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    const list = setInterval(() => { // art:track — the NOW PLAYING list refreshes ~6 Hz
+      const cur = playingNow(playing.current, wallSec());
+      setNowList((prev) => (prev.length === cur.length && prev.every((p, i) => p.route === cur[i].route && p.note === cur[i].note) ? prev : cur));
+    }, 160);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(list);
+    };
   }, []);
 
   const [head, chord, tail] = scopeLabel(music);
@@ -186,6 +199,17 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         </div>
       </div>
       <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>
+      {nowList.length > 0 && ( // art:track
+        <ul className="music-scope-now" aria-label="Routes playing now">
+          {nowList.map((p) => (
+            <li key={p.route} style={{ borderLeftColor: routeColor(p.route) }}>
+              <span className="route">{p.route.replace("-", " → ")}</span>
+              <span className="note">{p.note}</span>
+              {p.alt !== undefined && <span className="alt">{Math.round(p.alt / 100) * 100} ft</span>}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

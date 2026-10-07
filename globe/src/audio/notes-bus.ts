@@ -21,6 +21,8 @@ export interface NoteEvent {
   long?: boolean;
   /** the flight id of a flight-line note */
   lineId?: string;
+  /** altitude (ft) of the playing flight when known (the recorded track) */
+  alt?: number;
 }
 
 /** Scope lane of an instrument. */

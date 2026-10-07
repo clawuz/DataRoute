@@ -152,3 +152,41 @@ export const layerColor = (region: string): string => INSTRUMENT_COLOR[layerInst
 export const scopeLabel = (m: { section: string; chord: string; bpm: number; level: number }): [string, string, string] => [
   `ROUTES → MUSIC · ${m.section} · `, m.chord, ` · ${m.bpm} BPM · L${m.level}`,
 ];
+
+// ---- art:track — which routes play right now (the "NOW PLAYING" list) -------------------------------------------------
+
+/** "IST-JFK" (direction kept) for the notes of the recorded track; null for generative flight-line ids. */
+export const routeOfNote = (n: NoteEvent): string | null => (n.lineId && /^[A-Z]{3}-[A-Z]{3}$/.test(n.lineId) ? n.lineId : null);
+
+/** Stable route colour: the same hue wherever the route shows (ribbon, list). */
+export function routeColor(route: string): string {
+  let h = 0;
+  for (let i = 0; i < route.length; i++) h = (h * 31 + route.charCodeAt(i)) % 360;
+  return `hsl(${h}, 80%, 62%)`;
+}
+
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+/** Scientific pitch name of a frequency: 440 → "A4". */
+export function noteName(freq: number): string {
+  const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+  return `${NOTE_NAMES[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+}
+
+export interface Playing {
+  route: string;
+  note: string;
+  alt?: number;
+  until: number;
+}
+
+/** Adds a sounding route note; one entry per route (the latest note wins), kept for the note's length (≥ `minHold` s). */
+export function playingPush(list: Playing[], n: NoteEvent, now: number, minHold = 0.7): Playing[] {
+  const route = routeOfNote(n);
+  if (!route) return list;
+  const next = list.filter((p) => p.route !== route);
+  next.unshift({ route, note: noteName(n.freq), alt: n.alt, until: now + Math.max(minHold, n.durSec) });
+  return next;
+}
+
+/** Entries still sounding at `now`, newest first, at most `max`. */
+export const playingNow = (list: Playing[], now: number, max = 8): Playing[] => list.filter((p) => p.until > now).slice(0, max);

@@ -46,7 +46,7 @@ export const hzOfMidi = (p: number): number => 440 * 2 ** ((p - 69) / 12);
 export function noteEventOf(n: TrackNote, at: number): NoteEvent {
   const instrument = instrumentOf(n.p);
   const freq = hzOfMidi(n.p);
-  return { instrument, lane: instrument, freq, pitch: freq, vel: Math.min(1, 0.3 + n.v * 0.7), kind: "line", key: n.k, at, durSec: n.d, lineId: `${n.from}-${n.to}` };
+  return { instrument, lane: instrument, freq, pitch: freq, vel: Math.min(1, 0.3 + n.v * 0.7), kind: "line", key: n.k, at, durSec: n.d, lineId: `${n.from}-${n.to}`, alt: n.alt };
 }
 
 /** Where the audio should be for replay fraction `frac` (0..1), and whether it has to be re-seeked (drift > `tol` s). */

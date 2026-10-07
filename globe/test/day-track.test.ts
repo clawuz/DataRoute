@@ -31,3 +31,28 @@ describe("day track", () => {
     expect(targetTime(2, 180, 0).t).toBe(180);
   });
 });
+
+import { noteName, playingNow, playingPush, routeColor, routeOfNote } from "../src/audio/scope";
+
+describe("now playing", () => {
+  const ev = (lineId: string | undefined, at = 0, freq = 440, durSec = 1) => noteEventOf({ ...n(0, 69), d: durSec }, at) && { ...noteEventOf(n(0, 69), at), lineId, freq, durSec, alt: 34000 };
+  it("names notes and reads routes only from track notes", () => {
+    expect(noteName(440)).toBe("A4");
+    expect(noteName(261.63)).toBe("C4");
+    expect(routeOfNote(ev("IST-JFK"))).toBe("IST-JFK");
+    expect(routeOfNote(ev("4bb0e9-1791287466"))).toBeNull();
+  });
+  it("keeps one entry per route, newest first, until the note ends", () => {
+    let l = playingPush([], ev("IST-JFK"), 10);
+    l = playingPush(l, ev("KUL-SYD", 0, 330), 10.1);
+    l = playingPush(l, ev("IST-JFK", 0, 523.25), 10.2);
+    expect(l.map((p) => p.route)).toEqual(["IST-JFK", "KUL-SYD"]);
+    expect(l[0].note).toBe("C5");
+    expect(playingNow(l, 10.5).length).toBe(2);
+    expect(playingNow(l, 11.5).length).toBe(0);
+  });
+  it("gives a route the same colour every time", () => {
+    expect(routeColor("IST-JFK")).toBe(routeColor("IST-JFK"));
+    expect(routeColor("IST-JFK")).not.toBe(routeColor("KUL-SYD"));
+  });
+});
