@@ -343,10 +343,10 @@ describe("QuickControls", () => {
     const snap = { ...EMPTY_GLOBE_SNAPSHOT, mode: "REPLAY" as const, paused: false, tour: false, music: { ...EMPTY_GLOBE_SNAPSHOT.music, on: true } };
     const { container } = render(<QuickControls s={snap} />);
     const labels = Array.from(container.querySelectorAll("button")).map((b) => b.textContent);
-    expect(labels).toEqual(["SOUND ON", "▶ LIVE", "TOUR", "❚❚ PAUSE", "DENSITY", "AURORA", "HIDE HUD"]);
+    expect(labels).toEqual(["SOUND ON", "▶ LIVE", "TOUR", "❚❚ PAUSE"]);
     container.querySelectorAll("button").forEach((b) => fireEvent.click(b));
     window.removeEventListener("keydown", on);
-    expect(pressed).toEqual(["m", "r", "t", " ", "c", "a", "h"]);
+    expect(pressed).toEqual(["m", "r", "t", " "]);
   });
 });
 

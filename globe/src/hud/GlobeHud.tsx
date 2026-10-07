@@ -279,13 +279,6 @@ export function QuickControls({ s }: { s: GlobeHudSnapshot }) {
     { label: s.mode === "REPLAY" ? "▶ LIVE" : "↺ REPLAY", key: "r", on: s.mode === "REPLAY", title: "Replay 24 h ↔ live (R)" },
     { label: "TOUR", key: "t", on: s.tour, title: "Auto tour (T)" },
     { label: s.paused ? "▶ PLAY" : "❚❚ PAUSE", key: " ", on: s.paused, title: "Pause / resume (Space)" },
-    ...(s.art.enabled
-      ? [
-          { label: "DENSITY", key: "c", on: s.art.corridors, title: "Route density (C)" },
-          { label: "AURORA", key: "a", on: s.art.aurora, title: "Aurora (A)" },
-        ]
-      : []),
-    { label: "HIDE HUD", key: "h", on: false, title: "Hide the HUD (H)" },
   ];
   return (
     <div className="quick-controls" role="group" aria-label="Controls">
