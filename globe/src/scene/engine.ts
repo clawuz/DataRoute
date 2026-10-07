@@ -54,6 +54,8 @@ export interface GlobeEngine {
   camMode(): CamMode;
   setAfterRender(fn: (() => void) | null): void;
   pulseAirport(iata: string, nowSec: number): void;
+  /** flashes the corridor of a route key (a note of the route music); no-op without corridors */ // art:sound
+  pulseRoute(key: string): void;
   headsInfo(): { count: number; extrapolated: number };
   setEffects(e: Effects): void;
   dispose(): void;
@@ -286,6 +288,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     if (corridors) { // art:corridors
       corridors.uniforms.uTime.value = rel(f.nowSec); // art:corridors
+      corridors.update(dt); // art:sound
       const fl = f.follow ? model?.flights[f.follow.flight] : undefined; // art:corridors
       corridors.uniforms.uHighlight.value = fl ? corridors.indexOf(fl.from, fl.to) : -1; // art:corridors
     } // art:corridors
@@ -438,6 +441,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     pulseAirport(iata, nowSec) {
       airports?.pulse(iata, rel(nowSec));
+    },
+    pulseRoute(key) { // art:sound
+      if (corridors) corridors.pulse(corridors.indexOfKey(key));
     },
     headsInfo() {
       return headInfo;

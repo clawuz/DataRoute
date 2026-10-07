@@ -1,8 +1,10 @@
 import { Counters, DepartureStrip, FlightCardView, RegionBars, SourceLine, TitleBlock } from "@web/hud/Hud";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useStore, type Store } from "@web/hud/store";
 import type { FollowHud } from "../app/follow-hud";
-import type { AircraftCount, AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
+import { createNoteBus, type NoteBus } from "../audio/notes-bus"; // art:sound
+import { MusicScope } from "./MusicScope"; // art:sound
+import type { AirportLabel, EventLine, GlobeHudSnapshot, LabelBus } from "../app/hud-model";
 
 export function EventFeed({ events }: { events: EventLine[] }) {
   if (events.length === 0) return null;
@@ -100,25 +102,6 @@ export function FlightPanel({ f }: { f: FollowHud }) {
   );
 }
 
-export function AircraftBars({ rows }: { rows: AircraftCount[] }) {
-  if (rows.length === 0) return null;
-  const max = Math.max(1, ...rows.map((r) => r.count));
-  return (
-    <div className="aircraft-bars">
-      <div className="label">AIRBORNE BY AIRCRAFT</div>
-      {rows.map((r) => (
-        <div key={r.label} className="region-row">
-          <span className="region-name">{r.label}</span>
-          <span className="region-bar">
-            <span style={{ width: `${(r.count / max) * 100}%`, background: "var(--thy)" }} />
-          </span>
-          <span className="region-count num">{r.count}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
   const text = s.follow
     ? `FOLLOW · ${s.follow.speed} · ${s.follow.state}`
@@ -149,8 +132,9 @@ export function LoadingOverlay({ s }: { s: GlobeHudSnapshot }) {
   return <div className="loading label">{`LOADING EARTH IMAGERY ${Math.round(Math.max(0, Math.min(1, s.textureProgress)) * 100)}%`}</div>;
 }
 
-export function GlobeHud({ store, labelBus }: { store: Store<GlobeHudSnapshot>; labelBus?: LabelBus }) {
+export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSnapshot>; labelBus?: LabelBus; noteBus?: NoteBus }) {
   const s = useStore(store);
+  const ownBus = useMemo(createNoteBus, []); // art:sound — a quiet bus when none is wired
   const animate = !s.reducedMotion;
   return (
     <div className={`hud${s.hidden ? " hidden" : ""}`}>
@@ -162,7 +146,7 @@ export function GlobeHud({ store, labelBus }: { store: Store<GlobeHudSnapshot>; 
           <Counters c={s.counters} animate={animate} />
           <DepartureStrip bins={s.depHist} playhead={s.playhead} />
           {!s.follow && <RegionBars counts={s.regionAirborne} />}
-          {!s.follow && <AircraftBars rows={s.aircraftAirborne} />}
+          <MusicScope bus={noteBus ?? ownBus} music={s.music} /> {/* art:sound */}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />

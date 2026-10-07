@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
 import { act, render } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createStore } from "@web/hud/store";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "../src/app/hud-model";
 import type { FollowHud } from "../src/app/follow-hud";
-import { AircraftBars, AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
+import { MusicScope } from "../src/hud/MusicScope";
+import { createNoteBus } from "../src/audio/notes-bus";
+import { INSTRUMENT_COLOR } from "../src/audio/scope";
+import { AirportLabels, Credit, EventFeed, FlightPanel, GlobeHud, LoadingOverlay, ModeLine } from "../src/hud/GlobeHud";
 
 const snap = (o: Partial<GlobeHudSnapshot> = {}): GlobeHudSnapshot => ({ ...EMPTY_GLOBE_SNAPSHOT, ready: true, ...o });
 const text = (el: HTMLElement) => el.textContent!.replace(/\s+/g, " ").trim();
@@ -184,20 +187,59 @@ describe("ModeLine / notice with FOLLOW", () => {
   });
 });
 
-describe("AircraftBars", () => {
-  const rows = [{ label: "737-900", count: 4 }, { label: "A321NEO", count: 2 }];
-  it("renders a titled bar per aircraft type, widths relative to the largest", () => {
-    const { container } = render(<AircraftBars rows={rows} />);
-    expect(text(container)).toBe("AIRBORNE BY AIRCRAFT737-9004A321NEO2");
-    const bars = Array.from(container.querySelectorAll(".region-bar > span")) as HTMLElement[];
-    expect(bars.map((b) => b.style.width)).toEqual(["100%", "50%"]);
+describe("MusicScope", () => {
+  const music = (o: Partial<GlobeHudSnapshot["music"]> = {}): GlobeHudSnapshot["music"] => ({
+    on: true, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR", "DOM"], ...o,
   });
-  it("renders nothing without rows", () => {
-    expect(render(<AircraftBars rows={[]} />).container.innerHTML).toBe("");
+  it("labels the panel with the section, chord and tempo", () => {
+    const { container } = render(<MusicScope bus={createNoteBus()} music={music()} />);
+    expect(container.querySelector("canvas")).not.toBeNull();
+    expect(text(container)).toBe("ROUTES → MUSIC · DAY · C · 96 BPM");
   });
-  it("is in the HUD unless following", () => {
-    expect(render(<GlobeHud store={createStore(snap({ aircraftAirborne: rows }))} />).container.querySelector(".aircraft-bars")).not.toBeNull();
-    expect(render(<GlobeHud store={createStore(snap({ aircraftAirborne: rows, follow: fh() }))} />).container.querySelector(".aircraft-bars")).toBeNull();
+  it("says SOUND OFF · PRESS M while muted (the scope keeps running)", () => {
+    const { container } = render(<MusicScope bus={createNoteBus()} music={music({ on: false, section: "NIGHT", chord: "Am9", bpm: 72 })} />);
+    expect(text(container)).toContain("SOUND OFF · PRESS M");
+    expect(text(container)).toContain("ROUTES → MUSIC · NIGHT · Am9 · 72 BPM");
+  });
+  it("does not throw without a 2D context (jsdom) and accepts notes", () => {
+    const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    const bus = createNoteBus();
+    const r = render(<MusicScope bus={bus} music={music()} />);
+    expect(() => bus.emit({ instrument: "NEY", freq: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0 })).not.toThrow();
+    r.unmount();
+    spy.mockRestore();
+  });
+  it("draws one trace per ensemble lane in the instrument colours and stops its loop on unmount", () => {
+    const strokes: string[] = [];
+    const ctx = {
+      setTransform: vi.fn(), clearRect: vi.fn(), beginPath: vi.fn(), moveTo: vi.fn(), lineTo: vi.fn(),
+      stroke: vi.fn(function (this: { strokeStyle: string }) { strokes.push(this.strokeStyle); }),
+      strokeStyle: "", lineWidth: 1, globalAlpha: 1, globalCompositeOperation: "source-over",
+    };
+    const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(ctx as unknown as CanvasRenderingContext2D);
+    const frames: FrameRequestCallback[] = [];
+    const raf = vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => frames.push(cb));
+    const caf = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    const bus = createNoteBus();
+    const r = render(<MusicScope bus={bus} music={music()} />);
+    act(() => bus.emit({ instrument: "EUR", freq: 440, vel: 1, kind: "dep", key: "IST-FRA", at: 0 }));
+    act(() => frames.at(-1)!(performance.now() + 100));
+    expect(strokes).toEqual([INSTRUMENT_COLOR.NEY, INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.DOM]);
+    expect(ctx.globalCompositeOperation).toBe("lighter");
+    r.unmount();
+    expect(caf).toHaveBeenCalled();
+    spy.mockRestore();
+    raf.mockRestore();
+    caf.mockRestore();
+  });
+  it("replaces the aircraft bars in the HUD and stays while following", () => {
+    const plain = render(<GlobeHud store={createStore(snap())} />).container;
+    expect(plain.querySelector(".music-scope")).not.toBeNull();
+    expect(text(plain)).not.toContain("AIRBORNE BY AIRCRAFT");
+    expect(plain.querySelector(".aircraft-bars")).toBeNull();
+    const following = render(<GlobeHud store={createStore(snap({ follow: fh() }))} />).container;
+    expect(following.querySelector(".music-scope")).not.toBeNull();
+    expect(following.querySelector(".regions")).toBeNull();
   });
 });
 

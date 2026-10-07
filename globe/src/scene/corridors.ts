@@ -1,6 +1,6 @@
 import {
   AdditiveBlending, DoubleSide, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry,
-  Mesh, ShaderMaterial, Vector2,
+  DynamicDrawUsage, Mesh, ShaderMaterial, Vector2,
 } from "three";
 import { plannedArc } from "../geo3d/great";
 import { latLonToVec3 } from "../geo3d/vec";
@@ -143,6 +143,7 @@ attribute vec2 aU;
 attribute vec2 aS;
 attribute vec3 aColor;
 attribute vec4 aMisc;
+attribute float aPulse;
 varying vec3 vColor;
 varying float vAlpha;
 varying float vEdge;
@@ -159,12 +160,12 @@ void main() {
   vec2 n = vec2(-dir.y, dir.x);
   float u = mix(aU.x, aU.y, aCorner.y);
   float taper = 0.55 + 0.45 * sin(3.14159265 * u); // thicker mid-route, thinner at the airports
-  float w = uWidth * aMisc.x * taper * (hi ? 1.6 : 1.0);
+  float w = uWidth * aMisc.x * taper * (hi ? 1.6 : 1.0) * (1.0 + 0.8 * aPulse); // art:sound — note flash widens
   vec4 c = mix(cA, cB, aCorner.y);
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
-  vColor = aColor;
-  vAlpha = aMisc.y * (hi ? 2.2 : 1.0);
+  vColor = mix(aColor, vec3(1.0), min(1.0, aPulse)); // art:sound — and whitens
+  vAlpha = aMisc.y * (hi ? 2.2 : 1.0) * (1.0 + 3.0 * aPulse);
   vEdge = aCorner.x;
   vS = mix(aS.x, aS.y, aCorner.y);
   vW = aMisc.z;
@@ -198,6 +199,12 @@ export interface Corridors {
   corridors: Corridor[];
   uniforms: CorridorUniforms;
   indexOf(from?: string, to?: string): number;
+  /** corridor index of a route key (`routeKey`/`corridorKey`), -1 if none */
+  indexOfKey(key: string): number;
+  /** flashes a corridor (adds `amount`, default 1, clamped to 1.5) */
+  pulse(index: number, amount?: number): void;
+  /** decays the active flashes by exp(−dt / 0.6) */
+  update(dt: number): void;
   setResolution(w: number, h: number, pixelRatio: number): void;
   dispose(): void;
 }
@@ -215,6 +222,9 @@ export function createCorridors(m: GlobeModel): Corridors {
   geometry.setAttribute("aS", new InstancedBufferAttribute(buf.s, 2));
   geometry.setAttribute("aColor", new InstancedBufferAttribute(buf.color, 3));
   geometry.setAttribute("aMisc", new InstancedBufferAttribute(buf.misc, 4));
+  const pulseAttr = new InstancedBufferAttribute(new Float32Array(buf.count), 1); // art:sound
+  pulseAttr.setUsage(DynamicDrawUsage);
+  geometry.setAttribute("aPulse", pulseAttr);
   geometry.instanceCount = buf.count;
   const uniforms: CorridorUniforms = {
     uRes: { value: new Vector2(1, 1) },
@@ -229,11 +239,39 @@ export function createCorridors(m: GlobeModel): Corridors {
   const mesh = new Mesh(geometry, material);
   mesh.frustumCulled = false;
   const index = new Map(corridors.map((c, i) => [c.key, i]));
+  // art:sound — per-corridor flash level, written into all instances of that corridor
+  const seg = CORRIDOR_POINTS - 1;
+  const active = new Map<number, number>();
+  const write = (ci: number, v: number) => {
+    (pulseAttr.array as Float32Array).fill(v, ci * seg, (ci + 1) * seg);
+    pulseAttr.needsUpdate = true;
+  };
   return {
     mesh,
     corridors,
     uniforms,
     indexOf: (from, to) => (from && to ? (index.get(corridorKey(from, to)) ?? -1) : -1),
+    indexOfKey: (key) => index.get(key) ?? -1,
+    pulse(ci, amount = 1) {
+      if (!(ci >= 0 && ci < corridors.length)) return;
+      const v = Math.min(1.5, (active.get(ci) ?? 0) + amount);
+      active.set(ci, v);
+      write(ci, v);
+    },
+    update(dt) {
+      if (active.size === 0) return;
+      const k = Math.exp(-dt / 0.6);
+      for (const [ci, v0] of active) {
+        const v = v0 * k;
+        if (v < 0.01) {
+          active.delete(ci);
+          write(ci, 0);
+        } else {
+          active.set(ci, v);
+          write(ci, v);
+        }
+      }
+    },
     setResolution(w, h, pixelRatio) {
       uniforms.uRes.value.set(w, h);
       uniforms.uWidth.value = pixelRatio;

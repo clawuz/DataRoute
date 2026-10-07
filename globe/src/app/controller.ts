@@ -13,7 +13,7 @@ import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
-  CREDIT, LABEL_COUNT, addEvents, aircraftBreakdown, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
+  CREDIT, LABEL_COUNT, addEvents, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
@@ -21,6 +21,7 @@ import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/eng
 import { eventsBetween } from "../audio/score"; // art:sound
 import { istanbulHour } from "../audio/form"; // art:sound
 import { routeMidpoints, type RouteMidpoint } from "../audio/pans"; // art:sound
+import type { NoteBus } from "../audio/notes-bus"; // art:sound
 import { SCRUB_SEC, keyToCommand } from "./keys";
 
 export const GLOBE_CYCLE: CycleConfig = { replaySec: 180, liveSec: Number.POSITIVE_INFINITY, holdSec: 20 };
@@ -46,6 +47,8 @@ export interface GlobeControllerDeps {
   sound?: RouteSound;
   /** viewport width in px for stereo panning; defaults to window.innerWidth */ // art:sound
   viewportWidth?: () => number;
+  /** every planned note of the route music, for the scope panel */ // art:sound
+  noteBus?: NoteBus;
 }
 
 export interface GlobeController {
@@ -77,6 +80,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let art: ArtState = initArt(d.search ?? ""); // art:core
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
+  const offNote = sound.onNote((n) => { // art:sound
+    d.noteBus?.emit(n);
+    d.engine.pulseRoute(n.key);
+  });
   let prevSoundCur: number | null = null; // art:sound
   const pans = new Map<string, { pan: number; visible: boolean }>(); // art:sound
   let panModel: GlobeModel | null = null; // art:sound
@@ -230,8 +237,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       camMode: d.engine.camMode(),
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
-      aircraftAirborne: model && !follow ? aircraftBreakdown(model, cur) : [],
       art, // art:core
+      music: { on: soundOn, ...sound.info() }, // art:sound
     });
   }
 
@@ -282,13 +289,13 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (hudTimer >= HUD_TICK_SEC) {
       hudTimer = 0;
       pushHud();
-      if (soundOn && model) { // art:sound
+      if (model) { // art:sound — planned also while muted (scope, route flashes)
         refreshPans();
         sound.setEnergy(Math.min(1, Math.max(0, (d.store.get().counters.airborne ?? 0) / 150)));
       }
     }
     const cur = currentCur(nowSec);
-    if (soundOn && model) { // art:sound
+    if (model) { // art:sound
       if (prevSoundCur !== null) {
         const ev = eventsBetween(model, prevSoundCur, cur);
         if (ev.length) sound.schedule(ev, soundFocus(), pans, istanbulHour(model.from + cur)); // art:sound
@@ -485,6 +492,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     },
     dispose() {
       disposed = true;
+      offNote(); // art:sound
       sound.dispose(); // art:sound
       poller.stop();
       if (typeof document !== "undefined") document.removeEventListener("visibilitychange", onVisible);

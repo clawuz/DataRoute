@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_EVENTS, addEvents, aircraftBreakdown, aircraftLabel, eventText, liveCur, pickLabelAirports } from "../src/app/hud-model";
+import { MAX_EVENTS, addEvents, aircraftLabel, eventText, liveCur, pickLabelAirports } from "../src/app/hud-model";
 import type { FlightEvent } from "../src/model/events";
 import { buildGlobeModel } from "../src/model/globe-model";
 import { FROM, flight, makeDay } from "./helpers";
@@ -67,32 +67,5 @@ describe("aircraftLabel", () => {
     expect(aircraftLabel({ type: "A21N" })).toEqual({ name: "A21N", reg: "" });
     expect(aircraftLabel({ reg: "TC-LGA" })).toEqual({ name: "AIRCRAFT UNKNOWN", reg: "TC-LGA" });
     expect(aircraftLabel({})).toEqual({ name: "AIRCRAFT UNKNOWN", reg: "" });
-  });
-});
-
-describe("aircraftBreakdown", () => {
-  const mk = (type: string | undefined, dep = FROM) =>
-    flight({ from: "IST", to: "JFK", dep, arr: null, end: "AIRBORNE", s: [[0, 300, 41, 29], [600, 370, 45, 20], [3000, 370, 55, -20]], ...(type ? { type } : {}) });
-  const model = (types: (string | undefined)[]) => buildGlobeModel(makeDay({ flights: types.map((t) => mk(t)) }));
-
-  it("counts airborne heads per type with compact names, unknown codes verbatim", () => {
-    const m = model(["B739", "B739", "A21N", "ZZZZ", undefined]);
-    expect(aircraftBreakdown(m, 100)).toEqual([
-      { label: "737-900", count: 2 },
-      { label: "A321NEO", count: 1 },
-      { label: "ZZZZ", count: 1 },
-    ]);
-  });
-  it("breaks ties alphabetically and keeps the top six", () => {
-    const m = model(["B789", "A359", "B77W", "A333", "B38M", "A21N", "E190", "B789"]);
-    const r = aircraftBreakdown(m, 100);
-    expect(r).toHaveLength(6);
-    expect(r[0]).toEqual({ label: "787-9", count: 2 });
-    expect(r.slice(1).map((x) => x.label)).toEqual(["737 MAX 8", "777-300ER", "A321NEO", "A330-300", "A350-900"]);
-  });
-  it("ignores flights with no head at that time", () => {
-    const m = model(["B739"]);
-    expect(aircraftBreakdown(m, -50)).toEqual([]);
-    expect(aircraftBreakdown(m, 100000)).toEqual([]);
   });
 });

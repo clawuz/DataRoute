@@ -4,6 +4,7 @@ import { SECTIONS } from "../src/audio/form";
 import { createRouteSound } from "../src/audio/engine";
 import { playNote } from "../src/audio/instruments";
 import type { PlannedNote, ScoreEvent } from "../src/audio/score";
+import type { NoteEvent } from "../src/audio/notes-bus";
 
 class P {
   value = 0;
@@ -47,9 +48,10 @@ function fakeCtx() {
   };
   return c;
 }
+/** The planner's wall clock follows the fake audio clock here, so planned times equal audio times. */
 const make = () => {
   const ctx = fakeCtx();
-  const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
+  const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext, now: () => ctx.currentTime });
   return { ctx, s };
 };
 const BED_OSCS = 4;
@@ -61,12 +63,71 @@ const DAY_H = 13;
 const ev = (regionIdx: number, o: Partial<ScoreEvent> = {}): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx, distKm: 2000, at: 0, istanbul: false, ...o });
 
 describe("route sound engine", () => {
-  it("creates no audio context until enabled (autoplay rule); scheduling while disabled does nothing", () => {
+  it("creates no audio context until enabled (autoplay rule); scheduling while disabled is a dry run", () => {
     const create = vi.fn(() => fakeCtx() as unknown as AudioContext);
-    const s = createRouteSound({ createContext: create });
-    s.schedule([ev(1)]);
+    const clock = { t: 10 };
+    const s = createRouteSound({ createContext: create, now: () => clock.t });
+    const notes: NoteEvent[] = [];
+    s.onNote((n) => notes.push(n));
+    s.schedule([ev(1, ATHENS)]);
     s.setEnergy(0.5);
     expect(create).not.toHaveBeenCalled();
+    // the wall-clock epoch is 10 (creation): EUR slot 1 has no onset → slot 2 = 0.625 s after the epoch
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatchObject({ instrument: "EUR", kind: "dep", key: "IST-FRA", vel: 0.65 });
+    expect(notes[0].at).toBeCloseTo(10.625, 9);
+    expect(notes[0].freq).toBeGreaterThan(0);
+    s.dispose();
+  });
+
+  it("the planner runs on the wall clock while muted: the ney melody advances and section changes restart the epoch", () => {
+    const clock = { t: 0 };
+    const s = createRouteSound({ createContext: () => fakeCtx() as unknown as AudioContext, now: () => clock.t });
+    const notes: NoteEvent[] = [];
+    s.onNote((n) => notes.push(n));
+    clock.t = 3;
+    s.schedule([ev(6, { istanbul: true })], null, undefined, NIGHT_H); // NIGHT epoch = 3
+    expect(notes.filter((n) => n.instrument === "NEY")).toHaveLength(3);
+    expect(notes[0].at).toBeCloseTo(3 + 60 / 72 / 2, 9); // first eighth-note slot after the lookahead
+    s.dispose();
+  });
+
+  it("while enabled, notes play at ctx.currentTime + (when − now())", () => {
+    const ctx = fakeCtx();
+    const clock = { t: 100 };
+    const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext, now: () => clock.t });
+    const notes: NoteEvent[] = [];
+    s.onNote((n) => notes.push(n));
+    s.setEnabled(true);
+    ctx.currentTime = 5;
+    const before = ctx.oscs.length;
+    s.schedule([ev(1, ATHENS)]);
+    expect(notes[0].at).toBeCloseTo(100.625, 9);
+    expect(ctx.oscs.length - before).toBe(2);
+    expect(ctx.oscs[before].start.mock.calls[0][0]).toBeCloseTo(5.625, 9);
+    s.dispose();
+  });
+
+  it("info() reports the section, the chord at the wall-clock now, the tempo and the ensemble", () => {
+    const clock = { t: 0 };
+    const s = createRouteSound({ createContext: () => fakeCtx() as unknown as AudioContext, now: () => clock.t });
+    expect(s.info()).toEqual({ section: "DAY", chord: "C", bpm: 96, instruments: [...SECTIONS.DAY.instruments] });
+    s.schedule([], null, undefined, NIGHT_H);
+    expect(s.info()).toEqual({ section: "NIGHT", chord: "Am(add9)", bpm: 72, instruments: [...SECTIONS.NIGHT.instruments] });
+    clock.t = 8 * (60 / 72) + 0.01;
+    expect(s.info().chord).toBe("Am9");
+    s.dispose();
+  });
+
+  it("onNote unsubscribes", () => {
+    const { s } = make();
+    const fn = vi.fn();
+    const off = s.onNote(fn);
+    s.schedule([ev(1)]);
+    expect(fn).toHaveBeenCalledTimes(1);
+    off();
+    s.schedule([ev(1)]);
+    expect(fn).toHaveBeenCalledTimes(1);
     s.dispose();
   });
 

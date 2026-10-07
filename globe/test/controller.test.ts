@@ -5,6 +5,7 @@ import { GLOBE_CYCLE, createController } from "../src/app/controller";
 import { createStore } from "@web/hud/store";
 import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
 import type { RouteSound } from "../src/audio/engine";
+import { createNoteBus, type NoteBus, type NoteEvent } from "../src/audio/notes-bus";
 import { istanbulHour } from "../src/audio/form";
 import { FROM, flight, makeDay } from "./helpers";
 
@@ -22,7 +23,7 @@ const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
     now: { gs: 480, trk: 300 },
   });
 
-function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string } = {}) {
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string; noteBus?: NoteBus } = {}) {
   let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
   let afterRender: (() => void) | null = null;
   const engine: GlobeEngine = {
@@ -40,6 +41,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     },
     endDrag: vi.fn(),
     pulseAirport: vi.fn(),
+    pulseRoute: vi.fn(),
     setEffects: vi.fn(),
     headsInfo: () => ({ count: 1, extrapolated: 3 }),
     dispose: vi.fn(),
@@ -60,6 +62,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     sound: opts.sound,
     viewportWidth: opts.viewportWidth,
     search: opts.search,
+    noteBus: opts.noteBus,
     fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
   });
   return {
@@ -516,20 +519,68 @@ describe("globe controller", () => {
   });
 
   describe("sound wiring", () => {
-    const stub = () => ({ setEnabled: vi.fn(), schedule: vi.fn(), setEnergy: vi.fn(), dispose: vi.fn() });
+    const stub = () => {
+      const subs = new Set<(n: NoteEvent) => void>();
+      return {
+        setEnabled: vi.fn(),
+        schedule: vi.fn(),
+        setEnergy: vi.fn(),
+        dispose: vi.fn(),
+        onNote: vi.fn((fn: (n: NoteEvent) => void) => {
+          subs.add(fn);
+          return () => void subs.delete(fn);
+        }),
+        info: vi.fn(() => ({ section: "DAY" as const, chord: "C", bpm: 96, instruments: ["NEY", "EUR"] as NoteEvent["instrument"][] })),
+        play: (n: NoteEvent) => subs.forEach((fn) => fn(n)),
+        subs,
+      };
+    };
+    const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({ instrument: "AME", freq: 220, vel: 0.65, kind: "dep", key: "IST-JFK", at: 1, ...o });
 
-    it("M turns the sound on and off through the stub; nothing is scheduled while it is off", async () => {
+    it("M turns the sound on and off through the stub; the score is planned also while it is off", async () => {
       const sound = stub();
       const h = setup({ sound });
       await flush();
-      h.frame(0.3);
-      expect(sound.schedule).not.toHaveBeenCalled();
+      h.c.onKey("r"); // REPLAY: events stream past
+      for (let i = 0; i < 200; i++) h.frame(1);
+      expect(sound.setEnabled).not.toHaveBeenCalled(); // muted: the engine is never enabled
+      expect(sound.schedule).toHaveBeenCalled(); // but the planner runs (the scope and the route flashes)
       h.c.onKey("m");
       expect(sound.setEnabled).toHaveBeenLastCalledWith(true);
       h.c.onKey("m");
       expect(sound.setEnabled).toHaveBeenLastCalledWith(false);
       h.c.dispose();
       expect(sound.dispose).toHaveBeenCalled();
+    });
+
+    it("forwards every planned note to the note bus and flashes its route corridor; dispose unsubscribes", async () => {
+      const sound = stub();
+      const bus = createNoteBus();
+      const got: NoteEvent[] = [];
+      bus.subscribe((n) => got.push(n));
+      const h = setup({ sound, noteBus: bus });
+      await flush();
+      expect(sound.onNote).toHaveBeenCalledTimes(1);
+      const n = note();
+      sound.play(n);
+      expect(got).toEqual([n]);
+      expect(h.engine.pulseRoute).toHaveBeenCalledWith("IST-JFK");
+      h.c.dispose();
+      expect(sound.subs.size).toBe(0);
+      sound.play(note({ key: "IST-LHR" }));
+      expect(got).toHaveLength(1);
+    });
+
+    it("publishes the music state (section, chord, tempo, ensemble, on) in the snapshot", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.frame(0.3);
+      expect(h.store.get().music).toEqual({ on: false, section: "DAY", chord: "C", bpm: 96, instruments: ["NEY", "EUR"] });
+      h.c.onKey("m");
+      expect(h.store.get().music.on).toBe(true);
+      expect("aircraftAirborne" in h.store.get()).toBe(false);
+      h.c.dispose();
     });
 
     it("in a replay the departure of the routed flight is scheduled as a note on its corridor", async () => {
@@ -564,13 +615,10 @@ describe("globe controller", () => {
       h.c.dispose();
     });
 
-    it("publishes the airborne energy while on and keeps the stub quiet while off", async () => {
+    it("publishes the airborne energy, muted too (the engine decides what is audible)", async () => {
       const sound = stub();
       const h = setup({ sound });
       await flush();
-      h.frame(0.3);
-      expect(sound.setEnergy).not.toHaveBeenCalled();
-      h.c.onKey("m");
       h.frame(0.3);
       expect(sound.setEnergy).toHaveBeenCalled();
       const e = sound.setEnergy.mock.calls.at(-1)![0] as number;

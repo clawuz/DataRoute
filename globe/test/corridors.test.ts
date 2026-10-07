@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildGlobeModel } from "../src/model/globe-model";
-import { CORRIDOR_POINTS, buildCorridorBuffers, buildCorridors, corridorKey, corridorStyle, corridorWeight } from "../src/scene/corridors";
+import { CORRIDOR_POINTS, buildCorridorBuffers, buildCorridors, corridorKey, corridorStyle, corridorWeight, createCorridors } from "../src/scene/corridors";
 import { FROM, flight, makeDay } from "./helpers";
 
 const s = (lon: number): [number, number, number, number][] => [[0, 300, 41, 29], [600, 350, 42, lon]];
@@ -89,5 +89,50 @@ describe("buildCorridorBuffers", () => {
   });
   it("is empty for no corridors", () => {
     expect(buildCorridorBuffers([]).count).toBe(0);
+  });
+});
+
+describe("corridor pulses (route-line flashes of the music)", () => {
+  const make = () =>
+    createCorridors(model([flight({ from: "IST", to: "JFK", s: s(20) }), flight({ from: "IST", to: "JFK", s: s(20) }), flight({ from: "IST", to: "LHR", s: s(5) })]));
+  const pulses = (c: ReturnType<typeof createCorridors>) => c.mesh.geometry.getAttribute("aPulse").array as Float32Array;
+  const seg = CORRIDOR_POINTS - 1;
+
+  it("indexOfKey matches indexOf for both route directions; unknown keys give -1", () => {
+    const c = make();
+    expect(c.indexOfKey("IST-JFK")).toBe(c.indexOf("IST", "JFK"));
+    expect(c.indexOfKey("IST-LHR")).toBe(c.indexOf("LHR", "IST"));
+    expect(c.indexOfKey("tk123")).toBe(-1);
+    c.dispose();
+  });
+  it("pulse raises every instance of that corridor to 1 and leaves the others at 0", () => {
+    const c = make();
+    const i = c.indexOfKey("IST-LHR");
+    c.pulse(i);
+    const a = pulses(c);
+    expect(a).toHaveLength(seg * 2);
+    for (let k = 0; k < seg * 2; k++) expect(a[k]).toBe(Math.floor(k / seg) === i ? 1 : 0);
+    c.dispose();
+  });
+  it("update decays the pulse by exp(−dt / 0.6) and removes it once faint", () => {
+    const c = make();
+    c.pulse(0);
+    c.update(0.6);
+    expect(pulses(c)[0]).toBeCloseTo(1 / Math.E, 6);
+    expect(pulses(c)[seg - 1]).toBeCloseTo(1 / Math.E, 6);
+    for (let k = 0; k < 20; k++) c.update(0.6);
+    expect(pulses(c)[0]).toBe(0);
+    c.dispose();
+  });
+  it("pulses add up and clamp at 1.5; out-of-range indices are ignored", () => {
+    const c = make();
+    c.pulse(1);
+    c.pulse(1, 0.3);
+    expect(pulses(c)[seg]).toBeCloseTo(1.3, 6);
+    c.pulse(1);
+    expect(pulses(c)[seg]).toBe(1.5);
+    expect(() => { c.pulse(-1); c.pulse(99); }).not.toThrow();
+    expect(pulses(c)[0]).toBe(0);
+    c.dispose();
   });
 });

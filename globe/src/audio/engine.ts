@@ -1,6 +1,7 @@
 import { REGIONS } from "@web/data/palette";
 import { playNote } from "./instruments";
-import { sectionAt, type Section } from "./form";
+import { sectionAt, type Section, type SectionId } from "./form";
+import { createNoteBus, type NoteEvent } from "./notes-bus";
 import { initNey, initPiano, type NeyState, type PianoState } from "./melody";
 import { planNotes, type ScoreEvent } from "./score";
 import { chordAtBeat, freqOf, type Chord, type Instrument } from "./theory";
@@ -15,7 +16,18 @@ export interface RouteSound {
   /** `localHour`: Istanbul local hour of the flight time (selects the section; defaults to midday) */
   schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number): void;
   setEnergy(e: number): void;
+  /** every planned note (also while muted); returns the unsubscribe */
+  onNote(fn: (n: NoteEvent) => void): () => void;
+  /** the current section, the chord at the wall-clock now, the tempo and the ensemble */
+  info(): SoundInfo;
   dispose(): void;
+}
+
+export interface SoundInfo {
+  section: SectionId;
+  chord: string;
+  bpm: number;
+  instruments: Instrument[];
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
@@ -51,17 +63,26 @@ interface Graph {
   chordKey: string;
 }
 
-export function createRouteSound(opts: { createContext?: () => AudioContext } = {}): RouteSound {
+const defaultNow = (): number => performance.now() / 1000;
+
+/**
+ * The planner runs on the wall clock (`now()`, seconds) and always plans, also while muted, publishing every
+ * note through `onNote`; notes are played only when enabled with an audio context, at
+ * `ctx.currentTime + (when − now())`.
+ */
+export function createRouteSound(opts: { createContext?: () => AudioContext; now?: () => number } = {}): RouteSound {
   const create = opts.createContext ?? defaultCreate;
+  const now = opts.now ?? defaultNow;
+  const notes = createNoteBus();
   let g: Graph | null = null;
   let enabled = false;
   let disposed = false;
   let suspendTimer: ReturnType<typeof setTimeout> | null = null;
   let onVis: (() => void) | null = null;
   let onGesture: (() => void) | null = null;
-  // the only mutable music state: current section, its epoch (audio time) and the melodic states
+  // the only mutable music state: current section, its epoch (wall-clock seconds) and the melodic states
   let section: Section = sectionAt(12);
-  let epoch = 0;
+  let epoch = now();
   let neyState: NeyState = initNey(section);
   let pianoState: PianoState = initPiano();
   let energy = 0.5;
@@ -75,8 +96,8 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
   };
   const resume = () => safe(() => void g?.ctx.resume()?.catch?.(() => {}));
 
-  function bedChord(now: number): { chord: Chord; key: string } {
-    const beat = Math.floor(Math.max(0, now - epoch) / (60 / section.bpm));
+  function bedChord(t: number): { chord: Chord; key: string } {
+    const beat = Math.floor(Math.max(0, t - epoch) / (60 / section.bpm));
     const idx = Math.floor(beat / section.beatsPerChord) % section.progression.length;
     return { chord: chordAtBeat(beat, section.progression, section.beatsPerChord), key: `${section.id}:${idx}` };
   }
@@ -116,8 +137,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     lp.frequency.value = 500;
     lp.connect(bedGain);
     bedGain.connect(bus);
-    epoch = ctx.currentTime;
-    const { chord, key } = bedChord(ctx.currentTime);
+    const { chord, key } = bedChord(now());
     const types: OscillatorType[] = ["sine", "sine", "triangle", "sine"];
     const bed = bedVoicing(chord).map(([oct, semis], i) => {
       const o = ctx.createOscillator();
@@ -180,24 +200,34 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
   function schedule(
     events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number,
   ): void {
-    if (!enabled || !g) return;
-    const { ctx, bus } = g;
+    if (disposed) return;
     safe(() => {
+      const t = now();
       const sec = sectionAt(localHour ?? 12); // art:sound
       if (sec.id !== section.id) {
         section = sec;
-        epoch = ctx.currentTime;
+        epoch = t;
         neyState = initNey(sec);
       }
-      const plan = planNotes(events, ctx.currentTime, { epoch, section, ney: neyState, piano: pianoState });
+      const plan = planNotes(events, t, { epoch, section, ney: neyState, piano: pianoState });
       neyState = plan.ney;
       pianoState = plan.piano;
+      for (const n of plan.notes) {
+        safe(() =>
+          notes.emit({
+            instrument: n.instrument, freq: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when, ...(n.long ? { long: true } : {}),
+          }),
+        );
+      }
+      if (!enabled || !g) return;
+      const { ctx, bus } = g;
       const dyn = 0.6 + 0.4 * clamp(energy, 0, 1);
       for (const n of plan.notes) {
         // art:sound
         const match = focus?.regionIdx != null && instrumentRegionIdx(n.instrument) === focus.regionIdx;
         const p = pans?.get(n.key);
-        playNote(ctx, bus, n, {
+        const when = Math.max(ctx.currentTime, ctx.currentTime + (n.when - t)); // wall clock → audio clock
+        playNote(ctx, bus, { ...n, when }, {
           gainScale: dyn * (focus?.regionIdx == null ? 1 : match ? 1.6 : 0.7) * (p?.visible === false ? 0.3 : 1),
           cutoffScale: match && focus ? 0.6 + 0.8 * clamp(focus.alt100 / 410, 0, 1) : 1,
           pan: clamp(p?.pan ?? 0, -1, 1),
@@ -207,19 +237,24 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
   }
 
   function setEnergy(e: number): void {
+    if (disposed) return;
+    energy = clamp(e, 0, 1);
     if (!enabled || !g) return;
     const { ctx, bedGain, bed, wet } = g;
-    energy = clamp(e, 0, 1);
     safe(() => {
-      const now = ctx.currentTime;
-      bedGain.gain.setTargetAtTime(0.035 * energy ** 0.7, now, 0.8);
-      wet.gain.setTargetAtTime(section.wet, now, 1.5);
-      const { chord, key } = bedChord(now);
+      const at = ctx.currentTime;
+      bedGain.gain.setTargetAtTime(0.035 * energy ** 0.7, at, 0.8);
+      wet.gain.setTargetAtTime(section.wet, at, 1.5);
+      const { chord, key } = bedChord(now());
       if (key !== g!.chordKey) {
         g!.chordKey = key;
-        bedVoicing(chord).forEach(([oct, semis], i) => bed[i].frequency.setTargetAtTime(freqOf(oct, semis), now, 1.2));
+        bedVoicing(chord).forEach(([oct, semis], i) => bed[i].frequency.setTargetAtTime(freqOf(oct, semis), at, 1.2));
       }
     });
+  }
+
+  function info(): SoundInfo {
+    return { section: section.id, chord: bedChord(now()).chord.name, bpm: section.bpm, instruments: [...section.instruments] };
   }
 
   function dispose(): void {
@@ -243,5 +278,5 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     });
   }
 
-  return { setEnabled, schedule, setEnergy, dispose };
+  return { setEnabled, schedule, setEnergy, onNote: (fn) => notes.subscribe(fn), info, dispose };
 }

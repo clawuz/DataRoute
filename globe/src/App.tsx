@@ -6,12 +6,14 @@ import { isClick } from "./app/click";
 import { createController, type GlobeController } from "./app/controller";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "./app/hud-model";
 import { GlobeHud } from "./hud/GlobeHud";
+import { createNoteBus } from "./audio/notes-bus"; // art:sound
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
 
 export function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
   const labelBus = useMemo(() => createLabelBus(), []);
+  const noteBus = useMemo(createNoteBus, []); // art:sound
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function App() {
         debug: params.get("debug") === "1",
         reducedMotion,
         search, // art:core
+        noteBus, // art:sound
         onLabels: labelBus.emit,
         nowMs: () => Date.now(),
       });
@@ -126,12 +129,12 @@ export function App() {
       controller = null;
       engine.dispose();
     };
-  }, [store, labelBus]);
+  }, [store, labelBus, noteBus]);
 
   return (
     <>
       <canvas ref={canvasRef} className="stage" />
-      {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} />}
+      {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
     </>
   );
 }
