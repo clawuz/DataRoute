@@ -25,6 +25,17 @@ interface LaneTrace {
 
 const wallSec = () => performance.now() / 1000;
 
+/** art:track — path of a small aeroplane seen from above, nose pointing up, spanning `s` px from `top` at centre `cx` */
+function planePath(g: CanvasRenderingContext2D, cx: number, top: number, s: number): void {
+  const pts: [number, number][] = [
+    [0, 1], [0.1, 0.78], [0.1, 0.56], [0.5, 0.3], [0.5, 0.18], [0.1, 0.36], [0.1, 0.18], [0.27, 0.04], [0.27, 0], [0.04, 0.1], [0, 0.1],
+  ];
+  const mirror = pts.slice(1, -1).reverse().map(([x, y]): [number, number] => [-x, y]);
+  g.beginPath();
+  [...pts.slice(0, -1), ...mirror].forEach(([x, y], i) => (i === 0 ? g.moveTo(cx + x * s, top + (1 - y) * s) : g.lineTo(cx + x * s, top + (1 - y) * s)));
+  g.closePath();
+}
+
 /** art:track — bottom 30 % of the scope: the 24 h airborne curve with the 8 music windows and the playhead */
 function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: number, h: number, dpr: number, base: number): void {
   const pad = 3 * dpr;
@@ -215,11 +226,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         g.globalAlpha = 0.9;
         g.fillStyle = "#fff";
         g.fillRect(px0 - 0.75 * dpr, 0, 1.5 * dpr, ribbonH);
-        g.beginPath();
-        g.moveTo(px0 - 4 * dpr, 0);
-        g.lineTo(px0 + 4 * dpr, 0);
-        g.lineTo(px0, 5 * dpr);
-        g.closePath();
+        planePath(g, px0, 0, 9 * dpr); // an aeroplane (nose up) instead of a triangle
         g.fill();
       }
       // ribbon+: the strongest notes name their route
