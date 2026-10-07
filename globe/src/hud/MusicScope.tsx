@@ -233,7 +233,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
     };
     raf = requestAnimationFrame(frame);
     const list = setInterval(() => { // art:track — the NOW PLAYING list refreshes ~6 Hz
-      const cur = playingNow(playing.current, wallSec());
+      const cur = playingNow(playing.current, wallSec(), 6);
       setNowList((prev) => (prev.length === cur.length && prev.every((p, i) => p.route === cur[i].route && p.note === cur[i].note) ? prev : cur));
     }, 160);
     return () => {
@@ -264,7 +264,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         </div>}
       </div>
       <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>
-      {nowList.length > 0 && ( // art:track
+      {music.day && ( // art:track — always rendered at a fixed height
         <ul className="music-scope-now" aria-label="Routes playing now">
           {nowList.map((p) => (
             <li key={p.route} style={{ borderLeftColor: routeColor(p.route) }}>

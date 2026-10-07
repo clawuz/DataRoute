@@ -4,7 +4,7 @@ body { background: #02030a; }
 
 .modeline { position: absolute; left: 3vmin; top: 10.4vmin; letter-spacing: 0.16em; font-size: calc(1.1 * var(--u)); color: var(--ink-dim); }
 
-.events { position: absolute; left: 3vmin; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 0.9vmin; max-width: 32vmin; }
+.events { position: absolute; left: 3vmin; top: 19vmin; display: flex; flex-direction: column; gap: 0.9vmin; max-width: 32vmin; }
 .event { font-family: var(--label); font-size: calc(1.05 * var(--u)); letter-spacing: 0.12em; color: var(--ink-dim); border-left: 0.3vmin solid var(--line-strong); padding-left: 1vmin; }
 .event.departed { border-left-color: var(--thy); color: var(--ink); }
 .event.landed { border-left-color: #7bd389; }
@@ -21,7 +21,7 @@ body { background: #02030a; }
 @media (max-aspect-ratio: 1/1) {
   .modeline { top: 10vmin; }
   .art-notes { top: 21vmin; } /* below the portrait counters row (starts 13vmin) */
-  .events { top: 62%; }
+  .events { top: 26vmin; }
 }
 
 .flight-panel { position: absolute; right: 3vmin; top: 50%; transform: translateY(-50%); width: 30vmin; display: flex; flex-direction: column; gap: 1vmin; padding: 1.4vmin 1.6vmin; background: rgba(2, 4, 12, 0.55); border: 1px solid var(--line); backdrop-filter: blur(6px); pointer-events: none; }
@@ -51,9 +51,8 @@ body { background: #02030a; }
 }
 
 /* art:sound — ROUTES → MUSIC scope (bottom right, above the region bars) */
-.music-scope { position: absolute; right: 3vmin; bottom: 27vmin; width: 40vmin; padding: 1vmin 1.2vmin; background: rgba(2, 4, 12, 0.6); border: 1px solid var(--line); backdrop-filter: blur(4px); pointer-events: none; }
-.music-scope.compact { bottom: 4.5vmin; } /* while following, the flight panel owns the right-middle: the scope drops to the bottom corner */
-.music-scope-wave { position: relative; height: 19vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
+.music-scope { position: absolute; left: 3vmin; bottom: 17.5vmin; width: 40vmin; padding: 1vmin 1.2vmin; background: rgba(2, 4, 12, 0.6); border: 1px solid var(--line); backdrop-filter: blur(4px); pointer-events: none; }
+.music-scope-wave { position: relative; height: 16vmin; } /* pitch ribbon (top 70 %) over the rhythm strip */
 .music-scope-canvas { display: block; width: 100%; height: 100%; }
 .music-scope-off { position: absolute; left: 0; right: 0; top: 0; text-align: right; font-size: calc(0.8 * var(--u)); color: var(--ink-dim); text-shadow: 0 0 0.6vmin #000, 0 0 1.4vmin #000; }
 .music-scope-chord { text-transform: none; } /* "Am" must not read as "AM" */
@@ -65,13 +64,12 @@ body { background: #02030a; }
 .music-scope-layers { display: flex; gap: 0.4vmin; min-height: 0.7vmin; }
 .music-scope-layers .dot { width: 0.7vmin; height: 0.7vmin; border-radius: 50%; }
 /* art:track — NOW PLAYING: the routes sounding right now, in their ribbon colours */
-.music-scope-now { list-style: none; margin: 0.8vmin 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5vmin 0.8vmin; }
-.music-scope-now li { display: flex; gap: 0.7vmin; align-items: baseline; padding-left: 0.8vmin; border-left: 0.35vmin solid; font-size: calc(0.95 * var(--u)); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; }
+.music-scope-now { list-style: none; margin: 0.8vmin 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 2.6vmin; gap: 0.5vmin 0.8vmin; height: calc(3 * 2.6vmin + 2 * 0.5vmin); overflow: hidden; } /* fixed height: the box must not grow and shrink with the routes playing */
+.music-scope-now li { display: flex; gap: 0.7vmin; align-items: center; padding-left: 0.8vmin; border-left: 0.35vmin solid; font-size: calc(0.95 * var(--u)); letter-spacing: 0.06em; white-space: nowrap; overflow: hidden; }
 .music-scope-now .route { color: var(--ink); }
 .music-scope-now .note { color: var(--ink-dim); }
 .music-scope-now .alt { color: var(--ink-dim); margin-left: auto; font-size: calc(0.8 * var(--u)); }
 @media (max-aspect-ratio: 1/1) {
-  .music-scope { bottom: 30vmin; width: 36vmin; }
-  .music-scope.compact { bottom: 2vmin; width: 32vmin; }
+  .music-scope { bottom: 14vmin; width: 36vmin; }
   .music-scope-wave { height: 15vmin; }
 }

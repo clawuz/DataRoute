@@ -334,8 +334,12 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     // while following in REPLAY the displayed instant belongs to the follow clock: freeze the replay position
     cycle = follow && mode === "REPLAY" ? { ...stepped, phase: cycle.phase, elapsed: cycle.elapsed, tRel: cycle.tRel } : stepped;
     if (mode === "REPLAY" && cycle.phase === "LIVE") {
-      mode = "LIVE"; // replay finished: back to the present
-      liveFrozen = null;
+      if (soundOn && track.ready() && !follow) {
+        cycle = { ...initCycle(bounds()), phase: "REPLAY" }; // art:track — the music is done: rewind, the replay (and the music) start over
+      } else {
+        mode = "LIVE"; // replay finished: back to the present
+        liveFrozen = null;
+      }
     }
     if (mode === "LIVE") {
       if (!cycle.paused) liveFrozen = null;
