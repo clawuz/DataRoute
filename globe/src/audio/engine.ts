@@ -1,7 +1,9 @@
 import { REGIONS } from "@web/data/palette";
 import { playNote } from "./instruments";
+import { sectionAt, type Section } from "./form";
+import { initNey, initPiano, type NeyState, type PianoState } from "./melody";
 import { planNotes, type ScoreEvent } from "./score";
-import { chordAtTime, freqOf, type Instrument } from "./theory";
+import { chordAtBeat, freqOf, type Chord, type Instrument } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
@@ -10,18 +12,27 @@ export interface SoundFocus {
 
 export interface RouteSound {
   setEnabled(on: boolean): void;
-  schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>): void;
+  /** `localHour`: Istanbul local hour of the flight time (selects the section; defaults to midday) */
+  schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number): void;
   setEnergy(e: number): void;
   dispose(): void;
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
-/** Region index whose focus boost applies to an instrument; the ney ignores focus. */
+/** Region index whose focus boost applies to an instrument; the ney and its wind ensemble ignore focus. */
 export function instrumentRegionIdx(i: Instrument): number | null {
-  if (i === "NEY") return null;
+  if (i === "NEY" || i === "CLA" || i === "SAX" || i === "TPT") return null;
   return REGIONS.indexOf(i === "PNO" ? "EUR" : i);
 }
+
+/** The four bed voices of a chord: root (oct 2), fifth (oct 3), seventh or third (oct 3), ninth or fifth (oct 4). */
+export const bedVoicing = (c: Chord): [number, number][] => [
+  [2, c.root],
+  [3, c.fifth],
+  [3, c.seventh ?? c.third],
+  [4, c.ninth ?? c.fifth],
+];
 
 const defaultCreate = (): AudioContext => {
   const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
@@ -35,7 +46,9 @@ interface Graph {
   bus: GainNode;
   bedGain: GainNode;
   bed: OscillatorNode[];
-  chordName: string;
+  wet: GainNode;
+  /** section id + progression index of the bed's chord */
+  chordKey: string;
 }
 
 export function createRouteSound(opts: { createContext?: () => AudioContext } = {}): RouteSound {
@@ -46,6 +59,12 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
   let suspendTimer: ReturnType<typeof setTimeout> | null = null;
   let onVis: (() => void) | null = null;
   let onGesture: (() => void) | null = null;
+  // the only mutable music state: current section, its epoch (audio time) and the melodic states
+  let section: Section = sectionAt(12);
+  let epoch = 0;
+  let neyState: NeyState = initNey(section);
+  let pianoState: PianoState = initPiano();
+  let energy = 0.5;
 
   const safe = (fn: () => void) => {
     try {
@@ -55,6 +74,12 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     }
   };
   const resume = () => safe(() => void g?.ctx.resume()?.catch?.(() => {}));
+
+  function bedChord(now: number): { chord: Chord; key: string } {
+    const beat = Math.floor(Math.max(0, now - epoch) / (60 / section.bpm));
+    const idx = Math.floor(beat / section.beatsPerChord) % section.progression.length;
+    return { chord: chordAtBeat(beat, section.progression, section.beatsPerChord), key: `${section.id}:${idx}` };
+  }
 
   function build(): Graph {
     const ctx = create();
@@ -79,7 +104,7 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     }
     convolver.buffer = ir;
     const wet = ctx.createGain();
-    wet.gain.value = 0.3;
+    wet.gain.value = section.wet;
     bus.connect(convolver);
     convolver.connect(wet);
     wet.connect(master);
@@ -91,21 +116,18 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     lp.frequency.value = 500;
     lp.connect(bedGain);
     bedGain.connect(bus);
-    const chord = chordAtTime(ctx.currentTime);
-    const tones: [number, number, OscillatorType][] = [
-      [2, chord.root, "sine"],
-      [3, chord.third, "triangle"],
-      [3, chord.fifth, "sine"],
-    ];
-    const bed = tones.map(([oct, semis, type]) => {
+    epoch = ctx.currentTime;
+    const { chord, key } = bedChord(ctx.currentTime);
+    const types: OscillatorType[] = ["sine", "sine", "triangle", "sine"];
+    const bed = bedVoicing(chord).map(([oct, semis], i) => {
       const o = ctx.createOscillator();
-      o.type = type;
+      o.type = types[i];
       o.frequency.value = freqOf(oct, semis);
       o.connect(lp);
       o.start();
       return o;
     });
-    return { ctx, master, bus, bedGain, bed, chordName: chord.name };
+    return { ctx, master, bus, bedGain, bed, wet, chordKey: key };
   }
 
   function setEnabled(on: boolean): void {
@@ -155,16 +177,28 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
     onGesture = null;
   }
 
-  function schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>): void {
+  function schedule(
+    events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number,
+  ): void {
     if (!enabled || !g) return;
     const { ctx, bus } = g;
     safe(() => {
-      for (const n of planNotes(events, ctx.currentTime)) {
+      const sec = sectionAt(localHour ?? 12); // art:sound
+      if (sec.id !== section.id) {
+        section = sec;
+        epoch = ctx.currentTime;
+        neyState = initNey(sec);
+      }
+      const plan = planNotes(events, ctx.currentTime, { epoch, section, ney: neyState, piano: pianoState });
+      neyState = plan.ney;
+      pianoState = plan.piano;
+      const dyn = 0.6 + 0.4 * clamp(energy, 0, 1);
+      for (const n of plan.notes) {
         // art:sound
         const match = focus?.regionIdx != null && instrumentRegionIdx(n.instrument) === focus.regionIdx;
         const p = pans?.get(n.key);
         playNote(ctx, bus, n, {
-          gainScale: (focus?.regionIdx == null ? 1 : match ? 1.6 : 0.7) * (p?.visible === false ? 0.3 : 1),
+          gainScale: dyn * (focus?.regionIdx == null ? 1 : match ? 1.6 : 0.7) * (p?.visible === false ? 0.3 : 1),
           cutoffScale: match && focus ? 0.6 + 0.8 * clamp(focus.alt100 / 410, 0, 1) : 1,
           pan: clamp(p?.pan ?? 0, -1, 1),
         });
@@ -174,16 +208,16 @@ export function createRouteSound(opts: { createContext?: () => AudioContext } = 
 
   function setEnergy(e: number): void {
     if (!enabled || !g) return;
-    const { ctx, bedGain, bed } = g;
+    const { ctx, bedGain, bed, wet } = g;
+    energy = clamp(e, 0, 1);
     safe(() => {
       const now = ctx.currentTime;
-      bedGain.gain.setTargetAtTime(0.035 * clamp(e, 0, 1) ** 0.7, now, 0.8);
-      const chord = chordAtTime(now);
-      if (chord.name !== g!.chordName) {
-        g!.chordName = chord.name;
-        bed[0].frequency.setTargetAtTime(freqOf(2, chord.root), now, 1.2);
-        bed[1].frequency.setTargetAtTime(freqOf(3, chord.third), now, 1.2);
-        bed[2].frequency.setTargetAtTime(freqOf(3, chord.fifth), now, 1.2);
+      bedGain.gain.setTargetAtTime(0.035 * energy ** 0.7, now, 0.8);
+      wet.gain.setTargetAtTime(section.wet, now, 1.5);
+      const { chord, key } = bedChord(now);
+      if (key !== g!.chordKey) {
+        g!.chordKey = key;
+        bedVoicing(chord).forEach(([oct, semis], i) => bed[i].frequency.setTargetAtTime(freqOf(oct, semis), now, 1.2));
       }
     });
   }

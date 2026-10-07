@@ -5,6 +5,7 @@ import { GLOBE_CYCLE, createController } from "../src/app/controller";
 import { createStore } from "@web/hud/store";
 import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
 import type { RouteSound } from "../src/audio/engine";
+import { istanbulHour } from "../src/audio/form";
 import { FROM, flight, makeDay } from "./helpers";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -540,6 +541,26 @@ describe("globe controller", () => {
       for (let i = 0; i < 200; i++) h.frame(1);
       const events = sound.schedule.mock.calls.flatMap((c) => c[0] as { kind: string; key: string; regionIdx: number }[]);
       expect(events.some((e) => e.kind === "dep" && e.key === "IST-JFK" && e.regionIdx === 5)).toBe(true);
+      h.c.dispose();
+    });
+
+    it("passes the Istanbul local hour of the flight time (model.from + cur) to the score", async () => {
+      const sound = stub();
+      const h = setup({ sound });
+      await flush();
+      h.c.onKey("m");
+      h.c.onKey("r");
+      let checked = 0;
+      for (let i = 0; i < 200; i++) {
+        const before = sound.schedule.mock.calls.length;
+        const f = h.frame(1); // absTime = model.from + cur of this frame
+        if (sound.schedule.mock.calls.length > before) {
+          const hour = sound.schedule.mock.calls.at(-1)![3] as number;
+          expect(hour).toBe(istanbulHour(f.absTime));
+          checked++;
+        }
+      }
+      expect(checked).toBeGreaterThan(0);
       h.c.dispose();
     });
 

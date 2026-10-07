@@ -19,6 +19,7 @@ import {
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/engine"; // art:sound
 import { eventsBetween } from "../audio/score"; // art:sound
+import { istanbulHour } from "../audio/form"; // art:sound
 import { routeMidpoints, type RouteMidpoint } from "../audio/pans"; // art:sound
 import { SCRUB_SEC, keyToCommand } from "./keys";
 
@@ -290,7 +291,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (soundOn && model) { // art:sound
       if (prevSoundCur !== null) {
         const ev = eventsBetween(model, prevSoundCur, cur);
-        if (ev.length) sound.schedule(ev, soundFocus(), pans);
+        if (ev.length) sound.schedule(ev, soundFocus(), pans, istanbulHour(model.from + cur)); // art:sound
       }
       prevSoundCur = cur;
     }

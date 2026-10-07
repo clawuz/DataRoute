@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { BEAT_SEC, freqOf } from "../src/audio/theory";
+import { freqOf } from "../src/audio/theory";
+import { SECTIONS } from "../src/audio/form";
 import { createRouteSound } from "../src/audio/engine";
-import type { ScoreEvent } from "../src/audio/score";
+import { playNote } from "../src/audio/instruments";
+import type { PlannedNote, ScoreEvent } from "../src/audio/score";
 
 class P {
   value = 0;
@@ -50,7 +52,12 @@ const make = () => {
   const s = createRouteSound({ createContext: () => ctx as unknown as AudioContext });
   return { ctx, s };
 };
-const BED_OSCS = 3;
+const BED_OSCS = 4;
+const DAY_BEAT = 60 / 96;
+const ATHENS = { farLat: 37.9, farLon: 23.7 };
+const JFK = { farLat: 40.6398, farLon: -73.7789 };
+const NIGHT_H = 2;
+const DAY_H = 13;
 const ev = (regionIdx: number, o: Partial<ScoreEvent> = {}): ScoreEvent => ({ kind: "dep", key: "IST-FRA", regionIdx, distKm: 2000, at: 0, istanbul: false, ...o });
 
 describe("route sound engine", () => {
@@ -63,7 +70,7 @@ describe("route sound engine", () => {
     s.dispose();
   });
 
-  it("enabling builds the graph, resumes the context and starts the three-oscillator chord bed", () => {
+  it("enabling builds the graph, resumes the context and starts the four-oscillator chord bed", () => {
     const { ctx, s } = make();
     s.setEnabled(true);
     expect(ctx.resume).toHaveBeenCalled();
@@ -85,21 +92,116 @@ describe("route sound engine", () => {
     expect(counts).toEqual({ DOM: 1, EUR: 2, MEA: 2, AFR: 2, ASI: 1, AME: 2 });
   });
 
-  it("piano (west Europe) has three partials; the Istanbul ney has two voices, a vibrato LFO and one breath source", () => {
+  it("piano (west Europe) rolls a new chord open: three notes of three partials; the Istanbul ney plays a cell", () => {
     const { ctx, s } = make();
     s.setEnabled(true);
     const o0 = ctx.oscs.length;
     s.schedule([ev(1, { farLat: 51.5, farLon: -0.5 })]);
-    expect(ctx.oscs.length - o0).toBe(3);
+    expect(ctx.oscs.length - o0).toBe(9);
     expect(ctx.srcs).toHaveLength(0);
     s.dispose();
     const n = make();
     n.s.setEnabled(true);
     const before = n.ctx.oscs.length;
-    n.s.schedule([ev(6, { istanbul: true })]);
-    expect(n.ctx.oscs.length - before).toBe(3); // sine + triangle + vibrato LFO
-    expect(n.ctx.srcs).toHaveLength(1);
+    n.s.schedule([ev(6, { istanbul: true })], null, undefined, NIGHT_H); // the night ney plays alone
+    expect(n.ctx.oscs.length - before).toBe(9); // 3 notes × (sine + triangle + vibrato LFO)
+    expect(n.ctx.srcs).toHaveLength(3); // one breath source per note
     n.s.dispose();
+  });
+
+  it("a ney cell on a strong beat adds a grace note (one oscillator)", () => {
+    const count = (now: number) => {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      s.schedule([ev(6)], null, undefined, NIGHT_H); // silent: starts the night epoch at 0
+      ctx.currentTime = now;
+      const before = ctx.oscs.length;
+      s.schedule([ev(6, { istanbul: true })], null, undefined, NIGHT_H);
+      s.dispose();
+      return ctx.oscs.length - before;
+    };
+    const beat = 60 / 72;
+    expect(count(4 * beat - 0.07)).toBe(10); // slot 8 = beat 4 (strong)
+    expect(count(5 * beat - 0.07)).toBe(9); // slot 10 = beat 5
+  });
+
+  it("wind voices: clarinet three partials, saxophone a saw plus growl and vibrato LFOs and a breath, trumpet two saws", () => {
+    const layout = (instrument: PlannedNote["instrument"]) => {
+      const ctx = fakeCtx();
+      playNote(ctx as unknown as AudioContext, new Node() as unknown as AudioNode, { when: 1, instrument, freq: 330, vel: 1, kind: "dep", key: "k", long: true }, {
+        gainScale: 1, cutoffScale: 1, pan: 0,
+      });
+      return { oscs: ctx.oscs.length, srcs: ctx.srcs.length, saws: ctx.oscs.filter((o) => o.type === "sawtooth").length };
+    };
+    expect(layout("CLA")).toEqual({ oscs: 3, srcs: 0, saws: 0 });
+    expect(layout("SAX")).toEqual({ oscs: 3, srcs: 1, saws: 1 });
+    expect(layout("TPT")).toEqual({ oscs: 2, srcs: 0, saws: 2 });
+  });
+
+  it("the day's trumpet answers the phrase cadence; the morning has no trumpet", () => {
+    const tptAtCadence = (hour: number) => {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      const saws: number[] = [];
+      // DAY grid as in score.test: cells at 0, 1.3, 2.6, the cadence at 3.9 (same slot maths at 84 BPM in the morning)
+      for (const now of [0, 1.3, 2.6, 3.9]) {
+        ctx.currentTime = now;
+        const before = ctx.oscs.length;
+        s.schedule([ev(6, { istanbul: true, ...JFK })], null, undefined, hour);
+        saws.push(ctx.oscs.slice(before).filter((o) => o.type === "sawtooth" && o.detune.calls.some((c) => c.args[0] === 6)).length);
+      }
+      s.dispose();
+      return saws;
+    };
+    expect(tptAtCadence(DAY_H)).toEqual([0, 0, 0, 1]); // the detuned (+6 cent) one of the two trumpet saws
+    expect(tptAtCadence(8)).toEqual([0, 0, 0, 0]);
+  });
+
+  it("the night ignores instruments outside its ensemble", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    const before = ctx.oscs.length;
+    s.schedule([ev(4, { key: "IST-NRT" })], null, undefined, NIGHT_H);
+    expect(ctx.oscs.length).toBe(before);
+    s.schedule([ev(4, { key: "IST-NRT" })], null, undefined, DAY_H);
+    expect(ctx.oscs.length).toBeGreaterThan(before);
+    s.dispose();
+  });
+
+  it("a section change restarts the epoch and the chord bed and reverb follow the section", () => {
+    const { ctx, s } = make();
+    s.setEnabled(true);
+    const rootTargets = () => ctx.oscs[0].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
+    const wet = ctx.gains.filter((g) => g.gain.value === SECTIONS.DAY.wet); // built in the default (midday) section
+    expect(wet).toHaveLength(1);
+    const wetTargets = () => wet[0].gain.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
+    s.schedule([ev(6)], null, undefined, NIGHT_H);
+    s.setEnergy(0.5);
+    expect(rootTargets().at(-1)).toBeCloseTo(freqOf(2, 0), 6); // Am(add9)
+    expect(wetTargets()).toEqual([SECTIONS.NIGHT.wet]);
+    ctx.currentTime = 1;
+    const before = ctx.oscs.length;
+    s.schedule([ev(1, ATHENS)], null, undefined, DAY_H);
+    // DAY epoch = 1: EUR slot 1 has no onset → slot 2 = 2 · 0.3125 s after the epoch
+    expect(ctx.oscs[before].start).toHaveBeenCalledWith(1.625);
+    s.setEnergy(0.5);
+    expect(rootTargets().at(-1)).toBeCloseTo(freqOf(2, 3), 6); // C
+    expect(wetTargets().at(-1)).toBe(SECTIONS.DAY.wet);
+    s.dispose();
+  });
+
+  it("louder with more traffic: velocity scales with the energy", () => {
+    const peak = (energy: number) => {
+      const { ctx, s } = make();
+      s.setEnabled(true);
+      s.setEnergy(energy);
+      const before = ctx.gains.length;
+      s.schedule([ev(5)]);
+      const lin = ctx.gains.slice(before).flatMap((g) => g.gain.calls.filter((c) => c.fn === "lin").map((c) => c.args[0]));
+      s.dispose();
+      return Math.max(...lin);
+    };
+    expect(peak(1) / peak(0)).toBeCloseTo(1 / 0.6, 9);
   });
 
   it("a followed European flight boosts the piano; the ney ignores focus", () => {
@@ -152,14 +254,18 @@ describe("route sound engine", () => {
     s.dispose();
   });
 
-  it("the chord bed follows the progression: Am → F after 8 beats", () => {
+  it("the chord bed follows the section's progression: C → G after 8 beats by day, in four voices", () => {
     const { ctx, s } = make();
     s.setEnabled(true);
+    expect(ctx.oscs.slice(0, 4).map((o) => o.frequency.value)).toEqual([freqOf(2, 3), freqOf(3, 10), freqOf(3, 2), freqOf(4, 10)]); // C: root, fifth, maj7, fifth
     s.setEnergy(0.6);
-    ctx.currentTime = 8 * BEAT_SEC + 0.1;
+    ctx.currentTime = 8 * DAY_BEAT + 0.1;
     s.setEnergy(0.6);
-    const rootTargets = ctx.oscs[0].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
-    expect(rootTargets.some((f) => Math.abs(f - freqOf(2, 8)) < 1e-6)).toBe(true); // F root, octave 2
+    const targets = (i: number) => ctx.oscs[i].frequency.calls.filter((c) => c.fn === "target").map((c) => c.args[0]);
+    expect(targets(0)).toEqual([freqOf(2, 10)]); // G root, octave 2
+    expect(targets(1)).toEqual([freqOf(3, 5)]); // fifth D
+    expect(targets(2)).toEqual([freqOf(3, 2)]); // no seventh → third B
+    expect(targets(3)).toEqual([freqOf(4, 5)]); // no ninth → fifth D
     s.dispose();
   });
 

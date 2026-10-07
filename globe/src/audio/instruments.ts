@@ -1,3 +1,4 @@
+import { ladderFreq, ladderIndexOf, NEY_LADDER } from "./melody";
 import type { PlannedNote } from "./score";
 import type { Instrument } from "./theory";
 
@@ -29,6 +30,10 @@ interface Voice {
   decay: number;
   lowpass?: { start: number; end?: number; over?: number; q: number };
   at: number;
+  /** vibrato drawn as detune automation (rate Hz, ±cents, starting `after` s) */
+  wobble?: { rate: number; cents: number; after: number };
+  /** destination instead of the note's panner */
+  out?: AudioNode;
 }
 
 function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void): void {
@@ -41,6 +46,13 @@ function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void):
     osc.frequency.setValueAtTime(v.freq, v.at);
   }
   if (v.detune) osc.detune.setValueAtTime(v.detune, v.at);
+  if (v.wobble) {
+    const { rate, cents, after } = v.wobble;
+    const end = v.at + v.attack + v.decay;
+    osc.detune.setValueAtTime(v.detune ?? 0, v.at + after);
+    for (let i = 1, tt = v.at + after + 0.25 / rate; tt < end; i++, tt += 0.5 / rate)
+      osc.detune.linearRampToValueAtTime((v.detune ?? 0) + (i % 2 ? cents : -cents), tt);
+  }
   v.vibrato?.connect(osc.detune);
   const g = ctx.createGain();
   env(g, v.at, v.peak, v.attack, v.decay);
@@ -55,7 +67,7 @@ function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void):
     osc.connect(filt);
     filt.connect(g);
   }
-  g.connect(out);
+  g.connect(v.out ?? out);
   const stopAt = v.at + v.attack + v.decay + 0.1;
   osc.onended = () => {
     osc.disconnect();
@@ -72,11 +84,29 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
   pan.pan.value = o.pan;
   pan.connect(dest);
   let live = 0; // disconnect the panner once its last oscillator has ended
+  const release = () => {
+    if (--live === 0) pan.disconnect();
+  };
   const v = (vc: Voice) => {
     live++;
-    voice(ctx, pan, vc, () => {
-      if (--live === 0) pan.disconnect();
-    });
+    voice(ctx, pan, vc, release);
+  };
+  /** an LFO (sine at `rate` Hz) through a depth gain shaped by `shape`; it holds the panner open until it stops */
+  const lfo = (rate: number, at: number, dur: number, shape: (gp: AudioParam) => void): GainNode => {
+    const osc = ctx.createOscillator();
+    const depth = ctx.createGain();
+    osc.frequency.setValueAtTime(rate, at);
+    shape(depth.gain);
+    osc.connect(depth);
+    live++;
+    osc.onended = () => {
+      osc.disconnect();
+      depth.disconnect();
+      release();
+    };
+    osc.start(at);
+    osc.stop(at + dur + 0.1);
+    return depth;
   };
   const t = n.when;
   const f = n.freq;
@@ -127,32 +157,55 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
       break;
     }
     case "NEY": {
-      const decay = 1.4 * k;
+      const decay = 1.4 * k * (n.long ? 2.5 : 1);
       const lp = { start: 2400 * o.cutoffScale, q: 0.8 };
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.frequency.setValueAtTime(5, t);
-      lfoGain.gain.setValueAtTime(0, t);
-      lfoGain.gain.setValueAtTime(0, t + 0.15);
-      lfoGain.gain.linearRampToValueAtTime(12, t + 0.35);
-      lfo.connect(lfoGain);
-      const pair: Voice[] = [
-        { type: "sine", freq: f, from: 0.97 * f, glide: 0.08, peak, attack: 0.12, decay, at: t, lowpass: lp },
-        { type: "triangle", freq: f, from: 0.97 * f, glide: 0.08, peak: peak * 0.5, attack: 0.12, decay, at: t, lowpass: lp },
-      ];
-      live += 2; // the LFO and the breath source also hold the panner open
-      const release = () => {
-        if (--live === 0) pan.disconnect();
-      };
-      for (const vc of pair) v({ ...vc, vibrato: lfoGain });
-      lfo.onended = () => {
-        lfo.disconnect();
-        lfoGain.disconnect();
+      const vib = lfo(5, t, 0.12 + decay, (gp) => {
+        gp.setValueAtTime(0, t);
+        gp.setValueAtTime(0, t + 0.15);
+        gp.linearRampToValueAtTime(12, t + 0.35);
+      });
+      v({ type: "sine", freq: f, from: 0.97 * f, glide: 0.08, peak, attack: 0.12, decay, at: t, lowpass: lp, vibrato: vib });
+      v({ type: "triangle", freq: f, from: 0.97 * f, glide: 0.08, peak: peak * 0.5, attack: 0.12, decay, at: t, lowpass: lp, vibrato: vib });
+      live++;
+      breath(ctx, pan, f, t, 0.18 * peak, 0.12, decay, release);
+      if (n.grace) {
+        const up = ladderFreq(Math.min(NEY_LADDER.length - 1, ladderIndexOf(f) + 1));
+        v({ type: "sine", freq: up, peak: 0.4 * peak, attack: 0.01, decay: 0.08, at: t - 0.06, lowpass: lp });
+      }
+      break;
+    }
+    case "CLA": {
+      // three odd partials (the clarinet's hollow tone); a light vibrato as detune automation (no LFO node)
+      const decay = 1.0 * k * (n.long ? 2.5 : 1);
+      const lp = { start: 3000 * o.cutoffScale, q: 0.7 };
+      for (const [mult, p] of [[1, 1], [3, 0.33], [5, 0.15]] as const)
+        v({ type: "sine", freq: mult * f, peak: peak * p, attack: 0.06, decay, at: t, lowpass: lp, wobble: { rate: 5, cents: 8, after: 0.2 } });
+      break;
+    }
+    case "SAX": {
+      const decay = 1.6 * k * (n.long ? 2.5 : 1);
+      const growl = ctx.createGain(); // amplitude "growl": ±0.15 of the peak at 3 Hz
+      growl.gain.setValueAtTime(1, t);
+      growl.connect(pan);
+      const growlDepth = lfo(3, t, 0.05 + decay, (gp) => gp.setValueAtTime(0.15, t));
+      growlDepth.connect(growl.gain);
+      const vib = lfo(5.5, t, 0.05 + decay, (gp) => {
+        gp.setValueAtTime(0, t);
+        gp.setValueAtTime(0, t + 0.25);
+        gp.linearRampToValueAtTime(20, t + 0.45);
+      });
+      v({ type: "sawtooth", freq: f, peak, attack: 0.05, decay, at: t, lowpass: { start: 1800 * o.cutoffScale, q: 0.7 }, vibrato: vib, out: growl });
+      live++;
+      breath(ctx, pan, f, t, 0.1 * peak, 0.05, decay, () => {
+        growl.disconnect();
         release();
-      };
-      lfo.start(t);
-      lfo.stop(t + 0.12 + decay + 0.1);
-      breath(ctx, pan, f, t, 0.18 * peak, decay, release);
+      });
+      break;
+    }
+    case "TPT": {
+      const decay = 0.9 * k * (n.long ? 2.0 : 1);
+      const lp = { start: 800 * o.cutoffScale, end: 3500 * o.cutoffScale, over: 0.08, q: 0.9 };
+      for (const d of [0, 6]) v({ type: "sawtooth", freq: f, detune: d, peak: peak * 0.5, attack: 0.04, decay, at: t, lowpass: lp });
       break;
     }
     default:
@@ -174,8 +227,8 @@ function noiseBuffer(ctx: AudioContext): AudioBuffer {
   return b;
 }
 
-/** Ney breath: looped white noise through a bandpass at the pitch. */
-function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: number, decay: number, onEnd: () => void): void {
+/** Breath (ney, saxophone): looped white noise through a bandpass at the pitch. */
+function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: number, attack: number, decay: number, onEnd: () => void): void {
   const src = ctx.createBufferSource();
   src.buffer = noiseBuffer(ctx);
   src.loop = true;
@@ -184,7 +237,7 @@ function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: n
   bp.Q.setValueAtTime(2, t);
   bp.frequency.setValueAtTime(f, t);
   const g = ctx.createGain();
-  env(g, t, peak, 0.12, decay);
+  env(g, t, peak, attack, decay);
   src.connect(bp);
   bp.connect(g);
   g.connect(out);
@@ -195,5 +248,5 @@ function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: n
     onEnd();
   };
   src.start(t);
-  src.stop(t + 0.12 + decay + 0.1);
+  src.stop(t + attack + decay + 0.1);
 }
