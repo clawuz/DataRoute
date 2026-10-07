@@ -1,6 +1,21 @@
-import { ladderFreq, ladderIndexOf, NEY_LADDER } from "./melody";
-import type { PlannedNote } from "./score";
+import type { NoteKind } from "./notes-bus";
 import type { Instrument } from "./theory";
+
+/** What a recipe needs of a planned note (`PlannedNote` is one). */
+export interface SynthNote {
+  /** audio-clock time */
+  when: number;
+  instrument: Instrument;
+  freq: number;
+  /** chord voicing (KEYS: one Rhodes per tone; BRASS: trumpets on the two lower tones, sax on the third) */
+  freqs?: number[];
+  vel: number;
+  /** arrivals ring longer */
+  kind?: NoteKind;
+  long?: boolean;
+  /** ney: grace note pitch, sounded just before the note */
+  graceFreq?: number;
+}
 
 export interface NoteOpts {
   gainScale: number;
@@ -79,17 +94,20 @@ function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void):
   osc.stop(stopAt);
 }
 
-export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: NoteOpts): void {
+export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: NoteOpts): void {
   const pan = ctx.createStereoPanner();
   pan.pan.value = o.pan;
   pan.connect(dest);
-  let live = 0; // disconnect the panner once its last oscillator has ended
+  let live = 0; // disconnect the panner once its last source has ended
   const release = () => {
     if (--live === 0) pan.disconnect();
   };
-  const v = (vc: Voice) => {
+  const v = (vc: Voice, onEnd?: () => void) => {
     live++;
-    voice(ctx, pan, vc, release);
+    voice(ctx, pan, vc, () => {
+      onEnd?.();
+      release();
+    });
   };
   /** an LFO (sine at `rate` Hz) through a depth gain shaped by `shape`; it holds the panner open until it stops */
   const lfo = (rate: number, at: number, dur: number, shape: (gp: AudioParam) => void): GainNode => {
@@ -108,6 +126,45 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
     osc.stop(at + dur + 0.1);
     return depth;
   };
+  /** white noise through a filter (breath, snare, hats) */
+  const noise = (filter: { type: BiquadFilterType; freq: number; q: number }, t: number, peak: number, attack: number, decay: number, onEnd?: () => void) => {
+    live++;
+    noiseBurst(ctx, pan, filter, t, peak, attack, decay, () => {
+      onEnd?.();
+      release();
+    });
+  };
+  /** Rhodes: sine f, a bell 2f, a very short 7f tine; slow tremolo (5 Hz, ±0.12) as gain automation (no LFO node) */
+  const ep = (f: number, t: number, peak: number) => {
+    const decay = 0.9;
+    const trem = ctx.createGain();
+    trem.gain.setValueAtTime(1, t);
+    for (let i = 0, tt = t + 0.05; tt < t + decay; i++, tt += 0.1) trem.gain.linearRampToValueAtTime(i % 2 ? 1.12 : 0.88, tt);
+    trem.connect(pan);
+    v({ type: "sine", freq: f, peak, attack: 0.005, decay, at: t, out: trem }, () => trem.disconnect());
+    v({ type: "sine", freq: 2 * f, peak: peak * 0.35, attack: 0.005, decay: 0.35, at: t, out: trem });
+    v({ type: "sine", freq: 7 * f, peak: peak * 0.12, attack: 0.005, decay: 0.08, at: t, out: trem });
+  };
+  /** trumpet: two slightly detuned saws, bright attack (lowpass 800 → 3500 Hz in 80 ms) */
+  const tpt = (f: number, t: number, peak: number, decay: number) => {
+    const lp = { start: 800 * o.cutoffScale, end: 3500 * o.cutoffScale, over: 0.08, q: 0.9 };
+    for (const d of [0, 6]) v({ type: "sawtooth", freq: f, detune: d, peak: peak * 0.5, attack: 0.04, decay, at: t, lowpass: lp });
+  };
+  /** saxophone: lowpassed saw with a slow amplitude growl, a delayed vibrato and breath noise */
+  const sax = (f: number, t: number, peak: number, decay: number) => {
+    const growl = ctx.createGain(); // amplitude "growl": ±0.15 of the peak at 3 Hz
+    growl.gain.setValueAtTime(1, t);
+    growl.connect(pan);
+    const growlDepth = lfo(3, t, 0.05 + decay, (gp) => gp.setValueAtTime(0.15, t));
+    growlDepth.connect(growl.gain);
+    const vib = lfo(5.5, t, 0.05 + decay, (gp) => {
+      gp.setValueAtTime(0, t);
+      gp.setValueAtTime(0, t + 0.25);
+      gp.linearRampToValueAtTime(20, t + 0.45);
+    });
+    v({ type: "sawtooth", freq: f, peak, attack: 0.05, decay, at: t, lowpass: { start: 1800 * o.cutoffScale, q: 0.7 }, vibrato: vib, out: growl });
+    noise({ type: "bandpass", freq: f, q: 2 }, t, 0.1 * peak, 0.05, decay, () => growl.disconnect());
+  };
   const t = n.when;
   const f = n.freq;
   const land = n.kind === "arr";
@@ -115,9 +172,6 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
   const peak = 0.22 * n.vel * o.gainScale;
   const r: Instrument = n.instrument;
   switch (r) {
-    case "DOM":
-      v({ type: "sine", freq: f, from: 2 * f, glide: 0.06, peak, attack: 0.005, decay: 0.45 * k, at: t });
-      break;
     case "EUR":
       v({ type: "sine", freq: f, peak, attack: 0.004, decay: 1.4 * k, at: t });
       v({ type: "sine", freq: 4 * f, peak: peak * 0.25, attack: 0.004, decay: 0.35 * k, at: t });
@@ -166,12 +220,8 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
       });
       v({ type: "sine", freq: f, from: 0.97 * f, glide: 0.08, peak, attack: 0.12, decay, at: t, lowpass: lp, vibrato: vib });
       v({ type: "triangle", freq: f, from: 0.97 * f, glide: 0.08, peak: peak * 0.5, attack: 0.12, decay, at: t, lowpass: lp, vibrato: vib });
-      live++;
-      breath(ctx, pan, f, t, 0.18 * peak, 0.12, decay, release);
-      if (n.grace) {
-        const up = ladderFreq(Math.min(NEY_LADDER.length - 1, ladderIndexOf(f) + 1));
-        v({ type: "sine", freq: up, peak: 0.4 * peak, attack: 0.01, decay: 0.08, at: t - 0.06, lowpass: lp });
-      }
+      noise({ type: "bandpass", freq: f, q: 2 }, t, 0.18 * peak, 0.12, decay);
+      if (n.graceFreq !== undefined) v({ type: "sine", freq: n.graceFreq, peak: 0.4 * peak, attack: 0.01, decay: 0.08, at: t - 0.06, lowpass: lp });
       break;
     }
     case "CLA": {
@@ -182,30 +232,43 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
         v({ type: "sine", freq: mult * f, peak: peak * p, attack: 0.06, decay, at: t, lowpass: lp, wobble: { rate: 5, cents: 8, after: 0.2 } });
       break;
     }
-    case "SAX": {
-      const decay = 1.6 * k * (n.long ? 2.5 : 1);
-      const growl = ctx.createGain(); // amplitude "growl": ±0.15 of the peak at 3 Hz
-      growl.gain.setValueAtTime(1, t);
-      growl.connect(pan);
-      const growlDepth = lfo(3, t, 0.05 + decay, (gp) => gp.setValueAtTime(0.15, t));
-      growlDepth.connect(growl.gain);
-      const vib = lfo(5.5, t, 0.05 + decay, (gp) => {
-        gp.setValueAtTime(0, t);
-        gp.setValueAtTime(0, t + 0.25);
-        gp.linearRampToValueAtTime(20, t + 0.45);
-      });
-      v({ type: "sawtooth", freq: f, peak, attack: 0.05, decay, at: t, lowpass: { start: 1800 * o.cutoffScale, q: 0.7 }, vibrato: vib, out: growl });
-      live++;
-      breath(ctx, pan, f, t, 0.1 * peak, 0.05, decay, () => {
-        growl.disconnect();
-        release();
+    case "SAX":
+    case "SAXPAD":
+      sax(f, t, peak, 1.6 * k * (n.long ? 2.5 : 1));
+      break;
+    case "TPT":
+      tpt(f, t, peak, 0.9 * k * (n.long ? 2.0 : 1));
+      break;
+    // v3 groove voices (spec §4e)
+    case "EP":
+      ep(f, t, peak);
+      break;
+    case "KEYS":
+      for (const x of n.freqs ?? [f]) ep(x, t, 0.8 * peak);
+      break;
+    case "BASS":
+      v({ type: "sine", freq: f, peak, attack: 0.01, decay: n.long ? 1.2 : 0.28, at: t });
+      v({
+        type: "sawtooth", freq: f, peak: peak * 0.35, attack: 0.01, decay: n.long ? 1.2 : 0.28, at: t,
+        lowpass: { start: 600 * (0.6 + n.vel) * o.cutoffScale, q: 0.7 },
       });
       break;
-    }
-    case "TPT": {
-      const decay = 0.9 * k * (n.long ? 2.0 : 1);
-      const lp = { start: 800 * o.cutoffScale, end: 3500 * o.cutoffScale, over: 0.08, q: 0.9 };
-      for (const d of [0, 6]) v({ type: "sawtooth", freq: f, detune: d, peak: peak * 0.5, attack: 0.04, decay, at: t, lowpass: lp });
+    case "KICK":
+      v({ type: "sine", freq: 45, from: 130, glide: 0.08, peak, attack: 0.002, decay: 0.3, at: t });
+      break;
+    case "SNARE":
+      noise({ type: "highpass", freq: 1200, q: 0.7 }, t, peak, 0.002, 0.18);
+      v({ type: "sine", freq: 180, peak: peak * 0.5, attack: 0.002, decay: 0.1, at: t });
+      break;
+    case "HAT":
+    case "OHAT":
+      noise({ type: "highpass", freq: 7000, q: 0.7 }, t, peak, 0.002, r === "HAT" ? 0.045 : 0.22);
+      break;
+    case "BRASS": {
+      // a short stab: trumpets on the two lower voicing tones (0.7×), the sax on the third
+      const fs = n.freqs ?? [f];
+      for (const x of fs.slice(0, 2)) tpt(x, t, 0.7 * peak, 0.3);
+      if (fs[2] !== undefined) sax(fs[2], t, peak, 0.3);
       break;
     }
     default:
@@ -227,15 +290,18 @@ function noiseBuffer(ctx: AudioContext): AudioBuffer {
   return b;
 }
 
-/** Breath (ney, saxophone): looped white noise through a bandpass at the pitch. */
-function breath(ctx: AudioContext, out: AudioNode, f: number, t: number, peak: number, attack: number, decay: number, onEnd: () => void): void {
+/** Looped white noise through a filter (ney/sax breath: bandpass at the pitch; snare and hats: highpass). */
+function noiseBurst(
+  ctx: AudioContext, out: AudioNode, filter: { type: BiquadFilterType; freq: number; q: number },
+  t: number, peak: number, attack: number, decay: number, onEnd: () => void,
+): void {
   const src = ctx.createBufferSource();
   src.buffer = noiseBuffer(ctx);
   src.loop = true;
   const bp = ctx.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.Q.setValueAtTime(2, t);
-  bp.frequency.setValueAtTime(f, t);
+  bp.type = filter.type;
+  bp.frequency.setValueAtTime(filter.freq, t);
+  bp.Q.setValueAtTime(filter.q, t);
   const g = ctx.createGain();
   env(g, t, peak, attack, decay);
   src.connect(bp);

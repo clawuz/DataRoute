@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { buildGlobeModel } from "../src/model/globe-model";
-import { PATTERNS, nextActiveSlot, slotIndex, slotTime } from "../src/audio/theory";
-import { LEGACY_SECTIONS as SECTIONS, type LegacySection as Section } from "../src/audio/form"; // v2 data until Task 13
-import { initNey, initPiano, ladderIndexOf, neyCell, type NeyState } from "../src/audio/melody";
+import { freqOf } from "../src/audio/theory";
+import { SECTIONS, chordAtStep, stepDur, type Section } from "../src/audio/form";
+import { CHORDS, ladderFreq } from "../src/audio/harmony";
+import { keysVoicing } from "../src/audio/groove";
+import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from "../src/audio/lines";
+import { graceAbove, initNey, neyCell, type NeyState } from "../src/audio/melody";
 import {
-  LOOKAHEAD_SEC, MAX_RANGE_SEC, eventsBetween, instrumentFor, planNotes as plan, velocityFor, type PlanContext, type ScoreEvent,
+  DRUM_PITCH, MAX_RANGE_SEC, NEY_LEAD_SEC, eventsBetween, planNotes as plan, planStep, stepTime, velocityFor, type PlanContext, type PlannedNote,
+  type ScoreEvent,
 } from "../src/audio/score";
 import { FROM, flight, makeDay } from "./helpers";
 
@@ -79,16 +83,6 @@ describe("eventsBetween: Istanbul end and far end", () => {
   });
 });
 
-describe("instrumentFor", () => {
-  it("European routes with a west/north far end are piano, others stay vibraphone", () => {
-    expect(instrumentFor(ev({ ...LONDON }))).toBe("PNO");
-    expect(instrumentFor(ev({ ...ATHENS }))).toBe("EUR");
-    expect(instrumentFor(ev({}))).toBe("EUR");
-    expect(instrumentFor(ev({ regionIdx: 4, ...LONDON }))).toBe("ASI");
-    expect(instrumentFor(ev({ regionIdx: 6 }))).toBeNull();
-  });
-});
-
 describe("velocityFor", () => {
   it("grows with the number of merged events and is capped at 1", () => {
     expect(velocityFor(1)).toBeCloseTo(0.65, 12);
@@ -98,157 +92,163 @@ describe("velocityFor", () => {
 });
 
 const { NIGHT, MORNING, DAY, EVENING } = SECTIONS;
-const ctxFor = (section: Section, o: Partial<PlanContext> = {}): PlanContext => ({ epoch: 0, section, ney: initNey(section), piano: initPiano(), ...o });
-/** notes of a plan in DAY (or the given section) from a fresh state */
+const D = 60 / 116 / 4; // DAY 16th step ≈ 0.12931 s
+const ctxFor = (section: Section, o: Partial<PlanContext> = {}): PlanContext => ({ epoch: 0, section, ney: initNey(section), ...o });
 const notesOf = (events: ScoreEvent[], now: number, section: Section = DAY, o: Partial<PlanContext> = {}) => plan(events, now, ctxFor(section, o)).notes;
+/** a wall-clock time whose ney slot (first even step at or after now + lead) is step k of the DAY clock (epoch 0) */
+const nowFor = (k: number, d = D) => k * d - NEY_LEAD_SEC - 0.001;
+const stepOf = (n: PlannedNote, d = D, epoch = 0) => Math.round((n.when - epoch) / d);
+const pc = (s: number) => ((s % 12) + 12) % 12;
+const semisOf = (f: number) => Math.round(12 * Math.log2(f / 110));
 const JFK = { farLat: 40.6398, farLon: -73.7789 };
+const ney = (notes: PlannedNote[]) => notes.filter((n) => n.instrument === "NEY");
 
-describe("planNotes", () => {
-  it("places notes on the next active euclidean step of the instrument grid, relative to the epoch", () => {
-    const epoch = 10;
-    const now = 13.1;
-    const [n] = notesOf([ev({ ...ATHENS })], now, DAY, { epoch });
-    const slot = nextActiveSlot("EUR", slotIndex(now + LOOKAHEAD_SEC - epoch, "EUR", 96));
-    expect(n.instrument).toBe("EUR");
-    expect(n.when).toBeCloseTo(epoch + slotTime("EUR", slot, 96), 12);
-    expect(n.when).toBeGreaterThanOrEqual(now + LOOKAHEAD_SEC);
-    expect(PATTERNS.EUR![slot % 8]).toBe(true);
+describe("stepTime: the 16th-step clock", () => {
+  it("epoch + k · stepDur + swing on odd steps", () => {
+    expect(stepTime(0, 10, DAY)).toBe(10);
+    expect(stepTime(2, 10, DAY)).toBeCloseTo(10 + 2 * D, 12);
+    expect(stepTime(1, 10, DAY)).toBeCloseTo(10 + 1.1 * D, 12); // DAY swing 0.10
+    expect(stepTime(3, 0, NIGHT)).toBeCloseTo(3.15 * (60 / 84 / 4), 12); // NIGHT swing 0.15
   });
-  it("a skipped euclidean step moves the note to the next onset", () => {
-    // DAY, epoch 0: start 0.06 → EUR slot 1 (x.xx.xx. has no onset there) → slot 2 = 0.625 s
-    expect(notesOf([ev({ ...ATHENS })], 0, DAY)[0].when).toBeCloseTo(0.625, 12);
-    // MEA x..x..x.: start 0.06 → slot 1 → 3 (swung odd step: 3 · 0.3125 + 0.25 · 0.3125)
-    expect(notesOf([ev({ regionIdx: 2, key: "IST-DXB" })], 0, DAY)[0].when).toBeCloseTo(3.25 * 0.3125, 12);
-    // NIGHT 72 BPM, DOM x.x. on quarter notes: start 0.06 → slot 1 → 2 = 2 · 0.8333 s
-    expect(notesOf([ev({ regionIdx: 0, key: "IST-ESB" })], 0, NIGHT)[0].when).toBeCloseTo(2 * (60 / 72), 12);
-  });
-  it("drops instruments outside the section", () => {
-    const evs = [0, 1, 2, 3, 4, 5].map((r) => ev({ regionIdx: r, key: `K${r}`, ...ATHENS }));
-    const inst = (sec: Section) => [...new Set(notesOf(evs, 0, sec).map((n) => n.instrument))].sort();
-    expect(inst(NIGHT)).toEqual(["AME", "DOM"]);
-    expect(inst(MORNING)).toEqual(["AFR", "AME", "ASI", "DOM", "EUR"]);
-    expect(inst(DAY)).toEqual(["AFR", "AME", "ASI", "DOM", "EUR", "MEA"]);
-    expect(inst(EVENING)).toEqual(["AME", "DOM", "EUR", "MEA"]);
-  });
-  it("different regions land on their own grids (polyrhythm)", () => {
-    const notes = notesOf([ev({ regionIdx: 1 }), ev({ regionIdx: 3, key: "IST-CAI" }), ev({ regionIdx: 4, key: "IST-NRT" })], 0.01);
-    const by = Object.fromEntries(notes.map((n) => [n.instrument, n.when]));
-    // start 0.07: ASI slot 1 → onset 3 (0.469 s); AFR slot 1 → onset 3 (0.625 s); EUR slot 1 → onset 2 (0.625 s)
-    expect(by.ASI).toBeCloseTo(0.46875, 12);
-    expect(by.AFR).toBeCloseTo(0.625, 12);
-    expect(by.EUR).toBeCloseTo(0.625, 12);
-  });
-  it("at most section.maxNotes notes per instrument and step (1 at night, 2 by day); extras raise the velocity", () => {
-    const many = Array.from({ length: 5 }, (_, i) => ev({ key: `A${i}-IST`, regionIdx: 5 }));
-    const day = notesOf(many, 0, DAY);
-    expect(day).toHaveLength(2);
-    expect(day[0].vel).toBeCloseTo(velocityFor(5), 12);
-    expect(notesOf(many, 0, NIGHT)).toHaveLength(1);
-    const single = notesOf([ev({ regionIdx: 5 })], 0);
-    expect(day[0].vel).toBeGreaterThan(single[0].vel);
-  });
-  it("arrivals are softer and an octave lower than departures", () => {
-    const [d] = notesOf([ev({ kind: "dep" })], 0);
-    const [a] = notesOf([ev({ kind: "arr" })], 0);
-    expect(a.freq).toBeCloseTo(d.freq / 2, 9);
-    expect(a.vel).toBeCloseTo(d.vel * 0.6, 12);
-  });
-  it("departures come before arrivals when a step overflows; UNK is silent; empty in, empty out", () => {
-    const notes = notesOf([ev({ kind: "arr", key: "Z-IST" }), ev({ kind: "dep", key: "B-IST" }), ev({ kind: "dep", key: "A-IST" })], 0);
-    expect(notes.map((n) => n.kind)).toEqual(["dep", "dep"]);
-    expect(notesOf([ev({ regionIdx: 6 })], 0)).toEqual([]);
+});
+
+describe("planNotes: Istanbul events → ney cells and winds on the step clock", () => {
+  it("only Istanbul-end events play (no continent instruments any more); empty in, empty out", () => {
+    expect(notesOf([ev({}), ev({ ...LONDON }), ev({ regionIdx: 5 })], 0)).toEqual([]);
     const empty = plan([], 0, ctxFor(DAY));
-    expect(empty.notes).toEqual([]);
-    expect(empty.ney).toEqual(initNey(DAY));
+    expect(empty).toEqual({ notes: [], ney: initNey(DAY) });
   });
-  it("routes west-European events to the piano and east-European ones to the vibraphone", () => {
-    expect(notesOf([ev({ ...ATHENS })], 0).map((n) => n.instrument)).toEqual(["EUR"]);
-    const pno = notesOf([ev({ ...LONDON })], 0);
-    expect(new Set(pno.map((n) => n.instrument))).toEqual(new Set(["PNO"]));
-  });
-  it("the piano rolls a new chord open and then flows, threading PianoState", () => {
-    const e = ev({ ...LONDON }); // 2000 km → octave 4
-    const first = plan([e], 0, ctxFor(DAY)); // C (progression index 0)
-    expect(first.notes).toHaveLength(3);
-    expect(first.notes.map((n) => n.offsetSec ?? 0)).toEqual([0, 0.03, 0.06]);
-    expect(first.notes[1].when - first.notes[0].when).toBeCloseTo(0.03, 12);
-    expect(first.piano).toEqual({ i: 3, chordKey: "C0" });
-    const second = plan([e], 1, { ...ctxFor(DAY), piano: first.piano });
-    expect(second.notes).toHaveLength(1);
-    expect(second.piano.i).toBe(4);
-    // a later chord (beat ≥ 8 → G, index 1) rolls again
-    const later = plan([e], 5.2, { ...ctxFor(DAY), piano: second.piano });
-    expect(later.notes).toHaveLength(3);
-    expect(later.piano.chordKey).toBe("G1");
-  });
-  it("an Istanbul-end event plays a three-note ney cell on consecutive eighth-note slots", () => {
-    const r = plan([ev({ ...LONDON, istanbul: true })], 0.2, ctxFor(NIGHT));
-    const ney = r.notes.filter((n) => n.instrument === "NEY");
-    expect(ney).toHaveLength(3);
-    const slot = slotIndex(0.2 + LOOKAHEAD_SEC, "NEY", 72); // ceil(0.26 / 0.4167) = 1
-    expect(slot).toBe(1);
-    expect(ney.map((n) => n.when)).toEqual([1, 2, 3].map((k) => slotTime("NEY", k, 72)));
-    // same cell as the pure function: beat 0.5, chord Am(add9)
-    const cell = neyCell({ kind: "dep", distKm: 2000, ...LONDON }, initNey(NIGHT), NIGHT.progression[0], 0.5, NIGHT);
-    expect(ney.map((n) => n.freq)).toEqual(cell.notes.map((n) => n.freq));
-    expect(ney.map((n) => n.vel)).toEqual(cell.notes.map((n) => n.vel * velocityFor(1)));
+  it("a cell plays on three consecutive eighth notes (even steps) from the first even step after now + lead", () => {
+    // now 0: 0.06 / (2 · 0.12931) → ceil 0.23 = 1 → step 2
+    const r = plan([ev({ ...LONDON, istanbul: true })], 0, ctxFor(DAY));
+    const n = ney(r.notes);
+    expect(n.map((x) => stepOf(x))).toEqual([2, 4, 6]);
+    expect(n[0].when).toBeCloseTo(2 * D, 12);
+    // the same cell as the pure function: beat 0.5 (step 2 / 4), chord Dm9
+    const cell = neyCell({ kind: "dep", distKm: 2000, ...LONDON }, initNey(DAY), CHORDS.Dm9, 0.5, DAY);
+    expect(n.map((x) => x.freq)).toEqual(cell.notes.map((x) => x.freq));
+    expect(n.map((x) => x.vel)).toEqual(cell.notes.map((x) => x.vel * velocityFor(1)));
     expect(r.ney).toEqual(cell.state);
-    expect(r.notes.some((n) => n.instrument === "PNO")).toBe(true);
+    expect(n.every((x) => x.kind === "dep" && x.key === "IST-FRA")).toBe(true);
   });
-  it("NEY cells are not capped by maxNotes; one cell per step, extra events raise its velocity", () => {
+  it("is relative to the section epoch", () => {
+    // epoch 10, now 13.1: (3.16 / 0.25862) = 12.22 → 13 → step 26 = 10 + 26 · 0.12931 ≈ 13.362
+    const [n] = ney(notesOf([ev({ istanbul: true })], 13.1, DAY, { epoch: 10 }));
+    expect(n.when).toBeCloseTo(10 + 26 * D, 12);
+    expect(n.when).toBeGreaterThanOrEqual(13.1 + NEY_LEAD_SEC);
+  });
+  it("a cell on a bar start (strong beat) carries a grace note one chord-scale degree above", () => {
+    const n = ney(notesOf([ev({ istanbul: true, ...JFK })], nowFor(16)));
+    expect(stepOf(n[0])).toBe(16);
+    const chord = chordAtStep(16, DAY); // Bbmaj7
+    expect(chord.id).toBe("Bbmaj7");
+    expect(n[0].graceFreq).toBeCloseTo(ladderFreq(graceAbove(semisOf(n[0].freq), chord)), 9);
+    expect(n.slice(1).some((x) => x.graceFreq !== undefined)).toBe(false);
+    expect(ney(notesOf([ev({ istanbul: true, ...JFK })], nowFor(18))).some((x) => x.graceFreq !== undefined)).toBe(false);
+  });
+  it("every note sits in the scale of the chord current at its own step (a cell crossing the bar line is re-snapped)", () => {
+    // arrival from rung 6 (34) at step 14 on Dm9, 2000 km (step 2): rungs 0 → 2 → 1 = 24 27 26 at steps 14 16 18;
+    // 27 (C) is in Bb lydian, 26 (B) at step 18 is not → 25 (Bb and C tie → lower)
+    const r = notesOf([ev({ istanbul: true, kind: "arr", ...JFK })], nowFor(14), DAY, { ney: { last: 34, cell: 0, restUntilBeat: 0 } });
+    expect(ney(r).map((x) => stepOf(x))).toEqual([14, 16, 18]);
+    expect(ney(r).map((x) => semisOf(x.freq))).toEqual([24, 27, 25]);
+    for (const sec of [MORNING, DAY, EVENING])
+      for (const k of [2, 12, 14, 16, 30, 46, 62, 78, 110, 126])
+        for (const far of [JFK, LONDON, ATHENS])
+          for (const kind of ["dep", "arr"] as const) {
+            const d = 60 / sec.bpm / 4;
+            for (const n of notesOf([ev({ istanbul: true, kind, ...far })], nowFor(k, d), sec, { ney: { last: 30, cell: 0, restUntilBeat: 0 } }))
+              expect([sec.id, k, n.instrument, chordAtStep(stepOf(n, d), sec).scale.includes(pc(semisOf(n.freq)))]).toEqual([sec.id, k, n.instrument, true]);
+          }
+  });
+  it("one cell per call; extra events raise its velocity, departures first", () => {
     const many = Array.from({ length: 4 }, (_, i) => ev({ key: `K${i}-IST`, istanbul: true, regionIdx: 6, kind: i === 0 ? "arr" : "dep" }));
-    const ney = notesOf(many, 0, NIGHT).filter((n) => n.instrument === "NEY");
-    expect(ney).toHaveLength(3); // night maxNotes is 1, the cell keeps its three notes
-    expect(ney.every((n) => n.kind === "dep")).toBe(true);
-    expect(ney[0].vel).toBeCloseTo(0.8 * velocityFor(4), 12);
+    const n = ney(notesOf(many, 0, NIGHT));
+    expect(n).toHaveLength(3);
+    expect(n.every((x) => x.kind === "dep")).toBe(true);
+    expect(n[0].vel).toBeCloseTo(0.8 * velocityFor(4), 12);
   });
-  it("threads NeyState: the ney rests while a cell plays and after a cadence, and grace marks strong beats", () => {
+  it("threads NeyState: the ney rests while a cell plays and after a cadence", () => {
     const e = ev({ istanbul: true, regionIdx: 6, ...JFK });
-    let ney: NeyState = initNey(DAY);
+    let st: NeyState = initNey(DAY);
     const counts: number[] = [];
-    // DAY beat = 0.625 s, ney slot = 0.3125 s; slots land at beat 0.5 (now 0), 1.5 (0.7), 2.5 (1.3), 4.5 (2.6),
-    // 6.5 (3.9: cadence, rest until 8.5), 7.5 (4.6), 8.5 (5.2: the rest is over exactly there)
-    for (const now of [0, 0.7, 1.3, 2.6, 3.9, 4.6, 5.2]) {
-      const r = plan([e], now, ctxFor(DAY, { ney }));
-      counts.push(r.notes.filter((n) => n.instrument === "NEY").length);
-      ney = r.ney;
+    // cells at steps 2 (beat 0.5, busy until 2.5 = step 10), 6 busy, 10, 18, 26 cadence (rest until beat 8.5 = step 34), 30 rest, 34 new phrase
+    for (const k of [2, 6, 10, 18, 26, 30, 34]) {
+      const r = plan([e], nowFor(k), ctxFor(DAY, { ney: st }));
+      counts.push(ney(r.notes).length);
+      st = r.ney;
     }
-    expect(counts).toEqual([3, 0, 3, 3, 1, 0, 3]); // cell, busy, cell, cell, cadence, breath, new phrase
-    const strong = plan([e], 2.5 - LOOKAHEAD_SEC - 0.001, ctxFor(DAY)).notes.filter((n) => n.instrument === "NEY"); // slot 8 = beat 4
-    expect(strong[0].grace).toBe(true);
-    expect(strong.slice(1).some((n) => n.grace)).toBe(false);
+    expect(counts).toEqual([3, 0, 3, 3, 1, 0, 3]);
   });
   it("arrivals at Istanbul play the ney softer and lower", () => {
-    const d = notesOf([ev({ istanbul: true, regionIdx: 6, ...JFK })], 0).filter((n) => n.instrument === "NEY");
-    const st = { last: 21, cell: 0, restUntilBeat: 0 };
-    const hi = notesOf([ev({ istanbul: true, regionIdx: 6, ...JFK })], 0, DAY, { ney: st }).filter((n) => n.instrument === "NEY");
-    const lo = notesOf([ev({ istanbul: true, regionIdx: 6, ...JFK, kind: "arr" })], 0, DAY, { ney: st }).filter((n) => n.instrument === "NEY");
-    expect(ladderIndexOf(lo[0].freq)).toBeLessThan(ladderIndexOf(hi[0].freq));
-    expect(lo[0].vel).toBeCloseTo(d[0].vel * 0.6, 12);
+    const st = { last: 41, cell: 0, restUntilBeat: 0 };
+    const hi = ney(notesOf([ev({ istanbul: true, ...JFK })], 0, DAY, { ney: st }));
+    const lo = ney(notesOf([ev({ istanbul: true, ...JFK, kind: "arr" })], 0, DAY, { ney: st }));
+    expect(lo[0].freq).toBeLessThan(hi[0].freq);
+    expect(lo[0].vel).toBeCloseTo(hi[0].vel * 0.6, 12);
   });
-  it("the wind ensemble follows the cell by section, on the ney's slots", () => {
+  it("the wind ensemble follows the cell by section, on the ney's steps", () => {
     const e = ev({ istanbul: true, regionIdx: 6, ...JFK });
-    const winds = (sec: Section, ney?: NeyState) =>
-      notesOf([e], 0, sec, ney ? { ney } : {}).filter((n) => n.instrument !== "NEY").map((n) => n.instrument);
+    const winds = (sec: Section, st?: NeyState) => notesOf([e], 0, sec, st ? { ney: st } : {}).filter((n) => n.instrument !== "NEY").map((n) => n.instrument);
     expect(winds(NIGHT)).toEqual([]);
     expect(winds(MORNING)).toEqual(["CLA", "CLA", "CLA"]);
     expect(winds(DAY)).toEqual(["CLA", "CLA", "CLA"]);
     expect(winds(EVENING).sort()).toEqual(["CLA", "CLA", "CLA", "SAX"]);
-    const cadence = { last: 19, cell: 3, restUntilBeat: 0 };
+    const cadence = { last: 29, cell: 3, restUntilBeat: 0 };
     expect(winds(DAY, cadence)).toEqual(["TPT"]);
     expect(winds(MORNING, cadence)).toEqual([]);
     expect(winds(EVENING, cadence)).toEqual(["SAX"]);
     const all = notesOf([e], 0, EVENING);
-    const neyWhen = all.filter((n) => n.instrument === "NEY").map((n) => n.when);
+    const neyWhen = ney(all).map((n) => n.when);
     expect(all.filter((n) => n.instrument === "CLA").map((n) => n.when)).toEqual(neyWhen);
     const sax = all.find((n) => n.instrument === "SAX")!;
     expect([sax.when, sax.long]).toEqual([neyWhen[0], true]);
   });
-  it("events without istanbul produce no ney note", () => {
-    expect(notesOf([ev({}), ev({ ...LONDON })], 0).some((n) => n.instrument === "NEY")).toBe(false);
-  });
   it("is deterministic", () => {
-    const e = [ev({}), ev({ regionIdx: 2, key: "IST-DXB", distKm: 3000 }), ev({ ...LONDON, istanbul: true })];
+    const e = [ev({}), ev({ regionIdx: 2, key: "IST-DXB", distKm: 3000, istanbul: true }), ev({ ...LONDON, istanbul: true })];
     expect(plan(e, 1.234, ctxFor(EVENING))).toEqual(plan(e, 1.234, ctxFor(EVENING)));
+  });
+});
+
+describe("planStep: the groove and the flight lines of one 16th step", () => {
+  const sky = (id: string, o: Partial<SkyFlight> = {}): SkyFlight => ({ id, key: `IST-${id}`, regionIdx: 1, alt100: 350, vsFpm: 0, ...o });
+  it("drums and bass of DAY step 0 at the epoch; voices are the instruments, without a route key", () => {
+    const hits = planStep(0, { epoch: 5, section: DAY }, [], null);
+    expect(hits.map((h) => h.instrument).sort()).toEqual(["BASS", "HAT", "KICK"]);
+    for (const h of hits) expect([h.when, h.kind, h.key]).toEqual([5, "groove", ""]);
+    expect(hits.find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 5)); // D1 under Dm9
+    expect(hits.find((h) => h.instrument === "KICK")!.freq).toBe(DRUM_PITCH.KICK);
+  });
+  it("odd steps swing late; the step's chord and the next chord drive keys and the bass approach", () => {
+    const [hat] = planStep(1, { epoch: 0, section: DAY }, [], null);
+    expect([hat.instrument, hat.vel]).toEqual(["HAT", 0.3]);
+    expect(hat.when).toBeCloseTo(1.1 * D, 12);
+    const keys = planStep(18, { epoch: 0, section: DAY }, [], null).find((h) => h.instrument === "KEYS")!; // bar 1: Bbmaj7
+    expect(keys.freqs).toEqual(keysVoicing(CHORDS.Bbmaj7).map(ladderFreq));
+    expect(keys.freq).toBe(keys.freqs![0]);
+    // bar 7 (A7b9) step 11 approaches the next chord (Dm9, wrapping): C# = pc 4 in octave 1
+    expect(planStep(16 * 7 + 11, { epoch: 0, section: DAY }, [], null).find((h) => h.instrument === "BASS")!.freq).toBe(freqOf(1, 4));
+  });
+  it("a flight line plays on its euclidean steps only, at its altitude on the chord ladder", () => {
+    const f = sky("TK1", { alt100: 330, vsFpm: 1200, farLat: 51.5, farLon: -0.5 });
+    const pat = linePattern("TK1");
+    for (let k = 0; k < 32; k++) {
+      const lines = planStep(k, { epoch: 0, section: DAY }, [f], null).filter((h) => h.kind === "line");
+      expect(lines.length).toBe(pat[k % 16] ? 1 : 0);
+      for (const l of lines) {
+        expect(l).toMatchObject({ instrument: lineInstrument(f), key: "IST-TK1", lineId: "TK1" });
+        expect(l.instrument).toBe("PNO");
+        expect(l.freq).toBeCloseTo(ladderFreq(lineNote(f, chordAtStep(k, DAY), k)), 9);
+        expect(l.vel).toBeCloseTo(0.55 * lineGain(1), 12);
+        expect(l.when).toBeCloseTo(stepTime(k, 0, DAY), 12);
+      }
+    }
+  });
+  it("line velocity: 0.55 · lineGain(N), the followed flight × 1.4", () => {
+    const fs = [sky("A"), sky("B"), sky("C")];
+    const vels = new Map<string, number>();
+    for (let k = 0; k < 16; k++) for (const h of planStep(k, { epoch: 0, section: DAY }, fs, "B")) if (h.lineId) vels.set(h.lineId, h.vel);
+    expect(vels.get("A")).toBeCloseTo(0.55 * lineGain(3), 12);
+    expect(vels.get("B")).toBeCloseTo(1.4 * 0.55 * lineGain(3), 12);
   });
 });

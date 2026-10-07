@@ -526,6 +526,8 @@ describe("globe controller", () => {
         setEnabled: vi.fn(),
         schedule: vi.fn(),
         setEnergy: vi.fn(),
+        setSky: vi.fn(),
+        tick: vi.fn(),
         dispose: vi.fn(),
         onNote: vi.fn((fn: (n: NoteEvent) => void) => {
           subs.add(fn);
@@ -536,7 +538,9 @@ describe("globe controller", () => {
         subs,
       };
     };
-    const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({ instrument: "AME", freq: 220, vel: 0.65, kind: "dep", key: "IST-JFK", at: 1, ...o });
+    const note = (o: Partial<NoteEvent> = {}): NoteEvent => ({
+      instrument: "AME", lane: "AME", freq: 220, pitch: 220, vel: 0.65, kind: "line", key: "IST-JFK", at: 1, lineId: "f1", ...o,
+    });
 
     it("M turns the sound on and off through the stub; the score is planned also while it is off", async () => {
       const sound = stub();
@@ -572,6 +576,10 @@ describe("globe controller", () => {
         expect(h.engine.pulseRoute).not.toHaveBeenCalled(); // the corridor flashes when the note sounds
         vi.advanceTimersByTime(1);
         expect(h.engine.pulseRoute).toHaveBeenCalledWith("IST-JFK");
+        sound.play(note({ instrument: "KICK", lane: "KICK", kind: "groove", key: "", lineId: undefined, at: 50.6 }));
+        vi.advanceTimersByTime(200);
+        expect(h.engine.pulseRoute).toHaveBeenCalledTimes(1); // groove notes have no route to flash
+        expect(got).toHaveLength(2); // but reach the scope
         sound.play(note({ key: "IST-CDG", at: 51 }));
         h.c.dispose(); // pending flashes are dropped
         vi.advanceTimersByTime(2000);
@@ -581,7 +589,7 @@ describe("globe controller", () => {
       }
       expect(sound.subs.size).toBe(0);
       sound.play(note({ key: "IST-LHR" }));
-      expect(got).toHaveLength(2); // the two notes before dispose only
+      expect(got).toHaveLength(3); // the three notes before dispose only
     });
 
     it("publishes the music state (section, chord, tempo, ensemble, on) in the snapshot", async () => {

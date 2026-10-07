@@ -86,6 +86,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   const pulseTimers = new Set<ReturnType<typeof setTimeout>>(); // art:sound
   const offNote = sound.onNote((n) => { // art:sound
     d.noteBus?.emit(n);
+    if (!n.key) return; // art:sound — groove voices have no route
     // flash the route's corridor when the note actually sounds
     const t = setTimeout(() => {
       pulseTimers.delete(t);

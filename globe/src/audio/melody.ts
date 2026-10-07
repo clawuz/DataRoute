@@ -1,30 +1,43 @@
 import { initialBearing } from "@collector/geo";
-import type { LegacySection as Section } from "./form"; // v2 shape until Task 13
-import { freqOf, type LegacyChord as Chord } from "./theory"; // v2 shape until Task 13
+import type { Section } from "./form";
+import { ladderFreq, scaleLadder, type Chord } from "./harmony";
 
-/** A-natural-minor degrees as semitones above A2, octaves 0–3 (28 entries); index = scale-degree index. */
-const DEGREES = [0, 2, 3, 5, 7, 8, 10];
-export const NEY_LADDER: number[] = [0, 1, 2, 3].flatMap((o) => DEGREES.map((d) => d + 12 * o));
-const TOP = NEY_LADDER.length - 1;
-
-/** A2 = 110 Hz. */
-export const ladderFreq = (i: number): number => 110 * 2 ** (NEY_LADDER[i] / 12);
+/**
+ * The Istanbul ney and its wind ensemble (spec §4c, on v3 harmony §4e): data-born three-note cells walk the
+ * chord-scale ladder of the chord current at the cell. All pitches are absolute semitones above A2 (110 Hz).
+ */
 
 const mod12 = (x: number): number => ((x % 12) + 12) % 12;
 const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 /** Reflects `x` back into [lo, hi] at the bounds (one bounce, then clamped for safety). */
 const reflect = (x: number, lo: number, hi: number): number => clamp(x > hi ? 2 * hi - x : x < lo ? 2 * lo - x : x, lo, hi);
 
-/** Ladder index whose pitch is nearest `freq` (used by the ney's grace note). */
-export function ladderIndexOf(freq: number): number {
-  const semis = 12 * Math.log2(freq / 110);
+/** Semitones the ney window spans above its home A (twelve rungs of a seven-note scale: A … E an octave and a fifth up). */
+const NEY_SPAN = 19;
+
+/** The ney's ladder: the chord scale inside [12·(neyOct − 2), +19] (the section's home A upwards). */
+export function neyLadder(chord: Chord, sec: Section): number[] {
+  const lo = 12 * (sec.neyOct - 2);
+  return scaleLadder(chord, sec.neyOct, sec.neyOct + 1).filter((s) => s >= lo && s <= lo + NEY_SPAN);
+}
+
+/** Octaves of the winds' ladder (the clarinet's third, the sax's fifth and the trumpet's octave are counted on it). */
+export const WIND_LADDER_OCTS: [number, number] = [2, 5];
+
+/** Rung of `ladder` nearest to `semis` (ties → lower). */
+function nearestRung(ladder: number[], semis: number): number {
   let best = 0;
-  for (let i = 1; i <= TOP; i++) if (Math.abs(NEY_LADDER[i] - semis) < Math.abs(NEY_LADDER[best] - semis)) best = i;
+  for (let i = 1; i < ladder.length; i++) if (Math.abs(ladder[i] - semis) < Math.abs(ladder[best] - semis)) best = i;
   return best;
 }
 
+/** The next chord-scale pitch above `semis` (the ney's grace note). */
+export function graceAbove(semis: number, chord: Chord): number {
+  for (let s = Math.floor(semis) + 1; ; s++) if (chord.scale.includes(mod12(s))) return s;
+}
+
 export interface NeyState {
-  /** ladder index of the last emitted ney note */
+  /** absolute semitone (above A2) of the last ney note; snapped onto the current chord's ladder on each call */
   last: number;
   /** cells played in the current phrase (0–3) */
   cell: number;
@@ -32,13 +45,7 @@ export interface NeyState {
   restUntilBeat: number;
 }
 
-/** Ladder range [lo, hi] of a section: from its home A upwards. */
-export function neyRange(sec: Section): [number, number] {
-  const lo = clamp(7 * (sec.neyOct - 2), 0, TOP);
-  return [lo, Math.min(TOP, lo + 11)];
-}
-
-export const initNey = (sec: Section): NeyState => ({ last: neyRange(sec)[0], cell: 0, restUntilBeat: 0 });
+export const initNey = (sec: Section): NeyState => ({ last: 12 * (sec.neyOct - 2), cell: 0, restUntilBeat: 0 });
 
 export const IST_LAT = 41.2613;
 export const IST_LON = 28.742;
@@ -62,9 +69,9 @@ export const stepFor = (distKm: number): 1 | 2 | 3 => (distKm < 1500 ? 1 : distK
 
 export interface NeyNote {
   freq: number;
-  /** ladder index the note was built from */
-  idx: number;
-  /** offset in NEY grid slots (eighth notes) from the cell's slot */
+  /** absolute semitone above A2 */
+  semis: number;
+  /** offset in eighth notes from the cell's first note */
   slotOffset: number;
   vel: number;
   grace: boolean;
@@ -78,38 +85,37 @@ export interface NeyEvent {
   kind: "dep" | "arr";
 }
 
-const chordPcs = (c: Chord, all: boolean): number[] =>
-  (all ? [c.root, c.third, c.fifth, c.seventh, c.ninth] : [c.root, c.fifth]).filter((x): x is number => x !== undefined).map(mod12);
-
-/** Ladder index in [lo, hi] with a pitch class in `pcs` nearest to `target` (ties → lower), skipping `avoid`. */
-function nearestTone(pcs: number[], target: number, lo: number, hi: number, avoid?: number): number {
+/** Rung in `ladder` with a pitch class in `pcs` nearest to rung `target` (ties → lower), skipping rung `avoid`. */
+function nearestTone(ladder: number[], pcs: number[], target: number, avoid = -1): number {
   let best = -1;
-  for (let i = lo; i <= hi; i++) {
-    if (i === avoid || !pcs.includes(mod12(NEY_LADDER[i]))) continue;
+  for (let i = 0; i < ladder.length; i++) {
+    if (i === avoid || !pcs.includes(mod12(ladder[i]))) continue;
     if (best < 0 || Math.abs(i - target) < Math.abs(best - target)) best = i;
   }
-  return best < 0 ? clamp(target, lo, hi) : best;
+  return best < 0 ? clamp(target, 0, ladder.length - 1) : best;
 }
 
-const note = (idx: number, slotOffset: number, vel: number, grace = false, long = false): NeyNote => ({
-  freq: ladderFreq(idx), idx, slotOffset, vel, grace, long,
+const note = (ladder: number[], i: number, slotOffset: number, vel: number, grace = false, long = false): NeyNote => ({
+  freq: ladderFreq(ladder[i]), semis: ladder[i], slotOffset, vel, grace, long,
 });
 
 /**
- * One Istanbul-end event → a three-note ney cell shaped by the route (bearing → contour, distance → step),
+ * One Istanbul-end event → a three-note ney cell shaped by the route (bearing → contour, distance → step in ladder rungs),
  * or, as the fourth cell of a phrase, a single long cadence note on the chord root/fifth followed by a breath.
- * Pure: the same event stream gives the same melody.
+ * Pure: the same event stream gives the same melody. `beat` counts quarter notes from the section epoch.
  */
 export function neyCell(e: NeyEvent, st: NeyState, chord: Chord, beat: number, sec: Section): { notes: NeyNote[]; state: NeyState } {
   if (beat < st.restUntilBeat) return { notes: [], state: st };
-  const [lo, hi] = neyRange(sec);
+  const L = neyLadder(chord, sec);
+  const hi = L.length - 1;
+  const last = nearestRung(L, st.last);
   if (st.cell === 3) {
-    const idx = nearestTone(chordPcs(chord, false), st.last, lo, hi);
-    return { notes: [note(idx, 0, 1.0, false, true)], state: { last: idx, cell: 0, restUntilBeat: beat + 2 } };
+    const i = nearestTone(L, [chord.tones[0], chord.tones[2]], last);
+    return { notes: [note(L, i, 0, 1.0, false, true)], state: { last: L[i], cell: 0, restUntilBeat: beat + 2 } };
   }
   const arr = e.kind === "arr";
-  const target = arr ? Math.max(lo, st.last - 7) : st.last;
-  const n0 = nearestTone(chordPcs(chord, true), target, lo, hi, st.last);
+  const target = arr ? Math.max(0, last - 7) : last; // seven rungs = an octave
+  const n0 = nearestTone(L, chord.tones, target, L[last] === st.last ? last : -1); // never the same note again
   const bearing = Number.isFinite(e.farLat) && Number.isFinite(e.farLon) ? bearingOf(e.farLat!, e.farLon!) : 90;
   const step = stepFor(e.distKm);
   const dir = arr ? -1 : 1; // arrivals reverse the contour
@@ -117,66 +123,46 @@ export function neyCell(e: NeyEvent, st: NeyState, chord: Chord, beat: number, s
   let n1: number;
   let n2: number;
   if (contour === "arch") {
-    n1 = reflect(n0 + dir * step, lo, hi);
-    n2 = reflect(n0 - dir, lo, hi);
+    n1 = reflect(n0 + dir * step, 0, hi);
+    n2 = reflect(n0 - dir, 0, hi);
   } else {
     const s = (contour === "up" ? 1 : -1) * dir;
-    n1 = reflect(n0 + s * step, lo, hi);
-    n2 = reflect(n1 + (step >= 2 ? -s : s), lo, hi); // after a leap, one degree back
+    n1 = reflect(n0 + s * step, 0, hi);
+    n2 = reflect(n1 + (step >= 2 ? -s : s), 0, hi); // after a leap, one degree back
   }
-  const notes = [note(n0, 0, 0.8, beat % 4 === 0), note(n1, 1, 0.9), note(n2, 2, 0.7)];
+  const notes = [note(L, n0, 0, 0.8, beat % 4 === 0), note(L, n1, 1, 0.9), note(L, n2, 2, 0.7)];
   // the cell spans three eighth notes (1.5 beats); the ney is monophonic, so the next cell waits two beats
-  return { notes, state: { last: n2, cell: st.cell + 1, restUntilBeat: beat + 2 } };
+  return { notes, state: { last: L[n2], cell: st.cell + 1, restUntilBeat: beat + 2 } };
 }
 
 export type Wind = "CLA" | "SAX" | "TPT";
 export interface WindPart {
   instrument: Wind;
   freq: number;
+  semis: number;
   slotOffset: number;
   vel: number;
   long: boolean;
 }
 
-const windAt = (instrument: Wind, idx: number, slotOffset: number, vel: number, long: boolean): WindPart => {
-  const i = reflect(idx, 0, TOP);
-  return { instrument, freq: ladderFreq(i), slotOffset, vel, long };
-};
-
 /**
- * The wind ensemble derived from one ney cell or cadence: clarinet a diatonic third below each cell note,
- * saxophone a fifth below the cell's first note and the cadence, trumpet an octave above the cadence;
- * each only when the section's ensemble includes it. Phrase rests (empty cells) give no winds.
+ * The wind ensemble derived from one ney cell or cadence, counted in rungs of the chord-scale ladder (octaves 2–5):
+ * clarinet a third (two rungs) below each cell note, saxophone a fifth (four rungs) below the cell's first note and the
+ * cadence, trumpet an octave (seven rungs) above the cadence; each only when the section's ensemble includes it.
+ * Phrase rests (empty cells) give no winds.
  */
-export function windParts(cell: NeyNote[], _chord: Chord, sec: Section): WindPart[] {
+export function windParts(cell: NeyNote[], chord: Chord, sec: Section): WindPart[] {
   if (cell.length === 0) return [];
+  const W = scaleLadder(chord, WIND_LADDER_OCTS[0], WIND_LADDER_OCTS[1]);
+  const at = (instrument: Wind, n: NeyNote, rungs: number, vel: number, long: boolean): WindPart => {
+    const s = W[reflect(nearestRung(W, n.semis) + rungs, 0, W.length - 1)];
+    return { instrument, freq: ladderFreq(s), semis: s, slotOffset: n.slotOffset, vel, long };
+  };
   const cadence = cell.length === 1 && cell[0].long;
   const has = (w: Wind) => sec.instruments.has(w);
   const out: WindPart[] = [];
-  if (!cadence && has("CLA")) for (const n of cell) out.push(windAt("CLA", n.idx - 2, n.slotOffset, 0.7 * n.vel, false));
-  if (has("SAX")) out.push(windAt("SAX", cell[0].idx - 4, cell[0].slotOffset, 0.6 * cell[0].vel, true));
-  if (cadence && has("TPT")) out.push(windAt("TPT", cell[0].idx + 7, 0, 0.9 * cell[0].vel, true));
+  if (!cadence && has("CLA")) for (const n of cell) out.push(at("CLA", n, -2, 0.7 * n.vel, false));
+  if (has("SAX")) out.push(at("SAX", cell[0], -4, 0.6 * cell[0].vel, true));
+  if (cadence && has("TPT")) out.push(at("TPT", cell[0], 7, 0.9 * cell[0].vel, true));
   return out;
-}
-
-export interface PianoState {
-  /** position in the arpeggio pattern */
-  i: number;
-  /** chord (name + progression index) of the last piano note */
-  chordKey: string;
-}
-
-export const initPiano = (): PianoState => ({ i: 0, chordKey: "" });
-
-/** Flowing piano: root – fifth – third(+8ve) – fifth; the first event on a new chord rolls it open. */
-export function pianoNext(
-  st: PianoState, chord: Chord, chordKey: string, oct: number,
-): { notes: { freq: number; offsetSec: number }[]; state: PianoState } {
-  const o = clamp(oct, 3, 5);
-  const pattern = [chord.root, chord.fifth, chord.third + 12, chord.fifth];
-  if (chordKey !== st.chordKey) {
-    const notes = pattern.slice(0, 3).map((t, k) => ({ freq: freqOf(o, t), offsetSec: 0.03 * k }));
-    return { notes, state: { i: 3, chordKey } };
-  }
-  return { notes: [{ freq: freqOf(o, pattern[st.i % 4]), offsetSec: 0 }], state: { i: st.i + 1, chordKey } };
 }

@@ -205,7 +205,7 @@ describe("MusicScope", () => {
     const spy = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     const bus = createNoteBus();
     const r = render(<MusicScope bus={bus} music={music()} />);
-    expect(() => bus.emit({ instrument: "NEY", freq: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0 })).not.toThrow();
+    expect(() => bus.emit({ instrument: "NEY", lane: "NEY", freq: 440, pitch: 440, vel: 1, kind: "dep", key: "IST-JFK", at: 0 })).not.toThrow();
     r.unmount();
     spy.mockRestore();
   });
@@ -222,7 +222,7 @@ describe("MusicScope", () => {
     const caf = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
     const bus = createNoteBus();
     const r = render(<MusicScope bus={bus} music={music()} />);
-    act(() => bus.emit({ instrument: "EUR", freq: 440, vel: 1, kind: "dep", key: "IST-FRA", at: 0 }));
+    act(() => bus.emit({ instrument: "EUR", lane: "EUR", freq: 440, pitch: 440, vel: 1, kind: "line", key: "IST-FRA", at: 0, lineId: "f1" }));
     act(() => frames.at(-1)!(performance.now() + 100));
     expect(strokes).toEqual([INSTRUMENT_COLOR.NEY, INSTRUMENT_COLOR.EUR, INSTRUMENT_COLOR.DOM]);
     expect(ctx.globalCompositeOperation).toBe("lighter");

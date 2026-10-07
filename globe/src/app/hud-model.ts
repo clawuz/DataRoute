@@ -66,7 +66,7 @@ export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
   notice: "",
   tour: true,
   art: { enabled: true, corridors: true, aurora: false, sound: false },
-  music: { on: false, section: "DAY", chord: "C", bpm: 96, instruments: [] }, // art:sound
+  music: { on: false, section: "DAY", chord: "Dm9", bpm: 116, instruments: [] }, // art:sound
 };
 
 export function eventText(e: FlightEvent): string {

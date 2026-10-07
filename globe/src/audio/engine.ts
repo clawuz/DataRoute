@@ -1,26 +1,41 @@
-import { REGIONS } from "@web/data/palette";
 import { playNote } from "./instruments";
-import { legacySectionAt as sectionAt, type LegacySection as Section, type SectionId } from "./form"; // v2 path until Task 13
-import { createNoteBus, type NoteEvent } from "./notes-bus";
-import { initNey, initPiano, type NeyState, type PianoState } from "./melody";
-import { planNotes, type ScoreEvent } from "./score";
-import { chordAtBeat, freqOf, type LegacyChord as Chord, type Instrument } from "./theory";
+import { CHORDS, type Chord } from "./harmony";
+import { chordAtStep, sectionAt, stepDur, type Section, type SectionId } from "./form";
+import { selectLines, type SkyFlight } from "./lines";
+import { createNoteBus, laneOf, type NoteEvent } from "./notes-bus";
+import { initNey, type NeyState } from "./melody";
+import { planNotes, planStep, stepTime, type PlannedNote, type ScoreEvent } from "./score";
+import { freqOf, type Instrument } from "./theory";
 
 export interface SoundFocus {
   regionIdx: number | null;
   alt100: number;
 }
 
+export type Pans = Map<string, { pan: number; visible: boolean }>;
+
 export interface RouteSound {
   setEnabled(on: boolean): void;
-  /** `localHour`: Istanbul local hour of the flight time (selects the section; defaults to midday) */
-  schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number): void;
+  /**
+   * The airborne flights (the 12 lines are re-selected from the latest sky on every tick) and the followed flight id;
+   * `localHour` (Istanbul local hour of the flight time), when given, selects the section.
+   */
+  setSky(flights: SkyFlight[], followedId: string | null, localHour?: number): void;
+  /**
+   * Istanbul-end events → ney cells and winds; `pans` (route key → stereo pan) is kept for the flight lines;
+   * `localHour`, when given, selects the section. `focus` is accepted for compatibility: v3 emphasises the followed
+   * flight given to `setSky` instead.
+   */
+  schedule(events: ScoreEvent[], focus?: SoundFocus | null, pans?: Pans, localHour?: number): void;
+  /** traffic energy 0..1: velocities × (0.6 + 0.4·e) and the pad bed level */
   setEnergy(e: number): void;
+  /** advances the 16th-step clock (plans every step up to `now + LOOKAHEAD_SEC`); runs every 40 ms unless `autoTick: false` */
+  tick(): void;
   /** every planned note (also while muted); returns the unsubscribe */
   onNote(fn: (n: NoteEvent) => void): () => void;
   /**
    * The section, the chord at the wall-clock now, the tempo and the ensemble — of `localHour`'s section when given
-   * (read-only: planning switches its section on the next `schedule`), else of the planning section.
+   * (read-only: planning switches its section on the next `schedule`/`setSky` with an hour), else of the planning section.
    */
   info(localHour?: number): SoundInfo;
   dispose(): void;
@@ -33,22 +48,20 @@ export interface SoundInfo {
   instruments: Instrument[];
 }
 
-const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
+/** The planner looks this far ahead of the wall clock. */
+export const LOOKAHEAD_SEC = 0.25;
+/** Steps later than this behind the wall clock (a stalled or throttled timer) are skipped, not played in a burst. */
+export const LATE_SEC = 0.1;
+export const TICK_MS = 40;
 
-/** Region index whose focus boost applies to an instrument; the ney and its wind ensemble ignore focus. */
-export function instrumentRegionIdx(i: Instrument): number | null {
-  if (i === "NEY" || i === "CLA" || i === "SAX" || i === "TPT") return null;
-  if (i === "EP") return REGIONS.indexOf("DOM"); // v3 Rhodes of domestic/unknown lines
-  if (i === "BASS" || i === "KICK" || i === "SNARE" || i === "HAT" || i === "OHAT" || i === "KEYS" || i === "BRASS" || i === "SAXPAD") return null; // v3 groove voices
-  return REGIONS.indexOf(i === "PNO" ? "EUR" : i);
-}
+const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 
 /** The four bed voices of a chord: root (oct 2), fifth (oct 3), seventh or third (oct 3), ninth or fifth (oct 4). */
 export const bedVoicing = (c: Chord): [number, number][] => [
   [2, c.root],
-  [3, c.fifth],
-  [3, c.seventh ?? c.third],
-  [4, c.ninth ?? c.fifth],
+  [3, c.tones[2]],
+  [3, c.tones[3] ?? c.tones[1]],
+  [4, c.tones[4] ?? c.tones[2]],
 ];
 
 const defaultCreate = (): AudioContext => {
@@ -71,11 +84,11 @@ interface Graph {
 const defaultNow = (): number => performance.now() / 1000;
 
 /**
- * The planner runs on the wall clock (`now()`, seconds) and always plans, also while muted, publishing every
- * note through `onNote`; notes are played only when enabled with an audio context, at
- * `ctx.currentTime + (when − now())`.
+ * The planner runs on the wall clock (`now()`, seconds) as a continuous 16th-step clock (spec §4e) and always plans,
+ * also while muted, publishing every note through `onNote`; notes are played only when enabled with an audio context,
+ * at `ctx.currentTime + (when − now())`.
  */
-export function createRouteSound(opts: { createContext?: () => AudioContext; now?: () => number } = {}): RouteSound {
+export function createRouteSound(opts: { createContext?: () => AudioContext; now?: () => number; autoTick?: boolean } = {}): RouteSound {
   const create = opts.createContext ?? defaultCreate;
   const now = opts.now ?? defaultNow;
   const notes = createNoteBus();
@@ -85,12 +98,15 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   let suspendTimer: ReturnType<typeof setTimeout> | null = null;
   let onVis: (() => void) | null = null;
   let onGesture: (() => void) | null = null;
-  // the only mutable music state: current section, its epoch (wall-clock seconds) and the melodic states
+  // the mutable music state: the section, its epoch (wall-clock seconds of step 0), the next unplanned step, the ney
   let section: Section = sectionAt(12);
   let epoch = now();
+  let nextStep = 0;
   let neyState: NeyState = initNey(section);
-  let pianoState: PianoState = initPiano();
   let energy = 0.5;
+  let sky: SkyFlight[] = [];
+  let followedId: string | null = null;
+  let pans: Pans | undefined;
 
   const safe = (fn: () => void) => {
     try {
@@ -101,10 +117,23 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
   };
   const resume = () => safe(() => void g?.ctx.resume()?.catch?.(() => {}));
 
-  function bedChord(t: number, sec: Section = section): { chord: Chord; key: string } {
-    const beat = Math.floor(Math.max(0, t - epoch) / (60 / sec.bpm));
-    const idx = Math.floor(beat / sec.beatsPerChord) % sec.progression.length;
-    return { chord: chordAtBeat(beat, sec.progression, sec.beatsPerChord), key: `${sec.id}:${idx}` };
+  /** the step sounding at wall time `t` of the current section (0 before the epoch) */
+  const stepAt = (t: number): number => Math.max(0, Math.floor((t - epoch) / stepDur(section)));
+
+  function bedChord(t: number): { chord: Chord; key: string } {
+    const bar = Math.floor(stepAt(t) / 16);
+    const idx = Math.floor(bar / section.barsPerChord) % section.progression.length;
+    return { chord: chordAtStep(stepAt(t), section), key: `${section.id}:${idx}` };
+  }
+
+  function switchSection(localHour: number | undefined): void {
+    if (localHour === undefined) return;
+    const sec = sectionAt(localHour); // art:sound
+    if (sec.id === section.id) return;
+    section = sec;
+    epoch = now();
+    nextStep = 0;
+    neyState = initNey(sec);
   }
 
   function build(): Graph {
@@ -202,42 +231,70 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     onGesture = null;
   }
 
-  function schedule(
-    events: ScoreEvent[], focus?: SoundFocus | null, pans?: Map<string, { pan: number; visible: boolean }>, localHour?: number,
-  ): void {
+  /** publishes every planned note and, when audible, plays it on the audio clock */
+  function emit(planned: PlannedNote[], t: number): void {
+    for (const n of planned) {
+      safe(() =>
+        notes.emit({
+          instrument: n.instrument, lane: laneOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when,
+          ...(n.long ? { long: true } : {}), ...(n.lineId !== undefined ? { lineId: n.lineId } : {}),
+        }),
+      );
+    }
+    if (!enabled || !g) return;
+    const { ctx, bus } = g;
+    const dyn = 0.6 + 0.4 * energy;
+    for (const n of planned) {
+      // art:sound
+      const p = n.key ? pans?.get(n.key) : undefined;
+      const when = Math.max(ctx.currentTime, ctx.currentTime + (n.when - t)); // wall clock → audio clock
+      safe(() =>
+        playNote(ctx, bus, { ...n, when }, {
+          gainScale: dyn * (p?.visible === false ? 0.3 : 1),
+          cutoffScale: 1,
+          pan: clamp(p?.pan ?? 0, -1, 1),
+        }),
+      );
+    }
+  }
+
+  function tick(): void {
     if (disposed) return;
     safe(() => {
       const t = now();
-      const sec = sectionAt(localHour ?? 12); // art:sound
-      if (sec.id !== section.id) {
-        section = sec;
-        epoch = t;
-        neyState = initNey(sec);
-      }
-      const plan = planNotes(events, t, { epoch, section, ney: neyState, piano: pianoState });
-      neyState = plan.ney;
-      pianoState = plan.piano;
-      for (const n of plan.notes) {
-        safe(() =>
-          notes.emit({
-            instrument: n.instrument, freq: n.freq, vel: n.vel, kind: n.kind, key: n.key, at: n.when, ...(n.long ? { long: true } : {}),
-          }),
-        );
-      }
+      const sec = section;
+      // after a stall, skip the steps that are already late instead of playing them in a burst
+      if (stepTime(nextStep, epoch, sec) < t - LATE_SEC) nextStep = Math.max(nextStep, Math.ceil((t - LATE_SEC - epoch) / stepDur(sec) - 1e-9));
+      const lines = selectLines(sky, followedId);
+      const planned: PlannedNote[] = [];
+      for (; stepTime(nextStep, epoch, sec) <= t + LOOKAHEAD_SEC; nextStep++) planned.push(...planStep(nextStep, { epoch, section: sec }, lines, followedId));
+      emit(planned, t);
       if (!enabled || !g) return;
-      const { ctx, bus } = g;
-      const dyn = 0.6 + 0.4 * clamp(energy, 0, 1);
-      for (const n of plan.notes) {
-        // art:sound
-        const match = focus?.regionIdx != null && instrumentRegionIdx(n.instrument) === focus.regionIdx;
-        const p = pans?.get(n.key);
-        const when = Math.max(ctx.currentTime, ctx.currentTime + (n.when - t)); // wall clock → audio clock
-        playNote(ctx, bus, { ...n, when }, {
-          gainScale: dyn * (focus?.regionIdx == null ? 1 : match ? 1.6 : 0.7) * (p?.visible === false ? 0.3 : 1),
-          cutoffScale: match && focus ? 0.6 + 0.8 * clamp(focus.alt100 / 410, 0, 1) : 1,
-          pan: clamp(p?.pan ?? 0, -1, 1),
-        });
+      const { chord, key } = bedChord(t);
+      if (key !== g.chordKey) {
+        g.chordKey = key;
+        const at = g.ctx.currentTime;
+        bedVoicing(chord).forEach(([oct, semis], i) => g!.bed[i].frequency.setTargetAtTime(freqOf(oct, semis), at, 1.2));
       }
+    });
+  }
+
+  function setSky(flights: SkyFlight[], followed: string | null, localHour?: number): void {
+    if (disposed) return;
+    sky = flights;
+    followedId = followed;
+    switchSection(localHour);
+  }
+
+  function schedule(events: ScoreEvent[], _focus?: SoundFocus | null, p?: Pans, localHour?: number): void {
+    if (disposed) return;
+    safe(() => {
+      if (p) pans = p;
+      switchSection(localHour);
+      const t = now();
+      const plan = planNotes(events, t, { epoch, section, ney: neyState });
+      neyState = plan.ney;
+      emit(plan.notes, t);
     });
   }
 
@@ -245,30 +302,28 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     if (disposed) return;
     energy = clamp(e, 0, 1);
     if (!enabled || !g) return;
-    const { ctx, bedGain, bed, wet } = g;
+    const { ctx, bedGain, wet } = g;
     safe(() => {
       const at = ctx.currentTime;
       bedGain.gain.setTargetAtTime(0.035 * energy ** 0.7, at, 0.8);
       wet.gain.setTargetAtTime(section.wet, at, 1.5);
-      const { chord, key } = bedChord(now());
-      if (key !== g!.chordKey) {
-        g!.chordKey = key;
-        bedVoicing(chord).forEach(([oct, semis], i) => bed[i].frequency.setTargetAtTime(freqOf(oct, semis), at, 1.2));
-      }
     });
   }
 
   function info(localHour?: number): SoundInfo {
     const sec = localHour === undefined ? section : sectionAt(localHour);
     // a section the planner has not switched to yet starts at its first chord
-    const chord = sec.id === section.id ? bedChord(now(), sec).chord : sec.progression[0];
+    const chord = sec.id === section.id ? chordAtStep(stepAt(now()), sec) : CHORDS[sec.progression[0]];
     return { section: sec.id, chord: chord.name, bpm: sec.bpm, instruments: [...sec.instruments] };
   }
+
+  const timer = opts.autoTick === false ? null : setInterval(tick, TICK_MS);
 
   function dispose(): void {
     if (disposed) return;
     disposed = true;
     enabled = false;
+    if (timer) clearInterval(timer);
     if (suspendTimer) clearTimeout(suspendTimer);
     suspendTimer = null;
     removeGesture();
@@ -286,5 +341,5 @@ export function createRouteSound(opts: { createContext?: () => AudioContext; now
     });
   }
 
-  return { setEnabled, schedule, setEnergy, onNote: (fn) => notes.subscribe(fn), info, dispose };
+  return { setEnabled, setSky, schedule, setEnergy, tick, onNote: (fn) => notes.subscribe(fn), info, dispose };
 }

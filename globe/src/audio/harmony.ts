@@ -55,5 +55,14 @@ export function snapToTones(semis: number, c: Chord): number {
   return best;
 }
 
+/** The pitch (absolute semitones) of the chord scale nearest to `semis`; ties go to the lower pitch. */
+export function snapToScale(semis: number, c: Chord): number {
+  for (let d = 0; d <= 6; d++) {
+    if (c.scale.includes(mod12(semis - d))) return semis - d;
+    if (c.scale.includes(mod12(semis + d))) return semis + d;
+  }
+  return semis;
+}
+
 /** Frequency of a ladder value (semitones above A2 = 110 Hz). */
 export const ladderFreq = (semis: number): number => freqOf(2, semis);

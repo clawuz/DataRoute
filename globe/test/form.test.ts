@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
-import {
-  LEGACY_SECTIONS, SECTIONS, chordAtStep, istanbulHour, legacySectionAt, nextChordAtStep, sectionAt, stepDur, swingDelay, type SectionId,
-} from "../src/audio/form";
+import { SECTIONS, chordAtStep, istanbulHour, nextChordAtStep, sectionAt, stepDur, swingDelay, type SectionId } from "../src/audio/form";
 import { CHORDS } from "../src/audio/harmony";
 
-const A_MINOR = new Set([0, 2, 3, 5, 7, 8, 10]);
-const pc = (s: number) => ((s % 12) + 12) % 12;
 
 describe("form: four sections of the Istanbul day", () => {
   it("sectionAt boundaries (hours wrap mod 24)", () => {
@@ -16,15 +12,15 @@ describe("form: four sections of the Istanbul day", () => {
     ];
     for (const [h, id] of cases) expect([h, at(h)]).toEqual([h, id]);
   });
-  it("v3 tempo, swing, harmonic rhythm, density, reverb and ney register per section", () => {
+  it("v3 tempo, swing, harmonic rhythm, reverb and ney register per section", () => {
     const pick = (id: SectionId) => {
       const s = SECTIONS[id];
-      return [s.id, s.bpm, s.swing, s.barsPerChord, s.progression.length, s.maxNotes, s.wet, s.neyOct];
+      return [s.id, s.bpm, s.swing, s.barsPerChord, s.progression.length, s.wet, s.neyOct];
     };
-    expect(pick("NIGHT")).toEqual(["NIGHT", 84, 0.15, 2, 4, 1, 0.45, 3]);
-    expect(pick("MORNING")).toEqual(["MORNING", 100, 0.12, 1, 8, 2, 0.35, 4]);
-    expect(pick("DAY")).toEqual(["DAY", 116, 0.1, 1, 8, 2, 0.25, 4]);
-    expect(pick("EVENING")).toEqual(["EVENING", 92, 0.12, 1, 8, 2, 0.4, 4]);
+    expect(pick("NIGHT")).toEqual(["NIGHT", 84, 0.15, 2, 4, 0.45, 3]);
+    expect(pick("MORNING")).toEqual(["MORNING", 100, 0.12, 1, 8, 0.35, 4]);
+    expect(pick("DAY")).toEqual(["DAY", 116, 0.1, 1, 8, 0.25, 4]);
+    expect(pick("EVENING")).toEqual(["EVENING", 92, 0.12, 1, 8, 0.4, 4]);
   });
   it("v3 progressions (chord ids of the harmony table); the evening resolves on Dm9", () => {
     expect(SECTIONS.NIGHT.progression).toEqual(["Dm9", "Bbmaj7", "Gm9", "A7b9"]);
@@ -87,38 +83,5 @@ describe("form: 16th-step clock and chord at step (v3)", () => {
     expect(nextChordAtStep(0, NIGHT).id).toBe("Bbmaj7");
     expect(nextChordAtStep(16, NIGHT).id).toBe("Bbmaj7"); // second bar of Dm9 → 32 steps later: bar 3 = Bbmaj7
     expect(nextChordAtStep(16 * 7, EVENING).id).toBe("Fmaj7");
-  });
-});
-
-// v2 data kept for the engine/score/ney code until Task 13 migrates it.
-describe("form: legacy v2 sections", () => {
-  const SECTIONS = LEGACY_SECTIONS;
-  it("legacySectionAt mirrors sectionAt and shares the ensemble data", () => {
-    for (const h of [0, 7, 13, 19]) {
-      expect(legacySectionAt(h)).toBe(LEGACY_SECTIONS[sectionAt(h).id]);
-      const [v3, v2] = [sectionAt(h), legacySectionAt(h)];
-      expect([v2.wet, v2.maxNotes, v2.neyOct, v2.instruments]).toEqual([v3.wet, v3.maxNotes, v3.neyOct, v3.instruments]);
-    }
-    expect([SECTIONS.NIGHT.bpm, SECTIONS.MORNING.bpm, SECTIONS.DAY.bpm, SECTIONS.EVENING.bpm]).toEqual([72, 84, 96, 80]);
-    for (const s of Object.values(SECTIONS)) expect(s.beatsPerChord).toBe(8);
-  });
-  it("progressions: 4/4/4/8 chords, the specified names, the evening resolves on Am", () => {
-    const names = (id: SectionId) => SECTIONS[id].progression.map((c) => c.name);
-    expect(names("NIGHT")).toEqual(["Am(add9)", "Am9", "Fmaj7", "Gsus4"]);
-    expect(names("MORNING")).toEqual(["Am", "F", "C", "G"]);
-    expect(names("DAY")).toEqual(["C", "G", "Am", "F"]);
-    expect(names("EVENING")).toEqual(["Dm", "Am", "F", "C", "Dm", "F", "G", "Am"]);
-    const n = SECTIONS.NIGHT.progression;
-    expect(n[0]).toEqual({ name: "Am(add9)", root: 0, third: 3, fifth: 7, ninth: 2 });
-    expect(n[1]).toEqual({ name: "Am9", root: 0, third: 3, fifth: 7, seventh: 10, ninth: 2 });
-    expect(n[2]).toEqual({ name: "Fmaj7", root: 8, third: 0, fifth: 3, seventh: 7 });
-    expect(n[3]).toEqual({ name: "Gsus4", root: 10, third: 3, fifth: 5 });
-    expect(SECTIONS.EVENING.progression[0]).toEqual({ name: "Dm", root: 5, third: 8, fifth: 0, seventh: 3 });
-    expect(SECTIONS.DAY.progression[0]).toEqual({ name: "C", root: 3, third: 7, fifth: 10, seventh: 2 });
-  });
-  it("every chord tone of every progression lies in A natural minor", () => {
-    for (const s of Object.values(SECTIONS))
-      for (const c of s.progression)
-        for (const t of [c.root, c.third, c.fifth, c.seventh, c.ninth]) if (t !== undefined) expect([s.id, c.name, A_MINOR.has(pc(t))]).toEqual([s.id, c.name, true]);
   });
 });

@@ -1,14 +1,20 @@
-import { REGIONS } from "@web/data/palette";
 import type { GlobeModel } from "../model/globe-model";
 import { isIstanbul } from "@collector/regions";
-import type { LegacySection as Section } from "./form"; // v2 shape until Task 13
-import { neyCell, pianoNext, windParts, type NeyState, type PianoState } from "./melody";
-import {
-  INSTRUMENT_MUSIC, chordAtBeat, hasMusic, isWestNorth, nextActiveSlot, octaveFor, pickNote, routeKey, slotIndex, slotTime, type Instrument,
-} from "./theory";
+import { chordAtStep, nextChordAtStep, stepDur, swingDelay, type Section } from "./form";
+import { grooveStep, type Voice } from "./groove";
+import { ladderFreq, snapToScale } from "./harmony";
+import { lineGain, lineInstrument, lineNote, linePattern, type SkyFlight } from "./lines";
+import { graceAbove, neyCell, windParts, type NeyState } from "./melody";
+import type { NoteKind } from "./notes-bus";
+import { routeKey, type Instrument } from "./theory";
 
+/**
+ * Music v3 planning (spec §4e), pure: the continuous 16th-step clock (`planStep`: groove and flight lines) and the
+ * Istanbul ney cells with their winds (`planNotes`). The engine turns the planned notes into sound.
+ */
 export const MAX_RANGE_SEC = 600;
-export const LOOKAHEAD_SEC = 0.06;
+/** the ney's first note is at least this far after `now` (scheduling margin) */
+export const NEY_LEAD_SEC = 0.06;
 
 export interface ScoreEvent {
   kind: "dep" | "arr";
@@ -43,110 +49,106 @@ export function eventsBetween(m: GlobeModel, from: number, to: number): ScoreEve
 }
 
 export interface PlannedNote {
+  /** wall-clock seconds when it sounds */
   when: number;
   instrument: Instrument;
+  /** pitch (Hz); a chord's lowest tone for voicings, a nominal pitch for drums */
   freq: number;
+  /** chord voicing (keys comping, brass stab) */
+  freqs?: number[];
   vel: number;
-  kind: "dep" | "arr";
+  /** Istanbul departure/arrival (ney, winds), flight line, or groove voice */
+  kind: NoteKind;
+  /** route key (the corridor of the note); "" for the groove */
   key: string;
-  /** ney: a short grace note one ladder degree above, just before the note */
-  grace?: boolean;
-  /** ney cadence / held wind note: longer decay */
+  /** flight id of a line note */
+  lineId?: string;
+  /** ney: a short grace note at this pitch (one chord-scale degree above), just before the note */
+  graceFreq?: number;
+  /** ney cadence / held wind / sustained groove note: longer decay */
   long?: boolean;
-  /** piano roll: offset (already included in `when`) of this note inside the roll */
-  offsetSec?: number;
 }
 
+/** Nominal pitch of the unpitched drum voices (the scope draws a burst at this "frequency"). */
+export const DRUM_PITCH: Record<"KICK" | "SNARE" | "HAT" | "OHAT", number> = { KICK: 60, SNARE: 180, HAT: 8000, OHAT: 8000 };
+
 export interface PlanContext {
-  /** audio time of the section start; grids and chord counting are relative to it */
+  /** wall-clock time of step 0 of the current section */
   epoch: number;
   section: Section;
   ney: NeyState;
-  piano: PianoState;
 }
+
+/** Wall-clock time of 16th step `k`: epoch + k · stepDur + swing on odd steps. */
+export const stepTime = (k: number, epoch: number, sec: Section): number => epoch + k * stepDur(sec) + swingDelay(k, sec);
 
 export const velocityFor = (n: number): number => Math.min(1, 0.5 + 0.15 * n);
 
-export function instrumentFor(e: ScoreEvent): Instrument | null {
-  const region = REGIONS[e.regionIdx];
-  if (!region || !hasMusic(region)) return null;
-  if (region === "EUR" && Number.isFinite(e.farLat) && Number.isFinite(e.farLon) && isWestNorth(e.farLat!, e.farLon!)) return "PNO";
-  return region;
-}
+/** Base velocity of a flight line (scaled by `lineGain(N)`; the followed flight × `FOLLOW_BOOST`). */
+export const LINE_VEL = 0.55;
+export const FOLLOW_BOOST = 1.4;
 
 const byKindThenKey = (a: ScoreEvent, b: ScoreEvent) => (a.kind === b.kind ? a.key.localeCompare(b.key) : a.kind === "dep" ? -1 : 1);
 
 /**
- * Maps events to notes of the current section: each instrument's next active euclidean step on its grid
- * (relative to the section epoch), at most `section.maxNotes` per instrument and step (extra events raise
- * the velocity), the Istanbul ney as data-born cells with its wind ensemble, the piano as a flowing arpeggio.
- * Pure: returns the advanced ney and piano states.
+ * Istanbul-end events → one ney cell (or cadence) on consecutive eighth notes (even 16th steps) from the first even step
+ * at or after `now + NEY_LEAD_SEC`, with its wind ensemble. The cell is built on the chord of its first step; any note
+ * whose own step falls on another chord is snapped into that chord's scale. Extra events raise the velocity. Pure:
+ * returns the advanced ney state.
  */
-export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext): { notes: PlannedNote[]; ney: NeyState; piano: PianoState } {
+export function planNotes(events: ScoreEvent[], nowSec: number, ctx: PlanContext): { notes: PlannedNote[]; ney: NeyState } {
   const { epoch, section: sec } = ctx;
-  const { bpm, progression, beatsPerChord } = sec;
-  const beatSec = 60 / bpm;
-  const start = nowSec + LOOKAHEAD_SEC - epoch;
-  const slotOf = (inst: Instrument) => nextActiveSlot(inst, slotIndex(start, inst, bpm));
-  const beatOf = (inst: Instrument, slot: number) => Math.floor(slotTime(inst, slot, bpm) / beatSec + 1e-9);
-  const chordOf = (beat: number) => chordAtBeat(beat, progression, beatsPerChord);
-  const groups = new Map<Instrument, ScoreEvent[]>();
-  const neyEvs: ScoreEvent[] = [];
-  for (const e of events) {
-    const instrument = instrumentFor(e);
-    if (instrument && sec.instruments.has(instrument)) {
-      const g = groups.get(instrument);
-      if (g) g.push(e);
-      else groups.set(instrument, [e]);
-    }
-    if (e.istanbul && sec.instruments.has("NEY")) neyEvs.push(e);
-  }
+  const neyEvs = sec.instruments.has("NEY") ? events.filter((e) => e.istanbul).sort(byKindThenKey) : [];
+  if (neyEvs.length === 0) return { notes: [], ney: ctx.ney };
+  const d = stepDur(sec);
+  const k = 2 * Math.max(0, Math.ceil((nowSec + NEY_LEAD_SEC - epoch) / (2 * d) - 1e-9));
+  const e = neyEvs[0];
+  const r = neyCell(e, ctx.ney, chordAtStep(k, sec), k / 4, sec);
+  const vel = velocityFor(neyEvs.length) * (e.kind === "arr" ? 0.6 : 1);
+  const at = (slotOffset: number) => {
+    const step = k + 2 * slotOffset;
+    return { step, when: stepTime(step, epoch, sec), chord: chordAtStep(step, sec) };
+  };
   const out: PlannedNote[] = [];
-  let piano = ctx.piano;
-  for (const [instrument, evs] of groups) {
-    evs.sort(byKindThenKey);
-    const slot = slotOf(instrument);
-    const when = epoch + slotTime(instrument, slot, bpm);
-    const beat = beatOf(instrument, slot);
-    const chord = chordOf(beat);
-    const vel = velocityFor(evs.length);
-    for (const e of evs.slice(0, sec.maxNotes)) {
-      const v = e.kind === "arr" ? vel * 0.6 : vel;
-      const base = { instrument, vel: v, kind: e.kind, key: e.key };
-      if (instrument === "PNO") {
-        const progIdx = Math.floor(Math.max(0, beat) / beatsPerChord) % progression.length;
-        const oct = octaveFor(e.distKm) - (e.kind === "arr" ? 1 : 0);
-        const r = pianoNext(piano, chord, `${chord.name}${progIdx}`, oct);
-        piano = r.state;
-        for (const n of r.notes) out.push({ ...base, when: when + n.offsetSec, freq: n.freq, ...(n.offsetSec ? { offsetSec: n.offsetSec } : {}) });
-        continue;
-      }
-      const freq = pickNote(instrument, e.key, e.distKm, chord, beat, e.kind);
-      if (freq !== null) out.push({ ...base, when, freq });
-    }
+  for (const n of r.notes) {
+    const { when, chord } = at(n.slotOffset);
+    const s = snapToScale(n.semis, chord);
+    out.push({
+      when, instrument: "NEY", freq: ladderFreq(s), vel: n.vel * vel, kind: e.kind, key: e.key,
+      ...(n.grace ? { graceFreq: ladderFreq(graceAbove(s, chord)) } : {}), ...(n.long ? { long: true } : {}),
+    });
   }
-  let ney = ctx.ney;
-  if (neyEvs.length) {
-    neyEvs.sort(byKindThenKey);
-    const e = neyEvs[0];
-    const slot = slotOf("NEY");
-    const beat = slot / (INSTRUMENT_MUSIC.NEY?.perBeat ?? 1); // exact: the ney grid has no swing
-    const chord = chordOf(Math.floor(beat));
-    const r = neyCell(e, ney, chord, beat, sec);
-    ney = r.state;
-    const vel = velocityFor(neyEvs.length) * (e.kind === "arr" ? 0.6 : 1);
-    for (const n of r.notes) {
-      out.push({
-        when: epoch + slotTime("NEY", slot + n.slotOffset, bpm), instrument: "NEY", freq: n.freq, vel: n.vel * vel,
-        kind: e.kind, key: e.key, ...(n.grace ? { grace: true } : {}), ...(n.long ? { long: true } : {}),
-      });
-    }
-    for (const w of windParts(r.notes, chord, sec)) {
-      out.push({
-        when: epoch + slotTime(w.instrument, slot + w.slotOffset, bpm), instrument: w.instrument, freq: w.freq, vel: w.vel * vel,
-        kind: e.kind, key: e.key, ...(w.long ? { long: true } : {}),
-      });
-    }
+  for (const w of windParts(r.notes, chordAtStep(k, sec), sec)) {
+    const { when, chord } = at(w.slotOffset);
+    out.push({
+      when, instrument: w.instrument, freq: ladderFreq(snapToScale(w.semis, chord)), vel: w.vel * vel, kind: e.kind, key: e.key,
+      ...(w.long ? { long: true } : {}),
+    });
   }
-  return { notes: out.sort((a, b) => a.when - b.when || a.instrument.localeCompare(b.instrument)), ney, piano };
+  return { notes: out.sort((a, b) => a.when - b.when || a.instrument.localeCompare(b.instrument)), ney: r.state };
+}
+
+const drumPitch = (v: Voice): number => (v in DRUM_PITCH ? DRUM_PITCH[v as keyof typeof DRUM_PITCH] : 0);
+
+/**
+ * Every note of global 16th step `k`: the section's groove hits (`grooveStep` on the step's chord and the next one) and
+ * the active flight lines (each line's euclidean pattern; pitch = altitude on the chord ladder). Pure.
+ */
+export function planStep(k: number, ctx: { epoch: number; section: Section }, lines: SkyFlight[], followedId: string | null): PlannedNote[] {
+  const { epoch, section: sec } = ctx;
+  const when = stepTime(k, epoch, sec);
+  const chord = chordAtStep(k, sec);
+  const out: PlannedNote[] = grooveStep(k % 16, chord, nextChordAtStep(k, sec), sec).map((h) => ({
+    when, instrument: h.voice, freq: h.freq ?? h.freqs?.[0] ?? drumPitch(h.voice), vel: h.vel, kind: "groove" as const, key: "",
+    ...(h.freqs ? { freqs: h.freqs } : {}), ...(h.long ? { long: true } : {}),
+  }));
+  const gain = LINE_VEL * lineGain(lines.length);
+  for (const f of lines) {
+    if (!linePattern(f.id)[k % 16]) continue;
+    out.push({
+      when, instrument: lineInstrument(f), freq: ladderFreq(lineNote(f, chord, k)), vel: gain * (f.id === followedId ? FOLLOW_BOOST : 1),
+      kind: "line", key: f.key, lineId: f.id,
+    });
+  }
+  return out;
 }

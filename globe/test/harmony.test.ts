@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHORDS, ladderFreq, scaleLadder, snapToTones, type Chord } from "../src/audio/harmony";
+import { CHORDS, ladderFreq, scaleLadder, snapToScale, snapToTones, type Chord } from "../src/audio/harmony";
 import { freqOf } from "../src/audio/theory";
 
 const pc = (s: number) => ((s % 12) + 12) % 12;
@@ -86,5 +86,22 @@ describe("ladderFreq", () => {
     expect(ladderFreq(0)).toBe(110);
     expect(ladderFreq(12)).toBeCloseTo(220, 9);
     for (const s of [5, 17, 36, 46]) expect(ladderFreq(s)).toBe(freqOf(2, s));
+  });
+});
+
+describe("snapToScale", () => {
+  it("keeps scale pitches and moves others to the nearest scale pitch (ties → lower)", () => {
+    const { Bbmaj7, A7b9, Dm9 } = CHORDS;
+    expect(snapToScale(27, Bbmaj7)).toBe(27); // C is in Bb lydian
+    expect(snapToScale(26, Bbmaj7)).toBe(25); // B: Bb (25) and C (27) tie → lower
+    expect(snapToScale(38, Bbmaj7)).toBe(37);
+    expect(snapToScale(2, A7b9)).toBe(1); // B → Bb (1 away) rather than C# (2 away)
+    expect(snapToScale(3, A7b9)).toBe(4); // C → C# (1 away) rather than Bb (2 away)
+    expect(snapToScale(-2, A7b9)).toBe(-2); // G (pc 10), below A2
+    for (let s = -12; s <= 60; s++) for (const c of [Bbmaj7, A7b9, Dm9]) {
+      const r = snapToScale(s, c);
+      expect(c.scale.includes(pc(r))).toBe(true);
+      expect(Math.abs(r - s)).toBeLessThanOrEqual(1);
+    }
   });
 });
