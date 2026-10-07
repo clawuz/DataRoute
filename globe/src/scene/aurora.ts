@@ -47,7 +47,9 @@ void main() {
   float band = sm(58.0, 66.0, abs(lat)) * (1.0 - sm(76.0, 82.0, abs(lat)));
   float night = 1.0 - sm(-0.05, 0.12, dot(normalize(vWorldN), uSunDir));
   // curtains: vertical streaks along longitude drifting slowly
-  float curtain = noise(vec2(lon * 9.0 + uTime * 0.05, lat * 0.4)) * 0.6 + noise(vec2(lon * 23.0 - uTime * 0.08, lat * 1.1)) * 0.4;
+  // sampled on the circle of longitudes (not raw lon) so there is no seam at the 180 meridian
+  vec2 ring = normalize(d.xz + vec2(1e-5, 0.0));
+  float curtain = noise(ring * 9.0 + vec2(uTime * 0.05, lat * 0.4)) * 0.6 + noise(ring * 23.0 + vec2(-uTime * 0.08, lat * 1.1)) * 0.4;
   curtain = smoothstep(0.35, 0.85, curtain);
   vec3 V = normalize(cameraPosition - vWorldPos);
   float rim = pow(1.0 - max(dot(normalize(vWorldN), V), 0.0), 1.4); // curtains read best near the limb
