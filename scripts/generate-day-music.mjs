@@ -64,14 +64,18 @@ export function summarize(day) {
       }
     });
   }
-  const max = Math.max(1, ...chunks.map((c) => c.airborneHours / 6));
+  // contrast: scale between the quietest and busiest window of THIS day so the arc is audible even when traffic is fairly flat
+  const vals = chunks.map((c) => c.airborneHours / 6);
+  const lo = Math.min(...vals);
+  const hi = Math.max(...vals);
+  const norm = (v) => (hi - lo < 1e-6 ? 0.5 : (v - lo) / (hi - lo));
   return chunks.map((c) => {
     const localHour = (((c.start + 3 * 1800) / 3600 + IST_OFFSET_H) % 24 + 24) % 24; // middle of the window start +1.5 h, Istanbul time
     const label = localHour < 6 ? "night" : localHour < 12 ? "morning" : localHour < 18 ? "afternoon" : "evening";
     const total = Object.values(c.regions).reduce((a, b) => a + b, 0) || 1;
     const shares = Object.entries(c.regions).map(([r, v]) => [r, v / total]).sort((a, b) => b[1] - a[1]);
     const topTo = Object.entries(c.to).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
-    return { label, energy: c.airborneHours / 6 / max, shares, topTo, avgAirborne: c.airborneHours / 6, span };
+    return { label, energy: norm(c.airborneHours / 6), shares, topTo, avgAirborne: c.airborneHours / 6, span };
   });
 }
 
