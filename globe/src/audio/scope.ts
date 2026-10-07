@@ -194,3 +194,10 @@ export function playingPush(list: Playing[], n: NoteEvent, now: number, minHold 
 
 /** Entries still sounding at `now`, newest first, at most `max`. */
 export const playingNow = (list: Playing[], now: number, max = 8): Playing[] => list.filter((p) => p.until > now).slice(0, max);
+
+/** art:track — label while the recorded track drives the music: `ROUTES → MUSIC · 18:00 İST · 158 AIRBORNE`. */
+export const dayLabel = (d: { hour: number; airborne: number }): string =>
+  `ROUTES → MUSIC · ${String(Math.floor(d.hour)).padStart(2, "0")}:00 İST · ${d.airborne} AIRBORNE`;
+
+/** The music window (0 … windows−1) a position 0..1 of the day lies in. */
+export const windowAt = (pos: number, windows: number): number => Math.min(windows - 1, Math.max(0, Math.floor(pos * windows)));

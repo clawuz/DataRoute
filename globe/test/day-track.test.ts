@@ -88,3 +88,16 @@ describe("continuation after the track", () => {
     expect(total).toBeGreaterThan(4); // more than one pass over four notes
   });
 });
+
+import { dayLabel, windowAt } from "../src/audio/scope";
+describe("day curve", () => {
+  it("labels the hour and the airborne count", () => {
+    expect(dayLabel({ hour: 7.9, airborne: 158 })).toBe("ROUTES → MUSIC · 07:00 İST · 158 AIRBORNE");
+  });
+  it("finds the music window of a position", () => {
+    expect(windowAt(0, 8)).toBe(0);
+    expect(windowAt(0.5, 8)).toBe(4);
+    expect(windowAt(1, 8)).toBe(7);
+    expect(windowAt(-1, 8)).toBe(0);
+  });
+});

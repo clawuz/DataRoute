@@ -14,7 +14,7 @@ import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
 import type { GlobeEngine, GlobeFrameInput } from "../scene/engine";
 import {
   CREDIT, LABEL_COUNT, addEvents, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
-  type AirportLabel, type EventLine, type GlobeHudSnapshot, type MusicHud,
+  type AirportLabel, type DayCurveHud, type EventLine, type GlobeHudSnapshot, type MusicHud,
 } from "./hud-model";
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
@@ -112,18 +112,20 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
   let cont: Continuation | null = null; // art:track — after the track: its notes go on, played by the live routes
   let lastSky: SkyFlight[] = []; // art:track
-  let airRange: { model: GlobeModel; lo: number; hi: number } | null = null; // art:track — the day's own quietest/busiest airborne counts
+  let airRange: { model: GlobeModel; lo: number; hi: number; curve: number[] } | null = null; // art:track — the day's own quietest/busiest airborne counts
   const intensityNow = (): number => { // art:track — 0..1 between the quietest and busiest hour of the day
     if (!model) return 0.5;
     if (!airRange || airRange.model !== model) {
       let lo = Infinity;
       let hi = 0;
+      const counts: number[] = [];
       for (let i = 0; i < 48; i++) {
         const c = skyFlights(model, (i / 47) * model.span).length;
+        counts.push(c);
         lo = Math.min(lo, c);
         hi = Math.max(hi, c);
       }
-      airRange = { model, lo, hi };
+      airRange = { model, lo, hi, curve: counts.map((c) => (hi - lo < 1 ? 0.5 : (c - lo) / (hi - lo))) };
     }
     const { lo, hi } = airRange;
     return hi - lo < 1 ? 0.5 : Math.min(1, Math.max(0, (lastSky.length - lo) / (hi - lo)));
@@ -178,9 +180,17 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     lastSky = sky; // art:track
     sound.setSky(sky, follow?.id ?? null, istanbulHour(model.from + cur), mode === "REPLAY", sky.length); // art:sound — v4 build-ups, level
   }
-  const musicHud = (i: SoundInfo): MusicHud => ({ // art:sound
+  const musicHud = (i: SoundInfo, cur: number): MusicHud => ({ // art:sound
     on: soundOn, section: i.section, chord: i.chord, bpm: i.bpm, instruments: i.instruments, level: i.level, layers: i.layers,
+    ...(model && track.data() ? { day: dayCurveHud(cur) } : {}), // art:track
   });
+  const dayCurveHud = (cur: number): DayCurveHud => { // art:track
+    const level = intensityNow(); // also fills airRange.curve
+    return {
+      curve: airRange?.curve ?? [], pos: model && model.span > 0 ? Math.min(1, Math.max(0, cur / model.span)) : 0, level,
+      hour: model ? (((istanbulHour(model.from + cur)) % 24) + 24) % 24 : 0, airborne: lastSky.length, windows: 8,
+    };
+  };
   function refreshPans() { // art:sound
     if (!model) return;
     if (panModel !== model) {
@@ -315,7 +325,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
       art, // art:core
-      music: musicHud(sound.info(model ? istanbulHour(model.from + cur) : undefined)), // art:sound
+      music: musicHud(sound.info(model ? istanbulHour(model.from + cur) : undefined), cur), // art:sound
     });
   }
 

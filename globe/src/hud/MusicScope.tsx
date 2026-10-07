@@ -1,10 +1,10 @@
 // art:sound — the ROUTES → MUSIC scope: a pitch ribbon of the flight lines over a rhythm strip of the groove
 import { useEffect, useRef, useState } from "react";
-import type { MusicHud } from "../app/hud-model";
+import type { DayCurveHud, MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
   DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRACK_MAX_POINTS, TRACK_MAX_TRAILS, TRACK_RIBBON_SEC, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
-  noteBar, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, trailIdOf, type Lane, type Playing, type Trail,
+  dayLabel, noteBar, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, windowAt, trailIdOf, type Lane, type Playing, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -24,6 +24,58 @@ interface LaneTrace {
 }
 
 const wallSec = () => performance.now() / 1000;
+
+/** art:track — bottom 30 % of the scope: the 24 h airborne curve with the 8 music windows and the playhead */
+function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: number, h: number, dpr: number, base: number): void {
+  const pad = 3 * dpr;
+  const y0 = top + pad;
+  const y1 = h - pad;
+  const n = d.curve.length;
+  if (n < 2) return;
+  const xOf = (i: number) => (i / (n - 1)) * w;
+  const yOf = (v: number) => y1 - v * (y1 - y0);
+  g.globalCompositeOperation = "source-over";
+  // window dividers (the music is composed in `windows` pieces); the current window is lightly lit
+  const cur = windowAt(d.pos, d.windows);
+  g.fillStyle = "rgba(160, 200, 255, 0.07)";
+  g.fillRect((cur / d.windows) * w, y0, w / d.windows, y1 - y0);
+  g.strokeStyle = "rgba(160, 200, 255, 0.22)";
+  g.lineWidth = 1 * dpr;
+  for (let k = 1; k < d.windows; k++) {
+    const x = (k / d.windows) * w;
+    g.beginPath();
+    g.moveTo(x, y0);
+    g.lineTo(x, y1);
+    g.stroke();
+  }
+  // the curve: area + line
+  g.globalAlpha = base;
+  g.beginPath();
+  g.moveTo(0, y1);
+  d.curve.forEach((v, i) => g.lineTo(xOf(i), yOf(v)));
+  g.lineTo(w, y1);
+  g.closePath();
+  g.fillStyle = "rgba(90, 190, 255, 0.18)";
+  g.fill();
+  g.beginPath();
+  d.curve.forEach((v, i) => (i === 0 ? g.moveTo(xOf(i), yOf(v)) : g.lineTo(xOf(i), yOf(v))));
+  g.strokeStyle = "rgba(120, 210, 255, 0.95)";
+  g.lineWidth = 1.4 * dpr;
+  g.stroke();
+  // playhead on the curve, its dot at the traffic right now
+  const px = d.pos * w;
+  g.globalAlpha = 1;
+  g.strokeStyle = "rgba(255, 255, 255, 0.85)";
+  g.lineWidth = 1.2 * dpr;
+  g.beginPath();
+  g.moveTo(px, y0);
+  g.lineTo(px, y1);
+  g.stroke();
+  g.fillStyle = "#fff";
+  g.beginPath();
+  g.arc(px, yOf(d.level), 2.6 * dpr, 0, Math.PI * 2);
+  g.fill();
+}
 
 export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; music: MusicHud; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -146,6 +198,10 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         }
       }
 
+      if (m.day) { // art:track — the day's traffic curve replaces the (silent) rhythm strip
+        drawDay(g, m.day, w, ribbonH, h, dpr, base);
+        return;
+      }
       // rhythm strip (bottom 30 %): one thin waveform lane per groove voice
       g.globalAlpha = base;
       const laneH = (h - ribbonH) / LANE_ORDER.length;
@@ -186,7 +242,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
     };
   }, []);
 
-  const [head, chord, tail] = scopeLabel(music);
+  const [head, chord, tail] = music.day ? [dayLabel(music.day), "", ""] : scopeLabel(music);
   const segColor = SECTION_COLOR[music.section] ?? SECTION_COLOR.DAY;
   return (
     <div className={`music-scope${compact ? " compact" : ""}`}>
@@ -194,7 +250,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
         {/* v4: the rhythm level (five segments) and one dot per active region layer, over the rhythm strip */}
-        <div className="music-scope-meter">
+        {!music.day && <div className="music-scope-meter"> {/* art:track — the rhythm level and region dots belong to the generative engine */}
           <div className="music-scope-level">
             {levelSegments(music.level).map((on, i) => (
               <span key={i} className={`seg${on ? " on" : ""}${i === music.level ? " cur" : ""}`} style={on ? { background: segColor } : undefined} />
@@ -205,7 +261,7 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
               <span key={r} className="dot" data-region={r} style={{ background: layerColor(r) }} />
             ))}
           </div>
-        </div>
+        </div>}
       </div>
       <div className="music-scope-label label">{head}<span className="music-scope-chord">{chord}</span>{tail}</div>
       {nowList.length > 0 && ( // art:track

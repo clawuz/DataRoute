@@ -54,6 +54,22 @@ export interface MusicHud {
   level: number;
   /** active region layers */
   layers: string[];
+  /** art:track — while the recorded track drives the music: the day's traffic curve and where we are on it */
+  day?: DayCurveHud;
+}
+
+/** The day's airborne curve (48 samples, 0 = the quietest hour, 1 = the busiest), the position on it and the music windows. */ // art:track
+export interface DayCurveHud {
+  curve: number[];
+  /** 0..1 along the day (the replay position; the live head in LIVE) */
+  pos: number;
+  /** traffic right now, 0..1 on the same scale as the curve */
+  level: number;
+  /** Istanbul hour 0..24 and the airborne count at the position */
+  hour: number;
+  airborne: number;
+  /** number of music windows the day is divided into */
+  windows: number;
 }
 
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
