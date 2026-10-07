@@ -879,10 +879,10 @@ git commit -m "art(light): twilight band, cloud shadows and sun glare"
 - Modify: `globe/src/scene/space.ts`, `globe/src/scene/textures.ts`, `globe/src/scene/engine.ts`, `globe/src/styles.css` (none), `NOTICE`
 - Test: `globe/test/star-uv.test.ts`, `globe/test/scene-materials.test.ts`
 
-- [ ] **Step 0 (controller): resolve and approve the download.** Find the NASA SVS "Deep Star Maps 2020" equatorial-coordinates equirectangular image at roughly 4096×2048 (not the galactic-coordinates variant; if only 8k or galactic is offered, report the options). Use `curl -sI -L <url>` (HEAD only) to get the final URL, content type and size. **Ask the user to approve** (state file name, source URL, size ≈ 4–6 MB, public-domain NASA data). Do not download before approval. After approval: `curl -sSL -C - -o /tmp/starmap.jpg <url>`, convert with `sips -z 2048 4096 -s format jpeg -s formatOptions 85 /tmp/starmap.jpg --out globe/public/textures/stars-4k.jpg` (skip resizing if it is already 4096×2048), check the size with `ls -l`, delete the temp file. If the user declines, skip this task (the section is optional; mark it in the notes table) and continue with Task 5.
+- [ ] **Step 0 (controller): approved download and conversion.** NASA SVS "Deep Star Maps 2020" (public domain), celestial (ICRF/J2000) coordinates, plate carrée, **centred on 0 h right ascension with right ascension increasing to the left**: `https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/starmap_2020_4k.exr` (4096×2048, ≈ 34 MB, only EXR is published; no JPG). Already shown to the user for approval (record the answer). After approval: `curl -sSL -C - -o /private/tmp/claude-504/starmap_2020_4k.exr <url>` (retry the resume loop until the size matches `content-length`), convert the linear HDR EXR to an 8-bit sRGB JPEG with a mild highlight roll-off, e.g. `ffmpeg -y -i starmap_2020_4k.exr -vf "format=gbrpf32le,zscale=transfer=linear:npl=100,tonemap=hable:desat=0,zscale=transfer=bt709,format=yuvj420p" -q:v 3 globe/public/textures/stars-4k.jpg` (if the ffmpeg build lacks `zscale`, use Python Pillow/NumPy instead: read with ffmpeg to 16-bit PNG, then `out = np.clip(lin / (1 + lin), 0, 1) ** (1/2.2)`), check `sips -g pixelWidth -g pixelHeight` = 4096×2048 and the file is a few MB, delete the temporary EXR. If the user declines or the conversion fails, skip this task (mark it in the notes table) and continue with Task 5.
 
 **Interfaces:**
-- Produces: `star-uv.ts`: `starUV(dir: [number, number, number], flip = false): { u: number; v: number }` (inertial frame: right ascension `α = atan2(x, z)` measured from +z toward +x, declination `δ = asin(y)`; `u = fract(α / 2π)` mirrored to `1 − u` when `flip`; `v = (δ + π/2) / π`); `Space.setStarMap(tex: Texture | null): void`; `loadStarMap(): Promise<Texture | null>` in `textures.ts` (returns null on failure, never throws).
+- Produces: `star-uv.ts`: `starUV(dir: [number, number, number]): { u: number; v: number }` (inertial frame: right ascension `α = atan2(x, z)` measured from +z toward +x, declination `δ = asin(y)`; NASA convention — map centred on 0 h with RA increasing to the left — gives `u = fract(0.5 − α / 2π)`, `v = (δ + π/2) / π`); `Space.setStarMap(tex: Texture | null): void`; `loadStarMap(): Promise<Texture | null>` in `textures.ts` (returns null on failure, never throws).
 
 - [ ] **Step 1: Failing tests** — `globe/test/star-uv.test.ts`:
 ```ts
@@ -895,14 +895,11 @@ describe("starUV", () => {
     expect(starUV([0, -1, 0]).v).toBeCloseTo(0, 9);
     expect(starUV([0, 0, 1]).v).toBeCloseTo(0.5, 9);
   });
-  it("right ascension grows from +z toward +x over one turn of u", () => {
-    expect(starUV([0, 0, 1]).u).toBeCloseTo(0, 9);
-    expect(starUV([1, 0, 0]).u).toBeCloseTo(0.25, 9);
-    expect(starUV([0, 0, -1]).u).toBeCloseTo(0.5, 9);
-    expect(starUV([-1, 0, 0]).u).toBeCloseTo(0.75, 9);
-  });
-  it("flip mirrors u", () => {
-    expect(starUV([1, 0, 0], true).u).toBeCloseTo(0.75, 9);
+  it("NASA convention: 0 h at the centre, right ascension increases to the left", () => {
+    expect(starUV([0, 0, 1]).u).toBeCloseTo(0.5, 9); // RA 0 h
+    expect(starUV([1, 0, 0]).u).toBeCloseTo(0.25, 9); // RA 6 h
+    expect(starUV([0, 0, -1]).u).toBeCloseTo(0, 9); // RA 12 h (image edge)
+    expect(starUV([-1, 0, 0]).u).toBeCloseTo(0.75, 9); // RA 18 h
   });
 });
 ```
@@ -912,22 +909,21 @@ describe("starUV", () => {
 
 - [ ] **Step 3: Implement.** `star-uv.ts`:
 ```ts
-export function starUV(dir: [number, number, number], flip = false): { u: number; v: number } {
+export function starUV(dir: [number, number, number]): { u: number; v: number } {
   const [x, y, z] = dir;
   const l = Math.hypot(x, y, z) || 1;
   const a = Math.atan2(x, z); // right ascension from +z toward +x
-  let u = a / (2 * Math.PI);
+  let u = 0.5 - a / (2 * Math.PI); // NASA map: 0 h at the centre, RA increasing to the left
   u -= Math.floor(u);
-  return { u: flip ? (1 - u) % 1 : u, v: (Math.asin(Math.max(-1, Math.min(1, y / l))) + Math.PI / 2) / Math.PI };
+  return { u, v: (Math.asin(Math.max(-1, Math.min(1, y / l))) + Math.PI / 2) / Math.PI };
 }
 ```
-`space.ts` stars fragment shader: add `uniform sampler2D uStarMap; uniform float uHasStarMap; uniform float uStarFlip;`, and in `main` after `dir`:
+`space.ts` stars fragment shader: add `uniform sampler2D uStarMap; uniform float uHasStarMap;`, and in `main` after `dir`:
 ```glsl
   vec3 col = starLayer(dir, 90.0, 0.965, 0.30) + starLayer(dir, 40.0, 0.985, 0.38) * 1.4;
   if (uHasStarMap > 0.5) {
     float a = atan(dir.x, dir.z) / 6.28318530718;
-    float u = fract(a);
-    u = uStarFlip > 0.5 ? 1.0 - u : u;
+    float u = fract(0.5 - a); // NASA convention: 0 h at the centre, RA increasing to the left
     float v = (asin(clamp(dir.y, -1.0, 1.0)) + 1.57079632679) / 3.14159265359;
     // seam-safe derivatives (same trick as the Earth shader)
     vec2 uv = vec2(u, v);
@@ -939,7 +935,7 @@ export function starUV(dir: [number, number, number], flip = false): { u: number
   }
   gl_FragColor = vec4(col, 1.0);
 ```
-(replace the existing two lines `vec3 col = …; gl_FragColor = …;`). Uniforms: `uStarMap: { value: null }`, `uHasStarMap: { value: 0 }`, `uStarFlip: { value: STAR_FLIP ? 1 : 0 }` with `export const STAR_FLIP = false;` in `star-uv.ts` — **set after the visual check below**. `Space.setStarMap(tex)` sets texture/flag (and `tex.wrapS = RepeatWrapping; tex.colorSpace = NoColorSpace` handled in `loadStarMap`). `textures.ts`:
+(replace the existing two lines `vec3 col = …; gl_FragColor = …;`). Uniforms: `uStarMap: { value: null }`, `uHasStarMap: { value: 0 }`. `Space.setStarMap(tex)` sets texture/flag (and `tex.wrapS = RepeatWrapping; tex.colorSpace = NoColorSpace` handled in `loadStarMap`). `textures.ts`:
 ```ts
 export async function loadStarMap(load: (url: string) => Promise<Texture> = (u) => new TextureLoader().loadAsync(u)): Promise<Texture | null> {
   try {
@@ -957,7 +953,7 @@ Add a test for `loadStarMap` (success sets `colorSpace`/`wrapS`; a rejected load
 
 - [ ] **Step 4: Run to verify pass** — `npx vitest run && npx tsc --noEmit && npm run build`.
 
-- [ ] **Step 5: Controller visual check:** the sky must look like the real sky: verify orientation with known features — the band of the Milky Way should look continuous (no seam, no mirrored text-like patterns), the north celestial pole direction (camera looking along +y from the origin side is not reachable; instead compare with an astronomy reference using `sunDirection` at the March equinox: the Sun should sit in front of the constellation Pisces/Aquarius region and the Milky Way centre (Sagittarius, RA ≈ 17h45m, Dec ≈ −29°) should be opposite to the Sun at the equinox's December solstice…). Practical check: flip `STAR_FLIP` and compare the two looks against a real star chart of Orion (RA 5h30m, Dec −5°) and Cassiopeia (RA 1h, Dec +60°); the W of Cassiopeia must not be mirrored. Choose `STAR_FLIP` accordingly and commit the constant. Verify `?art=0` shows the procedural stars again and FPS ≥ 55.
+- [ ] **Step 5: Controller visual check:** the sky must look like the real sky: verify orientation with known features — the band of the Milky Way should look continuous (no seam, no mirrored text-like patterns), the north celestial pole direction (camera looking along +y from the origin side is not reachable; instead compare with an astronomy reference using `sunDirection` at the March equinox: the Sun should sit in front of the constellation Pisces/Aquarius region and the Milky Way centre (Sagittarius, RA ≈ 17h45m, Dec ≈ −29°) should be opposite to the Sun at the equinox's December solstice…). Practical check: compare the sky with a real star chart of Orion (RA 5h30m, Dec −5°) and Cassiopeia (RA 1h, Dec +60°); the W of Cassiopeia and Orion's belt orientation must not be mirrored. If the sky is mirrored, the inertial frame handedness is the cause: fix `starUV` and the shader together (mirror u: `u = fract(0.5 + a/2π)`) and say so in the notes table. Verify `?art=0` shows the procedural stars again and FPS ≥ 55.
 
 - [ ] **Step 6: Commit**
 ```bash
@@ -1818,7 +1814,7 @@ git commit -m "art(docs): art layer keys and implementation notes"
 ## Outcome notes (fill in during execution)
 
 - Task 2/3/5: record visual-check observations and tuned constants in the spec notes table.
-- Task 4: record the approved star-map file (name, URL, size) and the chosen `STAR_FLIP`.
+- Task 4: record the approved star-map file (name, URL, size) and whether the orientation check required mirroring `u`.
 - Task 8: record the user's listening feedback (levels, timbre) and any changes.
 
 ## Not in this plan
