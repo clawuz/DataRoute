@@ -73,14 +73,14 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let hidden = false;
   let hudTimer = 0;
   let perf = { fps: 0, level: 0 };
-  let art: ArtState = initArt(d.search ?? "");
+  let art: ArtState = initArt(d.search ?? ""); // art:core
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
   let prevSoundCur: number | null = null; // art:sound
   const pans = new Map<string, { pan: number; visible: boolean }>(); // art:sound
   let panModel: GlobeModel | null = null; // art:sound
   let panRoutes: RouteMidpoint[] = []; // art:sound
-  const pushEffects = () => {
+  const pushEffects = () => { // art:core
     const e = effectsFor(art, perf.level);
     d.engine.setEffects(e); // art:core
     if (e.sound !== soundOn) { // art:sound
@@ -230,7 +230,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
       aircraftAirborne: model && !follow ? aircraftBreakdown(model, cur) : [],
-      art,
+      art, // art:core
     });
   }
 
@@ -379,7 +379,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (!cmd) return;
       const nowSec = d.nowMs() / 1000;
       const f = follow && model ? model.flights[follow.idx] : null;
-      if (cmd === "toggleCorridors" || cmd === "toggleAurora" || cmd === "toggleSound") {
+      if (cmd === "toggleCorridors" || cmd === "toggleAurora" || cmd === "toggleSound") { // art:core
         if (!art.enabled) return; // ?art=0: art keys are inert
         art = toggleArt(art, cmd === "toggleCorridors" ? "corridors" : cmd === "toggleAurora" ? "aurora" : "sound");
         persistArt(art);
@@ -475,7 +475,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     setPerf(fps, level) {
       if (disposed) return;
       perf = { fps, level };
-      pushEffects();
+      pushEffects(); // art:core
     },
     setTextureState(progress, note) {
       if (disposed) return;

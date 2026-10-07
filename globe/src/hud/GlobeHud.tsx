@@ -132,6 +132,7 @@ export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
   return <div className="modeline label">{text}</div>;
 }
 
+// art:core
 export function ArtNotes({ art }: { art: GlobeHudSnapshot["art"] }) {
   if (!art.enabled) return null;
   const lines = [art.corridors && "ROUTE DENSITY · 24H", art.aurora && "AURORA · ILLUSTRATIVE", art.sound && "SOUND ON"].filter(Boolean) as string[];

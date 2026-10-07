@@ -29,7 +29,7 @@ interface Voice {
   at: number;
 }
 
-function voice(ctx: AudioContext, out: AudioNode, v: Voice): void {
+function voice(ctx: AudioContext, out: AudioNode, v: Voice, onEnd?: () => void): void {
   const osc = ctx.createOscillator();
   osc.type = v.type;
   if (v.from !== undefined && v.glide) {
@@ -58,6 +58,7 @@ function voice(ctx: AudioContext, out: AudioNode, v: Voice): void {
     osc.disconnect();
     filt?.disconnect();
     g.disconnect();
+    onEnd?.();
   };
   osc.start(v.at);
   osc.stop(stopAt);
@@ -67,6 +68,13 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
   const pan = ctx.createStereoPanner();
   pan.pan.value = o.pan;
   pan.connect(dest);
+  let live = 0; // disconnect the panner once its last oscillator has ended
+  const v = (vc: Voice) => {
+    live++;
+    voice(ctx, pan, vc, () => {
+      if (--live === 0) pan.disconnect();
+    });
+  };
   const t = n.when;
   const f = n.freq;
   const land = n.kind === "arr";
@@ -75,15 +83,15 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
   const r: RegionName = n.region;
   switch (r) {
     case "DOM":
-      voice(ctx, pan, { type: "sine", freq: f, from: 2 * f, glide: 0.06, peak, attack: 0.005, decay: 0.45 * k, at: t });
+      v({ type: "sine", freq: f, from: 2 * f, glide: 0.06, peak, attack: 0.005, decay: 0.45 * k, at: t });
       break;
     case "EUR":
-      voice(ctx, pan, { type: "sine", freq: f, peak, attack: 0.004, decay: 1.4 * k, at: t });
-      voice(ctx, pan, { type: "sine", freq: 4 * f, peak: peak * 0.25, attack: 0.004, decay: 0.35 * k, at: t });
+      v({ type: "sine", freq: f, peak, attack: 0.004, decay: 1.4 * k, at: t });
+      v({ type: "sine", freq: 4 * f, peak: peak * 0.25, attack: 0.004, decay: 0.35 * k, at: t });
       break;
     case "MEA": {
       const oud = (freq: number, at: number, p: number) =>
-        voice(ctx, pan, {
+        v({
           type: "sawtooth", freq, peak: p, attack: 0.005, decay: 0.9 * k, at,
           lowpass: { start: 3200 * o.cutoffScale, end: 600 * o.cutoffScale, over: 0.25, q: 0.8 },
         });
@@ -92,18 +100,18 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: PlannedNote, o: 
       break;
     }
     case "AFR":
-      voice(ctx, pan, { type: "sine", freq: f, peak, attack: 0.004, decay: 0.6 * k, at: t });
-      voice(ctx, pan, { type: "sine", freq: 2.76 * f, peak: peak * 0.35, attack: 0.004, decay: 0.18 * k, at: t });
+      v({ type: "sine", freq: f, peak, attack: 0.004, decay: 0.6 * k, at: t });
+      v({ type: "sine", freq: 2.76 * f, peak: peak * 0.35, attack: 0.004, decay: 0.18 * k, at: t });
       break;
     case "ASI":
-      voice(ctx, pan, {
+      v({
         type: "triangle", freq: f, from: 1.02 * f, glide: 0.03, peak, attack: 0.004, decay: 0.75 * k, at: t,
         lowpass: { start: 4200 * o.cutoffScale, q: 0.8 },
       });
       break;
     case "AME":
       for (const d of [-5, 5])
-        voice(ctx, pan, {
+        v({
           type: "sawtooth", freq: f, detune: d, peak: peak * 0.5, attack: 1.2, decay: 2.6 * k, at: t,
           lowpass: { start: 900 * o.cutoffScale, q: 0.8 },
         });

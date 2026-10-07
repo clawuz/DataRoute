@@ -39,7 +39,7 @@ export interface GlobeHudSnapshot extends HudSnapshot {
   notice: string;
   tour: boolean;
   aircraftAirborne: AircraftCount[];
-  art: ArtState;
+  art: ArtState; // art:core
 }
 
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {

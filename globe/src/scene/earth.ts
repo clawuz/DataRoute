@@ -44,7 +44,6 @@ vec2 sphereUV(vec3 p) {
   return vec2((lon + PI) / (2.0 * PI), (lat + PI * 0.5) / PI);
 }
 
-
 vec3 reinhard(vec3 c) {
   c *= uExposure / (1.0 + c / uExposure);
   return pow(c, vec3(uGamma));
@@ -89,7 +88,6 @@ void main() {
 
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   col += vec3(0.10, 0.32, 0.95) * fres * (0.10 + 0.9 * dayAmt) * 0.9;
-
 
   gl_FragColor = vec4(reinhard(col), 1.0);
 }

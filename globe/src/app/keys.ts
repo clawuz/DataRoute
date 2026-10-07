@@ -36,13 +36,13 @@ export function keyToCommand(key: string): GlobeCommand | null {
       return "faster";
     case "c":
     case "C":
-      return "toggleCorridors";
+      return "toggleCorridors"; // art:corridors
     case "a":
     case "A":
-      return "toggleAurora";
+      return "toggleAurora"; // art:core
     case "m":
     case "M":
-      return "toggleSound";
+      return "toggleSound"; // art:sound
     default:
       return null;
   }
