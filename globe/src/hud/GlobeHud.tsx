@@ -146,7 +146,7 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
           <Counters c={s.counters} animate={animate} />
           <DepartureStrip bins={s.depHist} playhead={s.playhead} />
           {!s.follow && <RegionBars counts={s.regionAirborne} />}
-          <MusicScope bus={noteBus ?? ownBus} music={s.music} /> {/* art:sound */}
+          <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} /> {/* art:sound */}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />

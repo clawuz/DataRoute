@@ -18,7 +18,7 @@ interface LaneTrace {
 
 const wallSec = () => performance.now() / 1000;
 
-export function MusicScope({ bus, music }: { bus: NoteBus; music: MusicHud }) {
+export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; music: MusicHud; compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const musicRef = useRef(music);
   musicRef.current = music;
@@ -120,7 +120,7 @@ export function MusicScope({ bus, music }: { bus: NoteBus; music: MusicHud }) {
   }, []);
 
   return (
-    <div className="music-scope">
+    <div className={`music-scope${compact ? " compact" : ""}`}>
       <div className="music-scope-wave" aria-hidden="true">
         <canvas ref={canvasRef} className="music-scope-canvas" />
         {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
