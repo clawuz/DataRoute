@@ -121,6 +121,10 @@ Adımlar ayrı commit: (1) koridorlar, (2) bulut gölgesi + güneş parlaması, 
 | Yıldız haritası | 8934651, dd7abab | `git revert dd7abab 8934651` |
 | Aurora | f1a1d47, 985055c | `git revert 985055c f1a1d47` |
 | Rota müziği | 7b459ae, 3a84843, 075d0a2, 08180d4 | `git revert 08180d4 075d0a2 3a84843 7b459ae` |
+| Müzik v2: piyano + ney + 8 akorlu armoni | 3389a06 | `git revert 3389a06` |
+| Müzik v2: dört bölümlü form, veriden doğan ney melodisi, öklid ritmi, akan piyano | fdec1af | `git revert fdec1af` |
+| Nefesli topluluk (klarnet, saksafon, trompet) | fdec1af (müzik v2 ile birlikte) | `git revert fdec1af` (ayrı commit değildir; müzik v2 ile birlikte geri alınır) |
+| Kapsam paneli (ROUTES → MUSIC) ve rota çizgisi nabızları | b4e6549, 7fcc885, dc57f5b | `git revert dc57f5b 7fcc885 b4e6549` (eski uçak çubukları ve motorun ses-saati planlaması geri gelir) |
 
 Gözlemler:
 - Koridorlar çiziliyor (gündüz tarafında krem/turuncu); İstanbul çevresi hâlâ beyaza doyuyor.
@@ -128,3 +132,6 @@ Gözlemler:
 - Yıldız haritası ayarlandıktan sonra ince; takımyıldızlara göre yönelim henüz doğrulanmadı.
 - Alacakaranlık bandı kullanıcı tercihiyle kaldırıldı.
 - Aurora ve ses henüz kullanıcı tarafından incelenmedi (ses için dinleme gerekir).
+- Kapsam paneli koyu bir zemin üzerinde çiziliyor; SOUND OFF durumunda da çalışıyor; konsol hatası yok.
+- Akor etiketi doğal harf büyüklüğüyle gösteriliyor (AM/PM gibi okunmuyor).
+- Müzik kalitesi ve nefesli topluluk dengesi kullanıcının dinlemesini bekliyor.

@@ -72,7 +72,7 @@ Click an arc (or let the tour pick one) to FOLLOW it: the camera flows along the
 While following: Space pause · ← / → ±5 min · [ / ] speed ×60…×960 · Esc / G back to the globe.
 Drag to rotate, hover an arc for details.
 
-Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default; a generative continent orchestra: every departure/landing is a note — Europe vibraphone, Middle East oud, Africa kalimba, Asia koto, Americas strings, domestic pulse — on one 96 BPM clock over an Am–F–C–G progression).
+Art layers: `C` route corridors (traffic-weighted, on by default) · `A` aurora (decorative, off by default) · `M` route music (off by default; a generative cinematic orchestra over a four-section day — night, morning, day, evening by Istanbul time — where tempo and chord progression change per section and every departure/landing is a note: Europe west/north piano, east/south vibraphone, Middle East oud, Africa kalimba, Asia koto, Americas strings, domestic pulse. Istanbul events tell a data-born melody on ney, with clarinet, saxophone and trumpet joining by section, over euclidean rhythms. The bottom-right "ROUTES → MUSIC" scope draws each instrument's waveform, and the route line that produced a note flashes on the globe; the scope also works with sound off)..
 Cloud shadows, sun glare and the real star map are always on (cloud shadows switch off at quality level 2 or worse). `?art=0` turns every art layer off and restores the plain look. Preferences persist in the browser.
 
 `globe/` reuses `web/src` (data, cycle, HUD) through the `@web/*` alias; the tunnel build in `web/` is unchanged
