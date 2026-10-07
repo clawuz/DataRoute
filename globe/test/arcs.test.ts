@@ -69,6 +69,14 @@ describe("buildArcBuffers", () => {
     expect(b.count).toBe(51);
   });
 
+  it("planned:false skips planned instances and keeps observed ones", () => {
+    const np = buildArcBuffers(model, { planned: false });
+    const k2 = Array.from({ length: np.count }, (_, i) => np.info[i * 4 + 1]);
+    expect(k2.filter((k) => k === 1)).toHaveLength(0);
+    expect(k2.filter((k) => k === 0)).toHaveLength(kinds.filter((k) => k === 0).length);
+    expect(kinds.filter((k) => k === 1).length).toBeGreaterThan(0);
+  });
+
   it("segment attributes", () => {
     const rel = FROM + 100 - FROM; // dep relative to window.from
     const first = 0;

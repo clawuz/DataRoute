@@ -40,7 +40,7 @@ export interface ArcBuffers {
   count: number;
 }
 
-export function buildArcBuffers(m: GlobeModel): ArcBuffers {
+export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean } = {}): ArcBuffers {
   const a: number[] = [];
   const b: number[] = [];
   const t: number[] = [];
@@ -83,6 +83,7 @@ export function buildArcBuffers(m: GlobeModel): ArcBuffers {
     // planned route (origin → destination), always available for routed flights
     const pl = f.planned;
     if (
+      opts.planned !== false && // art:corridors
       pl &&
       [pl.fromLat, pl.fromLon, pl.toLat, pl.toLon, pl.distKm].every(Number.isFinite) &&
       pl.distKm >= 1
@@ -219,8 +220,8 @@ export interface Arcs {
   dispose(): void;
 }
 
-export function createArcs(m: GlobeModel): Arcs {
-  const buf = buildArcBuffers(m);
+export function createArcs(m: GlobeModel, opts: { planned?: boolean } = {}): Arcs {
+  const buf = buildArcBuffers(m, opts); // art:corridors
   const geometry = new InstancedBufferGeometry();
   geometry.setIndex([0, 1, 2, 2, 1, 3]);
   geometry.setAttribute("position", new Float32BufferAttribute(new Float32Array(12), 3));

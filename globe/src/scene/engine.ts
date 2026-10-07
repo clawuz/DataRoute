@@ -15,6 +15,7 @@ import { EXTRAPOLATE_MAX_SEC, headState } from "../model/dead-reckon";
 import { HeadSmoother } from "../model/head-smoother";
 import { createAirports, type Airports } from "./airports";
 import { ARC_BASE_LIFT, createArcs, type Arcs } from "./arcs";
+import { createCorridors, type Corridors } from "./corridors"; // art:corridors
 import { createAtmosphere } from "./atmosphere";
 import { createEarth } from "./earth";
 import { createHeads, headLatLons } from "./heads";
@@ -110,6 +111,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let disposed = false;
   let texs: EarthTextures | null = null;
   let arcs: Arcs | null = null;
+  let corridors: Corridors | null = null; // art:corridors
+  const planned = () => !(effects?.corridors ?? false); // art:corridors
   let airports: Airports | null = null;
   let model: GlobeModel | null = null;
   let pickIndex: PickIndex | null = null;
@@ -173,6 +176,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     bloom.luminancePass.setSize(bw, bh);
     bloom.mipmapBlurPass.setSize(bw, bh);
     arcs?.setResolution(w * pr, h * pr, pr);
+    corridors?.setResolution(w * pr, h * pr, pr); // art:corridors
     heads.setPixelRatio(pr);
     airports?.setPixelRatio(pr);
   }
@@ -260,6 +264,11 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       arcs.uniforms.uCur.value = f.cur;
       arcs.uniforms.uHighlight.value = f.highlight;
     }
+    if (corridors) { // art:corridors
+      corridors.uniforms.uTime.value = rel(f.nowSec); // art:corridors
+      const fl = f.follow ? model?.flights[f.follow.flight] : undefined; // art:corridors
+      corridors.uniforms.uHighlight.value = fl ? corridors.indexOf(fl.from, fl.to) : -1; // art:corridors
+    } // art:corridors
     if (model) headInfo = heads.update(model, f.cur, rel(f.nowSec), f.highlight, smoother);
     airports?.setNow(rel(f.nowSec));
 
@@ -295,6 +304,32 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   resize();
   raf = requestAnimationFrame(frame);
 
+  // art:corridors — (re)build the arc / corridor overlays for the current model
+  function rebuildOverlays() {
+    if (arcs) {
+      earthGroup.remove(arcs.mesh);
+      arcs.dispose();
+      arcs = null;
+    }
+    if (corridors) {
+      earthGroup.remove(corridors.mesh);
+      corridors.dispose();
+      corridors = null;
+    }
+    if (!model) return;
+    arcs = createArcs(model, { planned: planned() });
+    earthGroup.add(arcs.mesh);
+    if (effects?.corridors) {
+      corridors = createCorridors(model);
+      earthGroup.add(corridors.mesh);
+    }
+    if (sized) {
+      const pr = renderer.getPixelRatio();
+      arcs.setResolution(size.w * pr, size.h * pr, pr);
+      corridors?.setResolution(size.w * pr, size.h * pr, pr);
+    }
+  }
+
   const world = new Vector3();
   const camWorld = new Vector3();
 
@@ -302,11 +337,6 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setModel(m, cur, nowSec) {
       const prev = model;
       const prevHeads = prev && m ? headLatLons(prev, m.from + cur - prev.from) : null;
-      if (arcs) {
-        earthGroup.remove(arcs.mesh);
-        arcs.dispose();
-        arcs = null;
-      }
       if (airports) {
         earthGroup.remove(airports.points);
         airports.dispose();
@@ -314,18 +344,17 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       }
       model = m;
       if (m) {
-        arcs = createArcs(m);
-        earthGroup.add(arcs.mesh);
+        rebuildOverlays(); // art:corridors
         airports = createAirports(m);
         earthGroup.add(airports.points);
         pickIndex = buildPickIndex(m, 3);
         if (prevHeads) smoother.onSwap(prevHeads, headLatLons(m, cur), rel(nowSec));
         if (sized) {
           const pr = renderer.getPixelRatio();
-          arcs.setResolution(size.w * pr, size.h * pr, pr);
           airports.setPixelRatio(pr);
         }
       } else {
+        rebuildOverlays(); // art:corridors
         pickIndex = null;
         heads.points.geometry.setDrawRange(0, 0);
         headInfo = { count: 0, extrapolated: 0 };
@@ -366,8 +395,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       return cam.mode;
     },
     setEffects(e) {
-      effects = e; // art:core — later sections apply it
-      void effects;
+      const prev = effects; // art:corridors
+      effects = e; // art:core
+      if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
     },
     setAfterRender(fn) {
       afterRender = fn;
@@ -398,6 +428,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       ro?.disconnect();
       canvas.removeEventListener("webglcontextlost", onContextLost);
       arcs?.dispose();
+      corridors?.dispose(); // art:corridors
       airports?.dispose();
       heads.dispose();
       earth.dispose();
