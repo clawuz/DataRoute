@@ -2077,7 +2077,68 @@ git commit -m "art(sound): v4 engine — traffic-driven rhythm levels, region la
 
 ---
 
-### Task 17: Docs, notes table, deploy
+### Task 18: Music v5 melody (pure) — unique routes, motifs, durations, instrument menus, string swells
+
+**Files:**
+- Modify: `globe/src/audio/lines.ts`, `globe/src/audio/groove.ts`, `globe/src/audio/melody.ts`, `globe/src/audio/theory.ts` (Instrument ids), `globe/src/audio/scope.ts` (colours)
+- Test: `globe/test/lines.test.ts`, `globe/test/groove.test.ts`, `globe/test/melody.test.ts` (update/extend)
+
+Spec: §4g (authoritative: motif table, instrument menus, timing rules). Pure modules only: no scene/Three imports. The engine keeps working on the old API until Task 19 migrates it — keep the previous functions it still uses compiling (list what you kept in the report).
+
+**Interfaces:**
+- `SkyFlight` gains `ageSec: number` (seconds since departure; the controller fills it in Task 19) and `routeCount?: number`.
+- `lines.ts`:
+  - `selectLines(flights, followedId, max = 12, active?)` — **groups by `key`** (one line per route): the representative is the flight with the smallest `ageSec` (for the followed flight's route the followed flight itself); the returned flights carry `routeCount` = number of input flights with that key; ordering/caps exactly as spec §4g (followed route first, then `routeCount` desc, ties by `routeHash(key)`, region cap 4 counting the followed route, `active` filter keeps the followed route).
+  - `INSTRUMENT_MENU: Record<string, Instrument[]>` keyed `"EUR_W" | "EUR_E" | "MEA" | "AFR" | "ASI" | "AME" | "DOM" | "UNK"` with the spec menus; `lineInstrument(f)` = `menu[routeHash(f.key) % menu.length]` (west/north Europe via `isWestNorth(farLat, farLon)`).
+  - `MOTIFS: { offsets: number[]; durs: number[] }[]` — exactly the twelve entries of the spec table; `motifFor(key: string, routeCount: number): { motif: { offsets: number[]; durs: number[] }; startStep: number; everyBars: 1 | 2; barParity: 0 | 1 }` (`motif = MOTIFS[routeHash(key) % 12]`, `startStep = ((routeHash(key) >> 4) % 4) * 2`, `everyBars = routeCount >= 3 ? 1 : 2`, `barParity = (routeHash(key) >> 8) & 1`).
+  - `isPhraseStart(key: string, routeCount: number, globalStep: number): boolean` — `stepInBar === startStep` and `bar % everyBars === barParity % everyBars`.
+  - `interface PhraseNote { stepOffset: number; durSteps: number; semis: number; vel: number }`; `phrase(f: SkyFlight, chordAt: (stepOffset: number) => Chord): PhraseNote[]` — four notes at cumulative offsets (`0, d0, d0 + d1, …`), `durSteps` from the motif; `chordAt(offset)` gives the chord sounding at each note's step; ladder `scaleLadder(chordAtThatNote, 3, 5)`; `baseIdx` computed from `f.alt100`/`f.vsFpm` as in the existing `lineNote` (using the ladder of the first note's chord, mapped by fraction when the ladder differs: use the same fractional position `baseIdx / (n − 1)` on each note's own ladder); note index `clamp(round(frac · (n − 1)) + offset_k)`; the first note and any note whose `stepOffset % 4 === 0` snapped with `snapToTones`; AME 7 degrees lower; velocities `0.5` first note, `0.42` others (gain scaling by `lineGain` and followed boost stay in the engine); the old `lineNote`/`linePattern` may stay only while the engine uses them.
+- `groove.ts`: `chordSwell(stepInBar: number, bar: number, chord: Chord, sec: Section, level: Level): GrooveHit | null` — `null` unless `stepInBar === 0 && bar % sec.barsPerChord === 0 && level >= 1`; voice `"STR"` (add to `Voice`/`Instrument`), `freqs` = the chord root (octave 2) plus the 3rd, 7th, 9th tones (`tones[1]`, `tones[3]`, `tones[4] ?? tones[2]`) placed in octaves 3–4, `durSteps = round(sec.barsPerChord · 16 · 0.92)`, `vel` by level `1: 0.3, 2: 0.35, 3: 0.4, 4: 0.5`. `GrooveHit` gains `durSteps?: number`.
+- `theory.ts`/`scope.ts`: add instrument ids `HARP`, `GUITAR`, `SAZ`, `KANUN`, `MARIMBA`, `CELLO`, `VIOLIN`, `FLUTE`, `ORGAN`, `STR` with colours (HARP `#9fe3ff`, GUITAR `#e8b64a`, SAZ `#F2508F`, KANUN `#F7C548`, MARIMBA `#7BD389`, CELLO `#A98BFF`, VIOLIN `#c9a7ff`, FLUTE `#3FC8F2`, ORGAN `#d9dce3`, STR `#A98BFF`).
+- `melody.ts`: `NeyNote` gains `durSlots: number` — normal cell notes `[1, 1, 3]` (the third note is held), cadence note `8`; `windParts` copy their source note's `durSlots` (clarinet same, saxophone `long` notes `durSlots × 2`, trumpet cadence `durSlots`). `pianoNext` unchanged.
+
+- [ ] **Step 1: Failing tests** (hand-check every number):
+  - `lines.test.ts`: `selectLines` — N flights sharing one key collapse to **one** line whose `routeCount === N` and whose representative is the smallest `ageSec`; the followed flight represents its route even if not newest; cap 12 / region cap 4 / `active` filter / stable ordering (route count desc, hash); no key appears twice in the output; `INSTRUMENT_MENU` content and stable `lineInstrument` per key (same key → same instrument across calls, different keys cover several menu entries over a sample of 40 keys); `MOTIFS` has 12 entries each with 4 offsets and `durs` summing to 16; `motifFor` (start step ∈ {0,2,4,6}, `everyBars` by `routeCount`, parity ∈ {0,1}, deterministic); `isPhraseStart` over 8 bars returns true exactly the expected (bar, step) pairs for a given key; `phrase` — four notes at cumulative offsets, `durSteps` equals the motif, every pitch class ∈ the chord scale of its own chord, the first note and notes at `stepOffset % 4 === 0` are chord tones, pitch rises with altitude (compare alt 100 vs 380 for the same key), AME lower than EUR, the same input gives the same output.
+  - `groove.test.ts`: `chordSwell` fires only at step 0 of chord-start bars (NIGHT with `barsPerChord 2`: bars 0, 2, 4…; DAY: every bar), `null` at level 0, velocities by level, `durSteps` = `round(barsPerChord · 16 · 0.92)` (NIGHT 29, others 15), voicing frequencies inside the chord scale and in octaves 2–4.
+  - `melody.test.ts`: the ney cell durations `[1, 1, 3]`, cadence 8, winds' durations as specified.
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; keep helpers small and pure.
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): v5 melody — one line per route, route motifs, note durations, instrument menus, string swells (pure)"
+```
+
+---
+
+### Task 19: Music v5 engine, sustained instruments, new recipes and scope bars
+
+**Files:**
+- Modify: `globe/src/audio/engine.ts`, `globe/src/audio/instruments.ts`, `globe/src/audio/score.ts`, `globe/src/app/controller.ts` (`ageSec`), `globe/src/audio/scope.ts`, `globe/src/hud/MusicScope.tsx`
+- Test: `globe/test/route-sound.test.ts`, `globe/test/score.test.ts`, `globe/test/controller.test.ts`, `globe/test/scope.test.ts`, `globe/test/hud.test.tsx`
+
+**Interfaces:**
+- `NoteEvent`/`PlannedNote` gain `durSec: number` (the note's real length); every planner path sets it (groove hits: drums keep their natural length, `durSteps · stepDur` for bass/keys/brass/string swells; line phrases `durSteps · stepDur`; ney/wind notes `durSlots` × the NEY slot length (`stepDur · 2` since the NEY grid is two slots per beat? — use the NEY slot length already defined by `slotTime`/`stepSec` for `"NEY"`)).
+- `engine.ts`: lines are now **phrases**: on each planned step, for every selected line (unique routes) with `isPhraseStart(f.key, f.routeCount ?? 1, step)`, compute `phrase(f, chordAt)` once and plan **all its notes** at `step + stepOffset` (time `epoch + (step + offset)·stepDur + swing`), instrument `lineInstrument(f)`, velocity `phraseNote.vel · lineGain(N) · 0.55`-scaled as before (followed route ×1.4, `routeCount` scaling `1 + 0.1·min(routeCount, 5)`), `durSec = durSteps · stepDur`; the same phrase must not be planned twice (track by `(key, step)`); the `STR` swell via `chordSwell(...)` at chord starts; section change / `replay` build-up rules as in §4f (during `build` the lines and strings are muted).
+- `instruments.ts`: `playNote(ctx, dest, note, opts)` honours `note.durSec`: **sustained** instruments (NEY, CLA, SAX, TPT, CELLO, VIOLIN, FLUTE, ORGAN, STR, AME): envelope attack → hold at peak until `when + durSec` → release `min(0.6, 0.5·durSec)`; **plucked/mallet** instruments (PNO, EUR, MARIMBA, HARP, GUITAR, SAZ, KANUN, MEA, AFR, ASI, EP, KEYS comping): their existing short decay becomes `clamp(durSec, ownDecay, 2.5)`; drums unchanged. New recipes exactly as spec §4g (peaks `0.22 · vel · gainScale`; vibrato as pitch automation, not extra oscillators, unless stated; reuse the cached noise buffer): HARP, GUITAR, SAZ, KANUN, MARIMBA, CELLO, VIOLIN, FLUTE, ORGAN, STR.
+- `controller.ts`: `SkyFlight.ageSec` = `max(0, cur − f.dep)` for each airborne head; nothing else changes.
+- `scope.ts`/`MusicScope.tsx`: trail points carry the note's `durSec`; the ribbon draws each note as a **thick bar** of length `durSec · pxPerSec` (min 3 px, height 3·DPR) in the line's colour at its pitch (instead of dots), with the existing trail line behind it; `pushTrail` stores `{ t, y, dur }`.
+
+- [ ] **Step 1: Failing tests:** (a) `route-sound.test.ts` (`autoTick: false`, injected `now`, DAY): for a sky with 5 flights on one route (`key` equal) only **one** line plays for that route (count distinct `lineId` per `key` = 1, unique routes ≤ 12); phrases appear at their `isPhraseStart` steps with four notes at the cumulative offsets and `durSec = durSteps · stepDur`; the phrase is not re-planned on later ticks; `routeCount ≥ 3` plays every bar, `< 3` every second bar; a `STR` swell with `durSec ≈ 0.92 · barsPerChord · bar` at chord starts and none at level 0; sustained instruments: the oscillator `stop` time ≥ `when + durSec + release` and the gain envelope holds (a `linearRampToValueAtTime`/`setValueAtTime` at `when + durSec` back to the release), plucked instruments' decay scales with `durSec` (compare a 1-step and a 10-step note of the same instrument: the longer one's `exponentialRampToValueAtTime` end time is later, capped at 2.5 s); node counts of each new recipe (HARP 2 oscillators, GUITAR 1 + filter + 1 buffer source, SAZ 2, KANUN 2, MARIMBA 2, CELLO 2 saw + filter, VIOLIN 2, FLUTE 1 + 1 buffer source, ORGAN 3, STR 2). (b) `score.test.ts`: ney/wind `durSec` from `durSlots`. (c) `controller.test.ts`: `setSky` flights have `ageSec = cur − dep`. (d) `scope.test.ts`: `pushTrail` stores `dur`, note bars use `durSec`; `hud.test.tsx`: still no throw without a 2D context.
+- [ ] **Step 2: Run to verify failure.**
+- [ ] **Step 3: Implement** per the contracts; remove dead code (old per-step line notes `lineNote`/`linePattern` if unused); mark integration lines `// art:sound`.
+- [ ] **Step 4: Run to verify pass** — `cd globe && npx vitest run && npx tsc --noEmit && npm run build`.
+- [ ] **Step 5: Commit**
+```bash
+git add globe
+git commit -m "art(sound): v5 engine — route phrases with real note lengths, sustained and plucked instruments, string swells"
+```
+- [ ] **Step 6: Listening check (user):** REPLAY with `M`: each route plays its own recognisable motif once per phrase (never two lines for one route), notes of different lengths (long held winds/strings, ringing plucks), more timbres joining by destination, chords marked by string swells; record feedback and tuning (motif density, velocities, durations, string level) in the spec notes table.
+
+---
+
+### Task 20: Docs, notes table, deploy
 
 **Files:**
 - Modify: `README.md`, `docs/superpowers/specs/2026-10-07-globe-art-light-corridors-design.md`
