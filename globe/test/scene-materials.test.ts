@@ -1,6 +1,7 @@
 import { AdditiveBlending, BackSide, Matrix3, PerspectiveCamera, Texture } from "three";
 import { describe, expect, it } from "vitest";
 import { createAtmosphere } from "../src/scene/atmosphere";
+import { createSunGlare } from "../src/scene/sun-glare";
 import { EARTH_FRAG, createEarth } from "../src/scene/earth";
 import { createSpace } from "../src/scene/space";
 import type { EarthTextures } from "../src/scene/textures";
@@ -83,5 +84,40 @@ describe("earth uniforms", () => {
     } finally {
       e.dispose();
     }
+  });
+});
+
+describe("art:light", () => {
+  it("earth exposes twilight / cloud-shadow uniforms driven by setLight", () => {
+    const e = createEarth();
+    expect(e.uniforms.uTwilight.value).toBe(0);
+    expect(e.uniforms.uCloudShadow.value).toBe(0);
+    e.setLight({ twilight: false, cloudShadow: true });
+    expect(e.uniforms.uTwilight.value).toBe(0);
+    expect(e.uniforms.uCloudShadow.value).toBe(1);
+    e.setLight({ twilight: true, cloudShadow: false });
+    expect(e.uniforms.uTwilight.value).toBe(1);
+    expect(e.uniforms.uCloudShadow.value).toBe(0);
+    e.dispose();
+  });
+  it("atmosphere has a twilight toggle", () => {
+    const a = createAtmosphere();
+    const m = a.mesh.material as import("three").ShaderMaterial;
+    expect(m.uniforms.uTwilight.value).toBe(0);
+    a.setTwilight(true);
+    expect(m.uniforms.uTwilight.value).toBe(1);
+    a.setTwilight(false);
+    expect(m.uniforms.uTwilight.value).toBe(0);
+    a.dispose();
+  });
+  it("sun glare is hidden by default, toggles, and sits 30 units along the sun direction", () => {
+    const g = createSunGlare();
+    expect(g.mesh.visible).toBe(false);
+    g.setVisible(true);
+    expect(g.mesh.visible).toBe(true);
+    g.setSun([0, 2, 0]);
+    expect(g.mesh.position.y).toBeCloseTo(30, 9);
+    expect(g.mesh.position.x).toBeCloseTo(0, 9);
+    expect(() => g.dispose()).not.toThrow();
   });
 });

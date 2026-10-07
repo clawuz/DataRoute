@@ -20,6 +20,7 @@ import { createAtmosphere } from "./atmosphere";
 import { createEarth } from "./earth";
 import { createHeads, headLatLons } from "./heads";
 import { buildPickIndex, pickFlight, type PickIndex } from "./picking3d";
+import { createSunGlare } from "./sun-glare"; // art:light
 import { createSpace } from "./space";
 import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures, lowerTier, type TextureTier, writeTierCap } from "./textures";
 
@@ -105,6 +106,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   earthGroup.add(earth.mesh);
   const atmosphere = createAtmosphere();
   scene.add(atmosphere.mesh);
+  const glare = createSunGlare(); // art:light
+  scene.add(glare.mesh); // art:light (inertial frame, not in earthGroup)
   const heads = createHeads();
   earthGroup.add(heads.points);
 
@@ -258,6 +261,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     const sun = sunDirection(shownAbs);
     earth.setSun(sun);
     atmosphere.setSun(sun);
+    glare.setSun(sun); // art:light
     earth.setCloudDrift(shownAbs * 1.5e-6);
 
     if (arcs) {
@@ -397,6 +401,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setEffects(e) {
       const prev = effects; // art:corridors
       effects = e; // art:core
+      earth.setLight({ twilight: e.twilight, cloudShadow: e.cloudShadow }); // art:light
+      atmosphere.setTwilight(e.twilight); // art:light
+      glare.setVisible(e.glare); // art:light
       if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
     },
     setAfterRender(fn) {
@@ -433,6 +440,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       heads.dispose();
       earth.dispose();
       atmosphere.dispose();
+      glare.dispose(); // art:light
       space.dispose();
       composer.dispose();
       renderer.dispose();
