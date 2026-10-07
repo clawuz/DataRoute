@@ -19,8 +19,7 @@ import {
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus } from "../audio/engine"; // art:sound
 import { eventsBetween } from "../audio/score"; // art:sound
-import { buildCorridors, type Corridor } from "../scene/corridors"; // art:sound
-import { interpolateGreatCircle } from "@collector/geo"; // art:sound
+import { routeMidpoints, type RouteMidpoint } from "../audio/pans"; // art:sound
 import { SCRUB_SEC, keyToCommand } from "./keys";
 
 export const GLOBE_CYCLE: CycleConfig = { replaySec: 180, liveSec: Number.POSITIVE_INFINITY, holdSec: 20 };
@@ -79,8 +78,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let soundOn = false; // art:sound
   let prevSoundCur: number | null = null; // art:sound
   const pans = new Map<string, { pan: number; visible: boolean }>(); // art:sound
-  let corridorModel: GlobeModel | null = null; // art:sound
-  let corridorList: Corridor[] = []; // art:sound
+  let panModel: GlobeModel | null = null; // art:sound
+  let panRoutes: RouteMidpoint[] = []; // art:sound
   const pushEffects = () => {
     const e = effectsFor(art, perf.level);
     d.engine.setEffects(e); // art:core
@@ -99,15 +98,14 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   };
   function refreshPans() { // art:sound
     if (!model) return;
-    if (corridorModel !== model) {
-      corridorModel = model;
-      corridorList = buildCorridors(model);
+    if (panModel !== model) {
+      panModel = model;
+      panRoutes = routeMidpoints(model, 40);
     }
     const vw = (d.viewportWidth ?? (() => (typeof window === "undefined" ? 1280 : window.innerWidth)))();
     pans.clear();
-    for (const c of corridorList.slice(0, 40)) {
-      const [la, lo] = interpolateGreatCircle(c.fromLat, c.fromLon, c.toLat, c.toLon, 0.5);
-      const p = d.engine.screenOf(la, lo, 0);
+    for (const c of panRoutes) {
+      const p = d.engine.screenOf(c.lat, c.lon, 0);
       pans.set(c.key, { pan: Math.min(1, Math.max(-1, (p.x - vw / 2) / (vw / 2))), visible: p.visible });
     }
   }
