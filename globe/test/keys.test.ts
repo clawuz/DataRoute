@@ -15,6 +15,11 @@ describe("keyToCommand", () => {
     expect(keyToCommand("g")).toBe("exitFollow");
     expect(keyToCommand("G")).toBe("exitFollow");
     expect(keyToCommand("t")).toBe("toggleTour");
+    expect(keyToCommand("c")).toBe("toggleCorridors");
+    expect(keyToCommand("C")).toBe("toggleCorridors");
+    expect(keyToCommand("a")).toBe("toggleAurora");
+    expect(keyToCommand("m")).toBe("toggleSound");
+    expect(keyToCommand("M")).toBe("toggleSound");
     expect(keyToCommand("T")).toBe("toggleTour");
     expect(keyToCommand("[")).toBe("slower");
     expect(keyToCommand("]")).toBe("faster");

@@ -1,6 +1,7 @@
 export type GlobeCommand =
   | "togglePause" | "scrubBack" | "scrubForward" | "toggleReplay" | "toggleHud" | "fullscreen"
-  | "exitFollow" | "toggleTour" | "slower" | "faster";
+  | "exitFollow" | "toggleTour" | "slower" | "faster"
+  | "toggleCorridors" | "toggleAurora" | "toggleSound";
 
 export const SCRUB_SEC = 3600;
 
@@ -33,6 +34,15 @@ export function keyToCommand(key: string): GlobeCommand | null {
       return "slower";
     case "]":
       return "faster";
+    case "c":
+    case "C":
+      return "toggleCorridors";
+    case "a":
+    case "A":
+      return "toggleAurora";
+    case "m":
+    case "M":
+      return "toggleSound";
     default:
       return null;
   }

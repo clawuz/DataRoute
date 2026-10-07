@@ -1,3 +1,4 @@
+import type { Effects } from "../app/art";
 import { BloomEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
 import { Group, LinearSRGBColorSpace, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
 import { TUNNEL_PERIOD, advance } from "@web/render/clocks";
@@ -51,6 +52,7 @@ export interface GlobeEngine {
   setAfterRender(fn: (() => void) | null): void;
   pulseAirport(iata: string, nowSec: number): void;
   headsInfo(): { count: number; extrapolated: number };
+  setEffects(e: Effects): void;
   dispose(): void;
 }
 
@@ -73,6 +75,7 @@ export function hasWebGL2(): boolean {
 }
 
 export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOptions): GlobeEngine {
+  let effects: Effects | null = null;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
   renderer.debug.onShaderError = (gl, program, vs, fs) => {
@@ -361,6 +364,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     camMode() {
       return cam.mode;
+    },
+    setEffects(e) {
+      effects = e; // art:core — later sections apply it
+      void effects;
     },
     setAfterRender(fn) {
       afterRender = fn;

@@ -132,6 +132,13 @@ export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
   return <div className="modeline label">{text}</div>;
 }
 
+export function ArtNotes({ art }: { art: GlobeHudSnapshot["art"] }) {
+  if (!art.enabled) return null;
+  const lines = [art.corridors && "ROUTE DENSITY · 24H", art.aurora && "AURORA · ILLUSTRATIVE", art.sound && "SOUND ON"].filter(Boolean) as string[];
+  if (lines.length === 0) return null;
+  return <div className="art-notes label">{lines.map((l) => <div key={l}>{l}</div>)}</div>;
+}
+
 export function Credit({ s }: { s: GlobeHudSnapshot }) {
   return <div className="source credit label">{s.textureNote ? `${s.credit} · ${s.textureNote}` : s.credit}</div>;
 }
@@ -148,6 +155,7 @@ export function GlobeHud({ store, labelBus }: { store: Store<GlobeHudSnapshot>; 
     <div className={`hud${s.hidden ? " hidden" : ""}`}>
       <TitleBlock s={s} />
       <ModeLine s={s} />
+      <ArtNotes art={s.art} />
       {s.ready && (
         <>
           <Counters c={s.counters} animate={animate} />

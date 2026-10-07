@@ -38,6 +38,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     },
     endDrag: vi.fn(),
     pulseAirport: vi.fn(),
+    setEffects: vi.fn(),
     headsInfo: () => ({ count: 1, extrapolated: 3 }),
     dispose: vi.fn(),
   };
@@ -463,5 +464,29 @@ describe("globe controller", () => {
     await flush();
     h.c.dispose();
     expect(() => h.frame(0.016)).toThrow();
+  });
+
+  it("art keys toggle corridors/aurora/sound, publish the state and push effects to the engine", async () => {
+    const h = setup();
+    await flush();
+    h.frame(0.3);
+    expect(h.store.get().art).toEqual({ enabled: true, corridors: true, aurora: false, sound: false });
+    h.c.onKey("a");
+    h.c.onKey("c");
+    h.c.onKey("m");
+    expect(h.store.get().art).toEqual({ enabled: true, corridors: false, aurora: true, sound: true });
+    const last = (h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
+    expect(last).toMatchObject({ corridors: false, aurora: true, sound: true });
+    h.c.dispose();
+  });
+
+  it("a quality drop turns the aurora off in the pushed effects", async () => {
+    const h = setup();
+    await flush();
+    h.c.onKey("a");
+    h.c.setPerf(40, 1);
+    const last = (h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
+    expect(last.aurora).toBe(false);
+    h.c.dispose();
   });
 });

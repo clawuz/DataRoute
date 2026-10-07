@@ -14,11 +14,13 @@ body { background: #02030a; }
 .airport-label.hub { color: #fff; font-size: calc(1.2 * var(--u)); }
 
 .credit { bottom: 4.6vmin; }
+.art-notes { position: absolute; left: 3vmin; top: 12.6vmin; font-size: calc(0.85 * var(--u)); letter-spacing: 0.14em; color: var(--ink-dim); line-height: 1.6; }
 
 .loading { position: fixed; inset: 0; display: grid; place-items: center; letter-spacing: 0.2em; color: var(--ink-dim); pointer-events: none; z-index: 6; }
 
 @media (max-aspect-ratio: 1/1) {
   .modeline { top: 10vmin; }
+  .art-notes { top: 21vmin; } /* below the portrait counters row (starts 13vmin) */
   .events { top: 62%; }
 }
 

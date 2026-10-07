@@ -4,6 +4,7 @@ import { headState } from "../model/dead-reckon";
 import type { CamMode } from "../camera/follow-rig";
 import type { GlobeFlight, GlobeModel } from "../model/globe-model";
 import { BREAK_SEC } from "../scene/arcs";
+import type { ArtState } from "./art";
 import type { FollowHud } from "./follow-hud";
 
 export const CREDIT = "EARTH IMAGERY: NASA EARTH OBSERVATORY (BLUE MARBLE · BLACK MARBLE)";
@@ -38,6 +39,7 @@ export interface GlobeHudSnapshot extends HudSnapshot {
   notice: string;
   tour: boolean;
   aircraftAirborne: AircraftCount[];
+  art: ArtState;
 }
 
 export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
@@ -54,6 +56,7 @@ export const EMPTY_GLOBE_SNAPSHOT: GlobeHudSnapshot = {
   notice: "",
   tour: true,
   aircraftAirborne: [],
+  art: { enabled: true, corridors: true, aurora: false, sound: false },
 };
 
 export function eventText(e: FlightEvent): string {

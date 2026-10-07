@@ -47,6 +47,7 @@ export function App() {
         fixture: isFixture(search),
         debug: params.get("debug") === "1",
         reducedMotion,
+        search,
         onLabels: labelBus.emit,
         nowMs: () => Date.now(),
       });

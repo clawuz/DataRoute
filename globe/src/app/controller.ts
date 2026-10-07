@@ -16,6 +16,7 @@ import {
   CREDIT, LABEL_COUNT, addEvents, aircraftBreakdown, aircraftLabel, hoverNote, liveCur, pickLabelAirports,
   type AirportLabel, type EventLine, type GlobeHudSnapshot,
 } from "./hud-model";
+import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { SCRUB_SEC, keyToCommand } from "./keys";
 
 export const GLOBE_CYCLE: CycleConfig = { replaySec: 180, liveSec: Number.POSITIVE_INFINITY, holdSec: 20 };
@@ -35,6 +36,8 @@ export interface GlobeControllerDeps {
   visible?: () => boolean;
   /** per-frame airport label positions (the store only carries them at HUD rate) */
   onLabels?: (labels: AirportLabel[]) => void;
+  /** the URL query string (for ?art=0); defaults to none */
+  search?: string;
 }
 
 export interface GlobeController {
@@ -63,6 +66,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let hidden = false;
   let hudTimer = 0;
   let perf = { fps: 0, level: 0 };
+  let art: ArtState = initArt(d.search ?? "");
+  const pushEffects = () => d.engine.setEffects(effectsFor(art, perf.level)); // art:core
   let tex = { progress: 0, note: "" };
   let firstDataSec = 0;
   let disposed = false;
@@ -184,6 +189,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       notice: notice && nowSec < notice.until ? notice.text : "",
       tour: tour.enabled,
       aircraftAirborne: model && !follow ? aircraftBreakdown(model, cur) : [],
+      art,
     });
   }
 
@@ -245,6 +251,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     };
   };
   d.engine.setFrameSource(frame);
+  pushEffects();
   d.engine.setAfterRender(() => {
     if (d.onLabels && model && !disposed) d.onLabels(computeLabels());
   });
@@ -319,6 +326,13 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (!cmd) return;
       const nowSec = d.nowMs() / 1000;
       const f = follow && model ? model.flights[follow.idx] : null;
+      if (cmd === "toggleCorridors" || cmd === "toggleAurora" || cmd === "toggleSound") {
+        art = toggleArt(art, cmd === "toggleCorridors" ? "corridors" : cmd === "toggleAurora" ? "aurora" : "sound");
+        persistArt(art);
+        pushEffects();
+        pushHud();
+        return;
+      }
       if (cmd === "toggleTour") {
         tour = { ...tour, enabled: !tour.enabled };
         pushHud();
@@ -407,6 +421,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     setPerf(fps, level) {
       if (disposed) return;
       perf = { fps, level };
+      pushEffects();
     },
     setTextureState(progress, note) {
       if (disposed) return;
