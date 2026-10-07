@@ -78,6 +78,26 @@ export const GENRES = [
 ];
 const FAMILIES = [...new Set(GENRES.map((g) => g.family))];
 
+/** Orchestral colours of the regions: the more a region dominates a window's routes, the more of its instruments join. */
+const REGION_INSTRUMENTS = {
+  EUR: ["oboe and clarinet melody", "string quartet textures", "flutes in thirds"],
+  ASI: ["harp and celesta pentatonic figures", "koto-like plucked strings", "shakuhachi-like solo flute"],
+  MEA: ["oud-like plucked cellos", "kanun-like harp", "ney-like solo flute", "frame drum"],
+  AFR: ["marimba and kalimba patterns", "polyrhythmic timpani and congas"],
+  AME: ["french horns and trumpets", "brass chorale", "wide open string fifths"],
+  DOM: ["saz-like plucked strings", "folk clarinet melody", "low davul-like drum"],
+};
+/** Instruments by route dominance: a region with ≥ 30 % of the window brings 3 of its instruments, ≥ 15 % brings 1. */
+export function regionInstruments(shares) {
+  const out = [];
+  for (const [r, v] of shares.slice(0, 3)) {
+    const list = REGION_INSTRUMENTS[r];
+    if (!list) continue;
+    out.push(...list.slice(0, v >= 0.3 ? 3 : v >= 0.15 ? 1 : 0));
+  }
+  return out;
+}
+
 const REGION_HINTS = {
   ASI: ["pentatonic colours"],
   MEA: ["modal oud-like colours"],
@@ -98,7 +118,7 @@ const arg = (name, def) => {
 export function summarize(day, windows = WINDOWS) {
   const from = day.window.from;
   const q = 86400 / windows;
-  const chunks = Array.from({ length: windows }, (_, i) => ({ start: from + i * q, end: from + (i + 1) * q, airborneHours: 0, regions: {}, to: {}, flights: 0 }));
+  const chunks = Array.from({ length: windows }, (_, i) => ({ start: from + i * q, end: from + (i + 1) * q, airborneHours: 0, regions: {}, to: {}, routes: {}, flights: 0 }));
   for (const f of day.flights) {
     if (!f.s || f.s.length === 0) continue;
     const t0 = f.dep + f.s[0][0];
@@ -111,6 +131,10 @@ export function summarize(day, windows = WINDOWS) {
         c.flights++;
         c.regions[f.region] = (c.regions[f.region] ?? 0) + (hi - lo);
         if (f.to) c.to[f.to] = (c.to[f.to] ?? 0) + 1;
+        if (f.from && f.to) {
+          const k = f.from < f.to ? `${f.from}-${f.to}` : `${f.to}-${f.from}`;
+          c.routes[k] = (c.routes[k] ?? 0) + 1;
+        }
       }
     });
   }
@@ -119,14 +143,20 @@ export function summarize(day, windows = WINDOWS) {
   const lo = Math.min(...vals);
   const hi = Math.max(...vals);
   const norm = (v) => (hi - lo < 1e-6 ? 0.5 : (v - lo) / (hi - lo));
-  return chunks.map((c) => {
+  const dist = chunks.map((c) => Object.keys(c.routes).length);
+  const dlo = Math.min(...dist), dhi = Math.max(...dist);
+  return chunks.map((c, wi) => {
+    const variety = dhi - dlo < 1 ? 0.5 : (dist[wi] - dlo) / (dhi - dlo);
     const localHour = (((c.start + q / 2) / 3600 + IST_OFFSET_H) % 24 + 24) % 24; // middle of the window, Istanbul time
     const label = localHour < 6 ? "night" : localHour < 12 ? "morning" : localHour < 18 ? "afternoon" : "evening";
     const total = Object.values(c.regions).reduce((a, b) => a + b, 0) || 1;
     const shares = Object.entries(c.regions).map(([r, v]) => [r, v / total]).sort((a, b) => b[1] - a[1]);
     const topTo = Object.entries(c.to).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
     const avg = c.airborneHours / (q / 3600);
-    return { label, hour: Math.floor(localHour), energy: norm(avg), shares, topTo, avgAirborne: avg };
+    const counts = Object.values(c.routes);
+    const distinct = counts.length;
+    const top = counts.length ? Math.max(...counts) : 0;
+    return { label, hour: Math.floor(localHour), energy: norm(avg), shares, topTo, avgAirborne: avg, variety, distinctRoutes: distinct, topRouteShare: c.flights ? top / c.flights : 0 };
   });
 }
 
@@ -139,14 +169,17 @@ export const layersFor = (g, e) => (g.layers ? g.layers.slice(0, Math.min(g.laye
 /** Pure: build the ElevenLabs composition plan (chunks) from the day summary and a genre. */
 export function buildPlan(summary, genre, dateIso) {
   const chunks = summary.map((s, i) => {
-    const regionHints = s.shares.filter(([, v]) => v >= 0.14).slice(0, 2).flatMap(([r]) => REGION_HINTS[r] ?? []);
+    const orchestral = genre.family === "classical" || !!genre.layers;
+    const quiet = (list) => (s.energy < 0.25 ? list.filter((x) => !/horn|trumpet|brass|timpani|congas|drum/.test(x)) : list); // quiet windows keep the soft colours only
+    const regionHints = orchestral ? quiet(regionInstruments(s.shares)) : s.shares.filter(([, v]) => v >= 0.14).slice(0, 2).flatMap(([r]) => REGION_HINTS[r] ?? []);
+    const texture = s.variety > 0.66 ? ["dense interwoven layers, many voices"] : s.variety < 0.33 ? ["a few clear voices"] : [];
     const name = `${s.label[0].toUpperCase()}${s.label.slice(1)} ${String(s.hour).padStart(2, "0")}h`;
     const next = summary[i + 1];
     const motion = !next ? [] : next.energy - s.energy > 0.2 ? ["gradually building toward the next section"] : s.energy - next.energy > 0.2 ? ["gradually easing down"] : [];
     return {
       text: `[${name}]`,
       duration_ms: CHUNK_MS,
-      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), ...layersFor(genre, s.energy), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...motion, ...regionHints, "instrumental"],
+      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), ...layersFor(genre, s.energy), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...motion, ...texture, ...regionHints, "instrumental"],
       negative_styles: ["vocals", "lyrics", "singing", "spoken words"],
       context_adherence: "high",
     };
