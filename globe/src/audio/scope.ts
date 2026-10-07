@@ -50,18 +50,22 @@ export interface Trail {
 
 export const MAX_TRAILS = 12;
 export const TRAIL_TTL_SEC = 6;
+/** art:track — the recorded track fills the ribbon with many routes: a long window, many trails (a flowing field of colour). */
+export const TRACK_RIBBON_SEC = 26;
+export const TRACK_MAX_TRAILS = 120;
+export const TRACK_MAX_POINTS = 60;
 
 /** Trail of a note: its flight line, the instrument for Istanbul (ney, winds) notes, none for groove voices. */
 export const trailIdOf = (n: NoteEvent): string | null =>
   n.lineId ?? (n.kind === "dep" || n.kind === "arr" ? n.instrument : null);
 
 /** Appends the note to its trail (trimmed to `maxPoints`); a new trail beyond 12 drops the one hit longest ago. */
-export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: string, maxPoints = 90): void {
+export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: string, maxPoints = 90, maxTrails = MAX_TRAILS): void {
   const id = trailIdOf(n);
   if (id === null) return;
   let t = trails.get(id);
   if (!t) {
-    while (trails.size >= MAX_TRAILS) {
+    while (trails.size >= maxTrails) {
       let oldest: string | null = null;
       let min = Infinity;
       for (const [k, v] of trails) if (v.lastHit < min) [oldest, min] = [k, v.lastHit];

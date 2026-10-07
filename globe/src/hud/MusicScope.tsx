@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
-  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
+  DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRACK_MAX_POINTS, TRACK_MAX_TRAILS, TRACK_RIBBON_SEC, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
   noteBar, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, trailIdOf, type Lane, type Playing, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
@@ -61,6 +61,8 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
     let head = 0; // next ring write position
     let simT = wallSec(); // time of the last simulated sample
     let raf = 0;
+    let ribbonSec = RIBBON_SEC; // art:track — the window widens while the recorded track plays
+    let lastTrackHit = -Infinity;
 
     const tick = () => {
       const now = wallSec();
@@ -73,7 +75,10 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         else if (traces.has(n.lane)) beats.push(n);
         else if (trailIdOf(n) !== null) {
           const route = routeOfNote(n); // art:track — recorded-track notes take their route's colour
-          pushTrail(trails, n, route ? routeColor(route) : INSTRUMENT_COLOR[n.instrument]);
+          if (route) {
+            lastTrackHit = now;
+            pushTrail(trails, n, routeColor(route), TRACK_MAX_POINTS, TRACK_MAX_TRAILS);
+          } else pushTrail(trails, n, INSTRUMENT_COLOR[n.instrument]);
           playing.current = playingPush(playing.current, n, now);
         }
       }
@@ -95,7 +100,8 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
         }
         head = (head + 1) % SCOPE_SAMPLES;
       }
-      pruneTrails(trails, now);
+      ribbonSec = now - lastTrackHit < 8 ? TRACK_RIBBON_SEC : RIBBON_SEC;
+      pruneTrails(trails, now, ribbonSec);
     };
 
     const draw = () => {
@@ -115,21 +121,24 @@ export function MusicScope({ bus, music, compact = false }: { bus: NoteBus; musi
       // thick bar as long as the note (v5), over the thin trail line
       const now = wallSec();
       const ribbonH = RIBBON_SHARE * h;
-      const pxPerSec = w / RIBBON_SEC;
+      const pxPerSec = w / ribbonSec;
       const xOf = (t: number) => w - (now - t) * pxPerSec;
       const yOf = (y: number) => (1 - y) * ribbonH;
       for (const tr of trails.values()) {
         const age = Math.max(0, now - tr.lastHit);
-        g.globalAlpha = base * Math.max(0.15, 1 - age / RIBBON_SEC);
+        const wide = ribbonSec > RIBBON_SEC; // recorded track: no connecting lines, just the flowing bars
+        g.globalAlpha = base * (wide ? Math.max(0.35, 1 - age / ribbonSec) : Math.max(0.15, 1 - age / ribbonSec));
         g.strokeStyle = tr.color;
-        g.beginPath();
-        tr.points.forEach((p, j) => {
-          if (j === 0) g.moveTo(xOf(p.t), yOf(p.y));
-          else g.lineTo(xOf(p.t), yOf(p.y));
-        });
-        g.stroke();
+        if (!wide) {
+          g.beginPath();
+          tr.points.forEach((p, j) => {
+            if (j === 0) g.moveTo(xOf(p.t), yOf(p.y));
+            else g.lineTo(xOf(p.t), yOf(p.y));
+          });
+          g.stroke();
+        }
         g.fillStyle = tr.color;
-        const barH = NOTE_BAR_H_PX * dpr;
+        const barH = NOTE_BAR_H_PX * dpr * (wide ? 1.7 : 1);
         for (const p of tr.points) {
           const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
           if (x + bw < 0) continue;
