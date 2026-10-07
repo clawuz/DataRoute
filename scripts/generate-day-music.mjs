@@ -30,7 +30,8 @@ export const GENRES = [
   { id: "classical-period", family: "classical", bpm: [72, 128], tags: ["classical period chamber orchestra", "elegant Viennese classicism", "fortepiano and strings", "Alberti bass", "clear periodic phrases"] },
   { id: "romantic-piano", family: "classical", bpm: [56, 100], tags: ["romantic piano", "lyrical cantabile melody", "arpeggiated accompaniment", "warm strings", "rubato"] },
   { id: "impressionist", family: "classical", bpm: [54, 92], tags: ["impressionist", "soft piano", "color chords and extended harmony", "airy flute and harp", "dreamlike"] },
-  { id: "minimalist", family: "classical", bpm: [80, 132], tags: ["minimalist repetitive patterns", "phasing marimba and piano", "pulsing strings", "gradual process", "hypnotic"] },
+  { id: "minimalist", family: "classical", bpm: [80, 132], tags: ["minimalist repetitive patterns", "phasing marimba and piano", "pulsing strings", "gradual process", "hypnotic"],
+    layers: ["vibraphone", "clarinet and bass clarinet", "flute", "cello ostinato", "harp arpeggios", "french horn pads", "glockenspiel", "soft timpani", "pizzicato violins", "wordless texture"] },
   { id: "cinematic", family: "classical", bpm: [60, 128], tags: ["cinematic orchestral score", "epic strings and brass", "taiko drums", "emotional swells", "film trailer build"] },
   // jazz & blues
   { id: "jazz-fusion", family: "jazz", bpm: [84, 120], tags: ["jazz fusion", "Fender Rhodes", "driving bass ostinato", "brass hits", "syncopated groove"] },
@@ -45,7 +46,8 @@ export const GENRES = [
   { id: "surf-rock", family: "rock", bpm: [120, 170], tags: ["surf rock", "reverb guitar", "twangy melody", "fast drums", "retro cool"] },
   { id: "instrumental-metal", family: "rock", bpm: [100, 170], tags: ["instrumental metal", "heavy distorted guitars", "double bass drums", "melodic riffs", "powerful"] },
   // electronic & dance
-  { id: "synthwave", family: "electronic", bpm: [80, 118], tags: ["synthwave", "analog arpeggios", "gated reverb drums", "retro neon", "driving bassline"] },
+  { id: "synthwave", family: "electronic", bpm: [80, 118], tags: ["synthwave", "analog arpeggios", "gated reverb drums", "retro neon", "driving bassline"],
+    layers: ["lead synth melody", "warm pad strings", "electric guitar with chorus", "saxophone line", "vocoder-free synth choir", "plucked bell synth", "tom fills", "sidechained pads", "counter-melody synth", "tape-delay stabs"] },
   { id: "house", family: "electronic", bpm: [110, 128], tags: ["deep house", "four on the floor", "warm chords", "filtered bass", "dancefloor groove"] },
   { id: "techno", family: "electronic", bpm: [118, 140], tags: ["melodic techno", "hypnotic sequences", "pulsing kick", "evolving synths", "dark"] },
   { id: "drum-and-bass", family: "electronic", bpm: [160, 176], tags: ["liquid drum and bass", "breakbeat", "deep sub bass", "atmospheric pads", "fast and fluid"] },
@@ -127,6 +129,9 @@ export function summarize(day) {
 const dyn = (e) => (e < 0.25 ? ["very soft", "sparse", "intimate"] : e < 0.55 ? ["gentle", "building", "flowing"] : e < 0.8 ? ["energetic", "full arrangement", "driving"] : ["powerful", "full band at peak intensity", "climactic"]);
 export const bpmFor = (g, e) => Math.round((g.bpm[0] + e * (g.bpm[1] - g.bpm[0])) / 2) * 2;
 
+/** Extra instrument layers that join as energy rises (2 at the quietest window, all of them at the peak). */
+export const layersFor = (g, e) => (g.layers ? g.layers.slice(0, Math.min(g.layers.length, 2 + Math.round(e * (g.layers.length - 2)))) : []);
+
 /** Pure: build the ElevenLabs composition plan (chunks) from the day summary and a genre. */
 export function buildPlan(summary, genre, dateIso) {
   const chunks = summary.map((s, i) => {
@@ -135,7 +140,7 @@ export function buildPlan(summary, genre, dateIso) {
     return {
       text: `[${name}]`,
       duration_ms: CHUNK_MS,
-      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...regionHints, "instrumental"],
+      positive_styles: [...(i === 0 ? genre.tags : genre.tags.slice(0, 3)), ...layersFor(genre, s.energy), `${bpmFor(genre, s.energy)} BPM`, ...dyn(s.energy), ...regionHints, "instrumental"],
       negative_styles: ["vocals", "lyrics", "singing", "spoken words"],
       context_adherence: "high",
     };
