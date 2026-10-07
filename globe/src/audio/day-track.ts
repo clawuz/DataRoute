@@ -127,6 +127,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
         prevT = null;
         return;
       }
+      a.loop = free; // following a flight: the recording keeps going round instead of ending
       const { t, seek } = targetTime(frac, data.duration, a.currentTime);
       if (seek && !free) {
         a.currentTime = t;
@@ -135,6 +136,11 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       if (a.paused) void a.play().catch(() => undefined); // blocked until a user gesture: the next tick retries
       const now = a.currentTime;
       if (prevT !== null && now - prevT < 1.5) for (const n of notesBetween(data.notes, prevT, now)) d.onNote(noteEventOf(n, d.clock() + (n.t - now)));
+      else if (prevT !== null && free && now < prevT && data.duration - prevT < 1.5) {
+        // the loop wrapped: the tail of the recording, then its start
+        for (const n of notesBetween(data.notes, prevT, data.duration)) d.onNote(noteEventOf(n, d.clock() + (n.t - prevT)));
+        for (const n of notesBetween(data.notes, -1, now)) d.onNote(noteEventOf(n, d.clock() + (n.t - now)));
+      }
       prevT = now;
     },
     dispose() {
