@@ -14,3 +14,9 @@ DataRoute — third-party notices
    Flight routes: adsbdb. Aircraft registry: tar1090-db (open source).
 
 4. TK fonts are licensed and are not stored in git; they are copied into the build from a local folder.
+
+5. Star map (globe/public/textures/stars-4k.jpg)
+   NASA Scientific Visualization Studio, "Deep Star Maps 2020" (starmap_2020_4k), public domain;
+   converted from the linear EXR to an 8-bit sRGB JPEG. Credit "NASA/Goddard Space Flight Center Scientific
+   Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. Constellation figures based on those developed for the IAU by
+   Alan MacRobert of Sky and Telescope magazine (Roger Sinnott and Rick Fienberg)."

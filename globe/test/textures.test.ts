@@ -1,6 +1,6 @@
-import { Texture, type WebGLRenderer } from "three";
+import { NoColorSpace, RepeatWrapping, Texture, type WebGLRenderer } from "three";
 import { describe, expect, it, vi } from "vitest";
-import { chooseTier, loadEarthTextures, textureUrls } from "../src/scene/textures";
+import { chooseTier, loadEarthTextures, loadStarMap, textureUrls } from "../src/scene/textures";
 
 const renderer = { capabilities: { getMaxAnisotropy: () => 16 } } as unknown as WebGLRenderer;
 
@@ -144,5 +144,20 @@ describe("loadEarthTextures", () => {
       return new Texture();
     });
     expect(urls.every((u) => !u.includes("8k"))).toBe(true);
+  });
+});
+
+describe("loadStarMap", () => {
+  it("sets colorSpace and wrapS on success", async () => {
+    const t = await loadStarMap(async () => new Texture());
+    expect(t?.colorSpace).toBe(NoColorSpace);
+    expect(t?.wrapS).toBe(RepeatWrapping);
+  });
+  it("resolves to null and warns once when the loader rejects", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const t = await loadStarMap(() => Promise.reject(new Error("404")));
+    expect(t).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });

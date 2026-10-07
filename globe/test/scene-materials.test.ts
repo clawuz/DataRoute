@@ -108,3 +108,20 @@ describe("art:light", () => {
     expect(() => g.dispose()).not.toThrow();
   });
 });
+
+describe("space star map", () => {
+  it("setStarMap toggles uHasStarMap; null keeps the procedural stars", () => {
+    const s = createSpace();
+    const u = (s.stars.material as unknown as { uniforms: Record<string, { value: unknown }> }).uniforms;
+    expect(u.uHasStarMap.value).toBe(0);
+    s.setStarMap(null);
+    expect(u.uHasStarMap.value).toBe(0);
+    const t = new Texture();
+    s.setStarMap(t);
+    expect(u.uHasStarMap.value).toBe(1);
+    expect(u.uStarMap.value).toBe(t);
+    s.setStarMap(null);
+    expect(u.uHasStarMap.value).toBe(0);
+    expect(() => s.dispose()).not.toThrow();
+  });
+});

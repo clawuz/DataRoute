@@ -1,4 +1,4 @@
-import { AdditiveBlending, Matrix3, Mesh, PerspectiveCamera, PlaneGeometry, ShaderMaterial } from "three";
+import { AdditiveBlending, Matrix3, Mesh, PerspectiveCamera, PlaneGeometry, ShaderMaterial, type Texture } from "three";
 import { createTunnel, type Tunnel } from "@web/render/tunnel";
 
 const STARS_VERT = /* glsl */ `
@@ -14,6 +14,8 @@ precision highp float;
 uniform mat3 uInvRot;
 uniform float uAspect;
 uniform float uTanHalf;
+uniform sampler2D uStarMap; // art:stars
+uniform float uHasStarMap; // art:stars
 varying vec2 vNdc;
 
 float hash31(vec3 p) {
@@ -38,6 +40,18 @@ vec3 starLayer(vec3 d, float scale, float threshold, float size) {
 void main() {
   vec3 dir = normalize(uInvRot * vec3(vNdc.x * uAspect * uTanHalf, vNdc.y * uTanHalf, -1.0));
   vec3 col = starLayer(dir, 90.0, 0.965, 0.30) + starLayer(dir, 40.0, 0.985, 0.38) * 1.4;
+  if (uHasStarMap > 0.5) { // art:stars
+    float a = atan(dir.x, dir.z) / 6.28318530718;
+    float u = fract(0.5 - a); // NASA convention: 0 h at the centre, RA increasing to the left
+    float v = (asin(clamp(dir.y, -1.0, 1.0)) + 1.57079632679) / 3.14159265359;
+    // seam-safe derivatives (same trick as the Earth shader)
+    vec2 uv = vec2(u, v);
+    vec2 uvB = vec2(fract(u + 0.5), v);
+    vec2 dxA = dFdx(uv), dyA = dFdy(uv), dxB = dFdx(uvB), dyB = dFdy(uvB);
+    bool useB = max(abs(dxA.x), abs(dyA.x)) > max(abs(dxB.x), abs(dyB.x));
+    vec3 map = textureGrad(uStarMap, uv, useB ? dxB : dxA, useB ? dyB : dyA).rgb;
+    col = map * 1.15;
+  }
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -45,6 +59,7 @@ void main() {
 export interface Space {
   stars: Mesh;
   nebula: Tunnel;
+  setStarMap(tex: Texture | null): void; // art:stars
   update(camera: PerspectiveCamera): void;
   dispose(): void;
 }
@@ -54,6 +69,8 @@ export function createSpace(): Space {
     uInvRot: { value: new Matrix3() },
     uAspect: { value: 1 },
     uTanHalf: { value: Math.tan((40 * Math.PI) / 360) },
+    uStarMap: { value: null as Texture | null }, // art:stars
+    uHasStarMap: { value: 0 }, // art:stars
   };
   const geometry = new PlaneGeometry(2, 2);
   const material = new ShaderMaterial({
@@ -74,6 +91,10 @@ export function createSpace(): Space {
   return {
     stars,
     nebula,
+    setStarMap(tex) {
+      uniforms.uStarMap.value = tex; // art:stars
+      uniforms.uHasStarMap.value = tex ? 1 : 0;
+    },
     update(camera) {
       uniforms.uInvRot.value.setFromMatrix4(camera.matrixWorld);
       uniforms.uAspect.value = camera.aspect;

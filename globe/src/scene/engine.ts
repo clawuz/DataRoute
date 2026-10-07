@@ -1,6 +1,6 @@
 import type { Effects } from "../app/art";
 import { BloomEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
-import { Group, LinearSRGBColorSpace, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
+import { Group, LinearSRGBColorSpace, PerspectiveCamera, Scene, type Texture, Vector3, WebGLRenderer } from "three";
 import { TUNNEL_PERIOD, advance } from "@web/render/clocks";
 import type { ScreenPoint } from "@web/render/picking";
 import { LEVELS, initQuality, updateQuality } from "@web/render/quality";
@@ -22,7 +22,7 @@ import { createHeads, headLatLons } from "./heads";
 import { buildPickIndex, pickFlight, type PickIndex } from "./picking3d";
 import { createSunGlare } from "./sun-glare"; // art:light
 import { createSpace } from "./space";
-import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures, lowerTier, type TextureTier, writeTierCap } from "./textures";
+import { chooseTier, type EarthTextures, detectTierInputs, loadEarthTextures, loadStarMap, lowerTier, type TextureTier, writeTierCap } from "./textures";
 
 export interface GlobeFrameInput {
   /** displayed UTC instant (unix seconds): drives Earth rotation and the sun */
@@ -100,6 +100,17 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const space = createSpace();
   scene.add(space.nebula.display);
   scene.add(space.stars);
+  let starTex: Texture | null = null; // art:stars
+  void loadStarMap().then((t) => { // art:stars
+    if (disposed) { // art:stars
+      t?.dispose(); // art:stars
+      return; // art:stars
+    } // art:stars
+    if (t) { // art:stars
+      starTex = t; // art:stars
+      space.setStarMap(effects?.starMap === false ? null : t); // art:stars
+    } // art:stars
+  }); // art:stars
   const earthGroup = new Group();
   scene.add(earthGroup);
   const earth = createEarth();
@@ -403,6 +414,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       effects = e; // art:core
       earth.setLight({ cloudShadow: e.cloudShadow }); // art:light
       glare.setVisible(e.glare); // art:light
+      space.setStarMap(e.starMap ? starTex : null); // art:stars
       if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
     },
     setAfterRender(fn) {
@@ -430,6 +442,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       cancelAnimationFrame(raf);
       if (texs) for (const tex of [texs.day, texs.night, texs.clouds]) tex.dispose();
       texs = null;
+      starTex?.dispose(); // art:stars
+      starTex = null; // art:stars
       window.removeEventListener("resize", resize);
       ro?.disconnect();
       canvas.removeEventListener("webglcontextlost", onContextLost);
