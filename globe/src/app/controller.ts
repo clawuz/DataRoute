@@ -382,6 +382,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       const nowSec = d.nowMs() / 1000;
       const f = follow && model ? model.flights[follow.idx] : null;
       if (cmd === "toggleCorridors" || cmd === "toggleAurora" || cmd === "toggleSound") {
+        if (!art.enabled) return; // ?art=0: art keys are inert
         art = toggleArt(art, cmd === "toggleCorridors" ? "corridors" : cmd === "toggleAurora" ? "aurora" : "sound");
         persistArt(art);
         pushEffects();

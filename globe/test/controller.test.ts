@@ -21,7 +21,7 @@ const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
     now: { gs: 480, trk: 300 },
   });
 
-function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number } = {}) {
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string } = {}) {
   let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
   let afterRender: (() => void) | null = null;
   const engine: GlobeEngine = {
@@ -58,6 +58,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     onLabels: opts.onLabels,
     sound: opts.sound,
     viewportWidth: opts.viewportWidth,
+    search: opts.search,
     fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
   });
   return {
@@ -481,6 +482,26 @@ describe("globe controller", () => {
     const last = (h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.at(-1)![0];
     expect(last).toMatchObject({ corridors: false, aurora: true, sound: true });
     h.c.dispose();
+  });
+
+  it("with ?art=0 the art keys do nothing: no persistence, no effect push, state stays off", async () => {
+    const setItem = vi.fn();
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem });
+    try {
+      const h = setup({ search: "?art=0" });
+      await flush();
+      h.frame(0.3);
+      const pushes = (h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.length;
+      h.c.onKey("c");
+      h.c.onKey("a");
+      h.c.onKey("m");
+      expect(setItem).not.toHaveBeenCalled();
+      expect((h.engine.setEffects as ReturnType<typeof vi.fn>).mock.calls.length).toBe(pushes);
+      expect(h.store.get().art).toEqual({ enabled: false, corridors: false, aurora: false, sound: false });
+      h.c.dispose();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("a quality drop turns the aurora off in the pushed effects", async () => {
