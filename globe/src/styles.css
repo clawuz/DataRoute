@@ -219,7 +219,7 @@ body { background: #02030a; }
   .events { top: 42vmin; max-width: 40vmin; gap: 0.6vmin; }
   .event { letter-spacing: 0.06em; }
   .flight-panel { top: 42vmin; width: 52vmin; padding: 1.2vmin 1.4vmin; gap: 0.8vmin; }
-  .fp-notes, .fp-route-text, .fp-profile { display: none; } /* the details a phone can live without while following */
+  .fp-route-text, .fp-profile { display: none; } /* the details a phone can live without while following */
   .regions { top: 42vmin; width: 46vmin; }
   .region-row { grid-template-columns: 22vmin 1fr 5vmin; letter-spacing: 0.06em; }
   .music-scope, .music-scope.compact { bottom: 29vmin; padding: 1vmin 1.4vmin; }
@@ -259,3 +259,14 @@ body { background: #02030a; }
 /* the departures strip stops short of the legend, so the NOW marker never lands on it */
 .dep.dep-globe { right: 38vmin; }
 @media (max-aspect-ratio: 1/1) { .dep.dep-globe { right: 3vmin; } }
+
+/* the follow card's footnotes live behind an info button instead of taking up the card */
+.fp-info { position: relative; display: inline-flex; margin-left: auto; pointer-events: auto; }
+.fp-info + .fp-leave { margin-left: 0; }
+.fp-info-btn { font-size: max(var(--fs-min), calc(1.5 * var(--u))); min-width: max(3.8vmin, 34px); padding: 0; }
+.fp-info-pop { position: absolute; right: 0; bottom: calc(100% + 1vmin); width: 34vmin; padding: 1.2vmin 1.4vmin; display: grid; gap: 0.7vmin; background: rgba(2, 4, 12, 0.92); border: 1px solid var(--line-strong); color: var(--ink); line-height: 1.5; opacity: 0; visibility: hidden; transform: translateY(0.6vmin); transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s 0.16s; z-index: 2; }
+.fp-info:hover .fp-info-pop, .fp-info:focus-within .fp-info-pop { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+@media (max-aspect-ratio: 1/1) { .fp-info-pop { width: 62vmin; right: -2vmin; } }
+.fp-controls { flex-wrap: wrap; row-gap: 0.8vmin; }
+.fp-leave { width: 100%; margin-left: 0; white-space: nowrap; }
+.fp-info + .fp-leave { margin-left: 0; }

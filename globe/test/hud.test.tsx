@@ -389,3 +389,14 @@ describe("airport label overlaps", () => {
     expect(out.map((l) => l.visible)).toEqual([true, false, true, false]);
   });
 });
+
+describe("follow card footnotes", () => {
+  it("live behind an info button, not on the card", async () => {
+    const { FlightPanel } = await import("../src/hud/GlobeHud");
+    const f = { tk: "TK1", state: "OBSERVED", aircraft: "A", route: "IST → GRU", progress: 0.5, speed: "×240", profile: [], cursor: 0, notes: ["GS / HDG / VS ARE 2-MIN AVERAGES", "EST = ESTIMATED (GAP / PLANNED / EXTRAPOLATED)"] } as unknown as Parameters<typeof FlightPanel>[0]["f"];
+    const { container } = render(<FlightPanel f={f} />);
+    expect(container.querySelector(".fp-notes")).toBeNull();
+    expect(container.querySelector("button[aria-label='How to read these numbers']")).not.toBeNull();
+    expect(Array.from(container.querySelectorAll(".fp-info-line")).map((x) => x.textContent)).toEqual(f.notes);
+  });
+});

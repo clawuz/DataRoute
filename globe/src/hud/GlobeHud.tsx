@@ -228,9 +228,14 @@ export function FlightPanel({ f }: { f: FollowHud }) {
         <button type="button" className="fp-btn" aria-label="Slower" title="Slower (−)" onClick={() => pressKey("-")}>−</button>
         <span className="fp-speed label">{f.speed}</span>
         <button type="button" className="fp-btn" aria-label="Faster" title="Faster (+)" onClick={() => pressKey("+")}>+</button>
+        <span className="fp-info">
+          <button type="button" className="fp-btn fp-info-btn" aria-label="How to read these numbers" aria-describedby="fp-info-pop">ⓘ</button>
+          <span className="fp-info-pop label" id="fp-info-pop" role="tooltip">
+            {f.notes.map((n) => <span key={n} className="fp-info-line">{n}</span>)}
+          </span>
+        </span>
         <button type="button" className="fp-btn fp-leave label" aria-label="Leave follow" title="Leave follow (G / Esc)" onClick={() => pressKey("Escape")}>✕ LEAVE</button>
       </div>
-      <div className="fp-notes label">{f.notes.map((n) => <div key={n}>{n}</div>)}</div>
     </div>
   );
 }
