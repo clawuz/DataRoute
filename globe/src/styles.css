@@ -270,3 +270,9 @@ body { background: #02030a; }
 .fp-controls { flex-wrap: wrap; row-gap: 0.8vmin; }
 .fp-leave { width: 100%; margin-left: 0; white-space: nowrap; }
 .fp-info + .fp-leave { margin-left: 0; }
+
+/* phone portrait: the mode line repeats the status chip and the legend sits on the brightest part of the globe — both go */
+@media (max-aspect-ratio: 1/1) {
+  .title .modeline { display: none; }
+  .regions { display: none; }
+}
