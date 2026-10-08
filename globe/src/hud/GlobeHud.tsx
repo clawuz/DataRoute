@@ -63,7 +63,7 @@ export function GlobeDepartures({ bins, playhead, from, live }: { bins: number[]
           ))}
           <line x1={playhead * 240} x2={playhead * 240} y1={0} y2={40} className="playhead" vectorEffect="non-scaling-stroke" />
         </svg>
-        <span className="dep-now label" style={{ left: `${playhead * 100}%` }}>{live ? "NOW" : "▼"}</span>
+        <span className="dep-now label" style={{ left: `${playhead * 100}%`, transform: `translateX(${playhead > 0.9 ? "-100%" : playhead < 0.06 ? "0" : "-50%"})` }}>{live ? "NOW" : "▼"}</span>
         {hover !== null && (
           <span className="dep-tip label" style={{ left: `${((hover + 0.5) / n) * 100}%` }}>
             {String(hourOf(hover)).padStart(2, "0")}:00 UTC · {bins[hover]} DEPARTURES

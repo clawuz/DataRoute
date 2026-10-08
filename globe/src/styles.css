@@ -255,3 +255,7 @@ body { background: #02030a; }
   .lockup { top: 31vmin; }
   .events, .flight-panel, .regions { top: 44vmin; }
 }
+
+/* the departures strip stops short of the legend, so the NOW marker never lands on it */
+.dep.dep-globe { right: 38vmin; }
+@media (max-aspect-ratio: 1/1) { .dep.dep-globe { right: 3vmin; } }
