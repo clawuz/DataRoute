@@ -251,7 +251,7 @@ export function ModeLine({ s }: { s: GlobeHudSnapshot }) {
 // art:core
 export function ArtNotes({ art }: { art: GlobeHudSnapshot["art"] }) {
   if (!art.enabled) return null;
-  const lines = [art.corridors && "ROUTE DENSITY · 24H", art.sound && "SOUND ON"].filter(Boolean) as string[];
+  const lines = [art.sound && "SOUND ON"].filter(Boolean) as string[];
   if (lines.length === 0) return null;
   return <div className="art-notes label">{lines.map((l) => <div key={l}>{l}</div>)}</div>;
 }

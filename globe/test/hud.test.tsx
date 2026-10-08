@@ -288,7 +288,7 @@ describe("MusicScope", () => {
 describe("ArtNotes", () => {
   it("lists only the active art features; nothing when art is disabled", () => {
     const on = render(<GlobeHud store={createStore(snap({ art: { enabled: true, corridors: true, aurora: true, sound: true } }))} />).container;
-    expect(text(on)).toContain("ROUTE DENSITY · 24H");
+    expect(text(on)).not.toContain("ROUTE DENSITY"); // no note for the density layer
     expect(text(on)).not.toContain("AURORA"); // the aurora layer carries no note
     expect(text(on)).toContain("SOUND ON");
     const off = render(<GlobeHud store={createStore(snap({ art: { enabled: false, corridors: false, aurora: false, sound: false } }))} />).container;
