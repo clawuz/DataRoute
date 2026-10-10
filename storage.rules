@@ -4,5 +4,9 @@ service firebase.storage {
     match /public/day.json {
       allow read: if true;
     }
+    // daily track (written by the daily-music pipeline with the Admin SDK; the site reads the pointer and the files)
+    match /public/music/{allPaths=**} {
+      allow read: if true;
+    }
   }
 }

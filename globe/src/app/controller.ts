@@ -19,6 +19,7 @@ import {
 import { effectsFor, initArt, persistArt, toggleArt, type ArtState } from "./art";
 import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } from "../audio/engine"; // art:sound
 import { createDayTrack, type DayTrack, type TrackNote } from "../audio/day-track"; // art:track
+import { dailyFlag, resolveDailyTrack } from "../audio/daily-track"; // art:track — dormant: nothing is requested unless the flag is on
 import { bestRoute, ranksOf, type Ranks } from "../audio/route-fit"; // art:track
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
@@ -134,6 +135,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   const pulseTrack = (key: string) => { if (!disposed) d.engine.pulseRoute(key); }; // art:track
   const track: DayTrack = d.track ?? createDayTrack({ // art:track
     clock,
+    resolve: () => resolveDailyTrack(dailyFlag()),
     onNote: (e) => {
       d.noteBus?.emit(e);
       const t = setTimeout(() => { pulseTimers.delete(t); pulseTrack(e.key); }, Math.max(0, (e.at - clock()) * 1000));

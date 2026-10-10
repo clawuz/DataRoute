@@ -1,0 +1,7 @@
+{
+  "enabled": false,
+  "bucket": "omerkilavuz-9ad41.firebasestorage.app",
+  "model": "music_v2_5",
+  "genres": ["symphonic", "cinematic", "romantic-piano", "minimalist", "impressionist", "classical-period", "baroque", "turkish-makam"],
+  "dayUrl": "https://firebasestorage.googleapis.com/v0/b/omerkilavuz-9ad41.firebasestorage.app/o/public%2Fday.json?alt=media"
+}

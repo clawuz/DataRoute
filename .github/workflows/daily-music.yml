@@ -1,0 +1,63 @@
+# Daily track generation for A World of Music — DEACTIVATED.
+#
+# It does nothing until BOTH are done: (1) the `schedule:` block below is uncommented, (2) the repository variable
+# DAILY_MUSIC_ENABLED is set to "true". It can always be run by hand (Actions → daily-music → Run workflow): choose
+# `dry-run` (plan only, no credits), `generate` (compose + upload a CANDIDATE) or `promote` (candidate → live).
+# Secrets needed: ELEVENLABS_API_KEY, GCP_SA_KEY (service-account JSON with Storage write on the project's bucket).
+# See docs/daily-music.md.
+name: daily-music
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "dry-run | generate | promote"
+        required: true
+        default: dry-run
+        type: choice
+        options: [dry-run, generate, promote]
+      genre:
+        description: "Force a genre id (optional)"
+        required: false
+        type: string
+  # schedule:
+  #   - cron: "30 2 * * *"   # every day 02:30 UTC — uncomment to activate (also set the DAILY_MUSIC_ENABLED variable)
+
+concurrency:
+  group: daily-music
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # a scheduled run needs the variable; a manual run is explicit and always allowed
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.DAILY_MUSIC_ENABLED == 'true' }}
+    env:
+      DAILY_MUSIC_ENABLED: "true"      # the script's own guard (config.enabled or this) — only reached when the job above allowed it
+      ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-sa.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - name: Python deps (note transcription)
+        if: ${{ inputs.action != 'dry-run' && inputs.action != 'promote' }}
+        run: pip install "basic-pitch[onnx]"
+      - name: Node deps (storage upload)
+        run: npm install --prefix scripts/music
+      - name: Service account
+        run: |
+          echo '${{ secrets.GCP_SA_KEY }}' > "$GOOGLE_APPLICATION_CREDENTIALS"
+      - name: Run
+        env:
+          ACTION: ${{ inputs.action || 'generate' }}
+          GENRE: ${{ inputs.genre }}
+        run: |
+          args=()
+          [ "$ACTION" = "dry-run" ] && args+=(--dry-run)
+          [ "$ACTION" = "promote" ] && args+=(--promote)
+          [ -n "$GENRE" ] && args+=(--genre "$GENRE")
+          node scripts/music/daily.mjs "${args[@]}"

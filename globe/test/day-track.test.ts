@@ -131,3 +131,34 @@ describe("duration ~ route length (LIVE)", () => {
     expect(bestRoute(shortNote, [near, longhaul], rt, 5, 1.2, ranks)?.key).toBe("IST-ESB");
   });
 });
+
+import { dailyEnabled, parsePointer, resolveDailyTrack, storageUrl } from "../src/audio/daily-track";
+describe("daily track (dormant)", () => {
+  it("is off unless a flag says otherwise", () => {
+    expect(dailyEnabled()).toBe(false);
+    expect(dailyEnabled({ env: "0", search: "?x=1", stored: null })).toBe(false);
+    expect(dailyEnabled({ search: "?daily=1" })).toBe(true);
+    expect(dailyEnabled({ stored: "1" })).toBe(true);
+    expect(dailyEnabled({ env: "1" })).toBe(true);
+  });
+  it("accepts only public/music/<date>/<file> paths from a pointer", () => {
+    const ok = { date: "2026-10-10", genre: "symphonic", track: "public/music/2026-10-10/track.mp3", notes: "public/music/2026-10-10/notes.json" };
+    expect(parsePointer(ok)?.trackUrl).toBe(storageUrl("public/music/2026-10-10/track.mp3"));
+    expect(parsePointer({ ...ok, track: "https://evil.example/x.mp3" })).toBeNull();
+    expect(parsePointer({ ...ok, notes: "../../etc/passwd" })).toBeNull();
+    expect(parsePointer({ ...ok, track: "public/day.json" })).toBeNull();
+    expect(parsePointer(null)).toBeNull();
+  });
+  it("makes no request while disabled, and falls back (null) on any failure", async () => {
+    let calls = 0;
+    const f = async () => {
+      calls++;
+      return { ok: true, json: async () => ({ track: "public/music/2026-10-10/track.mp3", notes: "public/music/2026-10-10/notes.json" }) };
+    };
+    expect(await resolveDailyTrack(false, f)).toBeNull();
+    expect(calls).toBe(0);
+    expect((await resolveDailyTrack(true, f))?.notesUrl).toContain("notes.json");
+    expect(await resolveDailyTrack(true, async () => ({ ok: false, json: async () => ({}) }))).toBeNull();
+    expect(await resolveDailyTrack(true, async () => { throw new Error("offline"); })).toBeNull();
+  });
+});

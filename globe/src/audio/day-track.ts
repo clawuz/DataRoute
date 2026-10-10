@@ -74,6 +74,8 @@ export interface DayTrack {
 
 export interface DayTrackDeps {
   base?: string;
+  /** optional: other sources than the bundled /music (the daily track); null = use the bundled one */
+  resolve?: () => Promise<{ trackUrl: string; notesUrl: string } | null>;
   onNote: (e: NoteEvent) => void;
   clock: () => number;
 }
@@ -96,11 +98,17 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
     if (loading || data || typeof Audio === "undefined") return;
     loading = true;
     try {
-      const res = await fetch(`${base}/notes.json`);
-      if (!res.ok) throw new Error(String(res.status));
+      let src = (await d.resolve?.().catch(() => null)) ?? null; // the daily track, when it is switched on and readable
+      const bundled = { notesUrl: `${base}/notes.json`, trackUrl: `${base}/track.mp3` };
+      let res = await fetch((src ?? bundled).notesUrl).catch(() => null);
+      if ((!res || !res.ok) && src) {
+        src = null; // the daily files are unreadable: the bundled track
+        res = await fetch(bundled.notesUrl);
+      }
+      if (!res || !res.ok) throw new Error(String(res?.status ?? "offline"));
       const j = (await res.json()) as TrackData;
       if (disposed) return;
-      const a = new Audio(`${base}/track.mp3`);
+      const a = new Audio((src ?? bundled).trackUrl);
       a.preload = "auto";
       a.loop = false;
       audio = a;

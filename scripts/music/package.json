@@ -1,0 +1,7 @@
+{
+  "name": "dataroute-daily-music",
+  "private": true,
+  "type": "module",
+  "description": "Daily track pipeline helpers (uploads to Firebase Storage). Installed by the daily-music workflow, never by the site.",
+  "dependencies": { "firebase-admin": "^13.0.0" }
+}
