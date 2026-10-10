@@ -276,3 +276,28 @@ body { background: #02030a; }
   .title .modeline { display: none; }
   .regions { display: none; }
 }
+
+/* ---- mobile pass ----------------------------------------------------------------------------------------------------- */
+.airport-label.hub { font-size: max(var(--fs-min), calc(1.2 * var(--u))); }
+@media (max-aspect-ratio: 1/1) {
+  .gt-main { font-size: max(14px, calc(2.55 * var(--u))); }
+  .gt-sub { font-size: max(10px, calc(1.2 * var(--u))); }
+  .counter .label { font-size: clamp(8.5px, 2.5vmin, 10px); }
+  .music-scope, .music-scope.compact { bottom: 33vmin; }
+  .credit { bottom: 8vmin; }
+  .first-hint { top: 52%; bottom: auto; transform: translate(-50%, -50%); }
+}
+@keyframes hint-fade-mid { 0% { opacity: 0; } 8%, 82% { opacity: 1; } 100% { opacity: 0; } }
+@media (max-aspect-ratio: 1/1) { .first-hint { animation-name: hint-fade-mid; } }
+@media (max-aspect-ratio: 1/1) {
+  .counters { top: 18vmin; }
+  .lockup { top: 31vmin; }
+  .events, .flight-panel { top: 46vmin; }
+  .dep, .dep.dep-globe { bottom: 17.5vmin; }
+  .music-scope, .music-scope.compact { bottom: 36vmin; }
+}
+@media (max-aspect-ratio: 1/1) {
+  .counters { top: 21.5vmin; }
+  .lockup { top: 34vmin; }
+  .events, .flight-panel { top: 49vmin; }
+}

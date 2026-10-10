@@ -186,7 +186,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     composer.setSize(w, h, false);
     camera.aspect = w / h;
     // ux: the globe sits lower so the top-centre title lockup has room (picking and label projection use the same matrix)
-    camera.setViewOffset(w, h, 0, -Math.round(Math.min(56, Math.max(24, h * 0.06))), w, h);
+    // portrait phones carry the whole lockup + counters above the globe: it sits lower there
+    camera.setViewOffset(w, h, 0, -Math.round(h > w ? Math.min(150, Math.max(70, h * 0.12)) : Math.min(56, Math.max(24, h * 0.06))), w, h);
     camera.updateProjectionMatrix();
     const pr = renderer.getPixelRatio();
     space.nebula.setSize(w * pr, h * pr, 0.35 * level.tunnelScale);

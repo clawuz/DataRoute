@@ -287,7 +287,7 @@ export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteB
     <div className={`music-scope${compact ? " compact" : ""}`}>
       <div className="music-scope-wave" aria-hidden="true">
         <canvas ref={canvasRef} className="music-scope-canvas" />
-        {!music.on && <div className="music-scope-off label">SOUND OFF · PRESS M</div>}
+        {!music.on && <div className="music-scope-off label">{typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches ? "SOUND OFF · TAP SOUND" : "SOUND OFF · PRESS M"}</div>}
         {/* v4: the rhythm level (five segments) and one dot per active region layer, over the rhythm strip */}
         {!music.day && <div className="music-scope-meter"> {/* art:track — the rhythm level and region dots belong to the generative engine */}
           <div className="music-scope-level">
