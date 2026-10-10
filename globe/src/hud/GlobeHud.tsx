@@ -180,6 +180,8 @@ export function AirportLabels({ labels, bus }: { labels: AirportLabel[]; bus?: L
   );
 }
 
+/** the four values a phone keeps in the follow card (the rest hide behind the card's width) */
+const ESSENTIAL = new Set(["ALT", "GS", "PHASE", "REMAINING"]);
 const rows: [string, keyof FollowHud][] = [
   ["ALT", "alt"], ["GS", "gs"], ["HDG", "hdg"], ["VS", "vs"], ["PHASE", "phase"],
   ["DIST", "dist"], ["ELAPSED", "elapsed"], ["REMAINING", "remaining"], ["UTC", "utc"], ["LOCAL", "local"],
@@ -217,7 +219,7 @@ export function FlightPanel({ f }: { f: FollowHud }) {
       <div className="fp-route-text label">{f.route}</div>
       <dl className="fp-grid">
         {rows.map(([label, key]) => (
-          <div key={label}>
+          <div key={label} className={ESSENTIAL.has(label) ? "fp-ess" : undefined}>
             <dt className="label">{label}</dt>
             <dd>{String(f[key])}</dd>
           </div>
@@ -329,7 +331,7 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
   const ownBus = useMemo(createNoteBus, []); // art:sound — a quiet bus when none is wired
   const animate = !s.reducedMotion;
   return (
-    <div className={`hud${s.hidden ? " hidden" : ""}`}>
+    <div className={`hud${s.hidden ? " hidden" : ""}${s.follow ? " following" : ""}`}>
       <GlobeTitle s={s} />
       <MusicLockup />
       {s.ready && (

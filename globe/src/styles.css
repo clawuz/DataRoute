@@ -313,3 +313,28 @@ body { background: #02030a; }
   .lockup { top: 27vmin; }
   .events, .flight-panel { top: 43vmin; }
 }
+
+/* ---- phone, following a flight: a bottom card with the essentials and the buttons, no clutter around it ------------------ */
+@media (max-aspect-ratio: 1/1) {
+  .hud.following .counters, .hud.following .events, .hud.following .lockup, .hud.following .dep, .hud.following .credit, .hud.following .source { display: none; }
+  .hud.following .music-scope-wave, .hud.following .music-scope-now, .hud.following .music-scope-label { display: none; }
+  .hud.following .music-scope.compact { bottom: 3vmin; padding: 0; background: transparent; border: none; backdrop-filter: none; }
+  .hud.following .quick-controls { margin-top: 0; }
+  .hud.following .flight-panel { top: auto; bottom: 19vmin; left: 3vmin; right: 3vmin; width: auto; transform: none; }
+  .flight-panel .fp-grid { grid-template-columns: repeat(4, 1fr); gap: 1vmin; }
+  .flight-panel .fp-grid > div:not(.fp-ess) { display: none; }
+  .fp-controls { flex-wrap: nowrap; }
+  .fp-leave { width: auto; margin-left: auto; }
+  .fp-info + .fp-leave { margin-left: auto; }
+}
+/* phone, not following: the attribution is fine print, so it takes less room */
+@media (max-aspect-ratio: 1/1) {
+  .credit, .source { font-size: 8px; letter-spacing: 0.03em; color: var(--ink-faint); }
+  .credit { bottom: 5vmin; }
+  .dep, .dep.dep-globe { bottom: 12vmin; }
+  .music-scope, .music-scope.compact { bottom: 30vmin; }
+}
+@media (max-aspect-ratio: 1/1) {
+  .hud.following .flight-panel { gap: 2vmin; padding: 1.6vmin 1.8vmin; }
+  .hud.following .quick-controls { background: rgba(2, 4, 12, 0.62); padding: 1vmin; border-radius: 1.2vmin; backdrop-filter: blur(6px); }
+}
