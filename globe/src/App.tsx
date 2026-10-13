@@ -8,8 +8,11 @@ import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "./a
 import { GlobeHud } from "./hud/GlobeHud";
 import { createNoteBus } from "./audio/notes-bus"; // art:sound
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
+import { Experience } from "./personal/Experience";
+import { Landing } from "./personal/Landing";
+import { selectionFromSearch, searchFromSelection, type PersonalSelection } from "./personal/codec";
 
-export function App() {
+function LiveApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
   const labelBus = useMemo(() => createLabelBus(), []);
@@ -136,5 +139,47 @@ export function App() {
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
     </>
+  );
+}
+
+/**
+ * Entry: a personal piece (`?v=` / `?w=`), the picker, or the live sky.
+ * The picker is the default only when the build sets VITE_PERSONAL=1 (the new link); the old deploy keeps the live sky.
+ */
+export function App() {
+  const search = window.location.search;
+  const params = new URLSearchParams(search);
+  const personalDefault = import.meta.env.VITE_PERSONAL === "1";
+  const wantsLive = params.has("live") || params.has("data") || params.has("debug") || params.has("art");
+  const [view, setView] = useState<"landing" | "personal" | "live">(() => {
+    if (selectionFromSearch(search)) return "personal";
+    if (params.get("personal") === "1" || (personalDefault && !wantsLive)) return "landing";
+    return "live";
+  });
+  const [selection, setSelection] = useState<PersonalSelection | null>(() => selectionFromSearch(search));
+
+  if (view === "live") return <LiveApp />;
+  if (view === "personal" && selection) {
+    return (
+      <Experience
+        key={searchFromSelection(selection)}
+        selection={selection}
+        onBack={() => {
+          window.history.replaceState(null, "", window.location.pathname);
+          setSelection(null);
+          setView("landing");
+        }}
+      />
+    );
+  }
+  return (
+    <Landing
+      onCompose={(sel) => {
+        window.history.replaceState(null, "", window.location.pathname + searchFromSelection(sel));
+        setSelection(sel);
+        setView("personal");
+      }}
+      onLive={() => setView("live")}
+    />
   );
 }

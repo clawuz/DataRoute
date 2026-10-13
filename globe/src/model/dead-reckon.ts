@@ -21,6 +21,7 @@ const KT_TO_KMH = 1.852;
  * (and flagged `extrapolated`); afterwards it disappears. Non-airborne flights are never extrapolated.
  */
 export function headState(f: GlobeFlight, cur: number): HeadState | null {
+  if (f.t.length === 0) return null; // planned-only route (the personal globe): nothing flies
   if (cur < f.t[0]) return null;
   if (f.status !== "AIRBORNE" || cur <= f.lastT) {
     const s = sampleAt(f, cur);

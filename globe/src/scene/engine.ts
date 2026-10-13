@@ -41,6 +41,8 @@ export interface GlobeEngineOptions {
   reducedMotion: boolean;
   onPerf?: (fps: number, level: number) => void;
   onError?: (msg: string) => void;
+  /** draw the planned great circles even when corridors are on (the personal globe has no flown tracks) */
+  alwaysPlanned?: boolean;
 }
 
 export interface GlobeEngine {
@@ -131,7 +133,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let texs: EarthTextures | null = null;
   let arcs: Arcs | null = null;
   let corridors: Corridors | null = null; // art:corridors
-  const planned = () => !(effects?.corridors ?? false); // art:corridors
+  const planned = () => !!opts.alwaysPlanned || !(effects?.corridors ?? false); // art:corridors
   let airports: Airports | null = null;
   let model: GlobeModel | null = null;
   let pickIndex: PickIndex | null = null;
