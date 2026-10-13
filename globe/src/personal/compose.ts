@@ -12,7 +12,7 @@ export interface PersonalNote {
   vel: number;
   /** route key — what lights on the globe when the note sounds */
   key: string;
-  /** index into the routes (journey order) */
+  /** index into the routes */
   route: number;
 }
 

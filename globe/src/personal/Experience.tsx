@@ -7,7 +7,7 @@ import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
 import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
-import { countryName, flagOf } from "./countries";
+import { destinationOf, flagOf } from "./destinations";
 
 interface Props {
   selection: PersonalSelection;
@@ -25,9 +25,9 @@ export function Experience({ selection, onBack }: Props) {
   const [toast, setToast] = useState("");
   const [now, setNow] = useState<string[]>([]);
 
-  const routes = useMemo(() => buildRoutes(selection.mode, selection.isos), [selection]);
+  const routes = useMemo(() => buildRoutes(selection.origin, selection.dests), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
-  const stats = useMemo(() => pieceStats(selection.mode, routes), [selection.mode, routes]);
+  const stats = useMemo(() => pieceStats(selection.mode, selection.origin, selection.dests, routes), [selection.mode, routes]);
 
   useEffect(() => {
     if (!hasWebGL2()) {
@@ -61,7 +61,8 @@ export function Experience({ selection, onBack }: Props) {
           engine.pulseRoute(routeKey(r.from, r.to, ""));
           engine.pulseAirport(r.to, nowSec());
           engine.pulseAirport(r.from, nowSec());
-          if (n.instrument !== "CELLO") setNow((p) => [...p.slice(-3), `${flagOf(r.to)} ${countryName(r.to)}`]);
+          const far = destinationOf(r.to === "IST" || r.to === "SAW" ? r.from : r.to);
+          if (n.instrument !== "CELLO" && far) setNow((p) => [...p.slice(-3), `${flagOf(far.iso)} ${r.from} → ${r.to} · ${far.city}`]);
         });
         setRunning(true);
       };
@@ -108,7 +109,7 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="landing-back" onClick={onBack}>← NEW PIECE</button>
         <h1 className="personal-title">{stats.title}</h1>
         <p className="personal-sub">
-          {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
+          {stats.destinations} DESTINATIONS · {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
         </p>
         <p className="personal-sub">SIGNATURE VOICE · {stats.signature.toUpperCase()}</p>
         <div className="personal-now" aria-live="off">

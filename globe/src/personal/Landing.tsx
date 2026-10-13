@@ -1,42 +1,77 @@
 import { useMemo, useState } from "react";
-import { REGION_HEX, REGION_LABEL } from "@web/data/palette";
-import { COUNTRIES, countryName, flagOf } from "./countries";
-import { MAX_COUNTRIES, MIN_COUNTRIES, type PersonalMode, type PersonalSelection } from "./codec";
+import { REGION_HEX, REGION_LABEL, REGIONS } from "@web/data/palette";
+import type { Region } from "@collector/day-schema";
+import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
+import { COUNTRY_COUNT, DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, type Destination } from "./destinations";
+import { buildRoutes } from "./routes";
 
 interface Props {
   onCompose(sel: PersonalSelection): void;
   onLive(): void;
 }
 
+type Step = "mode" | "origin" | "dests";
+
 const COPY: Record<PersonalMode, { head: string; sub: string; cta: string }> = {
-  visited: { head: "Where have you been?", sub: "Pick the countries you have travelled to. Your journey becomes a piece of music.", cta: "COMPOSE MY JOURNEY" },
+  visited: { head: "Where have you been?", sub: "Pick the places you have flown to. Your journey becomes a piece of music.", cta: "COMPOSE MY JOURNEY" },
   wish: { head: "Where do you want to go?", sub: "Pick your dream destinations. We will play the sound of the trip you have not taken yet.", cta: "COMPOSE MY WISHLIST" },
 };
 
+const norm = (s: string): string => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+interface Row extends Destination {
+  country: string;
+  label: string;
+  hay: string;
+}
+
+const ROWS: Row[] = DESTINATIONS.map((d) => {
+  const country = countryName(d.iso);
+  return { ...d, country, label: labelOf(d), hay: norm(`${d.city} ${d.iata} ${d.name} ${country}`) };
+});
+
+function groupByCountry(rows: Row[]): { iso: string; country: string; region: Region; items: Row[] }[] {
+  const m = new Map<string, Row[]>();
+  for (const r of rows) m.set(r.iso, [...(m.get(r.iso) ?? []), r]);
+  return [...m.entries()]
+    .map(([iso, items]) => ({ iso, country: items[0].country, region: items[0].region, items: items.sort((a, b) => a.city.localeCompare(b.city)) }))
+    .sort((a, b) => a.country.localeCompare(b.country));
+}
+
 export function Landing({ onCompose, onLive }: Props) {
-  const [mode, setMode] = useState<PersonalMode | null>(null);
+  const [step, setStep] = useState<Step>("mode");
+  const [mode, setMode] = useState<PersonalMode>("visited");
+  const [origin, setOrigin] = useState(DEFAULT_ORIGIN);
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
+  const [region, setRegion] = useState<Region | "ALL">("ALL");
 
-  const list = useMemo(() => {
-    const rows = COUNTRIES.filter((c) => c.iso !== "TR").map((c) => ({ ...c, name: countryName(c.iso) }));
-    rows.sort((a, b) => a.name.localeCompare(b.name));
-    const needle = q.trim().toLowerCase();
-    return needle ? rows.filter((r) => r.name.toLowerCase().includes(needle) || r.iso.toLowerCase() === needle) : rows;
-  }, [q]);
+  const needle = norm(q.trim());
+  const filtered = useMemo(
+    () => ROWS.filter((r) => (!needle || r.hay.includes(needle)) && (step === "origin" || region === "ALL" || r.region === region)),
+    [needle, region, step],
+  );
+  const groups = useMemo(() => groupByCountry(filtered), [filtered]);
 
-  if (!mode) {
+  const reset = () => {
+    setStep("mode");
+    setPicked([]);
+    setQ("");
+    setRegion("ALL");
+  };
+
+  if (step === "mode") {
     return (
       <div className="landing" role="main">
         <h1 className="landing-title">A WORLD OF MUSIC</h1>
         <p className="landing-sub">Every journey has a sound. Choose yours.</p>
         <div className="mode-cards">
-          <button type="button" className="mode-card" onClick={() => setMode("visited")}>
+          <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
             <span className="mode-n">01</span>
             <span className="mode-name">Where I have been</span>
-            <span className="mode-desc">Your travelled countries, composed into one piece.</span>
+            <span className="mode-desc">The places you flew to, composed into one piece.</span>
           </button>
-          <button type="button" className="mode-card" onClick={() => setMode("wish")}>
+          <button type="button" className="mode-card" onClick={() => { setMode("wish"); setStep("origin"); }}>
             <span className="mode-n">02</span>
             <span className="mode-name">Where I want to go</span>
             <span className="mode-desc">Your wishlist, as the music of a trip yet to come.</span>
@@ -47,37 +82,92 @@ export function Landing({ onCompose, onLive }: Props) {
             <span className="mode-desc">Every Turkish Airlines flight of the last 24 hours, played as music.</span>
           </button>
         </div>
+        <p className="landing-fine">{DESTINATIONS.length} airports · {COUNTRY_COUNT} countries · one hub</p>
       </div>
     );
   }
 
-  const toggle = (iso: string) =>
-    setPicked((p) => (p.includes(iso) ? p.filter((x) => x !== iso) : p.length >= MAX_COUNTRIES ? p : [...p, iso]));
-  const ready = picked.length >= MIN_COUNTRIES;
+  if (step === "origin") {
+    return (
+      <div className="landing picker" role="main">
+        <button type="button" className="landing-back" onClick={reset}>← BACK</button>
+        <h1 className="picker-head">Where do you start from?</h1>
+        <p className="landing-sub">Every Turkish Airlines trip passes through Istanbul. Pick the airport you fly out of.</p>
+        <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search your home airport" autoFocus />
+        <button type="button" className="origin-quick" onClick={() => { setOrigin("IST"); setQ(""); setStep("dests"); }}>
+          <span className="chip-flag">{flagOf("TR")}</span> Istanbul — the hub itself <span className="chip-code">IST</span>
+        </button>
+        <div className="picker-groups">
+          {groups.map((g) => (
+            <section key={g.iso} className="group">
+              <h2 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h2>
+              <div className="picker-grid">
+                {g.items.map((r) => (
+                  <button key={r.iata} type="button" className="chip" onClick={() => { setOrigin(r.iata); setQ(""); setStep("dests"); }}>
+                    <span className="chip-name">{r.city}</span>
+                    <span className="chip-code">{r.iata}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+          {groups.length === 0 && <p className="landing-sub">No airport matches “{q}”.</p>}
+        </div>
+      </div>
+    );
+  }
+
+  const toggle = (code: string) =>
+    setPicked((p) => (p.includes(code) ? p.filter((x) => x !== code) : p.length >= MAX_DESTINATIONS ? p : [...p, code]));
+  const ready = picked.length >= MIN_DESTINATIONS;
   const c = COPY[mode];
+  const o = destinationOf(origin);
+  const last = picked[picked.length - 1];
+  const lastTrip = last ? buildRoutes(origin, [last]).map((r) => r.from).concat(last).join(" → ") : "";
+  const regionTabs: (Region | "ALL")[] = ["ALL", ...REGIONS.filter((r) => r !== "UNK" && ROWS.some((x) => x.region === r))];
 
   return (
     <div className="landing picker" role="main">
-      <button type="button" className="landing-back" onClick={() => { setMode(null); setPicked([]); setQ(""); }}>← BACK</button>
+      <button type="button" className="landing-back" onClick={() => { setStep("origin"); setQ(""); }}>← BACK</button>
       <h1 className="picker-head">{c.head}</h1>
-      <p className="landing-sub">{c.sub}</p>
-      <input className="picker-search" type="search" placeholder="Search a country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search a country" />
-      <div className="picker-grid">
-        {list.map((r) => {
-          const on = picked.includes(r.iso);
-          return (
-            <button key={r.iso} type="button" className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iso)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={REGION_LABEL[r.region]}>
-              <span className="chip-flag">{flagOf(r.iso)}</span>
-              <span className="chip-name">{r.name}</span>
-            </button>
-          );
-        })}
+      <p className="landing-sub">
+        {c.sub} Starting from <strong>{o?.city ?? origin}</strong>{isHub(origin) ? " (the hub)" : " via Istanbul"}.
+      </p>
+      <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search a destination" />
+      <div className="region-tabs" role="tablist">
+        {regionTabs.map((r) => (
+          <button key={r} type="button" role="tab" aria-selected={region === r} className={`tab${region === r ? " on" : ""}`} onClick={() => setRegion(r)}>
+            {r === "ALL" ? "ALL" : REGION_LABEL[r]}
+          </button>
+        ))}
+      </div>
+      <div className="picker-groups">
+        {groups.map((g) => (
+          <section key={g.iso} className="group">
+            <h2 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h2>
+            <div className="picker-grid">
+              {g.items.map((r) => {
+                const on = picked.includes(r.iata);
+                const same = r.iata === origin;
+                return (
+                  <button key={r.iata} type="button" disabled={same} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
+                    <span className="chip-name">{r.city}</span>
+                    <span className="chip-code">{r.iata}</span>
+                    {r.seasonal && <span className="chip-tag">SEASONAL</span>}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+        {groups.length === 0 && <p className="landing-sub">No destination matches “{q}”.</p>}
       </div>
       <div className="picker-bar">
         <span className="picker-count">
-          {picked.length} / {MAX_COUNTRIES} {picked.length < MIN_COUNTRIES ? `· PICK AT LEAST ${MIN_COUNTRIES}` : ""}
+          {picked.length} / {MAX_DESTINATIONS}
+          {lastTrip ? ` · LAST: ${lastTrip}` : ` · PICK AT LEAST ${MIN_DESTINATIONS}`}
         </span>
-        <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, isos: picked })}>
+        <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, origin, dests: picked })}>
           {c.cta}
         </button>
       </div>

@@ -1,70 +1,111 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRIES, countryOf, flagOf } from "../src/personal/countries";
-import { decodeSet, encodeSet, pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
-import { buildRoutes, journeyOrder } from "../src/personal/routes";
+import { COUNTRY_COUNT, DESTINATIONS, destinationOf, flagOf, isHub, labelOf } from "../src/personal/destinations";
+import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
+import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
 import { buildPersonalModel } from "../src/personal/model";
+import { pieceStats } from "../src/personal/stats";
 import { buildArcBuffers } from "../src/scene/arcs";
 
-describe("countries", () => {
-  it("has unique ISO codes and valid coordinates", () => {
-    const isos = COUNTRIES.map((c) => c.iso);
-    expect(new Set(isos).size).toBe(isos.length);
-    for (const c of COUNTRIES) {
-      expect(c.lat).toBeGreaterThanOrEqual(-90);
-      expect(c.lat).toBeLessThanOrEqual(90);
-      expect(c.lon).toBeGreaterThanOrEqual(-180);
-      expect(c.lon).toBeLessThanOrEqual(180);
+describe("destinations", () => {
+  it("has unique IATA codes and valid coordinates", () => {
+    const codes = DESTINATIONS.map((d) => d.iata);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const d of DESTINATIONS) {
+      expect(d.iata).toMatch(/^[A-Z]{3}$/);
+      expect(d.iso).toMatch(/^[A-Z]{2}$/);
+      expect(Math.abs(d.lat)).toBeLessThanOrEqual(90);
+      expect(Math.abs(d.lon)).toBeLessThanOrEqual(180);
     }
-    expect(countryOf("TR")?.region).toBe("DOM");
-    expect(countryOf("JP")?.region).toBe("ASI");
   });
-  it("makes a flag emoji", () => expect(flagOf("TR")).toBe("🇹🇷"));
+  it("covers the Turkish Airlines network", () => {
+    expect(DESTINATIONS.length).toBeGreaterThanOrEqual(300);
+    expect(COUNTRY_COUNT).toBeGreaterThanOrEqual(115);
+    for (const c of ["IST", "LHR", "JFK", "DPS", "CGK", "NRT", "GRU", "JNB", "SYD"]) expect(destinationOf(c), c).toBeDefined();
+    expect(destinationOf("DPS")?.iso).toBe("ID");
+    expect(destinationOf("LHR")?.iso).toBe("GB");
+  });
+  it("knows the hub and labels twin airports", () => {
+    expect(isHub("IST")).toBe(true);
+    expect(isHub("LHR")).toBe(false);
+    expect(labelOf(destinationOf("LHR")!)).toBe("London · LHR");
+    expect(flagOf("TR")).toBe("🇹🇷");
+  });
+});
+
+describe("routes — every trip goes through Istanbul", () => {
+  it("London → Bali is LHR → IST → DPS", () => {
+    const r = buildRoutes("LHR", ["DPS"]);
+    expect(r.map((x) => x.key)).toEqual(["LHR-IST", "IST-DPS"]);
+    expect(r[0].leg).toBe(0);
+    expect(r[1].leg).toBe(1);
+  });
+  it("from the hub the flight is direct", () => {
+    expect(buildRoutes("IST", ["DPS", "JFK"]).map((x) => x.key)).toEqual(["IST-DPS", "IST-JFK"]);
+  });
+  it("a destination that is the hub needs no stopover", () => {
+    expect(buildRoutes("LHR", ["IST"]).map((x) => x.key)).toEqual(["LHR-IST"]);
+  });
+  it("shares the first leg between trips and keeps the order", () => {
+    const r = buildRoutes("LHR", ["DPS", "JFK", "NRT"]);
+    expect(r.map((x) => x.key)).toEqual(["LHR-IST", "IST-DPS", "IST-JFK", "IST-NRT"]);
+  });
+  it("uses a real non-hub flight when TK flies one", () => {
+    expect(buildRoutes("ESB", ["VIE"]).map((x) => x.key)).toEqual(["ESB-VIE"]);
+    expect(buildRoutes("AYT", ["VKO"]).map((x) => x.key)).toEqual(["AYT-VKO"]);
+    expect(buildRoutes("MEL", ["SIN"]).map((x) => x.key)).toEqual(["MEL-SIN"]);
+    // the pair is undirected
+    expect(buildRoutes("VIE", ["ESB"]).map((x) => x.key)).toEqual(["VIE-ESB"]);
+  });
+  it("changes at Istanbul when there is no direct flight", () => {
+    expect(buildRoutes("ESB", ["LHR"]).map((x) => x.key)).toEqual(["ESB-IST", "IST-LHR"]);
+    expect(buildRoutes("LHR", ["JFK"]).map((x) => x.key)).toEqual(["LHR-IST", "IST-JFK"]);
+  });
+  it("skips the origin and unknown codes", () => {
+    expect(buildRoutes("LHR", ["LHR", "ZZZ"])).toEqual([]);
+  });
+  it("counts stopovers", () => {
+    expect(stopovers("LHR", ["DPS", "IST", "JFK"])).toBe(2);
+    expect(stopovers("ESB", ["VIE", "LHR"])).toBe(1);
+    expect(stopovers("IST", ["DPS", "JFK"])).toBe(0);
+  });
+  it("great-circle distances are plausible", () => {
+    const [a, b] = buildRoutes("LHR", ["DPS"]);
+    expect(a.distKm).toBeGreaterThan(2400);
+    expect(a.distKm).toBeLessThan(3000);
+    expect(b.distKm).toBeGreaterThan(9500);
+    expect(b.distKm).toBeLessThan(10500);
+  });
+  it("colours a leg by the far end from the hub", () => {
+    const [a, b] = buildRoutes("LHR", ["DPS"]);
+    expect(a.region).toBe("EUR");
+    expect(b.region).toBe("ASI");
+  });
 });
 
 describe("codec", () => {
-  it("round-trips a set regardless of order", () => {
-    const s = encodeSet(["JP", "US", "TR", "FR"]);
-    expect(decodeSet(s).sort()).toEqual(["FR", "JP", "TR", "US"]);
-    expect(encodeSet(["US", "FR", "TR", "JP"])).toBe(s);
+  it("round-trips selections and defaults the origin to the hub", () => {
+    const sel = { mode: "wish" as const, origin: "LHR", dests: ["DPS", "NRT"] };
+    expect(selectionFromSearch(searchFromSelection(sel))).toEqual(sel);
+    expect(searchFromSelection({ mode: "visited", origin: "IST", dests: ["JFK"] })).toBe("?v=JFK");
+    expect(selectionFromSearch("?v=JFK")).toEqual({ mode: "visited", origin: "IST", dests: ["JFK"] });
+    expect(pieceHash(sel)).toMatch(/^w-LHR-/);
   });
-  it("parses and writes the URL", () => {
-    const sel = { mode: "wish" as const, isos: ["JP", "BR", "NZ"] };
-    const back = selectionFromSearch(searchFromSelection(sel));
-    expect(back?.mode).toBe("wish");
-    expect(back?.isos.sort()).toEqual(["BR", "JP", "NZ"]);
-    expect(pieceHash(sel)).toMatch(/^w-/);
-  });
-  it("rejects garbage and too-small selections", () => {
+  it("rejects garbage, unknown codes and the origin itself", () => {
     expect(selectionFromSearch("?v=!!")).toBeNull();
-    expect(selectionFromSearch(`?v=${encodeSet(["JP"])}`)).toBeNull();
+    expect(selectionFromSearch("?v=ZZZ,QQQ")).toBeNull();
+    expect(selectionFromSearch("?o=LHR&v=LHR")).toBeNull();
     expect(selectionFromSearch("")).toBeNull();
-  });
-});
-
-describe("routes", () => {
-  it("visited is a journey starting at home", () => {
-    const r = buildRoutes("visited", ["JP", "GB", "FR"]);
-    expect(r).toHaveLength(3);
-    expect(r[0].from).toBe("TR");
-    expect(r[1].from).toBe(r[0].to);
-  });
-  it("wish is a star from home", () => {
-    const r = buildRoutes("wish", ["JP", "GB", "FR"]);
-    expect(r.every((x) => x.from === "TR")).toBe(true);
-  });
-  it("skips home and unknown codes, and is deterministic", () => {
-    expect(journeyOrder("TR", ["TR", "ZZ", "FR"])).toEqual(["FR"]);
-    expect(buildRoutes("visited", ["JP", "FR", "US"])).toEqual(buildRoutes("visited", ["US", "FR", "JP"]));
+    expect(selectionFromSearch("?o=XXX&v=jfk,dps")?.origin).toBe("IST");
+    expect(selectionFromSearch("?v=jfk,JFK,dps")?.dests).toEqual(["JFK", "DPS"]);
   });
 });
 
 describe("compose", () => {
-  it("is deterministic and has notes inside the duration", () => {
-    const routes = buildRoutes("visited", ["JP", "FR", "US", "BR", "EG"]);
+  it("is deterministic and keeps every note inside the duration", () => {
+    const routes = buildRoutes("LHR", ["DPS", "JFK", "NRT", "GRU", "CAI"]);
     const a = composePiece("visited", routes);
-    const b = composePiece("visited", routes);
-    expect(a).toEqual(b);
+    expect(a).toEqual(composePiece("visited", routes));
     expect(a.notes.length).toBeGreaterThanOrEqual(routes.length);
     for (const n of a.notes) {
       expect(n.t).toBeGreaterThanOrEqual(0);
@@ -72,19 +113,27 @@ describe("compose", () => {
       expect(n.freq).toBeGreaterThan(20);
     }
   });
-  it("moods differ", () => {
-    const routes = buildRoutes("wish", ["JP", "FR", "US"]);
+  it("moods differ and an empty piece is empty", () => {
+    const routes = buildRoutes("IST", ["DPS", "JFK"]);
     expect(composePiece("wish", routes)).not.toEqual(composePiece("visited", routes));
+    expect(composePiece("wish", [])).toEqual({ notes: [], duration: 0 });
   });
-  it("is empty without routes", () => expect(composePiece("wish", [])).toEqual({ notes: [], duration: 0 }));
 });
 
-describe("personal model", () => {
-  it("builds planned arcs without a flown track", () => {
-    const routes = buildRoutes("wish", ["JP", "FR", "US"]);
+describe("personal model and stats", () => {
+  it("builds planned arcs keyed by IATA", () => {
+    const routes = buildRoutes("LHR", ["DPS", "JFK"]);
     const m = buildPersonalModel(routes);
     expect(m.flights).toHaveLength(3);
-    expect(m.airports.JP).toBeDefined();
+    expect(m.airports.IST).toBeDefined();
+    expect(m.traffic.get("IST")).toBe(3);
     expect(buildArcBuffers(m, { planned: true })).toBeTruthy();
+  });
+  it("summarises the piece", () => {
+    const routes = buildRoutes("LHR", ["DPS", "JFK"]);
+    const s = pieceStats("visited", "LHR", ["DPS", "JFK"], routes);
+    expect(s.destinations).toBe(2);
+    expect(s.countries).toBe(2);
+    expect(s.km).toBeGreaterThan(20000);
   });
 });

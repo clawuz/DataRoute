@@ -1,0 +1,63 @@
+<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Başlık seçenekleri (deneme)</title>
+<style>
+@font-face{font-family:"TK Display Condensed";src:url("/fonts/TKDisplayCondensed-Bold.woff2") format("woff2");font-weight:700}
+@font-face{font-family:"TK Display Condensed";src:url("/fonts/TKDisplayCondensed-SemiBold.woff2") format("woff2");font-weight:600}
+@font-face{font-family:"TK Text Wide";src:url("/fonts/TKTextWide-Medium.woff2") format("woff2");font-weight:500}
+@font-face{font-family:"TK Text";src:url("/fonts/TKText-Regular.woff2") format("woff2");font-weight:400}
+:root{--ink:#e9edf5;--dim:rgba(233,237,245,.7);--thy:#e30a17;--display:"TK Display Condensed",sans-serif;--label:"TK Text Wide",sans-serif;--text:"TK Text",sans-serif}
+body{margin:0;background:#02030a;color:var(--ink);font-family:var(--text)}
+h2{font:500 12px var(--label);letter-spacing:.2em;color:var(--dim);margin:0 0 10px}
+main{display:grid;grid-template-columns:1fr;gap:16px;padding:18px;max-width:760px}
+.card{border:1px solid #1b2540;border-radius:8px;overflow:hidden;background:radial-gradient(120% 140% at 80% 120%,#0d1a3a 0%,#05070f 60%)}
+.card .note{padding:12px 16px;font-size:13px;color:var(--dim);border-top:1px solid #1b2540;line-height:1.5}
+.stage{height:200px;position:relative;padding:20px 24px;width:1200px;box-sizing:border-box;zoom:var(--z,.6)}
+.card{overflow:hidden}
+.main{font:700 40px/1 var(--display);letter-spacing:.02em;text-shadow:-1.4px 0 rgba(255,40,70,.7),1.4px 0 rgba(40,200,255,.7)}
+.sub{font:600 18px var(--display);letter-spacing:.34em;color:var(--dim)}
+.status{font:500 12px var(--label);letter-spacing:.14em;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--thy);box-shadow:0 0 10px var(--thy)}
+.dim{color:var(--dim)}
+/* option A (1+2): stacked, aligned, one status chip */
+.A .main{display:block}
+.A .sub{display:block;margin-top:8px;font:600 15px var(--display);letter-spacing:.405em;color:rgba(233,237,245,.82)}
+.A .rule{width:100%;max-width:330px;height:1px;background:linear-gradient(90deg,var(--thy),rgba(227,10,23,0));margin:12px 0 12px}
+.A .chip{display:inline-flex;align-items:center;gap:10px;padding:5px 12px;border:1px solid rgba(233,237,245,.25);border-radius:999px;background:rgba(2,4,12,.5)}
+/* option B (3): one line, separator */
+.B .row{display:flex;align-items:center;gap:14px}
+.B .sep{width:1px;height:26px;background:rgba(233,237,245,.45)}
+.B .sub{font:600 17px var(--display);letter-spacing:.28em;color:rgba(233,237,245,.88)}
+.B .status{margin-top:12px}
+.B .status .dim::before{content:"· "}
+/* option C (5): only the name + a status chip */
+.C .chip{display:inline-flex;align-items:center;gap:10px;margin-top:12px;padding:5px 12px;border:1px solid rgba(233,237,245,.25);border-radius:999px;background:rgba(2,4,12,.5)}
+.C .bar{position:absolute;left:24px;top:22px;bottom:auto;width:3px;height:40px;background:var(--thy)}
+.C .main{padding-left:14px}
+.C .chip{margin-left:14px}
+.bar-demo{position:absolute;right:24px;top:20px;text-align:right}
+.counter{font:500 11px var(--label);letter-spacing:.14em;color:var(--dim)} .counter b{display:block;font:600 26px var(--display);color:#fff;letter-spacing:0}
+.lock{position:absolute;left:50%;top:22px;transform:translateX(-50%);text-align:center}
+.lock div:first-child{font:500 15px var(--label);letter-spacing:.34em;padding-left:.34em;color:#fff} .lock div:last-child{margin-top:6px;font:400 11px var(--text);color:rgba(255,255,255,.7)}
+</style>
+<main>
+ <section class="card A"><div class="stage">
+   <div class="bar-demo"><div class="counter">AIRBORNE<b>147</b></div></div>
+   <div class="lock"><div>A WORLD OF MUSIC</div><div>All our routes, composing the music of the world.</div></div>
+   <span class="main">TURKISH AIRLINES</span><span class="sub">24H OPERATIONS</span><div class="rule"></div>
+   <span class="chip status"><i class="dot"></i>LIVE <span class="dim">· ROUTE DENSITY 24H</span></span>
+ </div><div class="note"><h2>A · İsim büyük, altında hizalı alt başlık, tek durum çipi</h2>Kırmızı ince çizgi ismin altına sol kenardan başlar ve durum çipine bağlar. Üç katman (isim, alt başlık, durum) aynı sol kenarda; üst ortadaki lockup ile aynı hiyerarşi dili.</div></section>
+
+ <section class="card B"><div class="stage">
+   <div class="bar-demo"><div class="counter">AIRBORNE<b>147</b></div></div>
+   <div class="lock"><div>A WORLD OF MUSIC</div><div>All our routes, composing the music of the world.</div></div>
+   <div class="row"><span class="main">TURKISH AIRLINES</span><span class="sep"></span><span class="sub">24H OPERATIONS</span></div>
+   <div class="status"><i class="dot"></i>LIVE <span class="dim">ROUTE DENSITY 24H</span></div>
+ </div><div class="note"><h2>B · Aynı satır, ince dikey ayraç</h2>En az değişiklik. Alt başlığın rengi %88'e çıktı, ayraç iki parçayı tek lockup gibi tutuyor. Durum satırı tek satıra indi.</div></section>
+
+ <section class="card C"><div class="stage">
+   <div class="bar-demo"><div class="counter">AIRBORNE<b>147</b></div></div>
+   <div class="lock"><div>A WORLD OF MUSIC</div><div>All our routes, composing the music of the world.</div></div>
+   <span class="bar"></span><div class="main">TURKISH AIRLINES</div>
+   <span class="chip status"><i class="dot"></i>LIVE <span class="dim">· 24H OPERATIONS</span></span>
+ </div><div class="note"><h2>C · Sadece isim + kırmızı işaret, "24H OPERATIONS" duruma taşındı</h2>İsmin soluna kırmızı bir dikey çubuk (marka işareti). "24H OPERATIONS" ayrı bir başlık olmaktan çıkıp durum çipinin içinde bilgi olarak duruyor. En sade seçenek; sayaçlardaki "FLIGHTS · 24H" ile zaten tekrar etmiyor.</div></section>
+</main></html>

@@ -371,3 +371,14 @@ body { background: #02030a; }
 .personal-actions { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 1.6vmin; padding: 3vmin; }
 .tap-play { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); font: inherit; letter-spacing: 0.24em; padding: 2vmin 4vmin; color: #fff; background: rgba(227, 10, 23, 0.85); border: 0; border-radius: 99px; cursor: pointer; z-index: 8; }
 @media (max-aspect-ratio: 1/1) { .mode-card { width: 86vw; min-height: 0; } .picker { padding-top: 12vmin; } .personal-hud { padding-top: 10vmin; } }
+.landing-fine { margin: 0; color: var(--ink-dim); letter-spacing: 0.2em; font-size: clamp(10px, 1.3vmin, 13px); }
+.picker-groups { display: flex; flex-direction: column; gap: 2.4vmin; width: min(130vmin, 94vw); }
+.group-head { margin: 0 0 1vmin; font-weight: 400; letter-spacing: 0.14em; font-size: clamp(12px, 1.7vmin, 16px); }
+.picker-grid { justify-content: flex-start; }
+.chip-code { font-family: var(--label); color: var(--ink-dim); letter-spacing: 0.1em; font-size: 0.8em; }
+.chip-tag { font-size: 0.62em; letter-spacing: 0.14em; color: var(--amber); }
+.chip:disabled { opacity: 0.3; cursor: not-allowed; }
+.origin-quick { font: inherit; color: var(--ink); display: inline-flex; align-items: center; gap: 1vmin; padding: 1.2vmin 2vmin; background: rgba(227, 10, 23, 0.14); border: 1px solid var(--thy); border-radius: 99px; cursor: pointer; font-size: clamp(13px, 1.8vmin, 17px); }
+.region-tabs { display: flex; flex-wrap: wrap; gap: 0.8vmin; justify-content: center; }
+.tab { font: inherit; letter-spacing: 0.12em; font-size: clamp(10px, 1.3vmin, 13px); padding: 0.8vmin 1.4vmin; color: var(--ink-dim); background: none; border: 1px solid var(--line); border-radius: 0.5vmin; cursor: pointer; }
+.tab.on { color: var(--ink); border-color: var(--ink); }

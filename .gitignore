@@ -14,3 +14,4 @@ tmp-music/
 .env.local
 .venv-music/
 globe/public/music-demo/
+globe/dist-personal/

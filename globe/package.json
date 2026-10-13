@@ -8,6 +8,7 @@
     "dev": "vite --port ${PORT:-5174} --strictPort",
     "prebuild": "npm run fonts",
     "build": "tsc --noEmit && vite build",
+    "build:personal": "tsc --noEmit && VITE_PERSONAL=1 vite build --outDir dist-personal --emptyOutDir",
     "preview": "vite preview",
     "test": "vitest run"
   },
