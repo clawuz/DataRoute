@@ -33,7 +33,7 @@ export function drawReelBackdrop(ctx: CanvasRenderingContext2D, c: ReelInput): v
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  const logoH = drawLogo(ctx, c.logo, W / 2, 250, 340, 96);
+  const logoH = drawLogo(ctx, c.logo, W / 2, 240, 130, 130);
   const top = logoH > 0 ? 250 + logoH + 26 : 270;
   ctx.fillStyle = INK;
   ctx.font = '700 28px "TK Text Wide", system-ui, sans-serif';

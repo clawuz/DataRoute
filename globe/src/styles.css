@@ -394,3 +394,5 @@ body { background: #02030a; }
 .sheet-opt-name { letter-spacing: 0.2em; font-size: 15px; }
 .sheet-opt-desc { color: var(--ink-dim); font-size: 13px; line-height: 1.4; }
 .sheet-link { font: inherit; letter-spacing: 0.16em; font-size: 12px; color: var(--ink-dim); background: none; border: 0; padding: 8px; cursor: pointer; }
+.stage { cursor: grab; }
+.stage:active { cursor: grabbing; }

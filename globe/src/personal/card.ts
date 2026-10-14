@@ -60,8 +60,8 @@ export function drawCard(ctx: CanvasRenderingContext2D, c: CardInput): void {
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  const logoH = drawLogo(ctx, c.logo ?? null, W / 2, 44, 300, 84);
-  const top = logoH > 0 ? 44 + logoH + 22 : 60;
+  const logoH = drawLogo(ctx, c.logo ?? null, W / 2, 36, 100, 100);
+  const top = logoH > 0 ? 36 + logoH + 18 : 60;
   ctx.fillStyle = INK;
   ctx.font = '700 26px "TK Text Wide", system-ui, sans-serif';
   ctx.fillText("TURKISH AIRLINES", W / 2, top + 22);
@@ -71,13 +71,13 @@ export function drawCard(ctx: CanvasRenderingContext2D, c: CardInput): void {
   ctx.fillText("A WORLD OF MUSIC", W / 2, top + 76);
 
   ctx.fillStyle = INK;
-  ctx.font = '700 76px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
+  ctx.font = '700 70px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
   const titleLines = wrap(ctx, c.stats.title.toUpperCase(), W - 160);
-  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 160 + i * 84));
+  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 150 + i * 76));
 
   // the globe, a centred square crop of the render
-  const gy = top + 160 + 84 * Math.min(2, titleLines.length) + 30;
-  const size = Math.max(420, Math.min(640, H - gy - 340));
+  const gy = top + 150 + 76 * Math.min(2, titleLines.length) + 20;
+  const size = Math.max(420, Math.min(680, H - gy - 320));
   const s = Math.min(c.globe.width, c.globe.height);
   ctx.save();
   ctx.beginPath();

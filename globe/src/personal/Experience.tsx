@@ -63,6 +63,29 @@ export function Experience({ selection, onBack }: Props) {
     engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: performance.now() < lit.until ? lit.flight : -1, nowSec: nowSec() }));
     void engine.loadTextures(() => {}).catch(() => {});
 
+    // drag to turn the globe (the card and the video take whatever angle is on screen)
+    let drag: { x: number; y: number; t: number } | null = null;
+    const down = (e: PointerEvent) => {
+      canvas.setPointerCapture?.(e.pointerId);
+      drag = { x: e.clientX, y: e.clientY, t: performance.now() };
+    };
+    const move = (e: PointerEvent) => {
+      if (!drag) return;
+      const t = performance.now();
+      engine.dragBy(e.clientX - drag.x, e.clientY - drag.y, (t - drag.t) / 1000);
+      drag = { x: e.clientX, y: e.clientY, t };
+    };
+    const up = (e: PointerEvent) => {
+      if (!drag) return;
+      drag = null;
+      engine.endDrag();
+      canvas.releasePointerCapture?.(e.pointerId);
+    };
+    canvas.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+
     let player: PersonalPlayer | null = null;
     try {
       const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -96,6 +119,10 @@ export function Experience({ selection, onBack }: Props) {
     }
 
     return () => {
+      canvas.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
       player?.dispose();
       playerRef.current = null;
       engineRef.current = null;
