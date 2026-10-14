@@ -9,6 +9,8 @@ import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { renderCard } from "./card";
+import { loadLogo } from "./brand";
+import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop } from "./reel";
 import { extOf, pickMime, recordClip } from "./clip";
 
 interface Props {
@@ -23,6 +25,7 @@ export function Experience({ selection, onBack }: Props) {
   const playerRef = useRef<PersonalPlayer | null>(null);
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [night, setNight] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -47,6 +50,7 @@ export function Experience({ selection, onBack }: Props) {
       return;
     }
     engineRef.current = engine;
+    engine.setNight(true);
     engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     engine.setModel(buildPersonalModel(routes), SPAN, nowSec());
@@ -90,6 +94,10 @@ export function Experience({ selection, onBack }: Props) {
       engine.dispose();
     };
   }, [routes, piece]);
+
+  useEffect(() => {
+    engineRef.current?.setNight(night);
+  }, [night]);
 
   const url = () => `${window.location.origin}${window.location.pathname}${searchFromSelection(selection)}`;
   const share = async () => {
@@ -159,21 +167,45 @@ export function Experience({ selection, onBack }: Props) {
   };
   const saveClip = async () => {
     const canvas = canvasRef.current;
+    const engine = engineRef.current;
     const audio = playerRef.current?.audioStream();
     const mime = pickMime();
-    if (!canvas || !mime || busy) {
-      if (!mime) say("VIDEO IS NOT SUPPORTED HERE — SAVE THE CARD");
+    if (!canvas || !engine || busy) return;
+    if (!mime) {
+      say("VIDEO IS NOT SUPPORTED HERE — SAVE THE CARD");
       return;
     }
     setBusy("VIDEO");
     try {
-      const stream = canvas.captureStream(30);
+      const logo = await loadLogo();
+      try {
+        await document.fonts.load('700 84px "TK Display Condensed"');
+        await document.fonts.load('500 34px "TK Text Wide"');
+      } catch {
+        /* system fonts */
+      }
+      // a 9:16 canvas (Reels / Stories), filled from the live render once per frame
+      const comp = document.createElement("canvas");
+      comp.width = REEL_W;
+      comp.height = REEL_H;
+      const cctx = comp.getContext("2d")!;
+      const back = document.createElement("canvas");
+      back.width = REEL_W;
+      back.height = REEL_H;
+      drawReelBackdrop(back.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo });
+      engine.setAfterRender(() => {
+        cctx.drawImage(back, 0, 0);
+        drawGlobeFrame(cctx, canvas);
+      });
+      const stream = comp.captureStream(30);
       audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
-      const blob = await recordClip(stream, 12000, mime);
+      const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
       await deliver(blob, `a-world-of-music.${extOf(mime)}`, "A World of Music");
+      if (extOf(mime) !== "mp4") say("THIS BROWSER SAVES WEBM — INSTAGRAM NEEDS MP4 (CHROME OR SAFARI)", 5000);
     } catch {
       say("COULD NOT RECORD THE VIDEO");
     } finally {
+      engine.setAfterRender(null);
       setBusy(null);
     }
   };
@@ -201,7 +233,8 @@ export function Experience({ selection, onBack }: Props) {
       <div className="personal-actions">
         <button type="button" className="compose-btn" onClick={share}>SHARE MY PIECE</button>
         <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveCard}>{busy === "CARD" ? "MAKING…" : "CARD"}</button>
-        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveClip}>{busy === "VIDEO" ? "RECORDING 12 S…" : "VIDEO"}</button>
+        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveClip}>{busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : "VIDEO"}</button>
+        <button type="button" className="ghost-btn" onClick={() => setNight((n) => !n)}>{night ? "NIGHT" : "DAY"}</button>
         <button type="button" className="ghost-btn" onClick={() => { const m = !muted; setMuted(m); playerRef.current?.setMuted(m); }}>{muted ? "SOUND OFF" : "SOUND ON"}</button>
       </div>
       {toast && <div className="notice">{toast}</div>}

@@ -47,6 +47,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     pulseAirport: vi.fn(),
     pulseRoute: vi.fn(),
     setEffects: vi.fn(),
+    setNight: vi.fn(),
     headsInfo: () => ({ count: 1, extrapolated: 3 }),
     dispose: vi.fn(),
   };

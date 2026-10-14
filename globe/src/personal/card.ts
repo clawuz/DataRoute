@@ -1,6 +1,7 @@
 import { NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf } from "./destinations";
 import type { PieceStats } from "./stats";
 import type { PersonalMode } from "./codec";
+import { drawLogo, loadLogo } from "./brand";
 
 export const CARD_W = 1080;
 export const CARD_H = 1350;
@@ -12,6 +13,7 @@ export interface CardInput {
   /** a frame of the globe (the engine canvas) */
   globe: CanvasImageSource & { width: number; height: number };
   url: string;
+  logo?: HTMLImageElement | null;
 }
 
 /** flags of the first `max` distinct countries, in the order picked */
@@ -58,18 +60,24 @@ export function drawCard(ctx: CanvasRenderingContext2D, c: CardInput): void {
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
+  const logoH = drawLogo(ctx, c.logo ?? null, W / 2, 44, 300, 84);
+  const top = logoH > 0 ? 44 + logoH + 22 : 60;
+  ctx.fillStyle = INK;
+  ctx.font = '700 26px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillText("TURKISH AIRLINES", W / 2, top + 22);
+
   ctx.fillStyle = RED;
   ctx.font = '600 30px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText("A WORLD OF MUSIC", W / 2, 96);
+  ctx.fillText("A WORLD OF MUSIC", W / 2, top + 76);
 
   ctx.fillStyle = INK;
-  ctx.font = '700 84px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
+  ctx.font = '700 76px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
   const titleLines = wrap(ctx, c.stats.title.toUpperCase(), W - 160);
-  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, 190 + i * 92));
+  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 160 + i * 84));
 
   // the globe, a centred square crop of the render
-  const size = 700;
-  const gy = 300;
+  const gy = top + 160 + 84 * Math.min(2, titleLines.length) + 30;
+  const size = Math.max(420, Math.min(640, H - gy - 340));
   const s = Math.min(c.globe.width, c.globe.height);
   ctx.save();
   ctx.beginPath();
@@ -91,9 +99,12 @@ export function drawCard(ctx: CanvasRenderingContext2D, c: CardInput): void {
   ctx.fillStyle = DIM;
   ctx.fillText(`SIGNATURE VOICE · ${c.stats.signature.toUpperCase()}`, W / 2, gy + size + 184);
 
+  ctx.font = '700 22px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.fillText("TURKISH AIRLINES", W / 2, H - 98);
   ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
-  const foot = [`${NETWORK_CLAIM.toUpperCase()}`, `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES · ${hostOf(c.url)}`];
+  const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES · ${hostOf(c.url)}`];
   const lines = foot.flatMap((t) => wrap(ctx, t, W - 140));
   lines.forEach((l, i) => ctx.fillText(l, W / 2, H - 28 - (lines.length - 1 - i) * 30));
 }
@@ -118,6 +129,6 @@ export async function renderCard(c: CardInput): Promise<Blob> {
   } catch {
     /* fall back to system fonts */
   }
-  drawCard(ctx, c);
+  drawCard(ctx, { ...c, logo: c.logo ?? (await loadLogo()) });
   return new Promise((res, rej) => cv.toBlob((b) => (b ? res(b) : rej(new Error("card render failed"))), "image/png"));
 }

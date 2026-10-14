@@ -60,10 +60,20 @@ export interface GlobeEngine {
   pulseRoute(key: string): void;
   headsInfo(): { count: number; extrapolated: number };
   setEffects(e: Effects): void;
+  /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
+  setNight(on: boolean): void;
   dispose(): void;
 }
 
 const DRAG_RAD_PER_PX = 0.0045;
+
+/** a sun direction behind the globe as seen from the camera, nudged so the terminator crosses the limb */
+export function nightSun(cam: [number, number, number]): [number, number, number] {
+  const l = Math.hypot(cam[0], cam[1], cam[2]) || 1;
+  const v: [number, number, number] = [-cam[0] / l + 0.38, -cam[1] / l + 0.22, -cam[2] / l];
+  const n = Math.hypot(v[0], v[1], v[2]) || 1;
+  return [v[0] / n, v[1] / n, v[2] / n];
+}
 
 /*
  * Time contract: the engine's public API takes EPOCH seconds (`nowSec`), but the shaders and attributes
@@ -83,6 +93,7 @@ export function hasWebGL2(): boolean {
 
 export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOptions): GlobeEngine {
   let effects: Effects | null = null;
+  let night = false;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
   renderer.debug.onShaderError = (gl, program, vs, fs) => {
@@ -279,7 +290,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     camera.updateMatrixWorld();
 
-    const sun = sunDirection(shownAbs);
+    const sun = night ? nightSun(rp) : sunDirection(shownAbs);
     earth.setSun(sun);
     atmosphere.setSun(sun);
     glare.setSun(sun); // art:light
@@ -445,6 +456,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       aurora.setVisible(e.aurora); // art:aurora
       space.setStarMap(e.starMap ? starTex : null); // art:stars
       if (model && prev?.corridors !== e.corridors) rebuildOverlays(); // art:corridors
+    },
+    setNight(on) {
+      night = on;
     },
     setAfterRender(fn) {
       afterRender = fn;
