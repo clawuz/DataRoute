@@ -3,8 +3,11 @@ import type { PieceStats } from "./stats";
 import type { PersonalMode } from "./codec";
 import { drawLogo, loadLogo } from "./brand";
 
-export const CARD_W = 1080;
-export const CARD_H = 1350;
+import { SAFE_LAST_Y, SAFE_TOP, STORY_H, STORY_W } from "./safe";
+
+/** the card is a Story: 9:16, with the text kept inside the safe band */
+export const CARD_W = STORY_W;
+export const CARD_H = STORY_H;
 
 export interface CardInput {
   mode: PersonalMode;
@@ -47,66 +50,65 @@ const RED = "#E30A17";
 const INK = "#E9EDF5";
 const DIM = "rgba(233,237,245,0.62)";
 
-/** Draws the share card (1080×1350, the feed/story crop) onto `ctx`. */
+/** Draws the share card (1080×1920, an Instagram Story) onto `ctx`; everything sits inside SAFE_TOP … SAFE_LAST_Y. */
 export function drawCard(ctx: CanvasRenderingContext2D, c: CardInput): void {
   const W = CARD_W;
   const H = CARD_H;
-  const bg = ctx.createRadialGradient(W / 2, 560, 80, W / 2, 560, 900);
+  const bg = ctx.createRadialGradient(W / 2, H * 0.45, 100, W / 2, H * 0.45, 1250);
   bg.addColorStop(0, "#0b1330");
   bg.addColorStop(1, "#02030a");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
-
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  const logoH = drawLogo(ctx, c.logo ?? null, W / 2, 36, 100, 100);
-  const top = logoH > 0 ? 36 + logoH + 18 : 60;
+  const logoH = drawLogo(ctx, c.logo ?? null, W / 2, SAFE_TOP, 120, 104);
+  const top = logoH > 0 ? SAFE_TOP + logoH + 18 : SAFE_TOP;
   ctx.fillStyle = INK;
   ctx.font = '700 26px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText("TURKISH AIRLINES", W / 2, top + 22);
-
+  ctx.fillText("TURKISH AIRLINES", W / 2, top + 26);
   ctx.fillStyle = RED;
   ctx.font = '600 30px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText("A WORLD OF MUSIC", W / 2, top + 76);
-
+  ctx.fillText("A WORLD OF MUSIC", W / 2, top + 80);
   ctx.fillStyle = INK;
-  ctx.font = '700 70px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
-  const titleLines = wrap(ctx, c.stats.title.toUpperCase(), W - 160);
-  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 150 + i * 76));
+  ctx.font = '700 72px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
+  const titleLines = wrap(ctx, c.stats.title.toUpperCase(), W - 160).slice(0, 2);
+  titleLines.forEach((l, i) => ctx.fillText(l, W / 2, top + 165 + i * 78));
+  const titleBottom = top + 165 + (titleLines.length - 1) * 78;
 
-  // the globe, a centred square crop of the render
-  const gy = top + 150 + 76 * Math.min(2, titleLines.length) + 20;
-  const size = Math.max(420, Math.min(680, H - gy - 320));
-  const s = Math.min(c.globe.width, c.globe.height);
+  // footer: the airline line and the network, ending on the last safe baseline
+  ctx.font = '400 21px "TK Text Wide", system-ui, sans-serif';
+  const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES · ${hostOf(c.url)}`];
+  const lines = foot.flatMap((t) => wrap(ctx, t, W - 140));
+  const footTop = SAFE_LAST_Y - (lines.length - 1) * 30;
+  ctx.font = '700 22px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.fillText("TURKISH AIRLINES", W / 2, footTop - 36);
+  ctx.font = '400 21px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillStyle = DIM;
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, footTop + i * 30));
+
+  // the globe: a centred square crop of the render, in the room between the title and the numbers
+  const numbersH = 200; // flags, counts, signature voice
+  const gy = titleBottom + 40;
+  const size = Math.max(420, Math.min(720, footTop - 36 - 30 - numbersH - gy));
   ctx.save();
   ctx.beginPath();
   ctx.roundRect((W - size) / 2, gy, size, size, 36);
   ctx.clip();
+  const s = Math.min(c.globe.width, c.globe.height);
   ctx.drawImage(c.globe, (c.globe.width - s) / 2, (c.globe.height - s) / 2, s, s, (W - size) / 2, gy, size, size);
   ctx.restore();
 
-  const flags = flagsOf(c.dests, 12);
+  const y0 = gy + size + 70;
   ctx.font = '44px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
-  ctx.fillText(flags.map(flagOf).join(" "), W / 2, gy + size + 78);
-
+  ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);
   ctx.font = '500 34px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillStyle = INK;
-  const line = `${c.stats.destinations} DESTINATIONS · ${c.stats.countries} COUNTRIES · ${c.stats.km.toLocaleString("en")} KM`;
-  ctx.fillText(line, W / 2, gy + size + 140);
+  ctx.fillText(`${c.stats.destinations} DESTINATIONS · ${c.stats.countries} COUNTRIES · ${c.stats.km.toLocaleString("en")} KM`, W / 2, y0 + 62);
   ctx.font = '400 28px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
-  ctx.fillText(`SIGNATURE VOICE · ${c.stats.signature.toUpperCase()}`, W / 2, gy + size + 184);
-
-  ctx.font = '700 22px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillStyle = INK;
-  ctx.fillText("TURKISH AIRLINES", W / 2, H - 98);
-  ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillStyle = DIM;
-  const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES · ${hostOf(c.url)}`];
-  const lines = foot.flatMap((t) => wrap(ctx, t, W - 140));
-  lines.forEach((l, i) => ctx.fillText(l, W / 2, H - 28 - (lines.length - 1 - i) * 30));
+  ctx.fillText(`SIGNATURE VOICE · ${c.stats.signature.toUpperCase()}`, W / 2, y0 + 108);
 }
 
 const hostOf = (u: string): string => {

@@ -334,7 +334,7 @@ export function Experience({ selection, onBack }: Props) {
             </button>
             <button type="button" className="sheet-opt" onClick={() => { setSheet(false); void saveCard(); }}>
               <span className="sheet-opt-name">CARD</span>
-              <span className="sheet-opt-desc">An image of your globe and numbers · 4:5 · for feed posts</span>
+              <span className="sheet-opt-desc">An image of your globe and numbers · 9:16 · made for Instagram Stories</span>
             </button>
             <button type="button" className="sheet-link" onClick={() => { setSheet(false); void share(); }}>COPY LINK</button>
             <button type="button" className="sheet-link" onClick={() => setSheet(false)}>CLOSE</button>

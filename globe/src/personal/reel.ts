@@ -2,10 +2,11 @@ import { NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, flagOf } from "
 import { drawLogo } from "./brand";
 import { flagsOf, wrap } from "./card";
 import type { PieceStats } from "./stats";
+import { SAFE_LAST_Y, SAFE_TOP, STORY_H, STORY_W } from "./safe";
 
 /** Instagram Reels / Stories: 9:16. Content stays inside the safe zone (top ~250 px and bottom ~340 px are covered by the app UI). */
-export const REEL_W = 1080;
-export const REEL_H = 1920;
+export const REEL_W = STORY_W;
+export const REEL_H = STORY_H;
 export const REEL_SECONDS = 15;
 
 export interface ReelInput {
@@ -15,9 +16,9 @@ export interface ReelInput {
   logo: HTMLImageElement | null;
 }
 
-export const GLOBE_BOX = { x: 190, y: 500, size: 700 };
+export const GLOBE_BOX = { x: 270, y: 640, size: 540 };
 /** the music box (ribbon, label, routes sounding) under the numbers */
-export const SCOPE_BOX = { x: 60, y: 1400, w: 960, h: 300 };
+export const SCOPE_BOX = { x: 60, y: 1370, w: 960, h: 240 };
 
 const RED = "#E30A17";
 const INK = "#E9EDF5";
@@ -35,8 +36,8 @@ export function drawReelBackdrop(ctx: CanvasRenderingContext2D, c: ReelInput): v
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
 
-  const logoH = drawLogo(ctx, c.logo, W / 2, 70, 130, 130);
-  const top = logoH > 0 ? 70 + logoH + 24 : 110;
+  const logoH = drawLogo(ctx, c.logo, W / 2, SAFE_TOP, 120, 100);
+  const top = logoH > 0 ? SAFE_TOP + logoH + 16 : SAFE_TOP;
   ctx.fillStyle = INK;
   ctx.font = '700 28px "TK Text Wide", system-ui, sans-serif';
   ctx.fillText("TURKISH AIRLINES", W / 2, top + 24);
@@ -44,10 +45,10 @@ export function drawReelBackdrop(ctx: CanvasRenderingContext2D, c: ReelInput): v
   ctx.font = '600 32px "TK Text Wide", system-ui, sans-serif';
   ctx.fillText("A WORLD OF MUSIC", W / 2, top + 80);
   ctx.fillStyle = INK;
-  ctx.font = '700 84px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
+  ctx.font = '700 76px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
   wrap(ctx, c.stats.title.toUpperCase(), W - 140)
     .slice(0, 2)
-    .forEach((l, i) => ctx.fillText(l, W / 2, top + 160 + i * 88));
+    .forEach((l, i) => ctx.fillText(l, W / 2, top + 165 + i * 80));
 
   // globe window frame
   const g = GLOBE_BOX;
@@ -57,12 +58,12 @@ export function drawReelBackdrop(ctx: CanvasRenderingContext2D, c: ReelInput): v
   ctx.roundRect(g.x, g.y, g.size, g.size, 40);
   ctx.stroke();
 
-  const y0 = g.y + g.size + 70;
+  const y0 = g.y + g.size + 62;
   ctx.font = '44px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
   ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);
   ctx.font = '500 32px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText(`${c.stats.destinations} DESTINATIONS · ${c.stats.countries} COUNTRIES · ${c.stats.km.toLocaleString("en")} KM`, W / 2, y0 + 56);
+  ctx.fillText(`${c.stats.destinations} DESTINATIONS · ${c.stats.countries} COUNTRIES · ${c.stats.km.toLocaleString("en")} KM`, W / 2, y0 + 54);
   ctx.font = '400 26px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
   ctx.fillText(`SIGNATURE VOICE · ${c.stats.signature.toUpperCase()}`, W / 2, y0 + 98);
@@ -81,7 +82,7 @@ export function drawReelBackdrop(ctx: CanvasRenderingContext2D, c: ReelInput): v
   ctx.fillStyle = DIM;
   const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES`];
   const lines = foot.flatMap((t) => wrap(ctx, t, W - 160));
-  lines.forEach((l, i) => ctx.fillText(l, W / 2, sb.y + sb.h + 52 + i * 32));
+  lines.forEach((l, i) => ctx.fillText(l, W / 2, SAFE_LAST_Y - (lines.length - 1 - i) * 30));
 }
 
 /** copies the centred square of the live render into the globe window */
@@ -124,7 +125,7 @@ export function drawScopeFrame(ctx: CanvasRenderingContext2D, f: ScopeFrame): vo
   const head = wrap(ctx, f.label, b.x + b.w - pad - x0);
   head.slice(0, 2).forEach((l, i) => ctx.fillText(l, x0, b.y + pad + 22 + i * 28));
   const y0 = b.y + pad + 22 + Math.min(2, head.length) * 28 + 14;
-  f.items.slice(0, 5).forEach((it, i) => {
+  f.items.slice(0, 3).forEach((it, i) => {
     const y = y0 + 22 + i * 34;
     ctx.fillStyle = it.color;
     ctx.fillRect(x0, y - 22, 6, 28);
