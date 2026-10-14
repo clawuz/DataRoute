@@ -493,3 +493,39 @@ body.recording-reel .music-scope { opacity: 0; }
 
 .landing.v2.picker .topbar { background: linear-gradient(180deg, rgba(2, 3, 10, 0.96) 60%, rgba(2, 3, 10, 0)); padding-bottom: 22px; }
 .topbar .landing-back { position: static; padding: 6px 4px; }
+
+/* spacing and sizes as in the design (Voyage Glass) */
+.landing.v2 .landing-title { max-width: none; font-size: clamp(30px, 5vw, 72px); }
+.landing.v2 .mode-name { font-size: 19px; letter-spacing: 0.02em; }
+.landing.v2 .mode-card { min-height: 0; padding: 20px 22px; }
+.landing.v2 .landing-sub { max-width: 52ch; text-align: center; }
+.landing.v2.picker { padding-bottom: 120px; }
+.landing.v2 .picker-head { margin-top: 1vh; }
+.landing.v2 .picker-search { margin-top: 20px; flex: none; }
+.landing.v2 .region-tabs { margin: 18px 0 8px; gap: 8px; }
+.landing.v2 .tab { white-space: nowrap; }
+.landing.v2 .tab .c { margin-left: 7px; opacity: 0.6; font-variant-numeric: tabular-nums; }
+.landing.v2 .tab.on .c { opacity: 0.6; }
+.landing.v2 .origin-quick { margin: 18px 0 6px; flex: none; }
+.landing.v2 .picker-groups { margin-top: 12px; }
+.landing.v2 .area-head { margin-top: 18px; }
+.landing.v2 .picker-bar { padding: 16px 20px 18px; }
+@media (max-width: 760px) {
+  .landing.v2 .landing-title { font-size: 34px; }
+  .landing.v2 .picker-head { font-size: 26px; }
+  .landing.v2 .picker-search { margin-top: 16px; }
+  .landing.v2 .region-tabs { margin-top: 14px; overflow-x: auto; flex-wrap: nowrap; width: 100%; padding-bottom: 4px; scrollbar-width: none; }
+  .landing.v2 .region-tabs::-webkit-scrollbar { display: none; }
+  .landing.v2 .tab { flex: none; }
+  .landing.v2 .picker-bar { flex-direction: column; gap: 10px; align-items: stretch; }
+  .landing.v2 .compose-btn { width: 100%; }
+  .landing.v2 .picker-count { text-align: center; }
+}
+.landing.v2 > * { flex-shrink: 0; }
+.landing.v2 > .picker-bar { position: fixed !important; left: 0; right: 0; bottom: 0; }
+.landing.v2 .picker-bar { background: linear-gradient(0deg, #02030a 78%, rgba(2, 3, 10, 0)); padding-top: 30px; }
+@media (max-width: 760px) {
+  .landing.v2.picker { padding-bottom: 150px; }
+  .landing.v2 .region-tabs { justify-content: flex-start; }
+}
+.landing.v2.picker .topbar { background: linear-gradient(180deg, #02030a 72%, rgba(2, 3, 10, 0)); padding-bottom: 20px; }
