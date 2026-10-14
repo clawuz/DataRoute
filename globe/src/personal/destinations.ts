@@ -50,6 +50,8 @@ export const hasPassengerService = (d: Destination): boolean => d.status === "ac
 /** the network as Turkish Airlines states it — what every piece of copy says */
 export const NETWORK_DESTINATIONS = 355;
 export const NETWORK_COUNTRIES = 133;
+/** Turkish Airlines' own claim, kept next to the numbers it belongs to */
+export const NETWORK_CLAIM = "The airline that flies to more countries than any other in the world";
 
 export const COUNTRY_COUNT = new Set(DESTINATIONS.map((d) => d.iso)).size;
 

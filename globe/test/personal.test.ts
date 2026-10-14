@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_COUNT, DESTINATIONS, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
+import { COUNTRY_COUNT, DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
 import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
 import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
@@ -29,6 +29,7 @@ describe("destinations", () => {
     expect(NETWORK_DESTINATIONS).toBe(355);
     expect(NETWORK_COUNTRIES).toBe(133);
     expect(COUNTRY_COUNT).toBe(NETWORK_COUNTRIES);
+    expect(NETWORK_CLAIM).toMatch(/more countries than any other/);
   });
   it("marks what has no passenger service today", () => {
     const by = (c: string) => destinationOf(c)!;

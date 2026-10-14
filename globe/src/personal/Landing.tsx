@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { REGION_HEX, REGION_LABEL, REGIONS } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
 import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
-import { DESTINATIONS, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, STATUS_LABEL, type Destination } from "./destinations";
+import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, STATUS_LABEL, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 
 interface Props {
@@ -64,7 +64,7 @@ export function Landing({ onCompose, onLive }: Props) {
     return (
       <div className="landing" role="main">
         <h1 className="landing-title">A WORLD OF MUSIC</h1>
-        <p className="landing-sub">Every journey has a sound. Choose yours. Turkish Airlines flies to {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries.</p>
+        <p className="landing-sub">Every journey has a sound. Choose yours. Turkish Airlines flies to {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries — more countries than any other airline in the world.</p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
             <span className="mode-n">01</span>
@@ -82,7 +82,7 @@ export function Landing({ onCompose, onLive }: Props) {
             <span className="mode-desc">Every Turkish Airlines flight of the last 24 hours, played as music.</span>
           </button>
         </div>
-        <p className="landing-fine">{NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries · one hub</p>
+        <p className="landing-fine">{NETWORK_CLAIM} · {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries</p>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function Landing({ onCompose, onLive }: Props) {
       <div className="landing picker" role="main">
         <button type="button" className="landing-back" onClick={reset}>← BACK</button>
         <h1 className="picker-head">Where do you start from?</h1>
-        <p className="landing-sub">Turkish Airlines connects {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries through Istanbul. Pick the airport you fly out of.</p>
+        <p className="landing-sub">The world's most-connected airline reaches {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries, all through Istanbul. Pick the airport you fly out of.</p>
         <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search your home airport" autoFocus />
         <button type="button" className="origin-quick" onClick={() => { setOrigin("IST"); setQ(""); setStep("dests"); }}>
           <span className="chip-flag">{flagOf("TR")}</span> Istanbul — the hub itself <span className="chip-code">IST</span>
