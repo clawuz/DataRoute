@@ -189,3 +189,22 @@ describe("personal model and stats", () => {
     expect(s.km).toBeGreaterThan(20000);
   });
 });
+
+import { routePalette, hslToRgb } from "../src/personal/colors";
+describe("route colours", () => {
+  it("gives every route its own colour, the same each time, and the globe and the list agree", () => {
+    const routes = buildRoutes("WAW", ["GZP", "DNZ", "DIY", "EDO", "EZS", "ISE", "ASR", "NAV", "OGU", "RZV", "KYA", "IST", "ERC", "BJV", "BAL", "KCM"]);
+    const a = routePalette(routes);
+    const b = routePalette(routes);
+    expect(a.css.size).toBe(routes.length);
+    expect(new Set(a.css.values()).size).toBe(routes.length);
+    expect(a).toEqual(b);
+    expect(a.rgb).toHaveLength(routes.length);
+    const m = buildPersonalModel(routes);
+    m.flights.forEach((f, i) => expect(f.colorIdx).toBe(7 + i));
+  });
+  it("converts hsl to rgb", () => {
+    const [r, g, b] = hslToRgb(0, 1, 0.5);
+    expect([Math.round(r), Math.round(g), Math.round(b)]).toEqual([1, 0, 0]);
+  });
+});

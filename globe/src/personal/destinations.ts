@@ -25,6 +25,8 @@ export type ServiceStatus = "active" | "seasonal" | "future" | "suspended" | "ca
 interface Row { i: string; c: string; n: string; k: string; a: number; o: number; s?: ServiceStatus }
 
 export const HUB = "IST";
+/** where the camera is turned for the card and the video */
+export const ISTANBUL = { lat: 41.2613, lon: 28.742 };
 
 export const DESTINATIONS: Destination[] = (raw as Row[]).map((r) => ({
   iata: r.i,

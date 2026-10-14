@@ -16,6 +16,8 @@ export interface GlobeFlight extends FlightRec {
   gaps: [number, number][];
   lastT: number;
   trk?: number;
+  /** personal globe: an index into the extended palette (7 and up) that overrides the region colour of this flight */
+  colorIdx?: number;
   planned?: PlannedRoute;
   /** aircraft info from the collector (all optional) */
   reg?: string;

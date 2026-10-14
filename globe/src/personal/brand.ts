@@ -2,7 +2,7 @@
  * The airline's emblem, drawn on the share card and the reel. The file is the airline's own artwork and is supplied by the
  * project owner (public/brand/tk-logo.svg or .png); without it the cards fall back to the wordmark alone.
  */
-const CANDIDATES = ["/brand/tk-logo.svg", "/brand/tk-logo.png"];
+const CANDIDATES = ["/brand/tk-lockup-vertical-light.png", "/brand/tk-logo.png"];
 
 let cached: Promise<HTMLImageElement | null> | null = null;
 

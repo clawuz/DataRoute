@@ -1,3 +1,4 @@
+import { PALETTE_SIZE } from "../src/scene/palette-ext";
 import { DoubleSide, type ShaderMaterial } from "three";
 import { describe, expect, it } from "vitest";
 import { ARC_BASE_LIFT, ARC_WIDTH_PX, BREAK_SEC, buildArcBuffers, createArcs, isBreak } from "../src/scene/arcs";
@@ -122,7 +123,7 @@ describe("createArcs", () => {
     expect(m.depthTest).toBe(true);
     expect(m.depthWrite).toBe(false);
     expect((a.mesh.geometry as unknown as { instanceCount: number }).instanceCount).toBe(51);
-    expect(a.uniforms.uColors.value).toHaveLength(7);
+    expect(a.uniforms.uColors.value).toHaveLength(PALETTE_SIZE); // 7 regions + room for the personal globe's own colours
     a.setResolution(1920, 1080, 2);
     expect(a.uniforms.uRes.value.toArray()).toEqual([1920, 1080]);
     expect(a.uniforms.uWidth.value).toBeCloseTo(ARC_WIDTH_PX * 2, 9);

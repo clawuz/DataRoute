@@ -38,3 +38,6 @@ export function pieceStats(mode: PersonalMode, origin: string, dests: string[], 
     title: mode === "wish" ? `Dreaming of ${name}` : `Wandering through ${name}`,
   };
 }
+
+/** "1 country", "2 countries" — upper-case for the labels */
+export const countLabel = (n: number, one: string, many: string): string => `${n} ${(n === 1 ? one : many).toUpperCase()}`;

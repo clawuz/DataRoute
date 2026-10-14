@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { drawCard } from "../src/personal/card";
 import { SCOPE_BOX, drawReelOverlay, drawScopeFrame } from "../src/personal/reel";
 import { SAFE_LAST_Y, SAFE_TOP, STORY_H } from "../src/personal/safe";
 import { pieceStats } from "../src/personal/stats";
@@ -18,7 +17,7 @@ function recorder() {
         if (k === "fillText") return (text: string, _x: number, y: number) => texts.push({ text, y, size: +(/(\d+)px/.exec(font)?.[1] ?? 0) });
         if (k === "measureText") return (t: string) => ({ width: t.length * 13 });
         if (k === "drawImage") return (...a: number[]) => pics.push(a.length === 5 ? { y: a[2], h: a[4] } : { y: a[6], h: a[8] });
-        if (k === "createRadialGradient") return () => grad;
+        if (k === "createRadialGradient" || k === "createLinearGradient") return () => grad;
         return () => {};
       },
       set(_t, k, v) {
@@ -41,19 +40,6 @@ describe("Instagram Story safe area", () => {
     expect(SAFE_TOP).toBe(250);
     expect(SAFE_LAST_Y).toBe(1670);
   });
-  it("keeps every line of the card inside the band", () => {
-    const r = recorder();
-    drawCard(r.ctx, { mode: "visited", stats, dests, globe: img(1200, 800), url: "https://worldofmusic-tk.web.app/?v=DPS", logo: img(512, 512) });
-    expect(r.texts.length).toBeGreaterThan(6);
-    for (const t of r.texts) {
-      expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);
-      expect(t.y, t.text).toBeLessThanOrEqual(SAFE_LAST_Y);
-    }
-    for (const p of r.pics) {
-      expect(p.y).toBeGreaterThanOrEqual(SAFE_TOP);
-      expect(p.y + p.h).toBeLessThanOrEqual(SAFE_LAST_Y);
-    }
-  });
   it("fits the routes sounding now inside the music box", () => {
     const r = recorder();
     drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [1, 2, 3, 4, 5, 6].map((i) => ({ text: `IST → DPS ${i}`, color: "#fff" })) });
@@ -63,9 +49,17 @@ describe("Instagram Story safe area", () => {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SCOPE_BOX.y);
     }
   });
-  it("keeps the reel's text and music box inside the band", () => {
+  it("puts the card's numbers inside the band too (no music box)", () => {
     const r = recorder();
-    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(512, 512) });
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(1000, 333) }, false);
+    for (const t of r.texts) {
+      expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);
+      expect(t.y, t.text).toBeLessThanOrEqual(SAFE_LAST_Y);
+    }
+  });
+  it("keeps the story overlay (card and video) text and music box inside the band", () => {
+    const r = recorder();
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(1000, 333) });
     drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [1, 2, 3, 4, 5, 6].map((i) => ({ text: `IST → DPS ${i}`, color: "#fff" })) });
     for (const t of r.texts) {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);

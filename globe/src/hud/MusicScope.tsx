@@ -88,10 +88,13 @@ function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: nu
   g.fill();
 }
 
-export function MusicScope({ bus, music, compact = false, footer, label }: { bus: NoteBus; music: MusicHud; compact?: boolean; footer?: ReactNode; /** replaces the headline (the personal globe names its own piece) */ label?: string }) {
+export function MusicScope({ bus, music, compact = false, footer, label, routeColors }: { bus: NoteBus; music: MusicHud; compact?: boolean; footer?: ReactNode; /** replaces the headline (the personal globe names its own piece) */ label?: string; /** a colour per route key, the same the globe draws it in (otherwise a hash of the key) */ routeColors?: ReadonlyMap<string, string> }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const musicRef = useRef(music);
   musicRef.current = music;
+  const colorsRef = useRef(routeColors);
+  colorsRef.current = routeColors;
+  const colorOf = (route: string): string => colorsRef.current?.get(route) ?? routeColor(route);
   const queue = useRef<NoteEvent[]>([]);
   const fresh = useRef<NoteEvent[]>([]); // art:track — recorded-track notes enter the ribbon when published (ahead of their sound)
   const playing = useRef<Playing[]>([]); // art:track — the routes sounding right now
@@ -135,7 +138,7 @@ export function MusicScope({ bus, music, compact = false, footer, label }: { bus
       // sounding notes: flight lines (and the Istanbul ensemble) join their trail, groove voices wait for their sample
       for (const n of fresh.current) { // art:track — recorded-track notes take their route's colour, drawn ahead of the reading line
         lastTrackHit = now;
-        pushTrail(trails, n, routeColor(routeOfNote(n)!), TRACK_MAX_POINTS, TRACK_MAX_TRAILS);
+        pushTrail(trails, n, colorOf(routeOfNote(n)!), TRACK_MAX_POINTS, TRACK_MAX_TRAILS);
       }
       fresh.current.length = 0;
       const q = queue.current;
@@ -306,7 +309,7 @@ export function MusicScope({ bus, music, compact = false, footer, label }: { bus
       {music.day && ( // art:track — always rendered at a fixed height
         <ul className="music-scope-now" aria-label="Routes playing now">
           {nowList.map((p) => (
-            <li key={p.route} style={{ borderLeftColor: routeColor(p.route) }}>
+            <li key={p.route} style={{ borderLeftColor: colorOf(p.route) }}>
               <span className="route">{p.route.replace("-", " → ")}</span>
               <span className="note">{p.note}</span>
               {p.alt !== undefined && <span className="np-alt">{Math.round(p.alt / 100) * 100} ft</span>}

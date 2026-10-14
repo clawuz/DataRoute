@@ -5,15 +5,17 @@ import { composePiece, type PersonalNote, type PersonalPiece } from "./compose";
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
-import { pieceStats } from "./stats";
+import { countLabel, pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
-import { renderCard } from "./card";
 import { AI_MESSAGE, characterOf, requestAi } from "./ai";
 import { MusicScope } from "../hud/MusicScope";
 import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
+import { routePalette } from "./colors";
+import { setExtraColors } from "../scene/palette-ext";
+import { ISTANBUL } from "./destinations";
 import { REEL_H, REEL_SECONDS, REEL_W, drawReelOverlay, drawScopeFrame } from "./reel";
 import { chooseDelivery, extOf, pickMime, recordClip } from "./clip";
 
@@ -34,7 +36,7 @@ export function Experience({ selection, onBack }: Props) {
   const aiAudioRef = useRef<HTMLAudioElement | null>(null);
   const aiUrlRef = useRef<string | null>(null);
   /** while the video is made: a still of the current view with a progress screen over it */
-  const [making, setMaking] = useState<{ still: string; startedAt: number } | null>(null);
+  const [making, setMaking] = useState<{ still: string; startedAt: number; kind: "VIDEO" | "CARD" } | null>(null);
   const [makingSec, setMakingSec] = useState(0);
   const noteCbRef = useRef<((n: PersonalNote) => void) | null>(null);
   const pieceRef = useRef<PersonalPiece | null>(null);
@@ -47,6 +49,7 @@ export function Experience({ selection, onBack }: Props) {
 
   const routes = useMemo(() => buildRoutes(selection.origin, selection.dests), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
+  const palette = useMemo(() => routePalette(routes), [routes]);
   const stats = useMemo(() => pieceStats(selection.mode, selection.origin, selection.dests, routes), [selection.mode, routes]);
 
   useEffect(() => {
@@ -66,6 +69,7 @@ export function Experience({ selection, onBack }: Props) {
     engine.setNight(true); // always the night side: the lights and the routes read best on it
     engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
+    setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built
     const model = buildPersonalModel(routes);
     engine.setModel(model, model.span, nowSec());
     engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: -1, nowSec: nowSec() }));
@@ -141,7 +145,7 @@ export function Experience({ selection, onBack }: Props) {
       aiAudioRef.current?.pause();
       engine.dispose();
     };
-  }, [routes, piece]);
+  }, [routes, piece, palette]);
 
   useEffect(() => {
     if (!making) {
@@ -270,78 +274,48 @@ export function Experience({ selection, onBack }: Props) {
     startAiAudio(el);
   };
 
-  const saveCard = async () => {
+  /**
+   * The Story scene shared by the card and the video: the globe scene itself laid out as 1080×1920 (the stage canvas is given
+   * a 9:16 backbuffer and scaled down to fit the window, hidden under the progress screen), turned so Istanbul is in the
+   * middle, with the lockup, the numbers and the music box composed over every frame. `work` gets the frame composer.
+   */
+  const withStory = async (kind: "VIDEO" | "CARD", work: (frame: () => void, comp: HTMLCanvasElement) => Promise<void>) => {
     const canvas = canvasRef.current;
     const engine = engineRef.current;
-    if (!canvas || !engine || busy) return;
-    setBusy("CARD");
+    if (!canvas || !engine) return;
+    const logo = await loadLogo();
     try {
-      // the drawing buffer is only readable inside the frame it was drawn in
-      const globe = await new Promise<HTMLImageElement>((res, rej) => {
-        const timer = setTimeout(() => {
-          engine.setAfterRender(null);
-          rej(new Error("no frame (tab in the background?)"));
-        }, 2500);
-        engine.setAfterRender(() => {
-          clearTimeout(timer);
-          engine.setAfterRender(null);
-          const img = new Image();
-          img.onload = () => res(img);
-          img.onerror = () => rej(new Error("capture failed"));
-          img.src = canvas.toDataURL("image/jpeg", 0.92);
-        });
-      });
-      const blob = await renderCard({ mode: selection.mode, stats, dests: selection.dests, globe, url: url() });
-      await deliver(blob, "a-world-of-music.png", "A World of Music");
+      await document.fonts.load('700 84px "TK Display"');
+      await document.fonts.load('500 34px "TK Text Wide"');
     } catch {
-      say("COULD NOT MAKE THE CARD");
-    } finally {
-      setBusy(null);
+      /* system fonts */
     }
-  };
-  const saveClip = async () => {
-    const canvas = canvasRef.current;
-    const engine = engineRef.current;
-    const audio = playerRef.current?.audioStream();
-    const mime = pickMime();
-    if (!canvas || !engine || busy) return;
-    if (!mime) {
-      say("VIDEO IS NOT SUPPORTED HERE — SAVE THE CARD");
-      return;
-    }
-    setBusy("VIDEO");
-    try {
-      const logo = await loadLogo();
-      try {
-        await document.fonts.load('700 84px "TK Display Condensed"');
-        await document.fonts.load('500 34px "TK Text Wide"');
-      } catch {
-        /* system fonts */
-      }
-      // The reel is the globe scene itself at 9:16: the stage canvas is laid out as a 1080×1920 backbuffer (CSS size ÷ pixel
-      // ratio) and scaled down to fit the window while it records; the lockup and the music box are drawn over every frame.
-      // a still of what the person is looking at stays on screen under the progress card while the stage is re-laid out
-      const still = await new Promise<string>((res) => {
-        const timer = setTimeout(() => {
-          engine.setAfterRender(null);
-          res("");
-        }, 1500);
-        engine.setAfterRender(() => {
-          clearTimeout(timer);
-          engine.setAfterRender(null);
-          res(canvas.toDataURL("image/jpeg", 0.7));
-        });
+    // a still of what the person is looking at stays on screen under the progress card while the stage is re-laid out
+    const still = await new Promise<string>((res) => {
+      const timer = setTimeout(() => {
+        engine.setAfterRender(null);
+        res("");
+      }, 1500);
+      engine.setAfterRender(() => {
+        clearTimeout(timer);
+        engine.setAfterRender(null);
+        res(canvas.toDataURL("image/jpeg", 0.7));
       });
-      setMaking({ still, startedAt: performance.now() });
+    });
+    setMaking({ still, startedAt: performance.now(), kind });
+    try {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cssW = REEL_W / dpr;
       const cssH = REEL_H / dpr;
       const k = Math.min(1, (window.innerHeight - 24) / cssH);
       canvas.style.cssText = `position:fixed;inset:auto;left:50%;top:12px;width:${cssW}px;height:${cssH}px;transform-origin:top center;transform:translateX(-50%) scale(${k});z-index:15;cursor:default`;
       document.body.classList.add("recording-reel");
-      // the engine re-sizes itself to the new canvas: wait until its backbuffer is the reel's size (at most ~4 s)
+      // the engine re-sizes itself to the new canvas: wait until its backbuffer is the story's size (at most ~4 s)
       for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
-      await new Promise((r) => setTimeout(r, 250));
+      engine.centerOn(ISTANBUL.lat, ISTANBUL.lon); // Istanbul, in the middle of the globe, and it stays there
+      engine.setIdleSpin(false);
+      engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
+      await new Promise((r) => setTimeout(r, 450));
       const comp = document.createElement("canvas");
       comp.width = REEL_W;
       comp.height = REEL_H;
@@ -349,10 +323,11 @@ export function Experience({ selection, onBack }: Props) {
       const overlay = document.createElement("canvas");
       overlay.width = REEL_W;
       overlay.height = REEL_H;
-      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo });
-      engine.setAfterRender(() => {
+      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo }, kind === "VIDEO");
+      const frame = () => {
         cctx.drawImage(canvas, 0, 0, REEL_W, REEL_H);
         cctx.drawImage(overlay, 0, 0);
+        if (kind === "CARD") return; // the card has no music box: a still ribbon says nothing
         // the music box as it is on screen: its canvas, its label and the routes sounding now
         const box = document.querySelector<HTMLElement>(".music-scope");
         drawScopeFrame(cctx, {
@@ -363,30 +338,80 @@ export function Experience({ selection, onBack }: Props) {
             color: li.style.borderLeftColor || "#fff",
           })),
         });
-      });
-      // the clip's sound is the chorus (the best 15 s), restarted from its first note; afterwards the whole piece goes on
-      const hookPiece: PersonalPiece = {
-        ...piece,
-        notes: piece.notes.filter((n) => n.t >= piece.hook).map((n) => ({ ...n, t: n.t - piece.hook })),
-        duration: piece.duration - piece.hook,
-        hook: 0,
       };
-      playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
-      const aiEl = aiAudioRef.current;
-      if (aiEl && ai === "on" && Number.isFinite(aiEl.duration)) aiEl.currentTime = aiEl.duration * 0.5; // the AI version's chorus (half way, like ours)
-      const stream = comp.captureStream(30);
-      audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
-      const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
-      await deliver(blob, `a-world-of-music.${extOf(mime)}`, "A World of Music");
-      if (extOf(mime) !== "mp4") say("THIS BROWSER SAVES WEBM — INSTAGRAM NEEDS MP4 (CHROME OR SAFARI)", 5000);
-    } catch {
-      say("COULD NOT RECORD THE VIDEO");
+      await work(frame, comp);
     } finally {
       engine.setAfterRender(null);
-      if (aiAudioRef.current && ai === "on") aiAudioRef.current.currentTime = 0;
+      engine.setIdleSpin(true);
+      engine.setLineScale(1);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
       setMaking(null);
+    }
+  };
+
+  const saveCard = async () => {
+    if (!engineRef.current || busy) return;
+    setBusy("CARD");
+    try {
+      await withStory("CARD", async (frame, comp) => {
+        const engine = engineRef.current!;
+        // one frame of the same scene as the video, taken inside a render so the globe is in the buffer
+        await new Promise<void>((res, rej) => {
+          const timer = setTimeout(() => {
+            engine.setAfterRender(null);
+            rej(new Error("no frame (tab in the background?)"));
+          }, 3000);
+          engine.setAfterRender(() => {
+            clearTimeout(timer);
+            engine.setAfterRender(null);
+            frame();
+            res();
+          });
+        });
+        const blob = await new Promise<Blob>((res, rej) => comp.toBlob((b) => (b ? res(b) : rej(new Error("card failed"))), "image/png"));
+        await deliver(blob, "a-world-of-music.png", "A World of Music");
+      });
+    } catch {
+      say("COULD NOT MAKE THE CARD");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const saveClip = async () => {
+    const audio = playerRef.current?.audioStream();
+    const mime = pickMime();
+    if (!engineRef.current || busy) return;
+    if (!mime) {
+      say("VIDEO IS NOT SUPPORTED HERE — SAVE THE CARD");
+      return;
+    }
+    setBusy("VIDEO");
+    try {
+      await withStory("VIDEO", async (frame, comp) => {
+        const engine = engineRef.current!;
+        engine.setAfterRender(frame);
+        // the clip's sound is the chorus (the best 15 s), restarted from its first note; afterwards the whole piece goes on
+        const hookPiece: PersonalPiece = {
+          ...piece,
+          notes: piece.notes.filter((n) => n.t >= piece.hook).map((n) => ({ ...n, t: n.t - piece.hook })),
+          duration: piece.duration - piece.hook,
+          hook: 0,
+        };
+        playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
+        const aiEl = aiAudioRef.current;
+        if (aiEl && ai === "on" && Number.isFinite(aiEl.duration)) aiEl.currentTime = aiEl.duration * 0.5; // the AI version's chorus (half way, like ours)
+        const stream = comp.captureStream(30);
+        audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
+        const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
+        await deliver(blob, `a-world-of-music.${extOf(mime)}`, "A World of Music");
+        if (extOf(mime) !== "mp4") say("THIS BROWSER SAVES WEBM — INSTAGRAM NEEDS MP4 (CHROME OR SAFARI)", 5000);
+      });
+    } catch {
+      say("COULD NOT RECORD THE VIDEO");
+    } finally {
+      if (aiAudioRef.current && ai === "on") aiAudioRef.current.currentTime = 0;
       playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
       setBusy(null);
     }
@@ -403,11 +428,11 @@ export function Experience({ selection, onBack }: Props) {
       <div className="personal-hud">
         <h1 className="personal-title">{stats.title}</h1>
         <p className="personal-sub">
-          {stats.destinations} DESTINATIONS · {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
+          {countLabel(stats.destinations, "destination", "destinations")} · {countLabel(stats.countries, "country", "countries")} · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
         </p>
         <p className="personal-sub">SIGNATURE VOICE · {stats.signature.toUpperCase()}</p>
       </div>
-      <MusicScope bus={noteBus} music={musicHud} label={`ROUTES → MUSIC · ${scope.section.toUpperCase()} · ${piece.bpm} BPM`} />
+      <MusicScope bus={noteBus} music={musicHud} routeColors={palette.css} label={`ROUTES → MUSIC · ${scope.section.toUpperCase()} · ${piece.bpm} BPM`} />
       {!running && (
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
@@ -447,11 +472,11 @@ export function Experience({ selection, onBack }: Props) {
           {making.still && <div className="making-still" style={{ backgroundImage: `url(${making.still})` }} />}
           <div className="making-card">
             <div className="making-spin" aria-hidden="true" />
-            <div className="making-title">PREPARING YOUR VIDEO</div>
+            <div className="making-title">PREPARING YOUR {making.kind}</div>
             <div className="making-sub">
-              Recording {REEL_SECONDS} seconds of your piece · keep this tab open
+              {making.kind === "VIDEO" ? `Recording ${REEL_SECONDS} seconds of your piece · keep this tab open` : "Framing your globe and numbers · just a moment"}
             </div>
-            <div className="making-bar"><i style={{ width: `${Math.min(100, (makingSec / (REEL_SECONDS + 2)) * 100)}%` }} /></div>
+            <div className="making-bar"><i style={{ width: `${Math.min(100, (makingSec / (making.kind === "VIDEO" ? REEL_SECONDS + 2 : 4)) * 100)}%` }} /></div>
           </div>
         </div>
       )}

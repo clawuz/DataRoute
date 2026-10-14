@@ -50,6 +50,7 @@ export function buildPersonalModel(routes: PersonalRoute[]): GlobeModel {
       other: r.to,
       region: r.region,
       regionIdx: regionIdx < 0 ? REGIONS.length - 1 : regionIdx,
+      colorIdx: 7 + i, // every route has its own colour (see colors.ts)
       bearing: 0,
       dep,
       end: dep + dur,

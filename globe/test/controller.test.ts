@@ -48,6 +48,9 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     pulseRoute: vi.fn(),
     setEffects: vi.fn(),
     setNight: vi.fn(),
+    centerOn: vi.fn(),
+    setIdleSpin: vi.fn(),
+    setLineScale: vi.fn(),
     headsInfo: () => ({ count: 1, extrapolated: 3 }),
     dispose: vi.fn(),
   };

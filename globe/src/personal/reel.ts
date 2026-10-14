@@ -1,7 +1,7 @@
 import { NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, flagOf } from "./destinations";
 import { drawLogo } from "./brand";
 import { flagsOf, wrap } from "./card";
-import type { PieceStats } from "./stats";
+import { countLabel, type PieceStats } from "./stats";
 import { SAFE_LAST_Y, SAFE_TOP, STORY_H, STORY_W } from "./safe";
 
 /**
@@ -20,7 +20,7 @@ export interface ReelInput {
 }
 
 /** the music box (note ribbon, label, routes sounding) over the lower part of the globe — no panel behind it */
-export const SCOPE_BOX = { x: 60, y: 1330, w: 960, h: 240 };
+export const SCOPE_BOX = { x: 60, y: 1290, w: 960, h: 200 };
 
 const RED = "#FF3B47";
 const INK = "#F2F5FA";
@@ -35,47 +35,59 @@ function halo(ctx: CanvasRenderingContext2D, blur = 14): void {
 }
 
 /** The static lockup and numbers on a transparent canvas, drawn once and laid over every frame of the globe. */
-export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput): void {
+/** `withScope`: the video carries the music box; the card has none, so its numbers sit lower */
+export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, withScope = true): void {
   const W = REEL_W;
   ctx.clearRect(0, 0, W, REEL_H);
+  // soft shade behind the lockup and behind the numbers, so the text reads over any part of the scene
+  const top0 = ctx.createLinearGradient(0, 0, 0, 780);
+  top0.addColorStop(0, "rgba(2, 3, 10, 0.62)");
+  top0.addColorStop(1, "rgba(2, 3, 10, 0)");
+  ctx.fillStyle = top0;
+  ctx.fillRect(0, 0, W, 780);
+  const bot0 = ctx.createLinearGradient(0, REEL_H - 820, 0, REEL_H);
+  bot0.addColorStop(0, "rgba(2, 3, 10, 0)");
+  bot0.addColorStop(1, "rgba(2, 3, 10, 0.7)");
+  ctx.fillStyle = bot0;
+  ctx.fillRect(0, REEL_H - 820, W, 820);
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   halo(ctx);
 
-  const logoH = drawLogo(ctx, c.logo, W / 2, SAFE_TOP, 130, 110);
-  const top = logoH > 0 ? SAFE_TOP + logoH + 16 : SAFE_TOP;
-  ctx.fillStyle = INK;
-  ctx.font = '700 30px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText("TURKISH AIRLINES", W / 2, top + 26);
+  // the vertical lockup of the airline (circle over the name), centred, as the brand gives it
+  const logoH = drawLogo(ctx, c.logo, W / 2, SAFE_TOP, 460, 160);
+  const top = logoH > 0 ? SAFE_TOP + logoH + 14 : SAFE_TOP;
   ctx.fillStyle = RED;
-  ctx.font = '600 34px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText("A WORLD OF MUSIC", W / 2, top + 84);
+  ctx.font = '600 32px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillText("A WORLD OF MUSIC", W / 2, top + 44);
   ctx.fillStyle = INK;
-  ctx.font = '700 84px "TK Display Condensed", "Arial Narrow", system-ui, sans-serif';
-  wrap(ctx, c.stats.title.toUpperCase(), W - 140)
-    .slice(0, 2)
-    .forEach((l, i) => ctx.fillText(l, W / 2, top + 178 + i * 88));
+  // the title keeps to two lines: the size steps down until it does
+  let size = 84;
+  let titleLines: string[] = [];
+  for (; size >= 52; size -= 4) {
+    ctx.font = `700 ${size}px "TK Display", "TK Display Condensed", system-ui, sans-serif`;
+    titleLines = wrap(ctx, c.stats.title.toUpperCase(), W - 120);
+    if (titleLines.length <= 2) break;
+  }
+  titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 138 + i * (size + 8)));
 
   // numbers, just above the music box
-  const y0 = SCOPE_BOX.y - 100;
+  const y0 = withScope ? SCOPE_BOX.y - 120 : SCOPE_BOX.y + 50;
   ctx.font = '46px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
   ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);
   ctx.font = '500 34px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillText(`${c.stats.destinations} DESTINATIONS · ${c.stats.countries} COUNTRIES · ${c.stats.km.toLocaleString("en")} KM`, W / 2, y0 + 56);
+  ctx.fillText(`${countLabel(c.stats.destinations, "destination", "destinations")} · ${countLabel(c.stats.countries, "country", "countries")} · ${c.stats.km.toLocaleString("en")} KM`, W / 2, y0 + 56);
   ctx.font = '400 26px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
   ctx.fillText(`SIGNATURE VOICE · ${c.stats.signature.toUpperCase()}`, W / 2, y0 + 98);
 
   // the airline and its claim, ending on the last safe baseline
-  ctx.font = '400 22px "TK Text Wide", system-ui, sans-serif';
+  ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
   const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES`];
-  const lines = foot.flatMap((t) => wrap(ctx, t, W - 160));
+  const lines = foot.flatMap((t) => wrap(ctx, t, W - 70));
   const first = SAFE_LAST_Y - (lines.length - 1) * 30;
-  ctx.font = '700 24px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillStyle = INK;
-  ctx.fillText("TURKISH AIRLINES", W / 2, first - 38);
-  ctx.font = '400 22px "TK Text Wide", system-ui, sans-serif';
+  ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
   lines.forEach((l, i) => ctx.fillText(l, W / 2, first + i * 30));
   ctx.shadowBlur = 0;

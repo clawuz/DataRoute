@@ -9,7 +9,7 @@ import {
   Vector2,
   Vector3,
 } from "three";
-import { REGION_RGB } from "@web/data/palette";
+import { PALETTE_SIZE, paletteColors } from "./palette-ext";
 import { ALT_TONE_GLSL } from "./alt-tone";
 import { plannedArc } from "../geo3d/great";
 import { resampleRun } from "../geo3d/resample";
@@ -73,7 +73,7 @@ export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean } = {})
             push(
               latLonToVec3(p.lat, p.lon, altitudeRadius(p.alt100) + ARC_BASE_LIFT),
               latLonToVec3(q.lat, q.lon, altitudeRadius(q.alt100) + ARC_BASE_LIFT),
-              p.t, q.t, f.regionIdx, 0, fi, 0, 0, p.alt100, q.alt100,
+              p.t, q.t, f.colorIdx ?? f.regionIdx, 0, fi, 0, 0, p.alt100, q.alt100,
             );
           }
         }
@@ -99,7 +99,7 @@ export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean } = {})
         push(
           latLonToVec3(p.lat, p.lon, p.radius + ARC_BASE_LIFT),
           latLonToVec3(q.lat, q.lon, q.radius + ARC_BASE_LIFT),
-          f.dep, f.end, f.regionIdx, 1, fi,
+          f.dep, f.end, f.colorIdx ?? f.regionIdx, 1, fi,
           (p.u * distKm) / R_EARTH_KM, (q.u * distKm) / R_EARTH_KM,
           PLANNED_CRUISE100 * Math.pow(Math.sin(Math.PI * p.u), 0.6),
           PLANNED_CRUISE100 * Math.pow(Math.sin(Math.PI * q.u), 0.6),
@@ -131,7 +131,7 @@ uniform float uHiMix;
 uniform float uHiFull;
 uniform float uHighlight;
 uniform vec3 uHub;
-uniform vec3 uColors[7];
+uniform vec3 uColors[${PALETTE_SIZE}];
 attribute vec2 aCorner;
 attribute vec3 aA;
 attribute vec3 aB;
@@ -261,7 +261,7 @@ export function createArcs(m: GlobeModel, opts: { planned?: boolean } = {}): Arc
     uHiFull: { value: 0 },
     uHighlight: { value: -1 },
     uHub: { value: new Vector3(...latLonToVec3(41.2613, 28.742, 1)).normalize() },
-    uColors: { value: REGION_RGB.map(([r, g, b]) => new Vector3(r, g, b)) },
+    uColors: { value: paletteColors().map(([r, g, b]) => new Vector3(r, g, b)) },
   };
   const material = new ShaderMaterial({
     uniforms,

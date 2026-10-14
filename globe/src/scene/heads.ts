@@ -1,5 +1,5 @@
 import { AdditiveBlending, BufferAttribute, BufferGeometry, DynamicDrawUsage, Points, ShaderMaterial } from "three";
-import { REGION_RGB } from "@web/data/palette";
+import { colorOfIndex } from "./palette-ext";
 import { altitudeRadius, latLonToVec3 } from "../geo3d/vec";
 import { headState } from "../model/dead-reckon";
 import type { GlobeModel } from "../model/globe-model";
@@ -40,7 +40,7 @@ export function computeHeads(
     out.pos[n * 3] = p[0];
     out.pos[n * 3 + 1] = p[1];
     out.pos[n * 3 + 2] = p[2];
-    const [r, g, b] = altTone(REGION_RGB[f.regionIdx], h.alt100);
+    const [r, g, b] = altTone(colorOfIndex(f.colorIdx ?? f.regionIdx), h.alt100);
     out.color[n * 3] = r;
     out.color[n * 3 + 1] = g;
     out.color[n * 3 + 2] = b;

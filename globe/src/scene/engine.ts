@@ -8,7 +8,7 @@ import { earthRotationRad, sunDirection } from "../astro";
 import { SMOOTH_SEC, blendPose, followWeight, initCam, smoothDampVec, stepCam, type CamMode, type CamState, type Damped, type Pose } from "../camera/follow-rig";
 import { easeAbsTime, type TimeEase } from "../camera/time-ease";
 import { chaseFor } from "../camera/follow-pose";
-import { IDLE_YAW_RATE, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
+import { IDLE_YAW_RATE, PITCH_LIMIT, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
 import { altitudeRadius, latLonToVec3, type Vec3 } from "../geo3d/vec";
 import type { GlobeModel } from "../model/globe-model";
 import { EXTRAPOLATE_MAX_SEC, headState } from "../model/dead-reckon";
@@ -64,6 +64,11 @@ export interface GlobeEngine {
   setEffects(e: Effects): void;
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
+  /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
+  centerOn(lat: number, lon: number): void;
+  /** multiplies the width of route lines and corridors (the 1080×1920 story is drawn at a pixel ratio of 1–2: its lines need more) */
+  setLineScale(k: number): void;
+  setIdleSpin(on: boolean): void;
   dispose(): void;
 }
 
@@ -98,6 +103,8 @@ export function hasWebGL2(): boolean {
 export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOptions): GlobeEngine {
   let effects: Effects | null = null;
   let night = false;
+  let idleSpin = true;
+  let lineScale = 1;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
   renderer.debug.onShaderError = (gl, program, vs, fs) => {
@@ -214,8 +221,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     const bh = Math.max(1, Math.round(h * pr * k));
     bloom.luminancePass.setSize(bw, bh);
     bloom.mipmapBlurPass.setSize(bw, bh);
-    arcs?.setResolution(w * pr, h * pr, pr);
-    corridors?.setResolution(w * pr, h * pr, pr); // art:corridors
+    arcs?.setResolution(w * pr, h * pr, pr * lineScale);
+    corridors?.setResolution(w * pr, h * pr, pr * lineScale); // art:corridors
     heads.setPixelRatio(pr);
     airports?.setPixelRatio(pr);
   }
@@ -247,7 +254,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
 
     const fol = f.follow && model && model.flights[f.follow.flight] ? f.follow : null;
     cam = stepCam(cam, dt, !!fol, camScale);
-    rig = stepRig(rig, dt, cam.mode === "GLOBE" ? idleRate : 0);
+    rig = stepRig(rig, dt, cam.mode === "GLOBE" && idleSpin ? idleRate : 0);
 
     timeEase = easeAbsTime(timeEase, f.absTime, dt);
     const shownAbs = timeEase.shown;
@@ -368,8 +375,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     if (sized) {
       const pr = renderer.getPixelRatio();
-      arcs.setResolution(size.w * pr, size.h * pr, pr);
-      corridors?.setResolution(size.w * pr, size.h * pr, pr);
+      arcs.setResolution(size.w * pr, size.h * pr, pr * lineScale);
+      corridors?.setResolution(size.w * pr, size.h * pr, pr * lineScale);
     }
   }
 
@@ -465,6 +472,17 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     setNight(on) {
       night = on;
+    },
+    centerOn(lat, lon) {
+      const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, (lat * Math.PI) / 180));
+      rig = { yaw: initialYaw(earthRotationRad(Date.now() / 1000), lon), pitch, yawVel: 0, pitchVel: 0, dragging: false };
+    },
+    setIdleSpin(on) {
+      idleSpin = on;
+    },
+    setLineScale(k) {
+      lineScale = k;
+      resize();
     },
     setAfterRender(fn) {
       afterRender = fn;
