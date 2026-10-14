@@ -20,7 +20,7 @@ export interface ReelInput {
 }
 
 /** the music box (note ribbon, label, routes sounding) over the lower part of the globe — no panel behind it */
-export const SCOPE_BOX = { x: 60, y: 1290, w: 960, h: 200 };
+export const SCOPE_BOX = { x: 60, y: 1170, w: 960, h: 200 };
 
 const RED = "#FF3B47";
 const INK = "#F2F5FA";
@@ -71,8 +71,9 @@ export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, wit
   }
   titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 138 + i * (size + 8)));
 
-  // numbers, just above the music box
-  const y0 = withScope ? SCOPE_BOX.y - 120 : SCOPE_BOX.y + 50;
+  // numbers
+  // flags, counts and the signature voice sit under the music box (the card has none: they keep the same place)
+  const y0 = SCOPE_BOX.y + SCOPE_BOX.h + 64;
   ctx.font = '46px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
   ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);

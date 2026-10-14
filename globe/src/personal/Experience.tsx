@@ -312,8 +312,8 @@ export function Experience({ selection, onBack }: Props) {
       document.body.classList.add("recording-reel");
       // the engine re-sizes itself to the new canvas: wait until its backbuffer is the story's size (at most ~4 s)
       for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
-      engine.centerOn(ISTANBUL.lat, ISTANBUL.lon); // Istanbul, in the middle of the globe, and it stays there
-      engine.setIdleSpin(false);
+      engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 15); // Istanbul starts in the middle, a little above the centre of the picture
+      engine.setIdleSpin(kind === "VIDEO", 5); // the video turns (a visible 45° over its 15 s); the card holds still
       engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
       await new Promise((r) => setTimeout(r, 450));
       const comp = document.createElement("canvas");
@@ -334,7 +334,7 @@ export function Experience({ selection, onBack }: Props) {
           canvas: box?.querySelector<HTMLCanvasElement>("canvas") ?? null,
           label: box?.querySelector(".music-scope-label")?.textContent?.trim() ?? "",
           items: [...(box?.querySelectorAll<HTMLElement>(".music-scope-now li") ?? [])].map((li) => ({
-            text: li.textContent?.replace(/\s+/g, " ").trim() ?? "",
+            text: [...li.children].map((c) => c.textContent?.trim() ?? "").filter(Boolean).join("  "),
             color: li.style.borderLeftColor || "#fff",
           })),
         });
@@ -342,7 +342,7 @@ export function Experience({ selection, onBack }: Props) {
       await work(frame, comp);
     } finally {
       engine.setAfterRender(null);
-      engine.setIdleSpin(true);
+      engine.setIdleSpin(true, 1);
       engine.setLineScale(1);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");

@@ -65,10 +65,12 @@ export interface GlobeEngine {
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
-  centerOn(lat: number, lon: number): void;
+  /** `lift` (degrees) tips the globe so the point sits that much above its middle */
+  centerOn(lat: number, lon: number, lift?: number): void;
   /** multiplies the width of route lines and corridors (the 1080×1920 story is drawn at a pixel ratio of 1–2: its lines need more) */
   setLineScale(k: number): void;
-  setIdleSpin(on: boolean): void;
+  /** the slow idle spin: on/off and a speed multiplier */
+  setIdleSpin(on: boolean, speed?: number): void;
   dispose(): void;
 }
 
@@ -104,6 +106,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let effects: Effects | null = null;
   let night = false;
   let idleSpin = true;
+  let idleSpeed = 1;
   let lineScale = 1;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
@@ -254,7 +257,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
 
     const fol = f.follow && model && model.flights[f.follow.flight] ? f.follow : null;
     cam = stepCam(cam, dt, !!fol, camScale);
-    rig = stepRig(rig, dt, cam.mode === "GLOBE" && idleSpin ? idleRate : 0);
+    rig = stepRig(rig, dt, cam.mode === "GLOBE" && idleSpin ? idleRate * idleSpeed : 0);
 
     timeEase = easeAbsTime(timeEase, f.absTime, dt);
     const shownAbs = timeEase.shown;
@@ -473,12 +476,13 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setNight(on) {
       night = on;
     },
-    centerOn(lat, lon) {
-      const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, (lat * Math.PI) / 180));
+    centerOn(lat, lon, lift = 0) {
+      const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, ((lat - lift) * Math.PI) / 180));
       rig = { yaw: initialYaw(earthRotationRad(Date.now() / 1000), lon), pitch, yawVel: 0, pitchVel: 0, dragging: false };
     },
-    setIdleSpin(on) {
+    setIdleSpin(on, speed = 1) {
       idleSpin = on;
+      idleSpeed = speed;
     },
     setLineScale(k) {
       lineScale = k;
