@@ -362,6 +362,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     if (opts.boldTracks) {
       arcs.uniforms.uGain.value = 1.0;
       arcs.uniforms.uWidthK.value = 2.1;
+      arcs.uniforms.uHiMix.value = 0; // a sounding route stays in its own colour
+      arcs.uniforms.uHiFull.value = 1;
     }
     earthGroup.add(arcs.mesh);
     if (effects?.corridors) {
@@ -390,13 +392,15 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       model = m;
       if (m) {
         rebuildOverlays(); // art:corridors
-        airports = createAirports(m);
-        earthGroup.add(airports.points);
+        if (!opts.boldTracks) { // the personal globe draws no airport rings: the tracks meet at the hub on their own
+          airports = createAirports(m);
+          earthGroup.add(airports.points);
+        }
         pickIndex = buildPickIndex(m, 3);
         if (prevHeads) smoother.onSwap(prevHeads, headLatLons(m, cur), rel(nowSec));
         if (sized) {
           const pr = renderer.getPixelRatio();
-          airports.setPixelRatio(pr);
+          airports?.setPixelRatio(pr);
         }
       } else {
         rebuildOverlays(); // art:corridors

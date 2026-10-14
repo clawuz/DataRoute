@@ -102,8 +102,6 @@ export function Experience({ selection, onBack }: Props) {
         const r = n.route >= 0 ? routes[n.route] : undefined;
         if (!r) return;
         litRef.current?.(n.route);
-        engine.pulseAirport(r.to, nowSec());
-        engine.pulseAirport(r.from, nowSec());
       };
       // the music box: a note appears on the ribbon three seconds before it sounds
       planCbRef.current = (n, wallAt) => {

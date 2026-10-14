@@ -127,6 +127,8 @@ uniform vec2 uRes;
 uniform float uWidth;
 uniform float uGain;
 uniform float uWidthK;
+uniform float uHiMix;
+uniform float uHiFull;
 uniform float uHighlight;
 uniform vec3 uHub;
 uniform vec3 uColors[7];
@@ -189,7 +191,7 @@ void main() {
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
   vec3 col = altTone(base, mix(aAlt.x, aAlt.y, aCorner.y));
-  vColor = hi ? mix(col, vec3(1.0), 0.4) : col;
+  vColor = hi ? mix(mix(col, base, uHiFull), vec3(1.0), uHiMix) : col;
   vAlpha = alpha;
   vS = mix(aS.x, aS.y, aCorner.y);
   vEdge = aCorner.x;
@@ -219,6 +221,9 @@ export type ArcUniforms = {
   /** brightness and width multipliers (1 = the live globe; the personal globe draws fewer, brighter routes) */
   uGain: { value: number };
   uWidthK: { value: number };
+  /** how far a highlighted line goes toward white (0.4 live) and whether it shows its full region colour (1) or the altitude tone (0) */
+  uHiMix: { value: number };
+  uHiFull: { value: number };
   uHighlight: { value: number };
   uHub: { value: Vector3 };
   uColors: { value: Vector3[] };
@@ -252,6 +257,8 @@ export function createArcs(m: GlobeModel, opts: { planned?: boolean } = {}): Arc
     uWidth: { value: ARC_WIDTH_PX },
     uGain: { value: 1 },
     uWidthK: { value: 1 },
+    uHiMix: { value: 0.4 },
+    uHiFull: { value: 0 },
     uHighlight: { value: -1 },
     uHub: { value: new Vector3(...latLonToVec3(41.2613, 28.742, 1)).normalize() },
     uColors: { value: REGION_RGB.map(([r, g, b]) => new Vector3(r, g, b)) },
