@@ -8,6 +8,8 @@ export interface PersonalPlayer {
   /** browsers start a context suspended until a gesture */
   resume(): void;
   setMuted(m: boolean): void;
+  /** the audio of the piece as a stream (for a recorded clip) */
+  audioStream(): MediaStream | null;
   /** seconds into the current loop, or 0 when stopped */
   position(): number;
   dispose(): void;
@@ -45,6 +47,7 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   conv.connect(wet);
   wet.connect(master);
 
+  let tap: MediaStreamAudioDestinationNode | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   let loopStart = 0; // audio-clock time of the loop's origin
   let piece: PersonalPiece | null = null;
@@ -88,6 +91,13 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;
+    },
+    audioStream() {
+      if (!tap && typeof ctx.createMediaStreamDestination === "function") {
+        tap = ctx.createMediaStreamDestination();
+        comp.connect(tap); // post-compressor, so the clip is not affected by the mute button
+      }
+      return tap ? tap.stream : null;
     },
     setMuted(m) {
       master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.05);

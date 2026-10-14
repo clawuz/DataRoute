@@ -8,6 +8,8 @@ import { buildRoutes } from "./routes";
 import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
+import { renderCard } from "./card";
+import { extOf, pickMime, recordClip } from "./clip";
 
 interface Props {
   selection: PersonalSelection;
@@ -19,6 +21,8 @@ const SPAN = 86400;
 export function Experience({ selection, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<PersonalPlayer | null>(null);
+  const engineRef = useRef<GlobeEngine | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -42,6 +46,7 @@ export function Experience({ selection, onBack }: Props) {
       setError(String(e));
       return;
     }
+    engineRef.current = engine;
     engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     engine.setModel(buildPersonalModel(routes), SPAN, nowSec());
@@ -81,6 +86,7 @@ export function Experience({ selection, onBack }: Props) {
     return () => {
       player?.dispose();
       playerRef.current = null;
+      engineRef.current = null;
       engine.dispose();
     };
   }, [routes, piece]);
@@ -99,6 +105,77 @@ export function Experience({ selection, onBack }: Props) {
       setToast(data.url);
     }
     setTimeout(() => setToast(""), 2600);
+  };
+
+  const say = (t: string, ms = 2600) => {
+    setToast(t);
+    setTimeout(() => setToast(""), ms);
+  };
+  const deliver = async (blob: Blob, name: string, title: string) => {
+    const file = new File([blob], name, { type: blob.type });
+    try {
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title, text: `${stats.title} — ${url()}` });
+        return;
+      }
+    } catch {
+      return; // the share sheet was dismissed
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    say("SAVED");
+  };
+  const saveCard = async () => {
+    const canvas = canvasRef.current;
+    const engine = engineRef.current;
+    if (!canvas || !engine || busy) return;
+    setBusy("CARD");
+    try {
+      // the drawing buffer is only readable inside the frame it was drawn in
+      const globe = await new Promise<HTMLImageElement>((res, rej) => {
+        const timer = setTimeout(() => {
+          engine.setAfterRender(null);
+          rej(new Error("no frame (tab in the background?)"));
+        }, 2500);
+        engine.setAfterRender(() => {
+          clearTimeout(timer);
+          engine.setAfterRender(null);
+          const img = new Image();
+          img.onload = () => res(img);
+          img.onerror = () => rej(new Error("capture failed"));
+          img.src = canvas.toDataURL("image/jpeg", 0.92);
+        });
+      });
+      const blob = await renderCard({ mode: selection.mode, stats, dests: selection.dests, globe, url: url() });
+      await deliver(blob, "a-world-of-music.png", "A World of Music");
+    } catch {
+      say("COULD NOT MAKE THE CARD");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const saveClip = async () => {
+    const canvas = canvasRef.current;
+    const audio = playerRef.current?.audioStream();
+    const mime = pickMime();
+    if (!canvas || !mime || busy) {
+      if (!mime) say("VIDEO IS NOT SUPPORTED HERE — SAVE THE CARD");
+      return;
+    }
+    setBusy("VIDEO");
+    try {
+      const stream = canvas.captureStream(30);
+      audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
+      const blob = await recordClip(stream, 12000, mime);
+      await deliver(blob, `a-world-of-music.${extOf(mime)}`, "A World of Music");
+    } catch {
+      say("COULD NOT RECORD THE VIDEO");
+    } finally {
+      setBusy(null);
+    }
   };
 
   if (error) return <div className="loading">{error}</div>;
@@ -123,6 +200,8 @@ export function Experience({ selection, onBack }: Props) {
       )}
       <div className="personal-actions">
         <button type="button" className="compose-btn" onClick={share}>SHARE MY PIECE</button>
+        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveCard}>{busy === "CARD" ? "MAKING…" : "CARD"}</button>
+        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveClip}>{busy === "VIDEO" ? "RECORDING 12 S…" : "VIDEO"}</button>
         <button type="button" className="ghost-btn" onClick={() => { const m = !muted; setMuted(m); playerRef.current?.setMuted(m); }}>{muted ? "SOUND OFF" : "SOUND ON"}</button>
       </div>
       {toast && <div className="notice">{toast}</div>}
