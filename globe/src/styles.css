@@ -544,3 +544,8 @@ body.recording-reel .music-scope { opacity: 0; }
 @media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 34px; } }
 @media (max-height: 720px) { .landing.v2 .landing-hint { margin-top: 22px; } }
 @media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 24px; } .landing.v2 .landing-fine { padding-top: 16px; } }
+
+/* the claim, then the numbers on their own line */
+.landing.v2 .landing-fine { max-width: none; }
+.landing.v2 .landing-fine span { display: block; }
+.landing.v2 .landing-fine span + span { margin-top: 4px; }

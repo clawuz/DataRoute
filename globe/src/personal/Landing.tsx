@@ -103,7 +103,12 @@ export function Landing({ onCompose, onLive }: Props) {
           </svg>
           For the best experience, use headphones.
         </p>
-        <p className="landing-fine">{NETWORK_CLAIM} · {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries</p>
+        <p className="landing-fine">
+          <span>{NETWORK_CLAIM}</span>
+          <span>
+            {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries
+          </span>
+        </p>
       </div>
     );
   }

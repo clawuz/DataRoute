@@ -238,7 +238,7 @@ def build(v,fname,title,desc,src):
 {'<div class="hairline"></div>' if v=='v1' else ''}
 <p class="sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
 <div class="modes">{modes(v)}</div>
-<p class="foot">TURKISH AIRLINES, FLYING TO MORE COUNTRIES THAN ANY OTHER AIRLINE IN THE WORLD · 355 DESTINATIONS · 133 COUNTRIES</p>
+<p class="foot">TURKISH AIRLINES, FLYING TO MORE COUNTRIES THAN ANY OTHER AIRLINE IN THE WORLD<br>355 DESTINATIONS · 133 COUNTRIES</p>
 </section>
 <section id="s-origin" class="screen">
 <p class="eyebrow">STEP 1 OF 2</p><h1 style="font-size:clamp(26px,3.6vw,44px)">Where do you start from?</h1>
