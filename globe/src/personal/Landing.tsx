@@ -217,7 +217,7 @@ export function Landing({ onCompose, onLive }: Props) {
             <h2 className="area-head">{a.upper} DESTINATIONS</h2>
             {a.groups.map((g) => (
               <section key={g.iso} className="group">
-                <h3 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h3>
+                <h3 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country.toLocaleUpperCase(g.iso === "TR" ? "tr" : "en")}</h3>
                 <div className="picker-grid">
                   {g.items.map((r) => {
                     const on = !fromOpen && picked.includes(r.iata);

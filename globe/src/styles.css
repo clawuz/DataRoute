@@ -448,7 +448,7 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2 .picker-search { background: rgba(10, 15, 34, 0.7); backdrop-filter: blur(10px); font-family: var(--text); }
 .landing.v2 .tab { font-family: var(--text); background: rgba(10, 15, 34, 0.6); backdrop-filter: blur(8px); text-transform: none; letter-spacing: 0.02em; font-size: 13px; padding: 7px 13px; border-radius: 99px; }
 .landing.v2 .tab.on { background: #f2f5fa; color: #02030a; border-color: #f2f5fa; }
-.landing.v2 .group-head { font-family: var(--label); font-weight: 400; letter-spacing: 0.16em; text-transform: uppercase; font-size: 12px; }
+.landing.v2 .group-head { font-family: var(--label); font-weight: 400; letter-spacing: 0.16em; font-size: 12px; }
 .landing.v2 .area-head { font-family: var(--display); font-weight: 700; letter-spacing: 0.08em; }
 .landing.v2 .chip { font-family: var(--text); background: rgba(10, 15, 34, 0.62); backdrop-filter: blur(8px); font-size: 14px; }
 .landing.v2 .chip.on { background: rgba(201, 1, 25, 0.3); border-color: #e30a17 !important; }
