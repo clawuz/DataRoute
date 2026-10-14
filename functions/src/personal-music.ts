@@ -10,6 +10,9 @@
  */
 export const DAILY_CAP = 100;
 export const PER_VISITOR_CAP = 2;
+/** every request counts — also cached, malformed and failed ones — so one address cannot hammer the endpoint */
+export const ATTEMPTS_PER_HOUR = 10;
+export const ATTEMPTS_PER_DAY = 30;
 
 export const REGIONS = ["DOM", "EUR", "MEA", "AFR", "ASI", "AME"] as const;
 export type Region = (typeof REGIONS)[number];
@@ -93,6 +96,8 @@ export function buildPlan(c: Character): { chunks: PlanChunk[] } {
 export const dayId = (nowMs: number): string => new Date(nowMs).toISOString().slice(0, 10);
 
 export interface Store {
+  /** counts one request of this visitor and returns how many they have made in this UTC hour and day (this one included) */
+  hit(day: string, hour: number, visitor: string): Promise<{ hour: number; day: number }>;
   /** the public URL of a finished track, or null */
   find(key: string): Promise<string | null>;
   /** counts one new track against the day and the visitor; "ok" only when both are under their cap (atomic) */
@@ -108,13 +113,18 @@ export interface Deps {
   compose: (plan: { chunks: PlanChunk[] }) => Promise<Uint8Array>;
   now: () => number;
   enabled: boolean;
+  /** where a failed composition is reported (status and message, never the key) */
+  log?: (message: string) => void;
 }
 
 export type Outcome =
   | { status: "ready"; url: string; cached: boolean }
-  | { status: "cap" | "limit" | "off" | "bad-request" | "failed" };
+  | { status: "cap" | "limit" | "off" | "bad-request" | "failed" | "rate" };
 
 export async function handleRequest(body: unknown, visitor: string, d: Deps): Promise<Outcome> {
+  const now = d.now();
+  const seen = await d.store.hit(dayId(now), new Date(now).getUTCHours(), visitor);
+  if (seen.hour > ATTEMPTS_PER_HOUR || seen.day > ATTEMPTS_PER_DAY) return { status: "rate" };
   const c = parseCharacter(body);
   if (!c) return { status: "bad-request" };
   const key = characterKey(c);
@@ -128,7 +138,8 @@ export async function handleRequest(body: unknown, visitor: string, d: Deps): Pr
     const mp3 = await d.compose(buildPlan(c));
     const url = await d.store.save(key, mp3);
     return { status: "ready", url, cached: false };
-  } catch {
+  } catch (e) {
+    d.log?.(`composition failed: ${e instanceof Error ? e.message : String(e)}`);
     await d.store.release(day, visitor);
     return { status: "failed" };
   }

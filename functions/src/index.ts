@@ -6,7 +6,7 @@ import { defineSecret, defineString } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onRequest } from "firebase-functions/v2/https";
 import { dayId, handleRequest } from "./personal-music.js";
-import { elevenCompose, firebaseStore, visitorId } from "./personal-music-http.js";
+import { clientIp, elevenCompose, firebaseStore, visitorId } from "./personal-music-http.js";
 import { runCollect } from "./collect.js";
 import { firestoreRouteCache } from "./routes.js";
 import { selectProvider } from "./providers.js";
@@ -63,7 +63,6 @@ export const collect = onSchedule(
 //   firebase deploy --only functions:composePersonal --project omerkilavuz-9ad41
 // A plain `firebase deploy` of every function needs the secret too. See docs/personal-music.md.
 const ELEVENLABS_API_KEY = defineSecret("ELEVENLABS_API_KEY");
-const PERSONAL_MUSIC_ENABLED = defineString("PERSONAL_MUSIC_ENABLED", { default: "true" });
 
 export const composePersonal = onRequest(
   {
@@ -80,14 +79,15 @@ export const composePersonal = onRequest(
       return;
     }
     const day = dayId(Date.now());
-    const ip = (String(req.headers["x-forwarded-for"] ?? req.ip ?? "") || "unknown").split(",")[0].trim();
+    const ip = clientIp(String(req.headers["x-forwarded-for"] ?? ""), req.socket?.remoteAddress ?? "unknown");
     const outcome = await handleRequest(req.body, visitorId(ip, day), {
       store: firebaseStore(getFirestore(), getStorage().bucket()),
       compose: elevenCompose(() => ELEVENLABS_API_KEY.value()),
       now: Date.now,
-      enabled: PERSONAL_MUSIC_ENABLED.value() !== "false",
+      log: (m) => logger.warn(m),
+      enabled: process.env.PERSONAL_MUSIC_ENABLED !== "false", // kill switch: set PERSONAL_MUSIC_ENABLED=false in functions/.env and redeploy
     });
     logger.info("composePersonal", { status: outcome.status });
-    res.status(outcome.status === "ready" ? 200 : outcome.status === "bad-request" ? 400 : 200).json(outcome);
+    res.status(outcome.status === "rate" ? 429 : outcome.status === "bad-request" ? 400 : 200).json(outcome);
   },
 );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DAILY_CAP, PER_VISITOR_CAP, buildPlan, characterKey, dayId, handleRequest, parseCharacter, type Deps, type Store } from "../src/personal-music.js";
+import { ATTEMPTS_PER_DAY, ATTEMPTS_PER_HOUR, DAILY_CAP, PER_VISITOR_CAP, buildPlan, characterKey, dayId, handleRequest, parseCharacter, type Deps, type Store } from "../src/personal-music.js";
 
 const good = { mode: "visited", regions: ["EUR", "ASI"], size: "M" };
 
@@ -7,10 +7,18 @@ function memoryStore(): Store & { tracks: Map<string, string>; daily: Map<string
   const tracks = new Map<string, string>();
   const daily = new Map<string, number>();
   const visits = new Map<string, number>();
+  const rate = new Map<string, number>();
   return {
     tracks,
     daily,
     visits,
+    async hit(day, hour, visitor) {
+      const hk = `${day}:${visitor}:${hour}`;
+      const dk = `${day}:${visitor}`;
+      rate.set(hk, (rate.get(hk) ?? 0) + 1);
+      rate.set(dk, (rate.get(dk) ?? 0) + 1);
+      return { hour: rate.get(hk)!, day: rate.get(dk)! };
+    },
     async find(k) {
       return tracks.get(k) ?? null;
     },
@@ -119,6 +127,27 @@ describe("handleRequest", () => {
   });
   it("rejects a malformed body", async () => {
     expect((await handleRequest({ mode: "wish" }, "q", deps())).status).toBe("bad-request");
+  });
+  it("limits how often one visitor may ask in an hour, whatever the answer", async () => {
+    const d = deps();
+    // cached answers and malformed requests count too
+    await handleRequest(good, "ip", d);
+    for (let i = 1; i < ATTEMPTS_PER_HOUR; i++) expect((await handleRequest(i % 2 ? good : { nope: 1 }, "ip", d)).status).not.toBe("rate");
+    expect((await handleRequest(good, "ip", d)).status).toBe("rate");
+    // another visitor is not affected
+    expect((await handleRequest(good, "other", d)).status).toBe("ready");
+  });
+  it("limits a visitor per day across hours", async () => {
+    let hour = 0;
+    const base = Date.parse("2026-10-14T00:00:00Z");
+    const d = deps({ now: () => base + hour * 3600_000 });
+    let last = "";
+    for (let i = 0; i < ATTEMPTS_PER_DAY + 1; i++) {
+      hour = Math.floor(i / 5); // 5 an hour: under the hourly limit
+      last = (await handleRequest(good, "ip", d)).status;
+    }
+    expect(last).toBe("rate");
+    expect(ATTEMPTS_PER_DAY).toBe(30);
   });
   it("days roll over at UTC midnight", () => {
     expect(dayId(Date.parse("2026-10-14T23:59:59Z"))).toBe("2026-10-14");

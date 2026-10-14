@@ -13,6 +13,17 @@ export function firebaseStore(db: Firestore, bucket: Bucket): Store {
   const path = (key: string) => `public/personal/${key}.mp3`;
   const urlOf = (key: string) => `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(path(key))}?alt=media`;
   return {
+    async hit(day, hour, visitor) {
+      const ref = db.collection("personalMusicRate").doc(`${day}_${visitor}`);
+      return db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const data = (snap.data() ?? {}) as { total?: number; hours?: Record<string, number> };
+        const total = (data.total ?? 0) + 1;
+        const h = ((data.hours ?? {})[String(hour)] ?? 0) + 1;
+        tx.set(ref, { total, hours: { ...(data.hours ?? {}), [String(hour)]: h } });
+        return { hour: h, day: total };
+      });
+    },
     async find(key) {
       const [exists] = await bucket.file(path(key)).exists();
       return exists ? urlOf(key) : null;
@@ -59,10 +70,19 @@ export function elevenCompose(apiKey: () => string, fetchImpl: typeof fetch = fe
       headers: { "Content-Type": "application/json", "xi-api-key": apiKey() },
       body: JSON.stringify({ composition_plan: { chunks: plan.chunks }, model_id: MODEL }),
     });
-    if (!res.ok) throw new Error(`elevenlabs ${res.status}`);
+    if (!res.ok) throw new Error(`elevenlabs ${res.status}: ${(await res.text().catch(() => "")).slice(0, 400)}`);
     return new Uint8Array(await res.arrayBuffer());
   };
 }
 
 /** A visitor is the IP address, hashed with the day: the counters hold no addresses and reset every day. */
 export const visitorId = (ip: string, day: string): string => createHash("sha256").update(`${day}|${ip}`).digest("hex").slice(0, 24);
+
+/**
+ * The caller's address from X-Forwarded-For. The edge appends the real address at the END; anything before it is whatever
+ * the caller chose to send, so only the last entry can be trusted (measured on the deployed function).
+ */
+export function clientIp(xForwardedFor: string | undefined, fallback = "unknown"): string {
+  const parts = (xForwardedFor ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : fallback;
+}

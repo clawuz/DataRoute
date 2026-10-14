@@ -23,7 +23,7 @@ export function characterOf(mode: PersonalMode, routes: PersonalRoute[], destina
 
 export type AiOutcome =
   | { status: "ready"; url: string }
-  | { status: "cap" | "limit" | "off" | "failed" | "network" };
+  | { status: "cap" | "limit" | "off" | "failed" | "network" | "rate" };
 
 /** Asks the AI endpoint for the character's track. Never throws. */
 export async function requestAi(endpoint: string, c: AiCharacter, fetchImpl: typeof fetch = fetch, signal?: AbortSignal): Promise<AiOutcome> {
@@ -31,7 +31,7 @@ export async function requestAi(endpoint: string, c: AiCharacter, fetchImpl: typ
     const res = await fetchImpl(endpoint, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(c), signal });
     const j = (await res.json()) as { status?: string; url?: string };
     if (j.status === "ready" && typeof j.url === "string" && /^https:\/\//.test(j.url)) return { status: "ready", url: j.url };
-    if (j.status === "cap" || j.status === "limit" || j.status === "off") return { status: j.status };
+    if (j.status === "cap" || j.status === "limit" || j.status === "off" || j.status === "rate") return { status: j.status };
     return { status: "failed" };
   } catch {
     return { status: "network" };
@@ -41,6 +41,7 @@ export async function requestAi(endpoint: string, c: AiCharacter, fetchImpl: typ
 export const AI_MESSAGE: Record<Exclude<AiOutcome["status"], "ready">, string> = {
   cap: "TODAY'S AI VERSIONS ARE ALL TAKEN — TRY AGAIN TOMORROW",
   limit: "YOU HAVE USED YOUR 2 AI VERSIONS FOR TODAY",
+  rate: "TOO MANY ATTEMPTS — PLEASE TRY AGAIN IN A WHILE",
   off: "THE AI VERSION IS NOT AVAILABLE RIGHT NOW",
   failed: "THE AI VERSION COULD NOT BE MADE — YOUR MUSIC KEEPS PLAYING",
   network: "NO CONNECTION TO THE AI VERSION — YOUR MUSIC KEEPS PLAYING",

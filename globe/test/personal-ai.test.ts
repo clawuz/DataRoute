@@ -25,7 +25,7 @@ describe("ai request", () => {
     expect(await requestAi("https://x", c, reply({ status: "ready", url: "https://files/x.mp3" }))).toEqual({ status: "ready", url: "https://files/x.mp3" });
   });
   it("passes the cap, limit and off answers through", async () => {
-    for (const s of ["cap", "limit", "off"] as const) expect(await requestAi("https://x", c, reply({ status: s }))).toEqual({ status: s });
+    for (const s of ["cap", "limit", "off", "rate"] as const) expect(await requestAi("https://x", c, reply({ status: s }))).toEqual({ status: s });
   });
   it("never trusts a non-https url and never throws", async () => {
     expect((await requestAi("https://x", c, reply({ status: "ready", url: "javascript:alert(1)" }))).status).toBe("failed");
