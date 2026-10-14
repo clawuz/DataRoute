@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_COUNT, DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, areaOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
+import { COUNTRY_COUNT, DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, AREAS, areaOf, countryName, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
 import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
 import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
@@ -48,6 +48,11 @@ describe("destinations", () => {
     expect(areaOf("AE")).toBe("AS");
     expect(areaOf("AU")).toBe("OC");
     expect(new Set(DESTINATIONS.map((d) => areaOf(d.iso))).size).toBe(6);
+  });
+  it("always writes Türkiye, never Turkey", () => {
+    expect(countryName("TR")).toBe("Türkiye");
+    expect(AREAS[0].label).toBe("Türkiye");
+    expect(AREAS[0].upper).toBe("TÜRKİYE");
   });
   it("knows the hub and labels twin airports", () => {
     expect(isHub("IST")).toBe(true);

@@ -139,7 +139,7 @@ export function Landing({ onCompose, onLive }: Props) {
       <div className="region-tabs" role="tablist">
         {areaTabs.map((a) => (
           <button key={a} type="button" role="tab" aria-selected={area === a} className={`tab${area === a ? " on" : ""}`} onClick={() => setArea(a)}>
-            {a === "ALL" ? "ALL DESTINATIONS" : `${areaLabel(a).toUpperCase()} DESTINATIONS`}
+            {a === "ALL" ? "ALL DESTINATIONS" : `${AREAS.find((x) => x.id === a)!.upper} DESTINATIONS`}
           </button>
         ))}
       </div>

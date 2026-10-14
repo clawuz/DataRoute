@@ -58,6 +58,7 @@ export const COUNTRY_COUNT = new Set(DESTINATIONS.map((d) => d.iso)).size;
 const names = new Map<string, Intl.DisplayNames>();
 /** localised country name; falls back to the ISO code */
 export function countryName(iso: string, locale = "en"): string {
+  if (iso === "TR") return "Türkiye"; // the country's own name, in every language
   try {
     let dn = names.get(locale);
     if (!dn) names.set(locale, (dn = new Intl.DisplayNames([locale], { type: "region" })));
@@ -79,13 +80,13 @@ export function labelOf(d: Destination): string {
 
 /** The six areas the airline groups its destinations in. */
 export type AreaId = "TR" | "EU" | "AM" | "AF" | "AS" | "OC";
-export const AREAS: { id: AreaId; label: string }[] = [
-  { id: "TR", label: "Turkey" },
-  { id: "EU", label: "Europe" },
-  { id: "AM", label: "Americas" },
-  { id: "AF", label: "Africa" },
-  { id: "AS", label: "Asia" },
-  { id: "OC", label: "Australia" },
+export const AREAS: { id: AreaId; label: string; upper: string }[] = [
+  { id: "TR", label: "Türkiye", upper: "TÜRKİYE" },
+  { id: "EU", label: "Europe", upper: "EUROPE" },
+  { id: "AM", label: "Americas", upper: "AMERICAS" },
+  { id: "AF", label: "Africa", upper: "AFRICA" },
+  { id: "AS", label: "Asia", upper: "ASIA" },
+  { id: "OC", label: "Australia", upper: "AUSTRALIA" },
 ];
 
 const OCEANIA = new Set(["AU", "NZ", "FJ", "PF", "NC", "PG", "GU", "WS", "TO", "VU", "SB", "PW", "FM", "MH", "KI", "NR", "TV", "CK", "NU", "WF", "AS", "MP"]);
