@@ -16,7 +16,7 @@ type Step = "mode" | "pick";
 
 const COPY: Record<PersonalMode, { head: string; sub: string; cta: string }> = {
   visited: { head: "Where have you been?", sub: "Choose where you fly from, then every place you have flown to. Your journey becomes a piece of music.", cta: "COMPOSE MY JOURNEY" },
-  wish: { head: "Where do you want to go?", sub: "Choose where you fly from, then your dream destinations. We will play the sound of the trip you have not taken yet.", cta: "COMPOSE MY WISHLIST" },
+  wish: { head: "Where do you want to go?", sub: "Choose where you fly from, then name the places you dream of. We will compose the music of the journeys you have not taken yet.", cta: "COMPOSE MY WISHLIST" },
 };
 
 const norm = (s: string): string => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
