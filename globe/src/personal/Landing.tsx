@@ -97,6 +97,12 @@ export function Landing({ onCompose, onLive }: Props) {
             <span className="mode-desc">Every Turkish Airlines flight of the last 24 hours, played as music.</span>
           </button>
         </div>
+        <p className="landing-hint">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+            <path d="M4 15v-3a8 8 0 0 1 16 0v3M4 15h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-3zm16 0h-3a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2v-3z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          For the best experience, use headphones.
+        </p>
         <p className="landing-fine">{NETWORK_CLAIM} · {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries</p>
       </div>
     );

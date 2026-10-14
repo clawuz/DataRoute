@@ -534,3 +534,9 @@ body.recording-reel .music-scope { opacity: 0; }
 .live-back { position: fixed; left: 3vmin; top: 19vmin; z-index: 12; font-family: var(--label, "TK Text Wide", system-ui, sans-serif); letter-spacing: 0.16em; font-size: 12px; color: #f2f5fa; background: rgba(10, 15, 34, 0.72); border: 1px solid rgba(242, 245, 250, 0.3); border-radius: 99px; padding: 8px 14px; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .live-back:hover, .live-back:focus-visible { border-color: #e30a17; outline: none; }
 @media (max-aspect-ratio: 1/1) { .live-back { top: 41vmin; left: 12px; } }
+
+/* a quiet hint under the three choices */
+.landing.v2 .landing-hint { display: inline-flex; align-items: center; gap: 10px; margin: 22px 0 0; padding: 9px 16px; border: 1px solid rgba(242, 245, 250, 0.16); border-radius: 99px; background: rgba(10, 15, 34, 0.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); font-family: var(--text); font-size: 13.5px; color: rgba(242, 245, 250, 0.82); }
+.landing.v2 .landing-hint svg { flex: none; color: #f2f5fa; }
+@media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 14px; font-size: 13px; padding: 8px 14px; } }
+@media (max-height: 720px) { .landing.v2 .landing-hint { margin-top: 10px; padding: 6px 12px; } }
