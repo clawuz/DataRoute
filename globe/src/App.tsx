@@ -44,6 +44,8 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       setError(String(e));
       return;
     }
+    // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
+    if (import.meta.env.VITE_PERSONAL === "1") engine.setSpaceDim(0.35, false);
     try {
       controller = createController({
         engine,
