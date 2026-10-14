@@ -529,3 +529,8 @@ body.recording-reel .music-scope { opacity: 0; }
   .landing.v2 .region-tabs { justify-content: flex-start; }
 }
 .landing.v2.picker .topbar { background: linear-gradient(180deg, #02030a 72%, rgba(2, 3, 10, 0)); padding-bottom: 20px; }
+
+/* a way back from the live sky to the three choices */
+.live-back { position: fixed; left: 3vmin; top: 19vmin; z-index: 12; font-family: var(--label, "TK Text Wide", system-ui, sans-serif); letter-spacing: 0.16em; font-size: 12px; color: #f2f5fa; background: rgba(10, 15, 34, 0.72); border: 1px solid rgba(242, 245, 250, 0.3); border-radius: 99px; padding: 8px 14px; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.live-back:hover, .live-back:focus-visible { border-color: #e30a17; outline: none; }
+@media (max-aspect-ratio: 1/1) { .live-back { top: 41vmin; left: 12px; } }

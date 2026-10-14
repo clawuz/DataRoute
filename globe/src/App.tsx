@@ -12,7 +12,7 @@ import { Experience } from "./personal/Experience";
 import { Landing } from "./personal/Landing";
 import { selectionFromSearch, searchFromSelection, type PersonalSelection } from "./personal/codec";
 
-function LiveApp() {
+function LiveApp({ onExit }: { onExit?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
   const labelBus = useMemo(() => createLabelBus(), []);
@@ -138,6 +138,11 @@ function LiveApp() {
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
+      {onExit && (
+        <button type="button" className="live-back" onClick={onExit}>
+          ← BACK
+        </button>
+      )}
     </>
   );
 }
@@ -157,8 +162,11 @@ export function App() {
     return "live";
   });
   const [selection, setSelection] = useState<PersonalSelection | null>(() => selectionFromSearch(search));
+  const [cameFromLanding, setCameFromLanding] = useState(false);
 
-  if (view === "live") return <LiveApp />;
+  // the personal site can always step back to the three choices; the legacy live page (old link) has no entry screen
+  const canLeave = personalDefault || params.get("personal") === "1" || selectionFromSearch(search) !== null || cameFromLanding;
+  if (view === "live") return <LiveApp onExit={canLeave ? () => setView("landing") : undefined} />;
   if (view === "personal" && selection) {
     return (
       <Experience
@@ -179,7 +187,10 @@ export function App() {
         setSelection(sel);
         setView("personal");
       }}
-      onLive={() => setView("live")}
+      onLive={() => {
+        setCameFromLanding(true);
+        setView("live");
+      }}
     />
   );
 }
