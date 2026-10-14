@@ -47,10 +47,10 @@ export function Experience({ selection, onBack }: Props) {
   const planCbRef = useRef<((n: PersonalNote, wallAt: number) => void) | null>(null);
   const [scope, setScope] = useState<{ pos: number; section: string }>({ pos: 0, section: "" });
 
-  const routes = useMemo(() => buildRoutes(selection.origin, selection.dests), [selection]);
+  const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
   const palette = useMemo(() => routePalette(routes), [routes]);
-  const stats = useMemo(() => pieceStats(selection.mode, selection.origin, selection.dests, routes), [selection.mode, routes]);
+  const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
 
   useEffect(() => {
     if (!hasWebGL2()) {
@@ -257,7 +257,7 @@ export function Experience({ selection, onBack }: Props) {
       return;
     }
     setAi("composing");
-    const out = await requestAi(AI_ENDPOINT, characterOf(selection.mode, routes, selection.dests.length));
+    const out = await requestAi(AI_ENDPOINT, characterOf(selection.mode, routes, selection.places.length));
     if (out.status !== "ready") {
       setAi("idle");
       say(AI_MESSAGE[out.status], 5000);
@@ -323,7 +323,7 @@ export function Experience({ selection, onBack }: Props) {
       const overlay = document.createElement("canvas");
       overlay.width = REEL_W;
       overlay.height = REEL_H;
-      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo }, kind === "VIDEO");
+      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.places, url: url(), logo }, kind === "VIDEO");
       const frame = () => {
         cctx.drawImage(canvas, 0, 0, REEL_W, REEL_H);
         cctx.drawImage(overlay, 0, 0);

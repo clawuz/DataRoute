@@ -4,40 +4,52 @@ export type PersonalMode = "visited" | "wish";
 
 export interface PersonalSelection {
   mode: PersonalMode;
-  /** the airport the traveller starts from (a Turkish Airlines airport; IST = home hub) */
-  origin: string;
-  /** destination IATA codes in the order picked */
-  dests: string[];
+  /** the places picked, in order (Turkish Airlines airports) — consecutive places are the legs of the journey */
+  places: string[];
+  /** optional: every place is a separate trip from here instead of a chain */
+  home?: string;
 }
 
 export const MAX_DESTINATIONS = 30;
-export const MIN_DESTINATIONS = 1;
-export const DEFAULT_ORIGIN = "IST";
+/** a journey needs two places; with a home, one place is enough */
+export const MIN_PLACES = 2;
+export const minPlaces = (home?: string): number => (home ? 1 : MIN_PLACES);
 
 const KEY: Record<PersonalMode, string> = { visited: "v", wish: "w" };
 const CODE = /^[A-Z]{3}$/;
+const LEGACY_HUB = "IST";
 
-const uniqueKnown = (codes: string[], not: string): string[] =>
+const uniqueKnown = (codes: string[], not?: string): string[] =>
   [...new Set(codes.map((c) => c.toUpperCase()))].filter((c) => CODE.test(c) && isDestination(c) && c !== not);
 
-/** `?o=LHR&v=DPS,JFK` (visited) or `?o=LHR&w=...` (wish); null when nothing usable is in the URL */
+/**
+ * `?v=JFK,NRT,DPS` (a journey, in order) or `?w=...` (wish); `&h=LHR` makes every place a trip from LHR.
+ * Old links (`?o=LHR&v=DPS`, `?v=JFK`) were fans from an origin (default IST): they keep that meaning.
+ */
 export function selectionFromSearch(search: string): PersonalSelection | null {
   const p = new URLSearchParams(search);
-  const o = (p.get("o") ?? DEFAULT_ORIGIN).toUpperCase();
-  const origin = CODE.test(o) && isDestination(o) ? o : DEFAULT_ORIGIN;
+  const known = (c: string | null): string | undefined => {
+    const u = (c ?? "").toUpperCase();
+    return CODE.test(u) && isDestination(u) ? u : undefined;
+  };
   for (const mode of ["visited", "wish"] as const) {
     const raw = p.get(KEY[mode]);
     if (raw === null) continue;
-    const dests = uniqueKnown(raw.split(","), origin).slice(0, MAX_DESTINATIONS);
-    if (dests.length >= MIN_DESTINATIONS) return { mode, origin, dests };
+    let home = known(p.get("h")) ?? known(p.get("o"));
+    let places = uniqueKnown(raw.split(","), home).slice(0, MAX_DESTINATIONS);
+    if (!home && !p.has("h") && (p.has("o") || places.length === 1)) {
+      home = LEGACY_HUB;
+      places = places.filter((c) => c !== home);
+    }
+    if (places.length >= minPlaces(home)) return home ? { mode, places, home } : { mode, places };
   }
   return null;
 }
 
 export function searchFromSelection(s: PersonalSelection): string {
-  const o = s.origin !== DEFAULT_ORIGIN ? `o=${s.origin}&` : "";
-  return `?${o}${KEY[s.mode]}=${s.dests.join(",")}`;
+  return `?${KEY[s.mode]}=${s.places.join(",")}${s.home ? `&h=${s.home}` : ""}`;
 }
 
-/** stable identity of a piece (mode + origin + set) — the key of the AI cache */
-export const pieceHash = (s: PersonalSelection): string => `${KEY[s.mode]}-${s.origin}-${[...s.dests].sort().join("")}`;
+/** stable identity of a piece (mode + home + places) — the key of the AI cache; order matters for a journey */
+export const pieceHash = (s: PersonalSelection): string =>
+  `${KEY[s.mode]}-${s.home ?? "j"}-${(s.home ? [...s.places].sort() : s.places).join("")}`;

@@ -30,8 +30,8 @@ function recorder() {
 }
 
 const img = (w: number, h: number) => ({ width: w, height: h, naturalWidth: w, naturalHeight: h }) as unknown as HTMLImageElement;
-const routes = buildRoutes("LHR", ["DPS", "JFK", "NRT", "GRU", "CAI"]);
-const stats = pieceStats("visited", "LHR", ["DPS", "JFK", "NRT", "GRU", "CAI"], routes);
+const routes = buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI"], "LHR");
+const stats = pieceStats("visited", ["DPS", "JFK", "NRT", "GRU", "CAI"], "LHR", routes);
 const dests = ["DPS", "JFK", "NRT", "GRU", "CAI"];
 
 describe("Instagram Story safe area", () => {

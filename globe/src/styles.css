@@ -549,3 +549,41 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2 .landing-fine { max-width: none; }
 .landing.v2 .landing-fine span { display: block; }
 .landing.v2 .landing-fine span + span { margin-top: 4px; }
+
+/* picker v3: search hits and the journey tray */
+.landing.v2 .search-hits { list-style: none; margin: 6px auto 0; padding: 4px; width: min(560px, 100%); background: rgba(8, 10, 20, 0.92); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; flex: none; }
+.landing.v2 .hit { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: none; border: 0; color: var(--ink); font: inherit; font-family: var(--text); cursor: pointer; border-radius: 8px; text-align: left; }
+.landing.v2 .hit:hover { background: rgba(227, 10, 23, 0.16); }
+.landing.v2 .hit:disabled { opacity: 0.4; cursor: default; }
+.landing.v2 .hit-sub { flex: 1; color: var(--ink-dim); font-size: 0.85em; }
+.landing.v2 .tray { list-style: none; margin: 12px auto 0; padding: 0; width: min(560px, 100%); display: flex; flex-direction: column; gap: 6px; flex: none; }
+.landing.v2 .tray-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: rgba(227, 10, 23, 0.14); border: 1px solid var(--thy); border-radius: 99px; font-family: var(--text); }
+.landing.v2 .tray-item.home { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.5); }
+.landing.v2 .tray-n { width: 1.4em; text-align: center; color: var(--ink-dim); font-family: var(--label); }
+.landing.v2 .tray-item .chip-name { flex: 1; }
+.landing.v2 .tray-act { background: none; border: 0; color: var(--ink-dim); font-size: 1.15em; padding: 2px 8px; cursor: pointer; }
+.landing.v2 .tray-act:hover:not(:disabled) { color: var(--ink); }
+.landing.v2 .tray-act:disabled { opacity: 0.25; cursor: default; }
+.landing.v2 .from-row { display: flex; align-items: center; gap: 10px; margin: 10px auto 0; padding: 8px 8px 8px 14px; width: min(560px, 100%); background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 99px; font-family: var(--text); flex: none; }
+.landing.v2 .from-label { font-family: var(--label); letter-spacing: 0.14em; color: var(--ink-dim); font-size: 0.8em; }
+.landing.v2 .from-row .chip-name { flex: 1; }
+.landing.v2 .from-change { font-family: var(--label); letter-spacing: 0.12em; font-size: 0.8em; }
+.landing.v2 .tray-item .chip-code { color: var(--ink-dim); }
+
+/* the From / To fields: two pills of the same make; the live one shows it can be typed into */
+.landing.v2 .fields { display: flex; flex-direction: column; gap: 8px; width: min(560px, 100%); margin: 14px auto 0; flex: none; }
+.landing.v2 .field { display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; padding: 10px 16px; min-height: 52px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 99px; color: var(--ink); font: inherit; font-family: var(--text); text-align: left; cursor: text; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s; }
+.landing.v2 button.field { cursor: pointer; }
+.landing.v2 .field.live { background: rgba(255, 255, 255, 0.14); }
+.landing.v2 .field.live:focus-within { border-color: var(--thy); box-shadow: 0 0 0 3px rgba(227, 10, 23, 0.28); background: rgba(255, 255, 255, 0.18); }
+.landing.v2 .field:hover:not(.off) { border-color: rgba(255, 255, 255, 0.75); }
+.landing.v2 .field.off { opacity: 0.5; cursor: default; }
+.landing.v2 .field-label { flex: none; width: 3.2em; font-family: var(--label); letter-spacing: 0.14em; font-size: 0.8em; color: var(--ink-dim); }
+.landing.v2 .field-value { flex: 1; }
+.landing.v2 .field input { flex: 1; min-width: 0; background: transparent; border: 0; outline: 0; color: var(--ink); font: inherit; font-family: var(--text); padding: 0; caret-color: var(--thy); -webkit-appearance: none; appearance: none; }
+.landing.v2 .field input::placeholder { color: var(--ink-dim); opacity: 0.85; }
+.landing.v2 .field input::-webkit-search-cancel-button { display: none; }
+.landing.v2 .field-edit { flex: none; color: var(--ink-dim); font-size: 1.15em; }
+.landing.v2 .field.live:focus-within .field-edit { color: var(--ink); }
+
+.landing.v2 .landing-sub, .landing.v2 .landing-title, .landing.v2 .picker-head, .landing.v2 .mode-desc, .landing.v2 .landing-fine span { text-wrap: balance; }

@@ -57,16 +57,17 @@ export function tripPath(origin: string, dest: string): string[] {
 }
 
 /**
- * Real Turkish Airlines routing:
- *  - a flight exists (hub spoke, or a verified non-hub route) → one direct leg
- *  - otherwise the traveller changes at Istanbul → origin → IST → destination
- * A leg shared by several trips (e.g. the first leg home → IST) is returned once.
+ * Real Turkish Airlines routing, from the places a traveller picked (no fixed start):
+ *  - without `home`, the places are a journey: each neighbouring pair is one leg (direct if TK flies it, else via IST)
+ *  - with `home`, every place fans out from it (separate trips from one city)
+ * A leg shared by several trips is returned once.
  */
-export function buildRoutes(origin: string, dests: string[]): PersonalRoute[] {
+export function buildRoutes(places: string[], home?: string): PersonalRoute[] {
   const out: PersonalRoute[] = [];
   const seen = new Set<string>();
-  dests.forEach((d, trip) => {
-    const path = tripPath(origin, d);
+  const pairs: [string, string][] = home ? places.map((p) => [home, p]) : places.slice(1).map((p, i) => [places[i], p]);
+  pairs.forEach(([a, b], trip) => {
+    const path = tripPath(a, b);
     for (let i = 0; i < path.length - 1; i++) {
       const r = leg(path[i], path[i + 1], trip, i === 0 ? 0 : 1);
       if (r && !seen.has(r.key)) {
@@ -78,5 +79,8 @@ export function buildRoutes(origin: string, dests: string[]): PersonalRoute[] {
   return out;
 }
 
-/** Number of trips that change planes at Istanbul. */
-export const stopovers = (origin: string, dests: string[]): number => dests.filter((d) => tripPath(origin, d).length === 3).length;
+/** Number of legs that change planes at Istanbul. */
+export const stopovers = (places: string[], home?: string): number => {
+  const pairs: [string, string][] = home ? places.map((p) => [home, p]) : places.slice(1).map((p, i) => [places[i], p]);
+  return pairs.filter(([a, b]) => tripPath(a, b).length === 3).length;
+};

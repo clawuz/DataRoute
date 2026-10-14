@@ -1,21 +1,22 @@
 import { useMemo, useState } from "react";
 import { REGION_HEX } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
-import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
-import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
+import { MAX_DESTINATIONS, minPlaces, type PersonalMode, type PersonalSelection } from "./codec";
+import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 import { Backdrop } from "./Backdrop";
+import { guessHome } from "./locate";
 
 interface Props {
   onCompose(sel: PersonalSelection): void;
   onLive(): void;
 }
 
-type Step = "mode" | "origin" | "dests";
+type Step = "mode" | "pick";
 
 const COPY: Record<PersonalMode, { head: string; sub: string; cta: string }> = {
-  visited: { head: "Where have you been?", sub: "Pick the places you have flown to. Your journey becomes a piece of music.", cta: "COMPOSE MY JOURNEY" },
-  wish: { head: "Where do you want to go?", sub: "Pick your dream destinations. We will play the sound of the trip you have not taken yet.", cta: "COMPOSE MY WISHLIST" },
+  visited: { head: "Where have you been?", sub: "Choose where you fly from, then every place you have flown to. Your journey becomes a piece of music.", cta: "COMPOSE MY JOURNEY" },
+  wish: { head: "Where do you want to go?", sub: "Choose where you fly from, then your dream destinations. We will play the sound of the trip you have not taken yet.", cta: "COMPOSE MY WISHLIST" },
 };
 
 const norm = (s: string): string => s.normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -42,21 +43,24 @@ function groupByCountry(rows: Row[]): { iso: string; country: string; region: Re
 export function Landing({ onCompose, onLive }: Props) {
   const [step, setStep] = useState<Step>("mode");
   const [mode, setMode] = useState<PersonalMode>("visited");
-  const [origin, setOrigin] = useState(DEFAULT_ORIGIN);
+  const [home, setHome] = useState<string | undefined>(() => guessHome());
+  const [editFrom, setEditFrom] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
   const [area, setArea] = useState<AreaId | "ALL">("ALL");
 
   const needle = norm(q.trim());
   const filtered = useMemo(
-    () => ROWS.filter((r) => (!needle || r.hay.includes(needle)) && (step === "origin" || area === "ALL" || areaOf(r.iso) === area)),
-    [needle, area, step],
+    () => ROWS.filter((r) => (!needle || r.hay.includes(needle)) && (area === "ALL" || areaOf(r.iso) === area)),
+    [needle, area],
   );
   const groups = useMemo(() => groupByCountry(filtered), [filtered]);
 
   const reset = () => {
     setStep("mode");
     setPicked([]);
+    setHome(guessHome());
+    setEditFrom(false);
     setQ("");
     setArea("ALL");
   };
@@ -81,12 +85,12 @@ export function Landing({ onCompose, onLive }: Props) {
         <h1 className="landing-title">Every journey has a sound.<br />Choose yours.</h1>
         <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
         <div className="mode-cards">
-          <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
+          <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("pick"); }}>
             <span className="mode-n">01</span>
             <span className="mode-name">Where I have been</span>
             <span className="mode-desc">The places you flew to, composed into one piece.</span>
           </button>
-          <button type="button" className="mode-card" onClick={() => { setMode("wish"); setStep("origin"); }}>
+          <button type="button" className="mode-card" onClick={() => { setMode("wish"); setStep("pick"); }}>
             <span className="mode-n">02</span>
             <span className="mode-name">Where I want to go</span>
             <span className="mode-desc">Your wishlist, as the music of a trip yet to come.</span>
@@ -113,44 +117,24 @@ export function Landing({ onCompose, onLive }: Props) {
     );
   }
 
-  if (step === "origin") {
-    return (
-      <div className="landing v2 picker" role="main">
-        <Backdrop />
-        {bar(reset)}
-        <h1 className="picker-head">Where do you start from?</h1>
-        <p className="landing-sub">The world's most-connected airline reaches {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries, all through Istanbul. Pick the airport you fly out of.</p>
-        <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search your home airport" autoFocus />
-        <button type="button" className="origin-quick" onClick={() => { setOrigin("IST"); setQ(""); setStep("dests"); }}>
-          <span className="chip-flag">{flagOf("TR")}</span> Istanbul — the hub itself <span className="chip-code">IST</span>
-        </button>
-        <div className="picker-groups">
-          {groups.map((g) => (
-            <section key={g.iso} className="group">
-              <h2 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h2>
-              <div className="picker-grid">
-                {g.items.map((r) => (
-                  <button key={r.iata} type="button" className="chip" onClick={() => { setOrigin(r.iata); setQ(""); setStep("dests"); }}>
-                    <span className="chip-name">{r.city}</span>
-                    <span className="chip-code">{r.iata}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
-          {groups.length === 0 && <p className="landing-sub">No airport matches “{q}”.</p>}
-        </div>
-      </div>
-    );
-  }
-
-  const toggle = (code: string) =>
+  /** the From field is being filled (nothing chosen yet, or "change" was pressed) */
+  const fromOpen = editFrom || !home;
+  const toggle = (code: string) => {
+    if (fromOpen) {
+      setHome(code);
+      setPicked((p) => p.filter((x) => x !== code));
+      setEditFrom(false);
+      setQ("");
+      return;
+    }
+    if (code === home) return;
     setPicked((p) => (p.includes(code) ? p.filter((x) => x !== code) : p.length >= MAX_DESTINATIONS ? p : [...p, code]));
-  const ready = picked.length >= MIN_DESTINATIONS;
+  };
+  const ready = !!home && picked.length >= minPlaces(home);
   const c = COPY[mode];
-  const o = destinationOf(origin);
-  const last = picked[picked.length - 1];
-  const lastTrip = last ? buildRoutes(origin, [last]).map((r) => r.from).concat(last).join(" → ") : "";
+  const hits = needle ? ROWS.filter((r) => r.hay.includes(needle)).slice(0, 7) : [];
+  const via = ready ? buildRoutes(picked, home).filter((r) => r.leg === 1).length : 0;
+  const fromRow = home ? destinationOf(home) : undefined;
   const areaTabs: (AreaId | "ALL")[] = ["ALL", ...AREAS.map((a) => a.id).filter((id) => ROWS.some((x) => areaOf(x.iso) === id))];
   const areaLabel = (id: AreaId): string => AREAS.find((a) => a.id === id)!.label;
   const sections = AREAS.map((a) => ({ ...a, groups: groups.filter((g) => areaOf(g.iso) === a.id) })).filter((a) => a.groups.length > 0);
@@ -158,15 +142,67 @@ export function Landing({ onCompose, onLive }: Props) {
   return (
     <div className="landing v2 picker" role="main">
       <Backdrop />
-      {bar(() => {
-        setStep("origin");
-        setQ("");
-      })}
+      {bar(reset)}
       <h1 className="picker-head">{c.head}</h1>
-      <p className="landing-sub">
-        {c.sub} Starting from <strong>{o?.city ?? origin}</strong>{isHub(origin) ? " (the hub)" : " via Istanbul"}.
-      </p>
-      <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search a destination" />
+      <p className="landing-sub">{c.sub}</p>
+      <div className="fields">
+        {fromRow && !fromOpen ? (
+          <button type="button" className="field from" onClick={() => { setEditFrom(true); setQ(""); }} aria-label="Change where you fly from">
+            <span className="field-label">FROM</span>
+            <span className="chip-flag">{flagOf(fromRow.iso)}</span>
+            <span className="field-value">{fromRow.city}</span>
+            <span className="chip-code">{fromRow.iata}</span>
+            <span className="field-edit" aria-hidden="true">✎</span>
+          </button>
+        ) : (
+          <label className="field from live">
+            <span className="field-label">FROM</span>
+            <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type your city or airport" aria-label="Search where you fly from" />
+            <span className="field-edit" aria-hidden="true">⌕</span>
+          </label>
+        )}
+        <label className={`field to${fromOpen ? " off" : " live"}`}>
+          <span className="field-label">TO</span>
+          <input
+            type="search"
+            value={fromOpen ? "" : q}
+            disabled={fromOpen}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={fromOpen ? "Choose where you fly from first" : "Type a city, airport or country"}
+            aria-label="Search a place you flew to"
+          />
+          <span className="field-edit" aria-hidden="true">⌕</span>
+        </label>
+      </div>
+      {hits.length > 0 && (
+        <ul className="search-hits">
+          {hits.map((r) => (
+            <li key={r.iata}>
+              <button type="button" className="hit" disabled={!fromOpen && (picked.includes(r.iata) || r.iata === home)} onClick={() => { toggle(r.iata); setQ(""); }}>
+                <span className="chip-flag">{flagOf(r.iso)}</span>
+                <span className="chip-name">{r.city}</span>
+                <span className="hit-sub">{r.country}</span>
+                <span className="chip-code">{r.iata}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {picked.length > 0 && !fromOpen && (
+        <ul className="tray" aria-label="Where to">
+          {picked.map((code) => {
+            const d = destinationOf(code);
+            return (
+              <li key={code} className="tray-item">
+                <span className="chip-flag">{d ? flagOf(d.iso) : ""}</span>
+                <span className="chip-name">{d?.city ?? code}</span>
+                <span className="chip-code">{buildRoutes([code], home).length > 1 ? "via IST" : "direct"}</span>
+                <button type="button" className="tray-act" aria-label="Remove" onClick={() => toggle(code)}>×</button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       <div className="region-tabs" role="tablist">
         {areaTabs.map((a) => (
           <button key={a} type="button" role="tab" aria-selected={area === a} className={`tab${area === a ? " on" : ""}`} onClick={() => setArea(a)}>
@@ -184,10 +220,9 @@ export function Landing({ onCompose, onLive }: Props) {
                 <h3 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h3>
                 <div className="picker-grid">
                   {g.items.map((r) => {
-                    const on = picked.includes(r.iata);
-                    const same = r.iata === origin;
+                    const on = !fromOpen && picked.includes(r.iata);
                     return (
-                      <button key={r.iata} type="button" disabled={same} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
+                      <button key={r.iata} type="button" disabled={!fromOpen && r.iata === home} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
                         <span className="chip-name">{r.city}</span>
                         <span className="chip-code">{r.iata}</span>
                       </button>
@@ -198,14 +233,13 @@ export function Landing({ onCompose, onLive }: Props) {
             ))}
           </div>
         ))}
-        {groups.length === 0 && <p className="landing-sub">No destination matches “{q}”.</p>}
+        {groups.length === 0 && <p className="landing-sub">No place matches “{q}”.</p>}
       </div>
       <div className="picker-bar">
         <span className="picker-count">
-          {picked.length} / {MAX_DESTINATIONS}
-          {lastTrip ? ` · LAST: ${lastTrip}` : ` · PICK AT LEAST ${MIN_DESTINATIONS}`}
+          {fromOpen ? "CHOOSE WHERE YOU FLY FROM" : `${picked.length} / ${MAX_DESTINATIONS}${ready ? (via > 0 ? ` · ${via} CHANGE${via === 1 ? "" : "S"} AT ISTANBUL` : " · DIRECT") : " · ADD A PLACE"}`}
         </span>
-        <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, origin, dests: picked })}>
+        <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, places: picked, home })}>
           {c.cta}
         </button>
       </div>

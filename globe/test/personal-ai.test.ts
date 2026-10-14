@@ -4,14 +4,14 @@ import { buildRoutes } from "../src/personal/routes";
 
 describe("ai character", () => {
   it("reduces a piece to mood, top regions and size", () => {
-    const routes = buildRoutes("LHR", ["DPS", "NRT", "BKK", "JFK"]);
+    const routes = buildRoutes(["DPS", "NRT", "BKK", "JFK"], "LHR");
     const c = characterOf("visited", routes, 4);
     expect(c.mode).toBe("visited");
     expect(c.regions[0]).toBe("ASI");
     expect(c.regions.length).toBeLessThanOrEqual(3);
     expect(c.size).toBe("M");
-    expect(characterOf("wish", buildRoutes("IST", ["JFK"]), 1).size).toBe("S");
-    expect(characterOf("wish", buildRoutes("IST", Array(12).fill("JFK")), 12).size).toBe("L");
+    expect(characterOf("wish", buildRoutes(["JFK"], "IST"), 1).size).toBe("S");
+    expect(characterOf("wish", buildRoutes(Array(12).fill("JFK"), "IST"), 12).size).toBe("L");
   });
   it("always has at least one region", () => {
     expect(characterOf("wish", [], 0).regions).toEqual(["EUR"]);

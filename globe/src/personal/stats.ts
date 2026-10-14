@@ -19,18 +19,18 @@ export interface PieceStats {
   title: string;
 }
 
-export function pieceStats(mode: PersonalMode, origin: string, dests: string[], routes: PersonalRoute[]): PieceStats {
+export function pieceStats(mode: PersonalMode, places: string[], home: string | undefined, routes: PersonalRoute[]): PieceStats {
   const km = Math.round(routes.reduce((s, r) => s + r.distKm, 0));
   const count = new Map<string, number>();
   for (const r of routes) count.set(r.region, (count.get(r.region) ?? 0) + 1);
   const top = [...count.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0] ?? "UNK";
   const name = REGION_NAME[top] ?? "the world";
-  const isos = new Set(dests.map((d) => destinationOf(d)?.iso).filter(Boolean));
-  const o = destinationOf(origin)?.iso;
+  const isos = new Set(places.map((d) => destinationOf(d)?.iso).filter(Boolean));
+  const o = home ? destinationOf(home)?.iso : undefined;
   if (o) isos.delete(o);
   return {
     countries: isos.size,
-    destinations: dests.length,
+    destinations: places.length,
     km,
     laps: Math.round((km / EARTH_KM) * 10) / 10,
     regions: count.size,
