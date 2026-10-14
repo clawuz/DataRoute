@@ -8,5 +8,9 @@ service firebase.storage {
     match /public/music/{allPaths=**} {
       allow read: if true;
     }
+    // AI versions of personal pieces (written by the composePersonal function with the Admin SDK)
+    match /public/personal/{file} {
+      allow read: if true;
+    }
   }
 }

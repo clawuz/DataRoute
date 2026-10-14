@@ -9,6 +9,7 @@ import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { renderCard } from "./card";
+import { AI_MESSAGE, characterOf, requestAi } from "./ai";
 import { MusicScope } from "../hud/MusicScope";
 import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
@@ -28,6 +29,10 @@ export function Experience({ selection, onBack }: Props) {
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  /** the AI version: idle → composing → on (and back to "my version") */
+  const [ai, setAi] = useState<"idle" | "composing" | "on">("idle");
+  const aiAudioRef = useRef<HTMLAudioElement | null>(null);
+  const aiUrlRef = useRef<string | null>(null);
   /** while the video is made: a still of the current view with a progress screen over it */
   const [making, setMaking] = useState<{ still: string; startedAt: number } | null>(null);
   const [makingSec, setMakingSec] = useState(0);
@@ -133,6 +138,7 @@ export function Experience({ selection, onBack }: Props) {
       engineRef.current = null;
       noteCbRef.current = null;
       planCbRef.current = null;
+      aiAudioRef.current?.pause();
       engine.dispose();
     };
   }, [routes, piece]);
@@ -222,6 +228,48 @@ export function Experience({ selection, onBack }: Props) {
     }, 10000);
     say(touch ? "SAVED — CHECK YOUR FILES OR PHOTOS" : `DOWNLOADED ${name}`, 4000);
   };
+  const AI_ENDPOINT = (import.meta.env.VITE_PERSONAL_AI_URL as string | undefined) || "";
+  const stopAi = () => {
+    aiAudioRef.current?.pause();
+    playerRef.current?.setSynthMuted(false);
+    setAi("idle");
+  };
+  const startAiAudio = (el: HTMLAudioElement) => {
+    el.currentTime = 0;
+    void el.play().catch(() => {});
+    playerRef.current?.setSynthMuted(true);
+    // the visuals restart with it: the ribbon and the route lights follow the same form
+    playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
+    setAi("on");
+  };
+  const toggleAi = async () => {
+    if (ai === "composing") return;
+    if (ai === "on") {
+      stopAi();
+      return;
+    }
+    if (aiUrlRef.current && aiAudioRef.current) {
+      startAiAudio(aiAudioRef.current);
+      return;
+    }
+    setAi("composing");
+    const out = await requestAi(AI_ENDPOINT, characterOf(selection.mode, routes, selection.dests.length));
+    if (out.status !== "ready") {
+      setAi("idle");
+      say(AI_MESSAGE[out.status], 5000);
+      return;
+    }
+    const el = new Audio();
+    el.crossOrigin = "anonymous";
+    el.loop = true;
+    el.preload = "auto";
+    el.src = out.url;
+    aiAudioRef.current = el;
+    aiUrlRef.current = out.url;
+    playerRef.current?.attachElement(el);
+    startAiAudio(el);
+  };
+
   const saveCard = async () => {
     const canvas = canvasRef.current;
     const engine = engineRef.current;
@@ -324,6 +372,8 @@ export function Experience({ selection, onBack }: Props) {
         hook: 0,
       };
       playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
+      const aiEl = aiAudioRef.current;
+      if (aiEl && ai === "on" && Number.isFinite(aiEl.duration)) aiEl.currentTime = aiEl.duration * 0.5; // the AI version's chorus (half way, like ours)
       const stream = comp.captureStream(30);
       audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
       const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
@@ -333,6 +383,7 @@ export function Experience({ selection, onBack }: Props) {
       say("COULD NOT RECORD THE VIDEO");
     } finally {
       engine.setAfterRender(null);
+      if (aiAudioRef.current && ai === "on") aiAudioRef.current.currentTime = 0;
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
       setMaking(null);
@@ -358,6 +409,11 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
       <div className="personal-actions">
+        {AI_ENDPOINT && (
+          <button type="button" className="ghost-btn" disabled={!!busy || ai === "composing"} onClick={() => void toggleAi()}>
+            {ai === "composing" ? "COMPOSING WITH AI · ABOUT A MINUTE…" : ai === "on" ? "AI VERSION · ON — BACK TO MINE" : "AI VERSION"}
+          </button>
+        )}
         <button type="button" className="compose-btn" disabled={!!busy} onClick={() => setSheet(true)}>
           {busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : busy === "CARD" ? "MAKING THE CARD…" : "SHARE MY PIECE"}
         </button>

@@ -4,6 +4,9 @@ import { getStorage } from "firebase-admin/storage";
 import * as logger from "firebase-functions/logger";
 import { defineSecret, defineString } from "firebase-functions/params";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onRequest } from "firebase-functions/v2/https";
+import { dayId, handleRequest } from "./personal-music.js";
+import { elevenCompose, firebaseStore, visitorId } from "./personal-music-http.js";
 import { runCollect } from "./collect.js";
 import { firestoreRouteCache } from "./routes.js";
 import { selectProvider } from "./providers.js";
@@ -52,5 +55,39 @@ export const collect = onSchedule(
       clock: Date.now,
     });
     logger.info("collect finished", { result, provider: provider.name });
+  },
+);
+
+// AI version of a personal piece (A World of Music, personal site). Needs the secret ELEVENLABS_API_KEY:
+//   firebase functions:secrets:set ELEVENLABS_API_KEY --project omerkilavuz-9ad41
+//   firebase deploy --only functions:composePersonal --project omerkilavuz-9ad41
+// A plain `firebase deploy` of every function needs the secret too. See docs/personal-music.md.
+const ELEVENLABS_API_KEY = defineSecret("ELEVENLABS_API_KEY");
+const PERSONAL_MUSIC_ENABLED = defineString("PERSONAL_MUSIC_ENABLED", { default: "true" });
+
+export const composePersonal = onRequest(
+  {
+    region: "europe-west1",
+    secrets: [ELEVENLABS_API_KEY],
+    timeoutSeconds: 300,
+    memory: "512MiB",
+    maxInstances: 3,
+    cors: ["https://worldofmusic-tk.web.app", "https://worldofmusic-tk.firebaseapp.com", "http://localhost:5174"],
+  },
+  async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ status: "bad-request" });
+      return;
+    }
+    const day = dayId(Date.now());
+    const ip = (String(req.headers["x-forwarded-for"] ?? req.ip ?? "") || "unknown").split(",")[0].trim();
+    const outcome = await handleRequest(req.body, visitorId(ip, day), {
+      store: firebaseStore(getFirestore(), getStorage().bucket()),
+      compose: elevenCompose(() => ELEVENLABS_API_KEY.value()),
+      now: Date.now,
+      enabled: PERSONAL_MUSIC_ENABLED.value() !== "false",
+    });
+    logger.info("composePersonal", { status: outcome.status });
+    res.status(outcome.status === "ready" ? 200 : outcome.status === "bad-request" ? 400 : 200).json(outcome);
   },
 );

@@ -10,6 +10,10 @@ export interface PersonalPlayer {
   setMuted(m: boolean): void;
   /** the audio of the piece as a stream (for a recorded clip) */
   audioStream(): MediaStream | null;
+  /** routes an <audio> element (the AI version) through the same graph, so a recorded clip carries it; false when the browser refuses */
+  attachElement(el: HTMLAudioElement): boolean;
+  /** silences the synthesised piece without touching the attached element */
+  setSynthMuted(m: boolean): void;
   /** seconds into the current loop, or 0 when stopped */
   position(): number;
   dispose(): void;
@@ -95,6 +99,18 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;
+    },
+    attachElement(el) {
+      try {
+        const src = ctx.createMediaElementSource(el);
+        src.connect(master);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    setSynthMuted(m) {
+      bus.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.05);
     },
     audioStream() {
       if (!tap && typeof ctx.createMediaStreamDestination === "function") {
