@@ -396,8 +396,11 @@ export function Experience({ selection, onBack }: Props) {
   return (
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="A 3D globe with your routes drawn on it, played as music" />
-      <div className="personal-hud">
+      <header className="topbar">
+        <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
         <button type="button" className="landing-back" onClick={onBack}>← NEW PIECE</button>
+      </header>
+      <div className="personal-hud">
         <h1 className="personal-title">{stats.title}</h1>
         <p className="personal-sub">
           {stats.destinations} DESTINATIONS · {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
@@ -422,14 +425,18 @@ export function Experience({ selection, onBack }: Props) {
         <div className="sheet-back" onClick={() => setSheet(false)} role="dialog" aria-label="Share my piece">
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <h2 className="sheet-title">Share my piece</h2>
-            <button type="button" className="sheet-opt" onClick={() => { setSheet(false); void saveClip(); }}>
-              <span className="sheet-opt-name">VIDEO</span>
-              <span className="sheet-opt-desc">{REEL_SECONDS} seconds · 9:16 · made for Instagram Reels and Stories</span>
-            </button>
-            <button type="button" className="sheet-opt" onClick={() => { setSheet(false); void saveCard(); }}>
-              <span className="sheet-opt-name">CARD</span>
-              <span className="sheet-opt-desc">An image of your globe and numbers · 9:16 · made for Instagram Stories</span>
-            </button>
+            <div className="sheet-tiles">
+              <button type="button" className="sheet-opt tile" onClick={() => { setSheet(false); void saveClip(); }}>
+                <span className="sheet-ico" aria-hidden="true">▶</span>
+                <span className="sheet-opt-name">VIDEO</span>
+                <span className="sheet-opt-desc">{REEL_SECONDS} seconds · 9:16 · made for Instagram Reels and Stories</span>
+              </button>
+              <button type="button" className="sheet-opt tile" onClick={() => { setSheet(false); void saveCard(); }}>
+                <span className="sheet-ico" aria-hidden="true">▣</span>
+                <span className="sheet-opt-name">CARD</span>
+                <span className="sheet-opt-desc">An image of your globe and numbers · 9:16 · made for Instagram Stories</span>
+              </button>
+            </div>
             <button type="button" className="sheet-link" onClick={() => { setSheet(false); void share(); }}>COPY LINK</button>
             <button type="button" className="sheet-link" onClick={() => setSheet(false)}>CLOSE</button>
           </div>

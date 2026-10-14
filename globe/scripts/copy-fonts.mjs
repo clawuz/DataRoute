@@ -12,6 +12,10 @@ const FILES = [
   "TK_TEXT/TK_Text_Web_WOFF2/TK_Text_Wide_WOFF2/TKTextWide-Medium.woff2",
   "TK_TEXT/TK_Text_Web_WOFF2/TK_Text_Regular_WOFF2/TKText-Regular.woff2",
   "TK_TEXT/TK_Text_Web_WOFF2/TK_Text_Regular_WOFF2/TKText-Medium.woff2",
+  "TK_TEXT/TK_Text_Web_WOFF2/TK_Text_Regular_WOFF2/TKText-SemiBold.woff2",
+  "TK_TEXT/TK_Text_Web_WOFF2/TK_Text_Wide_WOFF2/TKTextWide-Regular.woff2",
+  "TK_DISPLAY/TK_Display_Web_WOFF2/TK_Display_Regular_WOFF2/TKDisplay-SemiBold.woff2",
+  "TK_DISPLAY/TK_Display_Web_WOFF2/TK_Display_Regular_WOFF2/TKDisplay-Bold.woff2",
 ];
 
 if (!existsSync(src)) {

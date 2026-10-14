@@ -4,6 +4,7 @@ import type { Region } from "@collector/day-schema";
 import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
 import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
+import { Backdrop } from "./Backdrop";
 
 interface Props {
   onCompose(sel: PersonalSelection): void;
@@ -60,11 +61,25 @@ export function Landing({ onCompose, onLive }: Props) {
     setArea("ALL");
   };
 
+  const bar = (back?: () => void) => (
+    <header className="topbar">
+      <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+      {back && (
+        <button type="button" className="landing-back" onClick={back}>
+          ← BACK
+        </button>
+      )}
+    </header>
+  );
+
   if (step === "mode") {
     return (
-      <div className="landing" role="main">
-        <h1 className="landing-title">A WORLD OF MUSIC</h1>
-        <p className="landing-sub">Every journey has a sound. Choose yours.</p>
+      <div className="landing v2" role="main">
+        <Backdrop />
+        {bar()}
+        <p className="landing-eyebrow">A WORLD OF MUSIC</p>
+        <h1 className="landing-title">Every journey has a sound. Choose yours.</h1>
+        <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music — and share it.</p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
             <span className="mode-n">01</span>
@@ -89,8 +104,9 @@ export function Landing({ onCompose, onLive }: Props) {
 
   if (step === "origin") {
     return (
-      <div className="landing picker" role="main">
-        <button type="button" className="landing-back" onClick={reset}>← BACK</button>
+      <div className="landing v2 picker" role="main">
+        <Backdrop />
+        {bar(reset)}
         <h1 className="picker-head">Where do you start from?</h1>
         <p className="landing-sub">The world's most-connected airline reaches {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries, all through Istanbul. Pick the airport you fly out of.</p>
         <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search your home airport" autoFocus />
@@ -129,8 +145,12 @@ export function Landing({ onCompose, onLive }: Props) {
   const sections = AREAS.map((a) => ({ ...a, groups: groups.filter((g) => areaOf(g.iso) === a.id) })).filter((a) => a.groups.length > 0);
 
   return (
-    <div className="landing picker" role="main">
-      <button type="button" className="landing-back" onClick={() => { setStep("origin"); setQ(""); }}>← BACK</button>
+    <div className="landing v2 picker" role="main">
+      <Backdrop />
+      {bar(() => {
+        setStep("origin");
+        setQ("");
+      })}
       <h1 className="picker-head">{c.head}</h1>
       <p className="landing-sub">
         {c.sub} Starting from <strong>{o?.city ?? origin}</strong>{isHub(origin) ? " (the hub)" : " via Istanbul"}.
