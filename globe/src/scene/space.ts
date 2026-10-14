@@ -16,6 +16,7 @@ uniform float uAspect;
 uniform float uTanHalf;
 uniform sampler2D uStarMap; // art:stars
 uniform float uHasStarMap; // art:stars
+uniform float uDim;
 varying vec2 vNdc;
 
 float hash31(vec3 p) {
@@ -52,7 +53,7 @@ void main() {
     vec3 map = textureGrad(uStarMap, uv, useB ? dxB : dxA, useB ? dyB : dyA).rgb;
     col = pow(map, vec3(1.45)) * 0.85; // darker faint speckle so the Milky Way and bright stars read
   }
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(col * uDim, 1.0);
 }
 `;
 
@@ -60,6 +61,8 @@ export interface Space {
   stars: Mesh;
   nebula: Tunnel;
   setStarMap(tex: Texture | null): void; // art:stars
+  /** 1 = as is; below 1 the stars, the Milky Way and the nebula behind the globe are held back */
+  setDim(k: number, nebulaOn?: boolean): void;
   update(camera: PerspectiveCamera): void;
   dispose(): void;
 }
@@ -71,6 +74,7 @@ export function createSpace(): Space {
     uTanHalf: { value: Math.tan((40 * Math.PI) / 360) },
     uStarMap: { value: null as Texture | null }, // art:stars
     uHasStarMap: { value: 0 }, // art:stars
+    uDim: { value: 1 },
   };
   const geometry = new PlaneGeometry(2, 2);
   const material = new ShaderMaterial({
@@ -94,6 +98,11 @@ export function createSpace(): Space {
     setStarMap(tex) {
       uniforms.uStarMap.value = tex; // art:stars
       uniforms.uHasStarMap.value = tex ? 1 : 0;
+    },
+    setDim(k, nebulaOn = true) {
+      uniforms.uDim.value = k;
+      nebula.uniforms.u_energy.value = 0.3 * k;
+      nebula.display.visible = nebulaOn; // the drifting clouds are the only thing that moves in the sky
     },
     update(camera) {
       uniforms.uInvRot.value.setFromMatrix4(camera.matrixWorld);

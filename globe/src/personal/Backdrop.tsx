@@ -18,6 +18,7 @@ export function Backdrop() {
     } catch {
       return;
     }
+    engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
     engine.setNight(true);
     engine.setEffects({ cloudShadow: false, glare: true, aurora: true, corridors: false, sound: false, starMap: true });
     engine.setModel(null, 0, Date.now() / 1000);

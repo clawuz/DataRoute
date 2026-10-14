@@ -67,6 +67,7 @@ export function Experience({ selection, onBack }: Props) {
     }
     engineRef.current = engine;
     engine.setNight(true); // always the night side: the lights and the routes read best on it
+    engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
     engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built

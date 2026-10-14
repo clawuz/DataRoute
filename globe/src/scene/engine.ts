@@ -62,6 +62,8 @@ export interface GlobeEngine {
   pulseRoute(key: string): void;
   headsInfo(): { count: number; extrapolated: number };
   setEffects(e: Effects): void;
+  /** holds back the stars and nebula behind the globe (1 = default) */
+  setSpaceDim(k: number, nebula?: boolean): void;
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
@@ -463,6 +465,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     camMode() {
       return cam.mode;
+    },
+    setSpaceDim(k, nebula = true) {
+      space.setDim(k, nebula);
     },
     setEffects(e) {
       const prev = effects; // art:corridors
