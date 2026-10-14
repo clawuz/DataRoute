@@ -1,0 +1,75 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Destination picker — concepts</title>
+<style>
+@font-face{font-family:"TK Display";src:url(assets/fonts/TKDisplay-Bold.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Regular.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Medium.woff2) format("woff2");font-weight:500}
+@font-face{font-family:"TK Text Wide";src:url(assets/fonts/TKTextWide-Regular.woff2) format("woff2");font-weight:400}
+:root{--night:#02030A;--panel:#0A0F22;--ink:#F2F5FA;--dim:rgba(242,245,250,.62);--line:rgba(242,245,250,.16);--red:#C90119;--red2:#E30A17}
+*{box-sizing:border-box}body{margin:0;background:#05060d;color:var(--ink);font:14px/1.5 "TK Text",system-ui,sans-serif;padding:28px}
+h1{font:700 30px "TK Display",sans-serif;text-transform:uppercase;margin:0 0 4px}p.lead{color:var(--dim);margin:0 0 22px;max-width:90ch}
+.grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(520px,1fr))}
+.concept h2{font:700 20px "TK Display",sans-serif;text-transform:uppercase;margin:0 0 2px}.concept .tag{color:var(--red2);font:12px "TK Text Wide";letter-spacing:.16em}.concept p{color:var(--dim);margin:6px 0 10px;font-size:13px}
+.frame{position:relative;height:620px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--night) url(assets/globe-night.jpg) 50% 30%/cover;display:flex;flex-direction:column;padding:22px}
+.frame::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,3,10,.82),rgba(2,3,10,.55) 45%,rgba(2,3,10,.85))}
+.frame>*{position:relative}
+.h{font:700 28px "TK Display";text-transform:uppercase;letter-spacing:.01em;margin:0 0 4px}.sub{color:var(--dim);margin:0 0 16px;font-size:13px}
+.field{display:flex;align-items:center;gap:10px;background:rgba(10,15,34,.78);border:1px solid rgba(242,245,250,.28);border-radius:14px;padding:13px 15px;backdrop-filter:blur(8px)}
+.field.focus{border-color:var(--red2);box-shadow:0 0 0 3px rgba(227,10,23,.18)}.field small{color:var(--dim);font:11px "TK Text Wide";letter-spacing:.14em}
+.drop{margin-top:8px;background:rgba(10,15,34,.94);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line)}.row:last-child{border:0}.row b{font-weight:500}.row .c{color:var(--dim);font-size:12px}.row .add{margin-left:auto;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center}
+.row.hl{background:rgba(201,1,25,.16)}.f{font-size:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.chip{display:inline-flex;gap:8px;align-items:center;background:rgba(201,1,25,.24);border:1px solid var(--red2);border-radius:99px;padding:7px 12px}.chip i{font-style:normal;color:var(--dim)}
+.chip.o{background:rgba(10,15,34,.7);border-color:var(--line)}
+.tray{margin-top:auto;display:flex;align-items:center;gap:12px;border-top:1px solid var(--line);padding-top:12px}.tray .st{flex:1;color:var(--dim);font-size:13px}
+.cta{background:var(--red);border:0;border-radius:99px;color:#fff;padding:12px 20px;font:12px "TK Text Wide";letter-spacing:.14em}
+.route{display:flex;align-items:center;gap:10px;margin-top:14px;background:rgba(10,15,34,.7);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stop{text-align:center}.stop b{display:block;font:700 22px "TK Display"}.stop span{font-size:11px;color:var(--dim);letter-spacing:.1em}
+.leg{flex:1;height:2px;background:linear-gradient(90deg,#3FC8F2,#F2508F);position:relative}.leg::after{content:"✈";position:absolute;left:50%;top:-11px;transform:translateX(-50%) rotate(0);font-size:14px}
+.swap{align-self:center;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:rgba(10,15,34,.9);margin:-10px 0}
+.pin{position:absolute;display:flex;align-items:center;gap:6px;font-size:12px}.pin i{width:12px;height:12px;border-radius:50%;background:var(--red2);box-shadow:0 0 0 6px rgba(227,10,23,.25);display:block}
+.sent{font:500 26px/1.7 "TK Text";margin:6px 0 10px}.sent .t{display:inline-flex;align-items:center;gap:8px;border-bottom:2px solid var(--red2);padding:0 6px;color:#fff;background:rgba(201,1,25,.18);border-radius:8px}
+.sec{font:11px "TK Text Wide";letter-spacing:.16em;color:var(--dim);margin:18px 0 8px}
+.sheet{margin-top:auto;background:rgba(10,15,34,.92);border:1px solid var(--line);border-radius:18px;padding:14px}
+</style></head><body>
+<h1>Destination picker — concepts</h1>
+<p class="lead">Four modern ways to choose places for “Where I have been” and “Where I want to go”, instead of a long list of chips. Each keeps the night globe behind and the real Turkish Airlines routing (everything changes at Istanbul).</p>
+<div class="grid">
+
+<section class="concept"><span class="tag">A · RECOMMENDED CORE</span><h2>Search first (omnibox)</h2><p>One big search field. Type a city, airport or country; suggestions appear with flag, code and country; tap to add. Selected places become chips. Empty state shows “Popular from London” and “Near you”.</p>
+<div class="frame"><h3 class="h">Where have you been?</h3><p class="sub">From London · every trip changes at Istanbul</p>
+<div class="field focus"><span>⌕</span><span>ba</span><small style="margin-left:auto">⌘K</small></div>
+<div class="drop">
+<div class="row hl"><span class="f">🇮🇩</span><div><b>Bali</b> <span class="c">Denpasar · DPS</span><div class="c">Indonesia</div></div><span class="add">+</span></div>
+<div class="row"><span class="f">🇦🇿</span><div><b>Baku</b> <span class="c">GYD</span><div class="c">Azerbaijan</div></div><span class="add">+</span></div>
+<div class="row"><span class="f">🇹🇭</span><div><b>Bangkok</b> <span class="c">BKK</span><div class="c">Thailand</div></div><span class="add">+</span></div>
+<div class="row"><span class="f">🇪🇸</span><div><b>Barcelona</b> <span class="c">BCN</span><div class="c">Spain</div></div><span class="add">+</span></div>
+</div>
+<div class="chips"><span class="chip">🇯🇵 Tokyo <i>✕</i></span><span class="chip">🇺🇸 New York <i>✕</i></span><span class="chip o">+ Popular from London</span></div>
+<div class="tray"><span class="st">2 places · LHR → IST → NRT</span><button class="cta">COMPOSE MY JOURNEY</button></div></div></section>
+
+<section class="concept"><span class="tag">B · AIRLINE-STYLE</span><h2>From → To</h2><p>Same mental model as booking a flight: FROM and TO fields, swap, add another stop. A live route strip shows the Istanbul change. Familiar, but one trip at a time.</p>
+<div class="frame"><h3 class="h">Plan your journey</h3><p class="sub">Add every place you flew to</p>
+<div class="field"><small>FROM</small><b style="font-weight:500">London · LHR</b><span style="margin-left:auto;color:var(--dim)">▾</span></div>
+<div class="swap">⇅</div>
+<div class="field"><small>TO</small><span class="chip" style="padding:5px 10px">🇮🇩 Bali <i>✕</i></span><span class="chip" style="padding:5px 10px">🇯🇵 Tokyo <i>✕</i></span><span style="margin-left:auto;color:var(--dim)">+ add</span></div>
+<div class="route"><div class="stop"><b>LHR</b><span>LONDON</span></div><div class="leg"></div><div class="stop"><b>IST</b><span>CHANGE</span></div><div class="leg"></div><div class="stop"><b>DPS</b><span>BALI</span></div></div>
+<div class="chips"><span class="chip o">＋ Add another stop</span><span class="chip o">Round trip</span></div>
+<div class="tray"><span class="st">12,614 km · 1 change at Istanbul</span><button class="cta">COMPOSE</button></div></div></section>
+
+<section class="concept"><span class="tag">C · VISUAL</span><h2>Globe first</h2><p>Pick on the globe itself: search flies the camera there, tap to drop a pin, pins draw their route live. A small bottom sheet holds the list. Most shareable, most “wow”, heavier on small phones.</p>
+<div class="frame" style="padding:0">
+<div class="pin" style="left:46%;top:30%"><i></i>Istanbul</div>
+<div class="pin" style="left:68%;top:58%"><i></i>Bali</div>
+<div class="pin" style="left:78%;top:34%"><i></i>Tokyo</div>
+<div style="padding:22px"><div class="field focus"><span>⌕</span><span style="color:var(--dim)">Search, or tap the globe</span></div></div>
+<div class="sheet" style="margin:auto 14px 14px"><div class="chips" style="margin:0"><span class="chip">🇮🇩 Bali <i>✕</i></span><span class="chip">🇯🇵 Tokyo <i>✕</i></span></div>
+<div class="tray" style="border:0;margin-top:12px;padding:0"><span class="st">2 pins · routes drawn live</span><button class="cta">COMPOSE</button></div></div></div></section>
+
+<section class="concept"><span class="tag">D · PLAYFUL</span><h2>Sentence builder</h2><p>The screen is one sentence you complete: “I flew from London and visited …”. Tap a blank to search; each place becomes an editable word. Reads as a story, easy to share, works great on phones.</p>
+<div class="frame"><div class="sent">I flew from <span class="t">London ▾</span> and visited <span class="t">Bali ✕</span> <span class="t">Tokyo ✕</span> <span class="t" style="background:rgba(10,15,34,.7);border-color:var(--line);color:var(--dim)">+ add a place</span></div>
+<div class="field focus" style="margin-top:6px"><span>⌕</span><span style="color:var(--dim)">Type a city, airport or country</span></div>
+<div class="sec">POPULAR FROM LONDON</div><div class="chips" style="margin-top:0"><span class="chip o">🇦🇪 Dubai</span><span class="chip o">🇺🇸 New York</span><span class="chip o">🇹🇭 Bangkok</span><span class="chip o">🇧🇷 São Paulo</span><span class="chip o">🇿🇦 Cape Town</span></div>
+<div class="sec">BROWSE</div><div class="chips" style="margin-top:0"><span class="chip o">Europe</span><span class="chip o">Asia</span><span class="chip o">Americas</span><span class="chip o">Africa</span><span class="chip o">Türkiye</span></div>
+<div class="tray"><span class="st">2 places</span><button class="cta">COMPOSE MY JOURNEY</button></div></div></section>
+
+</div></body></html>
