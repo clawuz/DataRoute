@@ -3,8 +3,9 @@ import type { Region } from "@collector/day-schema";
 import raw from "./destinations.json";
 
 /**
- * Turkish Airlines' passenger network: every airport TK serves (scheduled or seasonal), from the airline's published
- * destination list plus the airports seen in the live 24 h feed. Each trip is routed through the Istanbul hub.
+ * Turkish Airlines' network as the airline counts it (133 countries): scheduled and seasonal passenger service, services
+ * that are suspended for now, and cargo-only points, from the published destination list plus the airports seen in the
+ * live 24 h feed. Each trip is routed through the Istanbul hub.
  */
 export interface Destination {
   iata: string;
@@ -15,10 +16,13 @@ export interface Destination {
   lat: number;
   lon: number;
   region: Region;
-  seasonal: boolean;
+  /** active = scheduled passenger service; the others are part of the network but not flown as scheduled passenger service today */
+  status: ServiceStatus;
 }
 
-interface Row { i: string; c: string; n: string; k: string; a: number; o: number; s?: number }
+export type ServiceStatus = "active" | "seasonal" | "future" | "suspended" | "cargo";
+
+interface Row { i: string; c: string; n: string; k: string; a: number; o: number; s?: ServiceStatus }
 
 export const HUB = "IST";
 
@@ -30,7 +34,7 @@ export const DESTINATIONS: Destination[] = (raw as Row[]).map((r) => ({
   lat: r.a,
   lon: r.o,
   region: countryToRegion(r.k),
-  seasonal: !!r.s,
+  status: r.s ?? "active",
 }));
 
 const BY_IATA = new Map(DESTINATIONS.map((d) => [d.iata, d]));
@@ -38,6 +42,10 @@ export const destinationOf = (iata: string): Destination | undefined => BY_IATA.
 export const isDestination = (iata: string): boolean => BY_IATA.has(iata);
 /** Istanbul is the hub: a trip starting or ending there has no stopover. */
 export const isHub = (iata: string): boolean => iata === HUB;
+
+export const STATUS_LABEL: Record<ServiceStatus, string> = { active: "", seasonal: "SEASONAL", future: "NEW", suspended: "SUSPENDED", cargo: "CARGO ONLY" };
+/** true when a passenger could fly there on a scheduled flight at the moment */
+export const hasPassengerService = (d: Destination): boolean => d.status === "active" || d.status === "seasonal" || d.status === "future";
 
 export const COUNTRY_COUNT = new Set(DESTINATIONS.map((d) => d.iso)).size;
 

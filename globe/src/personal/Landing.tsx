@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { REGION_HEX, REGION_LABEL, REGIONS } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
 import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
-import { COUNTRY_COUNT, DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, type Destination } from "./destinations";
+import { COUNTRY_COUNT, DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, STATUS_LABEL, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 
 interface Props {
@@ -82,7 +82,7 @@ export function Landing({ onCompose, onLive }: Props) {
             <span className="mode-desc">Every Turkish Airlines flight of the last 24 hours, played as music.</span>
           </button>
         </div>
-        <p className="landing-fine">{DESTINATIONS.length} airports · {COUNTRY_COUNT} countries · one hub</p>
+        <p className="landing-fine">{DESTINATIONS.length} destinations · {COUNTRY_COUNT} countries · one hub</p>
       </div>
     );
   }
@@ -153,7 +153,7 @@ export function Landing({ onCompose, onLive }: Props) {
                   <button key={r.iata} type="button" disabled={same} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
                     <span className="chip-name">{r.city}</span>
                     <span className="chip-code">{r.iata}</span>
-                    {r.seasonal && <span className="chip-tag">SEASONAL</span>}
+                    {STATUS_LABEL[r.status] && <span className="chip-tag">{STATUS_LABEL[r.status]}</span>}
                   </button>
                 );
               })}

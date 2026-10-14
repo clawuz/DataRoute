@@ -12,13 +12,14 @@ for c in rows:
     else: continue
     res.append((country.replace('<br />',' / '),city.replace('<br />',' / '),ap,note))
 def st(n): return 'terminated' if re.search('erminated|closed',n) else 'suspended' if 'uspended' in n else 'future' if re.search('[Bb]egins|[Pp]lanned',n) else 'seasonal' if 'easonal' in n else 'cargo' if re.fullmatch(r'\s*Cargo\s*',n) else 'active'
+alias.update({'Congo, Democratic Republic of':'CD','Congo, Republic of':'CG'})
 toks=lambda s:set(norm(s).split())
 GEN={'airport','international','intl'}
 cat={};review=[]
 OVR={'Milan Bergamo Airport':'BGY','Rome Fiumicino Airport':'FCO','EuroAirport Basel Mulhouse Freiburg':'BSL','Heathrow Airport':'LHR','Gatwick Airport':'LGW','Soekarno–Hatta International Airport':'CGK','Sabiha Gökçen International Airport':'SAW'}
 for country,city,ap,note in res:
     s=st(note)
-    if s not in('active','seasonal'): continue
+    if s=='terminated': continue
     iso=None
     for part in re.split(r'\s*/\s*',country):
         iso=names.get(part) or alias.get(part)
@@ -38,8 +39,12 @@ for country,city,ap,note in res:
             if sc>score: score=sc;best=r
     if not best: print('MISS',iso,city,ap); continue
     if best['iata_code'] in cat: print('DUP',best['iata_code'],city,ap,'<-',cat[best['iata_code']]['name'])
+    RANK={'active':0,'seasonal':1,'future':2,'suspended':3,'cargo':4}
+    old=cat.get(best['iata_code'])
+    if old and RANK[old['status']]<=RANK[s]: continue
     cat[best['iata_code']]=dict(iata=best['iata_code'],city=city,name=best['name'],iso=best['iso_country'],lat=round(float(best['latitude_deg']),3),lon=round(float(best['longitude_deg']),3),status=s)
     review.append((round(score,2),best['iata_code'],city,ap,best['name'],best['municipality']))
 json.dump(cat,open('catalog.json','w'),ensure_ascii=False)
 print(len(cat),len({v['iso'] for v in cat.values()}))
+from collections import Counter;print(Counter(v['status'] for v in cat.values()))
 

@@ -382,3 +382,4 @@ body { background: #02030a; }
 .region-tabs { display: flex; flex-wrap: wrap; gap: 0.8vmin; justify-content: center; }
 .tab { font: inherit; letter-spacing: 0.12em; font-size: clamp(10px, 1.3vmin, 13px); padding: 0.8vmin 1.4vmin; color: var(--ink-dim); background: none; border: 1px solid var(--line); border-radius: 0.5vmin; cursor: pointer; }
 .tab.on { color: var(--ink); border-color: var(--ink); }
+.personal-warn { color: var(--amber); }

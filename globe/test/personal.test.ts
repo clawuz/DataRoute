@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_COUNT, DESTINATIONS, destinationOf, flagOf, isHub, labelOf } from "../src/personal/destinations";
+import { COUNTRY_COUNT, DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
 import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
 import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
@@ -19,11 +19,18 @@ describe("destinations", () => {
     }
   });
   it("covers the Turkish Airlines network", () => {
-    expect(DESTINATIONS.length).toBeGreaterThanOrEqual(300);
-    expect(COUNTRY_COUNT).toBeGreaterThanOrEqual(115);
+    expect(DESTINATIONS.length).toBeGreaterThanOrEqual(340);
+    expect(COUNTRY_COUNT).toBeGreaterThanOrEqual(133);
     for (const c of ["IST", "LHR", "JFK", "DPS", "CGK", "NRT", "GRU", "JNB", "SYD"]) expect(destinationOf(c), c).toBeDefined();
     expect(destinationOf("DPS")?.iso).toBe("ID");
     expect(destinationOf("LHR")?.iso).toBe("GB");
+  });
+  it("marks what has no passenger service today", () => {
+    const by = (c: string) => destinationOf(c)!;
+    expect(hasPassengerService(by("LHR"))).toBe(true);
+    expect(by("IKA").status).toBe("suspended");
+    expect(hasPassengerService(by("IKA"))).toBe(false);
+    expect(by("MFM").status).toBe("cargo");
   });
   it("knows the hub and labels twin airports", () => {
     expect(isHub("IST")).toBe(true);
