@@ -79,7 +79,7 @@ export function Landing({ onCompose, onLive }: Props) {
         {bar()}
         <p className="landing-eyebrow">A WORLD OF MUSIC</p>
         <h1 className="landing-title">Every journey has a sound.<br />Choose yours.</h1>
-        <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music — and share it.</p>
+        <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
             <span className="mode-n">01</span>

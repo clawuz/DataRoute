@@ -236,7 +236,7 @@ def build(v,fname,title,desc,src):
 <p class="eyebrow">A WORLD OF MUSIC</p>
 <h1>Every journey has a sound.{' <em>Choose yours.</em>' if v=='v1' else '<br>Choose yours.'}</h1>
 {'<div class="hairline"></div>' if v=='v1' else ''}
-<p class="sub">Turn the places you have been, or the places you dream of, into a piece of music — and share it.</p>
+<p class="sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
 <div class="modes">{modes(v)}</div>
 <p class="foot">TURKISH AIRLINES, FLYING TO MORE COUNTRIES THAN ANY OTHER AIRLINE IN THE WORLD · 355 DESTINATIONS · 133 COUNTRIES</p>
 </section>
