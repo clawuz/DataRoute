@@ -77,9 +77,8 @@ BASE_CSS += r"""
 @media (max-width:760px){
  .globe{left:0!important;right:0!important;top:0!important;bottom:0!important;inset:0!important;width:auto!important;height:auto!important;transform:none!important;border-radius:0!important;opacity:.95!important;filter:none!important;background-size:cover!important;background-position:44% 42%!important}
  .veil{background:linear-gradient(180deg,rgba(2,3,10,.82) 0%,rgba(2,3,10,.35) 34%,rgba(2,3,10,.3) 62%,rgba(2,3,10,.88) 100%)!important}
- body.v3 main{padding-left:16px}.rail{display:none}
- body.v1 #s-entry h1{font-size:46px}
- .mode b{font-size:24px!important}
+ body.v1 #s-entry h1{font-size:36px}
+ .mode b{font-size:21px!important}
 }
 """
 V_CSS = {
@@ -87,12 +86,12 @@ V_CSS = {
 .globe{right:-18vw;bottom:-30vh;width:96vw;height:96vw;max-width:1500px;max-height:1500px;border-radius:50%;background-size:cover;background-position:center;opacity:.9;box-shadow:0 0 120px rgba(201,1,25,.25)}
 .veil{background:linear-gradient(90deg,#02030A 8%,rgba(2,3,10,.72) 42%,rgba(2,3,10,0) 74%),linear-gradient(0deg,rgba(2,3,10,.5),transparent 40%)}
 #s-entry{justify-content:center;max-width:720px;padding-left:2vw}
-#s-entry h1{font-family:var(--display-c);font-size:clamp(48px,7.4vw,98px);line-height:.95;text-transform:uppercase;font-weight:700;letter-spacing:.005em}
+#s-entry h1{font-family:var(--display-c);font-size:clamp(34px,4.4vw,62px);line-height:.98;text-transform:uppercase;font-weight:700;letter-spacing:.005em}
 #s-entry h1 em{font-style:normal;color:var(--red2)}
-.hairline{width:64px;height:3px;background:var(--red);margin:22px 0}
-.modes{display:flex;flex-direction:column;margin-top:30px;border-top:1px solid var(--line)}
-.mode{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;backdrop-filter:none;padding:18px 4px;align-items:center;gap:18px}
-.mode .n{width:30px}.mode b{flex:1;font-size:30px;letter-spacing:.04em;font-family:var(--display-c)}
+.hairline{width:56px;height:3px;background:var(--red);margin:16px 0}
+.modes{display:flex;flex-direction:column;margin-top:20px;border-top:1px solid var(--line)}
+.mode{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;backdrop-filter:none;padding:13px 4px;align-items:center;gap:18px}
+.mode .n{width:30px}.mode b{flex:1;font-size:24px;letter-spacing:.04em;font-family:var(--display-c)}
 .mode i{display:none}.mode .arr{color:var(--red2);transition:transform .2s}.mode:hover .arr{transform:translateX(6px)}
 .mode:hover{border-color:var(--line);background:rgba(201,1,25,.08)}
 
@@ -131,10 +130,6 @@ V_CSS = {
 "v3": r"""
 .globe{right:-8vw;top:50%;width:70vw;height:70vw;transform:translateY(-50%);border-radius:50%;opacity:.7}
 .veil{background:linear-gradient(90deg,#02030A 18%,rgba(2,3,10,.78) 48%,rgba(2,3,10,.2) 100%),repeating-linear-gradient(0deg,transparent 0 47px,rgba(242,245,250,.04) 47px 48px),repeating-linear-gradient(90deg,transparent 0 47px,rgba(242,245,250,.04) 47px 48px)}
-main{padding-left:132px}
-.rail{position:fixed;left:0;top:0;bottom:0;width:104px;z-index:4;border-right:1px solid var(--line);background:rgba(2,3,10,.7);backdrop-filter:blur(8px);padding:84px 0 0;display:flex;flex-direction:column;gap:2px}
-.rail button{background:none;border:0;border-left:3px solid transparent;text-align:left;padding:14px 12px;font:500 11px/1.3 var(--wide);letter-spacing:.08em;color:var(--dim)}
-.rail button.on{border-left-color:var(--red2);color:var(--ink);background:rgba(10,15,34,.9)}
 #s-entry{justify-content:center;max-width:760px}
 #s-entry h1{font-size:clamp(38px,5.4vw,72px);line-height:1.02}
 .modes{display:grid;gap:10px;margin-top:26px}
@@ -227,7 +222,7 @@ def sheet_html(v):
 <button class="linkbtn">COPY LINK</button><button class="linkbtn" id="closeSheet">CLOSE</button></div></div>"""
 
 def build(v,fname,title,desc,src):
-    rail = '<nav class="rail" aria-label="Steps"><button data-go="entry" class="on">01 MODE</button><button data-go="origin">02 FROM</button><button data-go="dests">03 PLACES</button><button data-go="result">04 PIECE</button></nav>' if v=="v3" else ""
+    rail = ""
     result_top = ('<div class="pass"><div class="st"></div><div class="bd"><div style="display:flex;align-items:center;gap:12px"><img src="assets/tk-lockup-dark.png" alt="Turkish Airlines" style="height:24px;width:auto"><span style="font-size:11px;letter-spacing:.2em;color:rgba(2,3,10,.6)">A WORLD OF MUSIC · BOARDING PASS</span></div><div class="rt">LHR <span>→</span> IST <span>→</span> DPS</div><div class="meta"><div>PIECE<b>Wandering through Asia-Pacific</b></div><div>VOICE<b>Harp</b></div><div>TEMPO<b>84 BPM</b></div><div>DISTANCE<b>12,614 km</b></div></div></div><div class="ds"><span>SEAT</span><b style="font-size:20px">01A</b><span>355 · 133</span></div></div>'
                   if v=="v4" else
                   '<div class="eyebrow">YOUR PIECE</div><h1 style="font-size:clamp(28px,4vw,52px)">Wandering through Asia-Pacific</h1><div class="stats"><span class="stat">5 DESTINATIONS</span><span class="stat">5 COUNTRIES</span><span class="stat">41,667 KM</span><span class="stat">SIGNATURE · HARP</span></div>')
