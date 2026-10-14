@@ -64,7 +64,7 @@ export function Landing({ onCompose, onLive }: Props) {
     return (
       <div className="landing" role="main">
         <h1 className="landing-title">A WORLD OF MUSIC</h1>
-        <p className="landing-sub">Every journey has a sound. Choose yours. Turkish Airlines flies to {NETWORK_DESTINATIONS} destinations in {NETWORK_COUNTRIES} countries — more countries than any other airline in the world.</p>
+        <p className="landing-sub">Every journey has a sound. Choose yours.</p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("origin"); }}>
             <span className="mode-n">01</span>
