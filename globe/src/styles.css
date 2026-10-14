@@ -422,7 +422,7 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2, .personal-hud, .sheet-back { --display: "TK Display", "TK Display Condensed", system-ui, sans-serif; --label: "TK Text Wide", "TK Text", system-ui, sans-serif; --text: "TK Text", system-ui, sans-serif; font-family: var(--text); }
 
 .backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; background: #02030a; }
-.backdrop-img { position: absolute; inset: 0; background: url("/brand/globe-night.jpg") center / cover no-repeat; transform: scale(1.35) translateY(26%); filter: saturate(1.05); }
+.backdrop-img { position: absolute; inset: 0; background: #02030a url("/brand/globe-night.jpg") 50% 30% / cover no-repeat; filter: saturate(1.05); }
 .backdrop-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; touch-action: none; pointer-events: none; }
 .backdrop-canvas.on { opacity: 1; }
 .backdrop-veil { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 12%, rgba(2, 3, 10, 0.25), rgba(2, 3, 10, 0.78) 72%), linear-gradient(180deg, rgba(2, 3, 10, 0.6), transparent 26%, transparent 62%, rgba(2, 3, 10, 0.55)); }
