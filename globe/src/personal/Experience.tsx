@@ -8,6 +8,9 @@ import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { renderCard } from "./card";
+import { MusicScope } from "../hud/MusicScope";
+import { createNoteBus } from "../audio/notes-bus";
+import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
 import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop } from "./reel";
 import { extOf, pickMime, recordClip } from "./clip";
@@ -30,7 +33,9 @@ export function Experience({ selection, onBack }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [toast, setToast] = useState("");
-  const [now, setNow] = useState<string[]>([]);
+  const noteBus = useMemo(createNoteBus, []);
+  const planCbRef = useRef<((n: PersonalNote, wallAt: number) => void) | null>(null);
+  const [scope, setScope] = useState<{ pos: number; section: string }>({ pos: 0, section: "" });
 
   const routes = useMemo(() => buildRoutes(selection.origin, selection.dests), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
@@ -99,11 +104,15 @@ export function Experience({ selection, onBack }: Props) {
         litRef.current?.(n.route);
         engine.pulseAirport(r.to, nowSec());
         engine.pulseAirport(r.from, nowSec());
-        const far = destinationOf(r.to === "IST" ? r.from : r.to);
-        if (far) setNow((p) => [...p.slice(-3), `${flagOf(far.iso)} ${r.from} → ${r.to} · ${far.city}`]);
+      };
+      // the music box: a note appears on the ribbon three seconds before it sounds
+      planCbRef.current = (n, wallAt) => {
+        const r = n.route >= 0 ? routes[n.route] : undefined;
+        if (!r) return;
+        noteBus.emit({ instrument: n.instrument, lane: n.instrument, freq: n.freq, pitch: n.freq, vel: n.vel, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
       };
       const start = () => {
-        player?.play(piece, (n) => noteCbRef.current?.(n));
+        player?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
         setRunning(true);
       };
       start();
@@ -127,9 +136,39 @@ export function Experience({ selection, onBack }: Props) {
       playerRef.current = null;
       engineRef.current = null;
       noteCbRef.current = null;
+      planCbRef.current = null;
       engine.dispose();
     };
   }, [routes, piece]);
+
+  // the playhead of the music box
+  useEffect(() => {
+    const id = setInterval(() => {
+      const p = playerRef.current;
+      if (!p || piece.duration <= 0) return;
+      const t = Math.min(p.position(), piece.duration);
+      const sec = piece.sections.find((x) => t >= x.start && t < x.end) ?? piece.sections[piece.sections.length - 1];
+      setScope((prev) => {
+        const pos = Math.round((t / piece.duration) * 200) / 200;
+        return prev.pos === pos && prev.section === (sec?.name ?? "") ? prev : { pos, section: sec?.name ?? "" };
+      });
+    }, 250);
+    return () => clearInterval(id);
+  }, [piece]);
+
+  const musicHud: MusicHud = useMemo(
+    () => ({
+      on: true,
+      section: "DAY",
+      chord: "",
+      bpm: piece.bpm,
+      instruments: [],
+      level: 0,
+      layers: [],
+      day: { curve: piece.energy, pos: scope.pos, level: piece.energy[Math.min(47, Math.floor(scope.pos * 48))] ?? 0, hour: 0, airborne: 0, windows: Math.max(1, piece.sections.length) },
+    }),
+    [piece, scope.pos],
+  );
 
   const url = () => `${window.location.origin}${window.location.pathname}${searchFromSelection(selection)}`;
   const share = async () => {
@@ -236,7 +275,7 @@ export function Experience({ selection, onBack }: Props) {
         duration: piece.duration - piece.hook,
         hook: 0,
       };
-      playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n));
+      playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
       const stream = comp.captureStream(30);
       audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
       const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
@@ -246,7 +285,7 @@ export function Experience({ selection, onBack }: Props) {
       say("COULD NOT RECORD THE VIDEO");
     } finally {
       engine.setAfterRender(null);
-      playerRef.current?.play(piece, (n) => noteCbRef.current?.(n));
+      playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
       setBusy(null);
     }
   };
@@ -262,12 +301,8 @@ export function Experience({ selection, onBack }: Props) {
           {stats.destinations} DESTINATIONS · {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
         </p>
         <p className="personal-sub">SIGNATURE VOICE · {stats.signature.toUpperCase()}</p>
-        <div className="personal-now" aria-live="off">
-          {now.map((t, i) => (
-            <span key={i} style={{ opacity: 0.35 + (i + 1) / now.length * 0.65 }}>{t}</span>
-          ))}
-        </div>
       </div>
+      <MusicScope bus={noteBus} music={musicHud} label={`ROUTES → MUSIC · ${scope.section.toUpperCase()} · ${piece.bpm} BPM`} />
       {!running && (
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}

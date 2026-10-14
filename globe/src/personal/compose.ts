@@ -22,6 +22,10 @@ export interface PersonalPiece {
   /** where the chorus starts (s) — the best 15 s of the piece */
   hook: number;
   bpm: number;
+  /** the form, in seconds: where each part starts and ends */
+  sections: { name: string; start: number; end: number }[];
+  /** 48 samples of how loud the piece is (0..1) — drawn as the curve under the ribbon */
+  energy: number[];
 }
 
 /** the key is D (minor for a journey, major for a wish); semitones above A2 */
@@ -98,7 +102,7 @@ function sectionOf(bar: number): { section: Section; first: number; len: number 
  */
 export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
   const bpm = BPM[mode];
-  if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm };
+  if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [] };
   const beat = 60 / bpm;
   const bar = beat * 4;
   const scale = mode === "wish" ? MAJOR : MINOR;
@@ -169,5 +173,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const last = prog[Math.floor((BARS - 1) / 2) % prog.length];
   for (const i of [0, last.third, 7]) push({ t: BARS * bar, d: bar * 1.6, instrument: "STR", freq: hz(last.root + 12 + i), vel: 0.2 });
   const end = Math.max(...notes.map((n) => n.t + n.d));
-  return { notes, duration: end + 1.5, hook, bpm };
+  let at = 0;
+  const sections = FORM.map(([name, n]) => {
+    const sec = { name, start: at * bar, end: (at + n) * bar };
+    at += n;
+    return sec;
+  });
+  const energy = Array.from({ length: 48 }, (_, i) => {
+    const b = Math.min(BARS - 1, Math.floor(((i + 0.5) / 48) * BARS));
+    const { section } = sectionOf(b);
+    return LEVEL[section];
+  });
+  return { notes, duration: end + 1.5, hook, bpm, sections, energy };
 }

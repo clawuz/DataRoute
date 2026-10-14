@@ -3,7 +3,7 @@ import type { PersonalNote, PersonalPiece } from "./compose";
 
 export interface PersonalPlayer {
   /** begin (or restart) looping the piece; `onNote` fires when a note sounds, in time with the audio */
-  play(piece: PersonalPiece, onNote: (n: PersonalNote) => void): void;
+  play(piece: PersonalPiece, onNote: (n: PersonalNote) => void, onPlan?: (n: PersonalNote, wallAt: number) => void): void;
   stop(): void;
   /** browsers start a context suspended until a gesture */
   resume(): void;
@@ -15,7 +15,7 @@ export interface PersonalPlayer {
   dispose(): void;
 }
 
-const AHEAD = 0.25; // how far ahead notes are handed to the audio clock (s)
+const AHEAD = 3; // how far ahead notes are handed to the audio clock (s) — the note ribbon shows them coming
 const TICK_MS = 60;
 const GAP = 2.2; // silence between loops (s)
 
@@ -52,6 +52,7 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   let loopStart = 0; // audio-clock time of the loop's origin
   let piece: PersonalPiece | null = null;
   let onNote: ((n: PersonalNote) => void) | null = null;
+  let onPlan: ((n: PersonalNote, wallAt: number) => void) | null = null;
   let next = 0; // index of the next note to schedule in this loop
   let sorted: PersonalNote[] = [];
   let disposed = false;
@@ -64,7 +65,9 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       const when = Math.max(ctx.currentTime, loopStart + n.t);
       playNote(ctx, bus, { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d }, { gainScale: 1, cutoffScale: 1, pan: 0 });
       const cb = onNote;
-      setTimeout(() => cb(n), Math.max(0, (when - ctx.currentTime) * 1000));
+      const inSec = Math.max(0, when - ctx.currentTime);
+      onPlan?.(n, performance.now() / 1000 + inSec);
+      setTimeout(() => cb(n), inSec * 1000);
     }
     if (next >= sorted.length && ctx.currentTime >= loopStart + piece.duration + GAP) {
       loopStart += piece.duration + GAP;
@@ -73,10 +76,11 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   };
 
   return {
-    play(p, cb) {
+    play(p, cb, plan) {
       if (disposed) return;
       piece = p;
       onNote = cb;
+      onPlan = plan ?? null;
       sorted = [...p.notes].sort((a, b) => a.t - b.t);
       next = 0;
       void ctx.resume();

@@ -88,7 +88,7 @@ function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: nu
   g.fill();
 }
 
-export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteBus; music: MusicHud; compact?: boolean; footer?: ReactNode }) {
+export function MusicScope({ bus, music, compact = false, footer, label }: { bus: NoteBus; music: MusicHud; compact?: boolean; footer?: ReactNode; /** replaces the headline (the personal globe names its own piece) */ label?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const musicRef = useRef(music);
   musicRef.current = music;
@@ -281,7 +281,7 @@ export function MusicScope({ bus, music, compact = false, footer }: { bus: NoteB
     };
   }, []);
 
-  const [head, chord, tail] = music.day ? [dayLabel(music.day), "", ""] : scopeLabel(music);
+  const [head, chord, tail] = label !== undefined ? [label, "", ""] : music.day ? [dayLabel(music.day), "", ""] : scopeLabel(music);
   const segColor = SECTION_COLOR[music.section] ?? SECTION_COLOR.DAY;
   return (
     <div className={`music-scope${compact ? " compact" : ""}`}>
