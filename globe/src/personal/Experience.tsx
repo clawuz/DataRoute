@@ -28,6 +28,9 @@ export function Experience({ selection, onBack }: Props) {
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  /** while the video is made: a still of the current view with a progress screen over it */
+  const [making, setMaking] = useState<{ still: string; startedAt: number } | null>(null);
+  const [makingSec, setMakingSec] = useState(0);
   const noteCbRef = useRef<((n: PersonalNote) => void) | null>(null);
   const pieceRef = useRef<PersonalPiece | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -133,6 +136,15 @@ export function Experience({ selection, onBack }: Props) {
       engine.dispose();
     };
   }, [routes, piece]);
+
+  useEffect(() => {
+    if (!making) {
+      setMakingSec(0);
+      return;
+    }
+    const id = setInterval(() => setMakingSec((performance.now() - making.startedAt) / 1000), 200);
+    return () => clearInterval(id);
+  }, [making]);
 
   // the playhead of the music box
   useEffect(() => {
@@ -260,6 +272,19 @@ export function Experience({ selection, onBack }: Props) {
       }
       // The reel is the globe scene itself at 9:16: the stage canvas is laid out as a 1080×1920 backbuffer (CSS size ÷ pixel
       // ratio) and scaled down to fit the window while it records; the lockup and the music box are drawn over every frame.
+      // a still of what the person is looking at stays on screen under the progress card while the stage is re-laid out
+      const still = await new Promise<string>((res) => {
+        const timer = setTimeout(() => {
+          engine.setAfterRender(null);
+          res("");
+        }, 1500);
+        engine.setAfterRender(() => {
+          clearTimeout(timer);
+          engine.setAfterRender(null);
+          res(canvas.toDataURL("image/jpeg", 0.7));
+        });
+      });
+      setMaking({ still, startedAt: performance.now() });
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cssW = REEL_W / dpr;
       const cssH = REEL_H / dpr;
@@ -310,6 +335,7 @@ export function Experience({ selection, onBack }: Props) {
       engine.setAfterRender(null);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
+      setMaking(null);
       playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
       setBusy(null);
     }
@@ -353,7 +379,19 @@ export function Experience({ selection, onBack }: Props) {
           </div>
         </div>
       )}
-      {busy === "VIDEO" && <div className="recording-note">RECORDING YOUR STORY · {REEL_SECONDS} S</div>}
+      {making && (
+        <div className="making" role="status" aria-live="polite">
+          {making.still && <div className="making-still" style={{ backgroundImage: `url(${making.still})` }} />}
+          <div className="making-card">
+            <div className="making-spin" aria-hidden="true" />
+            <div className="making-title">PREPARING YOUR VIDEO</div>
+            <div className="making-sub">
+              Recording {REEL_SECONDS} seconds of your piece · keep this tab open
+            </div>
+            <div className="making-bar"><i style={{ width: `${Math.min(100, (makingSec / (REEL_SECONDS + 2)) * 100)}%` }} /></div>
+          </div>
+        </div>
+      )}
       {toast && <div className="notice">{toast}</div>}
     </>
   );

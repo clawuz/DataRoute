@@ -401,3 +401,14 @@ body { background: #02030a; }
 body.recording-reel .personal-hud, body.recording-reel .personal-actions, body.recording-reel .sheet-back, body.recording-reel .tap-play { visibility: hidden; }
 body.recording-reel .music-scope { opacity: 0; }
 .recording-note { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 30; padding: 8px 16px; border-radius: 99px; background: rgba(227, 10, 23, 0.9); color: #fff; letter-spacing: 0.18em; font-size: 12px; }
+
+/* the video is made behind this screen: a still of the view, dimmed and blurred, with a progress card */
+.making { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #02030a; }
+.making-still { position: absolute; inset: -20px; background-size: cover; background-position: center; filter: blur(10px) brightness(0.45); }
+.making-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 28px 30px; max-width: min(86vw, 420px); text-align: center; background: rgba(6, 10, 24, 0.72); border: 1px solid var(--line-strong); border-radius: 16px; backdrop-filter: blur(6px); }
+.making-spin { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(233, 237, 245, 0.18); border-top-color: var(--thy); animation: making-spin 0.9s linear infinite; }
+.making-title { letter-spacing: 0.22em; font-size: 14px; }
+.making-sub { color: var(--ink-dim); font-size: 12px; line-height: 1.5; letter-spacing: 0.06em; }
+.making-bar { width: 100%; height: 3px; background: rgba(233, 237, 245, 0.15); border-radius: 2px; overflow: hidden; }
+.making-bar > i { display: block; height: 100%; background: var(--thy); transition: width 0.2s linear; }
+@keyframes making-spin { to { transform: rotate(360deg); } }
