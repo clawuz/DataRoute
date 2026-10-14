@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_COUNT, DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
+import { COUNTRY_COUNT, DESTINATIONS, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
 import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
 import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
@@ -24,6 +24,11 @@ describe("destinations", () => {
     for (const c of ["IST", "LHR", "JFK", "DPS", "CGK", "NRT", "GRU", "JNB", "SYD"]) expect(destinationOf(c), c).toBeDefined();
     expect(destinationOf("DPS")?.iso).toBe("ID");
     expect(destinationOf("LHR")?.iso).toBe("GB");
+  });
+  it("states the official network size", () => {
+    expect(NETWORK_DESTINATIONS).toBe(355);
+    expect(NETWORK_COUNTRIES).toBe(133);
+    expect(COUNTRY_COUNT).toBe(NETWORK_COUNTRIES);
   });
   it("marks what has no passenger service today", () => {
     const by = (c: string) => destinationOf(c)!;

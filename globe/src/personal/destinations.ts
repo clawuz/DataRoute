@@ -47,6 +47,10 @@ export const STATUS_LABEL: Record<ServiceStatus, string> = { active: "", seasona
 /** true when a passenger could fly there on a scheduled flight at the moment */
 export const hasPassengerService = (d: Destination): boolean => d.status === "active" || d.status === "seasonal" || d.status === "future";
 
+/** the network as Turkish Airlines states it — what every piece of copy says */
+export const NETWORK_DESTINATIONS = 355;
+export const NETWORK_COUNTRIES = 133;
+
 export const COUNTRY_COUNT = new Set(DESTINATIONS.map((d) => d.iso)).size;
 
 const names = new Map<string, Intl.DisplayNames>();
