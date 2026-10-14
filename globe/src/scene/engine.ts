@@ -360,8 +360,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     if (!model) return;
     arcs = createArcs(model, { planned: planned() });
     if (opts.boldTracks) {
-      arcs.uniforms.uGain.value = 2.6;
-      arcs.uniforms.uWidthK.value = 1.7;
+      arcs.uniforms.uGain.value = 1.0;
+      arcs.uniforms.uWidthK.value = 2.1;
     }
     earthGroup.add(arcs.mesh);
     if (effects?.corridors) {

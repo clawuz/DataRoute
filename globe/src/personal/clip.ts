@@ -18,3 +18,6 @@ export function recordClip(stream: MediaStream, ms: number, mime: string): Promi
     setTimeout(() => rec.state !== "inactive" && rec.stop(), ms);
   });
 }
+
+/** Phones and tablets get the share sheet (Instagram, Messages …); desktops always get a plain browser download. */
+export const chooseDelivery = (touchDevice: boolean, canShareFiles: boolean): "share" | "download" => (touchDevice && canShareFiles ? "share" : "download");

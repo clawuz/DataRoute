@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { flagsOf, wrap } from "../src/personal/card";
-import { extOf, pickMime } from "../src/personal/clip";
+import { chooseDelivery, extOf, pickMime } from "../src/personal/clip";
 
 describe("share card helpers", () => {
   it("lists distinct country flags in picked order, capped", () => {
@@ -15,6 +15,12 @@ describe("share card helpers", () => {
 });
 
 describe("clip", () => {
+  it("downloads on desktop even when the browser could share files; shares on touch devices", () => {
+    expect(chooseDelivery(false, true)).toBe("download");
+    expect(chooseDelivery(false, false)).toBe("download");
+    expect(chooseDelivery(true, true)).toBe("share");
+    expect(chooseDelivery(true, false)).toBe("download");
+  });
   it("prefers mp4, falls back to webm, or null", () => {
     expect(pickMime((m) => m.startsWith("video/mp4"))).toMatch(/^video\/mp4/);
     expect(pickMime((m) => m === "video/webm")).toBe("video/webm");

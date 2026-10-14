@@ -13,7 +13,7 @@ import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
 import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop } from "./reel";
-import { extOf, pickMime, recordClip } from "./clip";
+import { chooseDelivery, extOf, pickMime, recordClip } from "./clip";
 
 interface Props {
   selection: PersonalSelection;
@@ -192,20 +192,30 @@ export function Experience({ selection, onBack }: Props) {
   };
   const deliver = async (blob: Blob, name: string, title: string) => {
     const file = new File([blob], name, { type: blob.type });
-    try {
-      if (navigator.canShare?.({ files: [file] })) {
+    // phones and tablets: the share sheet (Instagram, Messages …); desktops: a plain browser download
+    const touch = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+    if (chooseDelivery(touch, !!navigator.canShare?.({ files: [file] })) === "share") {
+      try {
         await navigator.share({ files: [file], title, text: `${stats.title} — ${url()}` });
         return;
+      } catch (e) {
+        if ((e as { name?: string }).name === "AbortError") return; // the sheet was dismissed
+        // NotAllowedError (the recording outlasted the tap) and others: fall through to a download
       }
-    } catch {
-      return; // the share sheet was dismissed
     }
+    const href = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
+    a.href = href;
     a.download = name;
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
     a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    say("SAVED");
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(href);
+    }, 10000);
+    say(touch ? "SAVED — CHECK YOUR FILES OR PHOTOS" : `DOWNLOADED ${name}`, 4000);
   };
   const saveCard = async () => {
     const canvas = canvasRef.current;
