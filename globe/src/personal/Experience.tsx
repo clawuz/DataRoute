@@ -13,7 +13,7 @@ import { MusicScope } from "../hud/MusicScope";
 import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
-import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop } from "./reel";
+import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop, drawScopeFrame } from "./reel";
 import { chooseDelivery, extOf, pickMime, recordClip } from "./clip";
 
 interface Props {
@@ -270,6 +270,16 @@ export function Experience({ selection, onBack }: Props) {
       engine.setAfterRender(() => {
         cctx.drawImage(back, 0, 0);
         drawGlobeFrame(cctx, canvas);
+        // the music box as it is on screen: its canvas, its label and the routes sounding now
+        const box = document.querySelector<HTMLElement>(".music-scope");
+        drawScopeFrame(cctx, {
+          canvas: box?.querySelector<HTMLCanvasElement>("canvas") ?? null,
+          label: box?.querySelector(".music-scope-label")?.textContent?.trim() ?? "",
+          items: [...(box?.querySelectorAll<HTMLElement>(".music-scope-now li") ?? [])].map((li) => ({
+            text: li.textContent?.replace(/\s+/g, " ").trim() ?? "",
+            color: li.style.borderLeftColor || "#fff",
+          })),
+        });
       });
       // the clip's sound is the chorus (the best 15 s), restarted from its first note; afterwards the whole piece goes on
       const hookPiece: PersonalPiece = {
