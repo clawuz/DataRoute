@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { REGION_HEX, REGION_LABEL, REGIONS } from "@web/data/palette";
+import { REGION_HEX } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
 import { DEFAULT_ORIGIN, MAX_DESTINATIONS, MIN_DESTINATIONS, type PersonalMode, type PersonalSelection } from "./codec";
-import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, STATUS_LABEL, type Destination } from "./destinations";
+import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, isHub, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 
 interface Props {
@@ -44,12 +44,12 @@ export function Landing({ onCompose, onLive }: Props) {
   const [origin, setOrigin] = useState(DEFAULT_ORIGIN);
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
-  const [region, setRegion] = useState<Region | "ALL">("ALL");
+  const [area, setArea] = useState<AreaId | "ALL">("ALL");
 
   const needle = norm(q.trim());
   const filtered = useMemo(
-    () => ROWS.filter((r) => (!needle || r.hay.includes(needle)) && (step === "origin" || region === "ALL" || r.region === region)),
-    [needle, region, step],
+    () => ROWS.filter((r) => (!needle || r.hay.includes(needle)) && (step === "origin" || area === "ALL" || areaOf(r.iso) === area)),
+    [needle, area, step],
   );
   const groups = useMemo(() => groupByCountry(filtered), [filtered]);
 
@@ -57,7 +57,7 @@ export function Landing({ onCompose, onLive }: Props) {
     setStep("mode");
     setPicked([]);
     setQ("");
-    setRegion("ALL");
+    setArea("ALL");
   };
 
   if (step === "mode") {
@@ -124,7 +124,9 @@ export function Landing({ onCompose, onLive }: Props) {
   const o = destinationOf(origin);
   const last = picked[picked.length - 1];
   const lastTrip = last ? buildRoutes(origin, [last]).map((r) => r.from).concat(last).join(" → ") : "";
-  const regionTabs: (Region | "ALL")[] = ["ALL", ...REGIONS.filter((r) => r !== "UNK" && ROWS.some((x) => x.region === r))];
+  const areaTabs: (AreaId | "ALL")[] = ["ALL", ...AREAS.map((a) => a.id).filter((id) => ROWS.some((x) => areaOf(x.iso) === id))];
+  const areaLabel = (id: AreaId): string => AREAS.find((a) => a.id === id)!.label;
+  const sections = AREAS.map((a) => ({ ...a, groups: groups.filter((g) => areaOf(g.iso) === a.id) })).filter((a) => a.groups.length > 0);
 
   return (
     <div className="landing picker" role="main">
@@ -135,30 +137,34 @@ export function Landing({ onCompose, onLive }: Props) {
       </p>
       <input className="picker-search" type="search" placeholder="Search a city, airport or country" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search a destination" />
       <div className="region-tabs" role="tablist">
-        {regionTabs.map((r) => (
-          <button key={r} type="button" role="tab" aria-selected={region === r} className={`tab${region === r ? " on" : ""}`} onClick={() => setRegion(r)}>
-            {r === "ALL" ? "ALL" : REGION_LABEL[r]}
+        {areaTabs.map((a) => (
+          <button key={a} type="button" role="tab" aria-selected={area === a} className={`tab${area === a ? " on" : ""}`} onClick={() => setArea(a)}>
+            {a === "ALL" ? "ALL DESTINATIONS" : `${areaLabel(a).toUpperCase()} DESTINATIONS`}
           </button>
         ))}
       </div>
       <div className="picker-groups">
-        {groups.map((g) => (
-          <section key={g.iso} className="group">
-            <h2 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h2>
-            <div className="picker-grid">
-              {g.items.map((r) => {
-                const on = picked.includes(r.iata);
-                const same = r.iata === origin;
-                return (
-                  <button key={r.iata} type="button" disabled={same} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
-                    <span className="chip-name">{r.city}</span>
-                    <span className="chip-code">{r.iata}</span>
-                    {STATUS_LABEL[r.status] && <span className="chip-tag">{STATUS_LABEL[r.status]}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+        {sections.map((a) => (
+          <div key={a.id} className="area">
+            <h2 className="area-head">{a.label} destinations</h2>
+            {a.groups.map((g) => (
+              <section key={g.iso} className="group">
+                <h3 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h3>
+                <div className="picker-grid">
+                  {g.items.map((r) => {
+                    const on = picked.includes(r.iata);
+                    const same = r.iata === origin;
+                    return (
+                      <button key={r.iata} type="button" disabled={same} className={`chip${on ? " on" : ""}`} aria-pressed={on} onClick={() => toggle(r.iata)} style={on ? { borderColor: REGION_HEX[r.region] } : undefined} title={r.name}>
+                        <span className="chip-name">{r.city}</span>
+                        <span className="chip-code">{r.iata}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
         ))}
         {groups.length === 0 && <p className="landing-sub">No destination matches “{q}”.</p>}
       </div>

@@ -383,3 +383,5 @@ body { background: #02030a; }
 .tab { font: inherit; letter-spacing: 0.12em; font-size: clamp(10px, 1.3vmin, 13px); padding: 0.8vmin 1.4vmin; color: var(--ink-dim); background: none; border: 1px solid var(--line); border-radius: 0.5vmin; cursor: pointer; }
 .tab.on { color: var(--ink); border-color: var(--ink); }
 .personal-warn { color: var(--amber); }
+.area { display: flex; flex-direction: column; gap: 2vmin; }
+.area-head { margin: 1.5vmin 0 0; padding-bottom: 1vmin; border-bottom: 1px solid var(--line); font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; font-size: clamp(13px, 1.9vmin, 19px); }

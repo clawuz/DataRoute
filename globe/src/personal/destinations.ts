@@ -76,3 +76,29 @@ export function labelOf(d: Destination): string {
   const sameCity = DESTINATIONS.filter((x) => x.city === d.city && x.iso === d.iso);
   return sameCity.length > 1 ? `${d.city} · ${d.iata}` : d.city;
 }
+
+/** The six areas the airline groups its destinations in. */
+export type AreaId = "TR" | "EU" | "AM" | "AF" | "AS" | "OC";
+export const AREAS: { id: AreaId; label: string }[] = [
+  { id: "TR", label: "Turkey" },
+  { id: "EU", label: "Europe" },
+  { id: "AM", label: "Americas" },
+  { id: "AF", label: "Africa" },
+  { id: "AS", label: "Asia" },
+  { id: "OC", label: "Australia" },
+];
+
+const OCEANIA = new Set(["AU", "NZ", "FJ", "PF", "NC", "PG", "GU", "WS", "TO", "VU", "SB", "PW", "FM", "MH", "KI", "NR", "TV", "CK", "NU", "WF", "AS", "MP"]);
+const AMERICAS = new Set("US CA MX GT BZ SV HN NI CR PA CU DO HT JM BS BB TT AG AW BM CW GD KY LC MQ PR SX TC VG VI GP DM KN VC AI MS BQ BL MF AR BO BR CL CO EC GY PY PE SR UY VE FK GF".split(" "));
+const AFRICA = new Set("DZ AO BJ BW BF BI CV CM CF TD KM CD CG CI DJ EG GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG MW ML MR MU MA MZ NA NE NG RW ST SN SC SL SO ZA SS SD TZ TG TN UG ZM ZW RE YT SH EH".split(" "));
+// Europe keeps Russia, Cyprus and the Balkans; the Caucasus, Central Asia and the Middle East count as Asia.
+const EUROPE = new Set("AL AD AT BY BE BA BG HR CY CZ DK EE FO FI FR DE GI GR HU IS IE IM IT XK LV LI LT LU MT MD MC ME NL MK NO PL PT RO RU SM RS SK SI ES SE CH UA GB VA JE GG AX SJ".split(" "));
+
+export function areaOf(iso: string): AreaId {
+  if (iso === "TR") return "TR";
+  if (OCEANIA.has(iso)) return "OC";
+  if (AMERICAS.has(iso)) return "AM";
+  if (AFRICA.has(iso)) return "AF";
+  if (EUROPE.has(iso)) return "EU";
+  return "AS";
+}

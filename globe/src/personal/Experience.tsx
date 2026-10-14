@@ -7,7 +7,7 @@ import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
 import { pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
-import { destinationOf, flagOf, hasPassengerService, STATUS_LABEL } from "./destinations";
+import { destinationOf, flagOf } from "./destinations";
 
 interface Props {
   selection: PersonalSelection;
@@ -27,10 +27,6 @@ export function Experience({ selection, onBack }: Props) {
 
   const routes = useMemo(() => buildRoutes(selection.origin, selection.dests), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
-  const noService = useMemo(
-    () => selection.dests.map((d) => destinationOf(d)).filter((d) => d && !hasPassengerService(d)) as NonNullable<ReturnType<typeof destinationOf>>[],
-    [selection.dests],
-  );
   const stats = useMemo(() => pieceStats(selection.mode, selection.origin, selection.dests, routes), [selection.mode, routes]);
 
   useEffect(() => {
@@ -115,11 +111,6 @@ export function Experience({ selection, onBack }: Props) {
         <p className="personal-sub">
           {stats.destinations} DESTINATIONS · {stats.countries} COUNTRIES · {stats.km.toLocaleString("en")} KM{stats.laps >= 0.1 ? ` · ${stats.laps}× AROUND THE EARTH` : ""}
         </p>
-        {noService.length > 0 && (
-          <p className="personal-sub personal-warn">
-            NO PASSENGER SERVICE RIGHT NOW: {noService.map((d) => `${d.city} (${STATUS_LABEL[d.status]})`).join(" · ")}
-          </p>
-        )}
         <p className="personal-sub">SIGNATURE VOICE · {stats.signature.toUpperCase()}</p>
         <div className="personal-now" aria-live="off">
           {now.map((t, i) => (

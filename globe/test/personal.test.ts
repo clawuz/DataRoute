@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COUNTRY_COUNT, DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
+import { COUNTRY_COUNT, DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, destinationOf, flagOf, areaOf, hasPassengerService, isHub, labelOf } from "../src/personal/destinations";
 import { pieceHash, searchFromSelection, selectionFromSearch } from "../src/personal/codec";
 import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
@@ -37,6 +37,17 @@ describe("destinations", () => {
     expect(by("IKA").status).toBe("suspended");
     expect(hasPassengerService(by("IKA"))).toBe(false);
     expect(by("MFM").status).toBe("cargo");
+  });
+  it("groups countries into the six areas", () => {
+    expect(areaOf("TR")).toBe("TR");
+    expect(areaOf("DE")).toBe("EU");
+    expect(areaOf("RU")).toBe("EU");
+    expect(areaOf("US")).toBe("AM");
+    expect(areaOf("EG")).toBe("AF");
+    expect(areaOf("JP")).toBe("AS");
+    expect(areaOf("AE")).toBe("AS");
+    expect(areaOf("AU")).toBe("OC");
+    expect(new Set(DESTINATIONS.map((d) => areaOf(d.iso))).size).toBe(6);
   });
   it("knows the hub and labels twin airports", () => {
     expect(isHub("IST")).toBe(true);
