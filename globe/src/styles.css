@@ -540,3 +540,7 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2 .landing-hint svg { flex: none; color: #f2f5fa; }
 @media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 14px; font-size: 13px; padding: 8px 14px; } }
 @media (max-height: 720px) { .landing.v2 .landing-hint { margin-top: 10px; padding: 6px 12px; } }
+.landing.v2 .landing-hint { margin-top: 52px; align-self: center; }
+@media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 34px; } }
+@media (max-height: 720px) { .landing.v2 .landing-hint { margin-top: 22px; } }
+@media (max-width: 760px) { .landing.v2 .landing-hint { margin-top: 24px; } .landing.v2 .landing-fine { padding-top: 16px; } }
