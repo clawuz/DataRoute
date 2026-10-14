@@ -1,10 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Boarding Pass — A World of Music</title><style>
-@font-face{font-family:"TK Display Condensed";src:url(assets/fonts/TKDisplayCondensed-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Display";src:url(assets/fonts/TKDisplay-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Display";src:url(assets/fonts/TKDisplay-Bold.woff2) format("woff2");font-weight:700}
 @font-face{font-family:"TK Display Condensed";src:url(assets/fonts/TKDisplayCondensed-Bold.woff2) format("woff2");font-weight:700}
 @font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Regular.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Medium.woff2) format("woff2");font-weight:500}
+@font-face{font-family:"TK Text";src:url(assets/fonts/TKText-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Text Wide";src:url(assets/fonts/TKTextWide-Regular.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"TK Text Wide";src:url(assets/fonts/TKTextWide-Medium.woff2) format("woff2");font-weight:500}
-:root{--display:"TK Display Condensed","Arial Narrow",system-ui,sans-serif;--text:"TK Text",system-ui,sans-serif;--wide:"TK Text Wide","TK Text",system-ui,sans-serif}
+:root{--display:"TK Display",system-ui,sans-serif;--display-c:"TK Display Condensed","TK Display",system-ui,sans-serif;--text:"TK Text",system-ui,sans-serif;--wide:"TK Text Wide","TK Text",system-ui,sans-serif}
 :root{--night:#02030A;--panel:#0A0F22;--ink:#F2F5FA;--dim:rgba(242,245,250,.62);--faint:rgba(242,245,250,.34);--line:rgba(242,245,250,.16);--red:#C90119;--red2:#E30A17;
 --eu:#3FC8F2;--mea:#F7C548;--af:#7BD389;--as:#F2508F;--am:#A98BFF}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
@@ -14,7 +17,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .globe{position:absolute;background:url(assets/globe-night.jpg) center/cover no-repeat}
 .veil{position:absolute;inset:0}
 .bar{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:16px 28px}
-.bar .logo{width:34px;height:34px;border-radius:50%;background:url(assets/tk-logo.png) center/cover}
+.bar .lockup{height:34px;width:auto;display:block}.bar .sep{width:1px;height:26px;background:var(--line)}
 .bar .tk{font-family:var(--wide);font-size:12px;letter-spacing:.2em}.bar .aw{font-family:var(--wide);font-size:11px;letter-spacing:.24em;color:var(--red2)}
 .bar .sw{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .bar .sw button{background:rgba(2,3,10,.55);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;color:var(--dim);backdrop-filter:blur(6px)}
@@ -67,6 +70,7 @@ h1{margin:0;font-family:var(--display);font-weight:700;letter-spacing:.005em;tex
  .veil{background:linear-gradient(180deg,rgba(2,3,10,.82) 0%,rgba(2,3,10,.35) 34%,rgba(2,3,10,.3) 62%,rgba(2,3,10,.88) 100%)!important}
  body.v3 main{padding-left:16px}.rail{display:none}
  body.v1 #s-entry h1{font-size:46px}
+ .mode b{font-size:24px!important}
 }
 
 .globe{inset:-4%;opacity:.8;filter:saturate(1.1) blur(1px)}
@@ -100,7 +104,7 @@ h1{margin:0;font-family:var(--display);font-weight:700;letter-spacing:.005em;tex
 .sheet .linkbtn{color:rgba(2,3,10,.6);margin-left:14px}
 </style></head><body class="v4">
 <div class="stage"><div class="globe"></div><div class="veil"></div></div>
-<header class="bar"><div class="logo" role="img" aria-label="Turkish Airlines"></div><div><div class="tk">TURKISH AIRLINES</div><div class="aw">A WORLD OF MUSIC</div></div>
+<header class="bar"><img class="lockup" src="assets/tk-lockup-light.png" alt="Turkish Airlines">
 <div class="sw"><button data-go="entry" class="on">Giriş</button><button data-go="origin">Nereden</button><button data-go="dests">Nereye</button><button data-go="result">Sonuç</button><button data-go="share">Paylaş</button></div></header>
 
 <main>
@@ -130,14 +134,14 @@ h1{margin:0;font-family:var(--display);font-weight:700;letter-spacing:.005em;tex
 <div class="tray"><span class="st">2 selected · last: LHR → IST → DPS</span><button class="cta" data-go="result">COMPOSE MY JOURNEY</button></div>
 </section>
 <section id="s-result" class="screen">
-<div class="pass"><div class="st"></div><div class="bd"><div style="font-size:11px;letter-spacing:.2em;color:rgba(2,3,10,.6)">A WORLD OF MUSIC · BOARDING PASS</div><div class="rt">LHR <span>→</span> IST <span>→</span> DPS</div><div class="meta"><div>PIECE<b>Wandering through Asia-Pacific</b></div><div>VOICE<b>Harp</b></div><div>TEMPO<b>84 BPM</b></div><div>DISTANCE<b>12,614 km</b></div></div></div><div class="ds"><span>SEAT</span><b style="font-size:20px">01A</b><span>355 · 133</span></div></div>
+<div class="pass"><div class="st"></div><div class="bd"><div style="display:flex;align-items:center;gap:12px"><img src="assets/tk-lockup-dark.png" alt="Turkish Airlines" style="height:24px;width:auto"><span style="font-size:11px;letter-spacing:.2em;color:rgba(2,3,10,.6)">A WORLD OF MUSIC · BOARDING PASS</span></div><div class="rt">LHR <span>→</span> IST <span>→</span> DPS</div><div class="meta"><div>PIECE<b>Wandering through Asia-Pacific</b></div><div>VOICE<b>Harp</b></div><div>TEMPO<b>84 BPM</b></div><div>DISTANCE<b>12,614 km</b></div></div></div><div class="ds"><span>SEAT</span><b style="font-size:20px">01A</b><span>355 · 133</span></div></div>
 <div class="box" style="margin-top:14px"><div class="ribbon"><i style="left:6%;top:30px;width:12%;background:var(--eu)"></i><i style="left:22%;top:14px;width:9%;background:var(--as)"></i><i style="left:40%;top:46px;width:16%;background:var(--am)"></i><i style="left:63%;top:24px;width:8%;background:var(--af)"></i><i style="left:78%;top:52px;width:12%;background:var(--mea)"></i><i style="left:58%;top:0;bottom:0;width:2px;background:#fff"></i></div>
 <div class="lab">ROUTES → MUSIC · CHORUS · 84 BPM</div>
 <div class="rows"><span>IST → DPS D3</span><span style="border-color:var(--eu)">LHR → IST D5</span><span style="border-color:var(--am)">IST → JFK C5</span></div></div>
 <div class="tray" style="margin-top:20px"><span class="st"></span><button class="ghost">AI VERSION</button><button class="cta" data-go="share">SHARE MY PIECE</button></div>
 </section>
 </main>
-<div class="sheet-back" id="sheet"><div class="sheet"><div class="tk-head">A WORLD OF MUSIC · SHARE MY PIECE</div>
+<div class="sheet-back" id="sheet"><div class="sheet"><div class="tk-head"><img src="assets/tk-lockup-dark.png" alt="Turkish Airlines" style="height:22px;width:auto;display:block;margin-bottom:8px">A WORLD OF MUSIC · SHARE MY PIECE</div>
 <button class="opt stub"><div><b>VIDEO</b><span>15 seconds · made for Reels and Stories</span></div><i>9:16 · MP4</i></button>
 <button class="opt stub"><div><b>CARD</b><span>Your globe and numbers · for Stories</span></div><i>9:16 · PNG</i></button>
 <button class="linkbtn">COPY LINK</button><button class="linkbtn" id="closeSheet">CLOSE</button></div></div>

@@ -7,12 +7,15 @@ VERSIONS=[
  ("v4","v4-boarding.html","Boarding Pass","Biniş kartı biçiminde kartlar, kırmızı şerit — küre tam ekran, buğulu.","lumen-aurora-vcard + crimson-mill card"),
 ]
 BASE_CSS = r"""
-@font-face{font-family:"TK Display Condensed";src:url(assets/fonts/TKDisplayCondensed-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Display";src:url(assets/fonts/TKDisplay-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Display";src:url(assets/fonts/TKDisplay-Bold.woff2) format("woff2");font-weight:700}
 @font-face{font-family:"TK Display Condensed";src:url(assets/fonts/TKDisplayCondensed-Bold.woff2) format("woff2");font-weight:700}
 @font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Regular.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"TK Text";src:url(assets/fonts/TKText-Medium.woff2) format("woff2");font-weight:500}
+@font-face{font-family:"TK Text";src:url(assets/fonts/TKText-SemiBold.woff2) format("woff2");font-weight:600}
+@font-face{font-family:"TK Text Wide";src:url(assets/fonts/TKTextWide-Regular.woff2) format("woff2");font-weight:400}
 @font-face{font-family:"TK Text Wide";src:url(assets/fonts/TKTextWide-Medium.woff2) format("woff2");font-weight:500}
-:root{--display:"TK Display Condensed","Arial Narrow",system-ui,sans-serif;--text:"TK Text",system-ui,sans-serif;--wide:"TK Text Wide","TK Text",system-ui,sans-serif}
+:root{--display:"TK Display",system-ui,sans-serif;--display-c:"TK Display Condensed","TK Display",system-ui,sans-serif;--text:"TK Text",system-ui,sans-serif;--wide:"TK Text Wide","TK Text",system-ui,sans-serif}
 :root{--night:#02030A;--panel:#0A0F22;--ink:#F2F5FA;--dim:rgba(242,245,250,.62);--faint:rgba(242,245,250,.34);--line:rgba(242,245,250,.16);--red:#C90119;--red2:#E30A17;
 --eu:#3FC8F2;--mea:#F7C548;--af:#7BD389;--as:#F2508F;--am:#A98BFF}
 *{box-sizing:border-box}html,body{margin:0;height:100%}
@@ -22,7 +25,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .globe{position:absolute;background:url(assets/globe-night.jpg) center/cover no-repeat}
 .veil{position:absolute;inset:0}
 .bar{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:16px 28px}
-.bar .logo{width:34px;height:34px;border-radius:50%;background:url(assets/tk-logo.png) center/cover}
+.bar .lockup{height:34px;width:auto;display:block}.bar .sep{width:1px;height:26px;background:var(--line)}
 .bar .tk{font-family:var(--wide);font-size:12px;letter-spacing:.2em}.bar .aw{font-family:var(--wide);font-size:11px;letter-spacing:.24em;color:var(--red2)}
 .bar .sw{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .bar .sw button{background:rgba(2,3,10,.55);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:12px;color:var(--dim);backdrop-filter:blur(6px)}
@@ -76,6 +79,7 @@ BASE_CSS += r"""
  .veil{background:linear-gradient(180deg,rgba(2,3,10,.82) 0%,rgba(2,3,10,.35) 34%,rgba(2,3,10,.3) 62%,rgba(2,3,10,.88) 100%)!important}
  body.v3 main{padding-left:16px}.rail{display:none}
  body.v1 #s-entry h1{font-size:46px}
+ .mode b{font-size:24px!important}
 }
 """
 V_CSS = {
@@ -83,12 +87,12 @@ V_CSS = {
 .globe{right:-18vw;bottom:-30vh;width:96vw;height:96vw;max-width:1500px;max-height:1500px;border-radius:50%;background-size:cover;background-position:center;opacity:.9;box-shadow:0 0 120px rgba(201,1,25,.25)}
 .veil{background:linear-gradient(90deg,#02030A 8%,rgba(2,3,10,.72) 42%,rgba(2,3,10,0) 74%),linear-gradient(0deg,rgba(2,3,10,.5),transparent 40%)}
 #s-entry{justify-content:center;max-width:720px;padding-left:2vw}
-#s-entry h1{font-size:clamp(44px,7vw,92px);line-height:.96;text-transform:uppercase;font-weight:700;letter-spacing:.005em}
+#s-entry h1{font-family:var(--display-c);font-size:clamp(48px,7.4vw,98px);line-height:.95;text-transform:uppercase;font-weight:700;letter-spacing:.005em}
 #s-entry h1 em{font-style:normal;color:var(--red2)}
 .hairline{width:64px;height:3px;background:var(--red);margin:22px 0}
 .modes{display:flex;flex-direction:column;margin-top:30px;border-top:1px solid var(--line)}
 .mode{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;backdrop-filter:none;padding:18px 4px;align-items:center;gap:18px}
-.mode .n{width:30px}.mode b{flex:1;font-size:28px;letter-spacing:.04em}
+.mode .n{width:30px}.mode b{flex:1;font-size:30px;letter-spacing:.04em;font-family:var(--display-c)}
 .mode i{display:none}.mode .arr{color:var(--red2);transition:transform .2s}.mode:hover .arr{transform:translateX(6px)}
 .mode:hover{border-color:var(--line);background:rgba(201,1,25,.08)}
 
@@ -107,7 +111,7 @@ V_CSS = {
 .globe{left:50%;bottom:-62vw;width:130vw;height:130vw;transform:translateX(-50%);border-radius:50%;box-shadow:0 -30px 140px rgba(63,200,242,.25),inset 0 0 120px rgba(2,3,10,.55)}
 .veil{background:radial-gradient(ellipse at 50% 10%,rgba(2,3,10,.2),rgba(2,3,10,.8) 70%),linear-gradient(180deg,rgba(2,3,10,.55),transparent 30%)}
 #s-entry{align-items:center;text-align:center;justify-content:center}
-#s-entry h1{font-size:clamp(46px,7vw,98px);line-height:.98}
+#s-entry h1{font-size:clamp(40px,5.2vw,76px);line-height:1}
 #s-entry .sub{margin-left:auto;margin-right:auto}
 .modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;width:min(900px,100%);margin-top:34px}
 .mode{flex-direction:column;gap:8px;border-radius:20px;border:1px solid rgba(242,245,250,.22);background:linear-gradient(160deg,rgba(242,245,250,.12),rgba(242,245,250,.03));backdrop-filter:blur(16px);padding:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
@@ -217,19 +221,19 @@ def sheet_html(v):
 <button class="opt row"><kbd>V</kbd><b>VIDEO</b><span>15 s · 9:16 · mp4 · Reels, Stories</span></button>
 <button class="opt row"><kbd>C</kbd><b>CARD</b><span>Image · 9:16 · Stories</span></button>
 <button class="opt row"><kbd>L</kbd><b>COPY LINK</b><span>worldofmusic-tk.web.app/?o=LHR&amp;v=DPS,JFK</span></button></div></div>"""
-    return """<div class="sheet-back" id="sheet"><div class="sheet"><div class="tk-head">A WORLD OF MUSIC · SHARE MY PIECE</div>
+    return """<div class="sheet-back" id="sheet"><div class="sheet"><div class="tk-head"><img src="assets/tk-lockup-dark.png" alt="Turkish Airlines" style="height:22px;width:auto;display:block;margin-bottom:8px">A WORLD OF MUSIC · SHARE MY PIECE</div>
 <button class="opt stub"><div><b>VIDEO</b><span>15 seconds · made for Reels and Stories</span></div><i>9:16 · MP4</i></button>
 <button class="opt stub"><div><b>CARD</b><span>Your globe and numbers · for Stories</span></div><i>9:16 · PNG</i></button>
 <button class="linkbtn">COPY LINK</button><button class="linkbtn" id="closeSheet">CLOSE</button></div></div>"""
 
 def build(v,fname,title,desc,src):
     rail = '<nav class="rail" aria-label="Steps"><button data-go="entry" class="on">01 MODE</button><button data-go="origin">02 FROM</button><button data-go="dests">03 PLACES</button><button data-go="result">04 PIECE</button></nav>' if v=="v3" else ""
-    result_top = ('<div class="pass"><div class="st"></div><div class="bd"><div style="font-size:11px;letter-spacing:.2em;color:rgba(2,3,10,.6)">A WORLD OF MUSIC · BOARDING PASS</div><div class="rt">LHR <span>→</span> IST <span>→</span> DPS</div><div class="meta"><div>PIECE<b>Wandering through Asia-Pacific</b></div><div>VOICE<b>Harp</b></div><div>TEMPO<b>84 BPM</b></div><div>DISTANCE<b>12,614 km</b></div></div></div><div class="ds"><span>SEAT</span><b style="font-size:20px">01A</b><span>355 · 133</span></div></div>'
+    result_top = ('<div class="pass"><div class="st"></div><div class="bd"><div style="display:flex;align-items:center;gap:12px"><img src="assets/tk-lockup-dark.png" alt="Turkish Airlines" style="height:24px;width:auto"><span style="font-size:11px;letter-spacing:.2em;color:rgba(2,3,10,.6)">A WORLD OF MUSIC · BOARDING PASS</span></div><div class="rt">LHR <span>→</span> IST <span>→</span> DPS</div><div class="meta"><div>PIECE<b>Wandering through Asia-Pacific</b></div><div>VOICE<b>Harp</b></div><div>TEMPO<b>84 BPM</b></div><div>DISTANCE<b>12,614 km</b></div></div></div><div class="ds"><span>SEAT</span><b style="font-size:20px">01A</b><span>355 · 133</span></div></div>'
                   if v=="v4" else
                   '<div class="eyebrow">YOUR PIECE</div><h1 style="font-size:clamp(28px,4vw,52px)">Wandering through Asia-Pacific</h1><div class="stats"><span class="stat">5 DESTINATIONS</span><span class="stat">5 COUNTRIES</span><span class="stat">41,667 KM</span><span class="stat">SIGNATURE · HARP</span></div>')
     html=f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title} — A World of Music</title>{FONTS}<style>{BASE_CSS}{V_CSS[v]}</style></head><body class="{v}">
 <div class="stage"><div class="globe"></div><div class="veil"></div></div>
-<header class="bar"><div class="logo" role="img" aria-label="Turkish Airlines"></div><div><div class="tk">TURKISH AIRLINES</div><div class="aw">A WORLD OF MUSIC</div></div>
+<header class="bar"><img class="lockup" src="assets/tk-lockup-light.png" alt="Turkish Airlines">
 <div class="sw"><button data-go="entry" class="on">Giriş</button><button data-go="origin">Nereden</button><button data-go="dests">Nereye</button><button data-go="result">Sonuç</button><button data-go="share">Paylaş</button></div></header>
 {rail}
 <main>
