@@ -384,4 +384,4 @@ body { background: #02030a; }
 .tab.on { color: var(--ink); border-color: var(--ink); }
 .personal-warn { color: var(--amber); }
 .area { display: flex; flex-direction: column; gap: 2vmin; }
-.area-head { margin: 1.5vmin 0 0; padding-bottom: 1vmin; border-bottom: 1px solid var(--line); font-weight: 400; letter-spacing: 0.2em; text-transform: uppercase; font-size: clamp(13px, 1.9vmin, 19px); }
+.area-head { margin: 1.5vmin 0 0; padding-bottom: 1vmin; border-bottom: 1px solid var(--line); font-weight: 400; letter-spacing: 0.2em; font-size: clamp(13px, 1.9vmin, 19px); }

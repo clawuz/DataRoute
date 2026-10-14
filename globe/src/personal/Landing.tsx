@@ -146,7 +146,7 @@ export function Landing({ onCompose, onLive }: Props) {
       <div className="picker-groups">
         {sections.map((a) => (
           <div key={a.id} className="area">
-            <h2 className="area-head">{a.label} destinations</h2>
+            <h2 className="area-head">{a.upper} DESTINATIONS</h2>
             {a.groups.map((g) => (
               <section key={g.iso} className="group">
                 <h3 className="group-head" style={{ color: REGION_HEX[g.region] }}>{flagOf(g.iso)} {g.country}</h3>
