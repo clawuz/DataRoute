@@ -13,7 +13,7 @@ import { MusicScope } from "../hud/MusicScope";
 import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
-import { REEL_H, REEL_SECONDS, REEL_W, drawGlobeFrame, drawReelBackdrop, drawScopeFrame } from "./reel";
+import { REEL_H, REEL_SECONDS, REEL_W, drawReelOverlay, drawScopeFrame } from "./reel";
 import { chooseDelivery, extOf, pickMime, recordClip } from "./clip";
 
 interface Props {
@@ -258,18 +258,28 @@ export function Experience({ selection, onBack }: Props) {
       } catch {
         /* system fonts */
       }
-      // a 9:16 canvas (Reels / Stories), filled from the live render once per frame
+      // The reel is the globe scene itself at 9:16: the stage canvas is laid out as a 1080×1920 backbuffer (CSS size ÷ pixel
+      // ratio) and scaled down to fit the window while it records; the lockup and the music box are drawn over every frame.
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cssW = REEL_W / dpr;
+      const cssH = REEL_H / dpr;
+      const k = Math.min(1, (window.innerHeight - 24) / cssH);
+      canvas.style.cssText = `position:fixed;inset:auto;left:50%;top:12px;width:${cssW}px;height:${cssH}px;transform-origin:top center;transform:translateX(-50%) scale(${k});z-index:15;cursor:default`;
+      document.body.classList.add("recording-reel");
+      // the engine re-sizes itself to the new canvas: wait until its backbuffer is the reel's size (at most ~4 s)
+      for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 250));
       const comp = document.createElement("canvas");
       comp.width = REEL_W;
       comp.height = REEL_H;
       const cctx = comp.getContext("2d")!;
-      const back = document.createElement("canvas");
-      back.width = REEL_W;
-      back.height = REEL_H;
-      drawReelBackdrop(back.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo });
+      const overlay = document.createElement("canvas");
+      overlay.width = REEL_W;
+      overlay.height = REEL_H;
+      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.dests, url: url(), logo });
       engine.setAfterRender(() => {
-        cctx.drawImage(back, 0, 0);
-        drawGlobeFrame(cctx, canvas);
+        cctx.drawImage(canvas, 0, 0, REEL_W, REEL_H);
+        cctx.drawImage(overlay, 0, 0);
         // the music box as it is on screen: its canvas, its label and the routes sounding now
         const box = document.querySelector<HTMLElement>(".music-scope");
         drawScopeFrame(cctx, {
@@ -298,6 +308,8 @@ export function Experience({ selection, onBack }: Props) {
       say("COULD NOT RECORD THE VIDEO");
     } finally {
       engine.setAfterRender(null);
+      canvas.style.cssText = "";
+      document.body.classList.remove("recording-reel");
       playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
       setBusy(null);
     }
@@ -341,6 +353,7 @@ export function Experience({ selection, onBack }: Props) {
           </div>
         </div>
       )}
+      {busy === "VIDEO" && <div className="recording-note">RECORDING YOUR STORY · {REEL_SECONDS} S</div>}
       {toast && <div className="notice">{toast}</div>}
     </>
   );

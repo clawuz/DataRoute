@@ -396,3 +396,8 @@ body { background: #02030a; }
 .sheet-link { font: inherit; letter-spacing: 0.16em; font-size: 12px; color: var(--ink-dim); background: none; border: 0; padding: 8px; cursor: pointer; }
 .stage { cursor: grab; }
 .stage:active { cursor: grabbing; }
+
+/* the reel is recorded from the stage canvas laid out as 9:16: the page UI steps aside, the music box keeps drawing (invisible) */
+body.recording-reel .personal-hud, body.recording-reel .personal-actions, body.recording-reel .sheet-back, body.recording-reel .tap-play { visibility: hidden; }
+body.recording-reel .music-scope { opacity: 0; }
+.recording-note { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 30; padding: 8px 16px; border-radius: 99px; background: rgba(227, 10, 23, 0.9); color: #fff; letter-spacing: 0.18em; font-size: 12px; }

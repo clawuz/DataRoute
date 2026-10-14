@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { drawCard } from "../src/personal/card";
-import { GLOBE_BOX, SCOPE_BOX, drawReelBackdrop, drawScopeFrame } from "../src/personal/reel";
+import { SCOPE_BOX, drawReelOverlay, drawScopeFrame } from "../src/personal/reel";
 import { SAFE_LAST_Y, SAFE_TOP, STORY_H } from "../src/personal/safe";
 import { pieceStats } from "../src/personal/stats";
 import { buildRoutes } from "../src/personal/routes";
@@ -63,16 +63,15 @@ describe("Instagram Story safe area", () => {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SCOPE_BOX.y);
     }
   });
-  it("keeps the reel's text, globe window and music box inside the band", () => {
+  it("keeps the reel's text and music box inside the band", () => {
     const r = recorder();
-    drawReelBackdrop(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(512, 512) });
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(512, 512) });
     drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [1, 2, 3, 4, 5, 6].map((i) => ({ text: `IST → DPS ${i}`, color: "#fff" })) });
     for (const t of r.texts) {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);
       expect(t.y, t.text).toBeLessThanOrEqual(SAFE_LAST_Y);
     }
-    expect(GLOBE_BOX.y).toBeGreaterThanOrEqual(SAFE_TOP);
     expect(SCOPE_BOX.y + SCOPE_BOX.h).toBeLessThanOrEqual(SAFE_LAST_Y);
-    expect(GLOBE_BOX.y + GLOBE_BOX.size).toBeLessThan(SCOPE_BOX.y);
+    expect(SCOPE_BOX.y).toBeGreaterThanOrEqual(SAFE_TOP);
   });
 });
