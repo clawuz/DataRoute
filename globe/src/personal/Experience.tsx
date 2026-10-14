@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
-import { routeKey } from "../audio/theory";
-import { composePiece } from "./compose";
+import { composePiece, type PersonalNote, type PersonalPiece } from "./compose";
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
@@ -18,17 +17,18 @@ interface Props {
   onBack(): void;
 }
 
-const SPAN = 86400;
 
 export function Experience({ selection, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<PersonalPlayer | null>(null);
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [night, setNight] = useState(true);
+  const [sheet, setSheet] = useState(false);
+  const litRef = useRef<((flight: number) => void) | null>(null);
+  const noteCbRef = useRef<((n: PersonalNote) => void) | null>(null);
+  const pieceRef = useRef<PersonalPiece | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [muted, setMuted] = useState(false);
   const [toast, setToast] = useState("");
   const [now, setNow] = useState<string[]>([]);
 
@@ -44,17 +44,23 @@ export function Experience({ selection, onBack }: Props) {
     const canvas = canvasRef.current!;
     let engine: GlobeEngine;
     try {
-      engine = createGlobeEngine(canvas, { reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches, onError: setError, alwaysPlanned: true });
+      engine = createGlobeEngine(canvas, { reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches, onError: setError, boldTracks: true });
     } catch (e) {
       setError(String(e));
       return;
     }
     engineRef.current = engine;
-    engine.setNight(true);
-    engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
+    engine.setNight(true); // always the night side: the lights and the routes read best on it
+    engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: false, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
-    engine.setModel(buildPersonalModel(routes), SPAN, nowSec());
-    engine.setFrameSource(() => ({ absTime: nowSec(), cur: SPAN, highlight: -1, nowSec: nowSec() }));
+    const model = buildPersonalModel(routes);
+    engine.setModel(model, model.span, nowSec());
+    // the track of the route that is sounding is lit for a moment (the arcs keep their region colours)
+    let lit = { flight: -1, until: 0 };
+    litRef.current = (flight) => {
+      lit = { flight, until: performance.now() + 520 };
+    };
+    engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: performance.now() < lit.until ? lit.flight : -1, nowSec: nowSec() }));
     void engine.loadTextures(() => {}).catch(() => {});
 
     let player: PersonalPlayer | null = null;
@@ -63,16 +69,18 @@ export function Experience({ selection, onBack }: Props) {
       const ctx = new AC();
       player = createPersonalPlayer(ctx);
       playerRef.current = player;
+      pieceRef.current = piece;
+      noteCbRef.current = (n) => {
+        const r = n.route >= 0 ? routes[n.route] : undefined;
+        if (!r) return;
+        litRef.current?.(n.route);
+        engine.pulseAirport(r.to, nowSec());
+        engine.pulseAirport(r.from, nowSec());
+        const far = destinationOf(r.to === "IST" ? r.from : r.to);
+        if (far) setNow((p) => [...p.slice(-3), `${flagOf(far.iso)} ${r.from} → ${r.to} · ${far.city}`]);
+      };
       const start = () => {
-        player?.play(piece, (n) => {
-          const r = routes[n.route];
-          if (!r) return;
-          engine.pulseRoute(routeKey(r.from, r.to, ""));
-          engine.pulseAirport(r.to, nowSec());
-          engine.pulseAirport(r.from, nowSec());
-          const far = destinationOf(r.to === "IST" || r.to === "SAW" ? r.from : r.to);
-          if (n.instrument !== "CELLO" && far) setNow((p) => [...p.slice(-3), `${flagOf(far.iso)} ${r.from} → ${r.to} · ${far.city}`]);
-        });
+        player?.play(piece, (n) => noteCbRef.current?.(n));
         setRunning(true);
       };
       start();
@@ -91,13 +99,10 @@ export function Experience({ selection, onBack }: Props) {
       player?.dispose();
       playerRef.current = null;
       engineRef.current = null;
+      noteCbRef.current = null;
       engine.dispose();
     };
   }, [routes, piece]);
-
-  useEffect(() => {
-    engineRef.current?.setNight(night);
-  }, [night]);
 
   const url = () => `${window.location.origin}${window.location.pathname}${searchFromSelection(selection)}`;
   const share = async () => {
@@ -197,6 +202,14 @@ export function Experience({ selection, onBack }: Props) {
         cctx.drawImage(back, 0, 0);
         drawGlobeFrame(cctx, canvas);
       });
+      // the clip's sound is the chorus (the best 15 s), restarted from its first note; afterwards the whole piece goes on
+      const hookPiece: PersonalPiece = {
+        ...piece,
+        notes: piece.notes.filter((n) => n.t >= piece.hook).map((n) => ({ ...n, t: n.t - piece.hook })),
+        duration: piece.duration - piece.hook,
+        hook: 0,
+      };
+      playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n));
       const stream = comp.captureStream(30);
       audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
       const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);
@@ -206,6 +219,7 @@ export function Experience({ selection, onBack }: Props) {
       say("COULD NOT RECORD THE VIDEO");
     } finally {
       engine.setAfterRender(null);
+      playerRef.current?.play(piece, (n) => noteCbRef.current?.(n));
       setBusy(null);
     }
   };
@@ -231,12 +245,27 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
       <div className="personal-actions">
-        <button type="button" className="compose-btn" onClick={share}>SHARE MY PIECE</button>
-        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveCard}>{busy === "CARD" ? "MAKING…" : "CARD"}</button>
-        <button type="button" className="ghost-btn" disabled={!!busy} onClick={saveClip}>{busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : "VIDEO"}</button>
-        <button type="button" className="ghost-btn" onClick={() => setNight((n) => !n)}>{night ? "NIGHT" : "DAY"}</button>
-        <button type="button" className="ghost-btn" onClick={() => { const m = !muted; setMuted(m); playerRef.current?.setMuted(m); }}>{muted ? "SOUND OFF" : "SOUND ON"}</button>
+        <button type="button" className="compose-btn" disabled={!!busy} onClick={() => setSheet(true)}>
+          {busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : busy === "CARD" ? "MAKING THE CARD…" : "SHARE MY PIECE"}
+        </button>
       </div>
+      {sheet && (
+        <div className="sheet-back" onClick={() => setSheet(false)} role="dialog" aria-label="Share my piece">
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <h2 className="sheet-title">Share my piece</h2>
+            <button type="button" className="sheet-opt" onClick={() => { setSheet(false); void saveClip(); }}>
+              <span className="sheet-opt-name">VIDEO</span>
+              <span className="sheet-opt-desc">{REEL_SECONDS} seconds · 9:16 · made for Instagram Reels and Stories</span>
+            </button>
+            <button type="button" className="sheet-opt" onClick={() => { setSheet(false); void saveCard(); }}>
+              <span className="sheet-opt-name">CARD</span>
+              <span className="sheet-opt-desc">An image of your globe and numbers · 4:5 · for feed posts</span>
+            </button>
+            <button type="button" className="sheet-link" onClick={() => { setSheet(false); void share(); }}>COPY LINK</button>
+            <button type="button" className="sheet-link" onClick={() => setSheet(false)}>CLOSE</button>
+          </div>
+        </div>
+      )}
       {toast && <div className="notice">{toast}</div>}
     </>
   );

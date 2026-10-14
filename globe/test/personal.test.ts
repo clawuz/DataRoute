@@ -5,7 +5,7 @@ import { buildRoutes, stopovers } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
 import { buildPersonalModel } from "../src/personal/model";
 import { pieceStats } from "../src/personal/stats";
-import { buildArcBuffers } from "../src/scene/arcs";
+import { buildArcBuffers, isBreak } from "../src/scene/arcs";
 
 describe("destinations", () => {
   it("has unique IATA codes and valid coordinates", () => {
@@ -131,6 +131,25 @@ describe("codec", () => {
 });
 
 describe("compose", () => {
+  it("is a full-length piece: about two and a half to three minutes", () => {
+    const all = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG"];
+    for (const mode of ["visited", "wish"] as const) {
+      for (const n of [1, 5, 25]) {
+        const p = composePiece(mode, buildRoutes("IST", all.slice(0, n)));
+        expect(p.duration, `${mode} ${n}`).toBeGreaterThan(140);
+        expect(p.duration, `${mode} ${n}`).toBeLessThan(200);
+        expect(p.hook).toBeGreaterThan(40);
+        expect(p.hook).toBeLessThan(p.duration - 30);
+      }
+    }
+  });
+  it("plays every route at least once and marks the accompaniment", () => {
+    const routes = buildRoutes("LHR", ["DPS", "JFK", "NRT", "GRU", "CAI"]);
+    const p = composePiece("visited", routes);
+    const heard = new Set(p.notes.filter((n) => n.route >= 0).map((n) => n.route));
+    expect(heard.size).toBe(routes.length);
+    expect(p.notes.some((n) => n.route === -1 && n.instrument === "STR")).toBe(true);
+  });
   it("is deterministic and keeps every note inside the duration", () => {
     const routes = buildRoutes("LHR", ["DPS", "JFK", "NRT", "GRU", "CAI"]);
     const a = composePiece("visited", routes);
@@ -145,7 +164,8 @@ describe("compose", () => {
   it("moods differ and an empty piece is empty", () => {
     const routes = buildRoutes("IST", ["DPS", "JFK"]);
     expect(composePiece("wish", routes)).not.toEqual(composePiece("visited", routes));
-    expect(composePiece("wish", [])).toEqual({ notes: [], duration: 0 });
+    expect(composePiece("wish", []).notes).toEqual([]);
+    expect(composePiece("wish", []).duration).toBe(0);
   });
 });
 
@@ -157,6 +177,9 @@ describe("personal model and stats", () => {
     expect(m.airports.IST).toBeDefined();
     expect(m.traffic.get("IST")).toBe(3);
     expect(buildArcBuffers(m, { planned: true })).toBeTruthy();
+    // no flown track may be split by the coverage-gap rule, however long the route
+    const longRoute = buildPersonalModel(buildRoutes("IST", ["GRU", "SYD", "LAX"]));
+    for (const f of longRoute.flights) for (let i = 0; i + 1 < f.t.length; i++) expect(isBreak(f, i)).toBe(false);
   });
   it("summarises the piece", () => {
     const routes = buildRoutes("LHR", ["DPS", "JFK"]);

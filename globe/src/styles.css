@@ -385,3 +385,12 @@ body { background: #02030a; }
 .personal-warn { color: var(--amber); }
 .area { display: flex; flex-direction: column; gap: 2vmin; }
 .area-head { margin: 1.5vmin 0 0; padding-bottom: 1vmin; border-bottom: 1px solid var(--line); font-weight: 400; letter-spacing: 0.2em; font-size: clamp(13px, 1.9vmin, 19px); }
+
+.sheet-back { position: fixed; inset: 0; z-index: 20; display: flex; align-items: flex-end; justify-content: center; background: rgba(2, 3, 10, 0.6); backdrop-filter: blur(4px); }
+.sheet { width: min(520px, 100vw); padding: 24px 20px 28px; display: flex; flex-direction: column; gap: 12px; background: #0a0f22; border: 1px solid var(--line-strong); border-radius: 18px 18px 0 0; }
+.sheet-title { margin: 0 0 4px; font-weight: 400; letter-spacing: 0.18em; font-size: 16px; text-align: center; }
+.sheet-opt { font: inherit; color: var(--ink); text-align: left; display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: rgba(233, 237, 245, 0.06); border: 1px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
+.sheet-opt:hover, .sheet-opt:focus-visible { border-color: var(--thy); background: rgba(227, 10, 23, 0.12); }
+.sheet-opt-name { letter-spacing: 0.2em; font-size: 15px; }
+.sheet-opt-desc { color: var(--ink-dim); font-size: 13px; line-height: 1.4; }
+.sheet-link { font: inherit; letter-spacing: 0.16em; font-size: 12px; color: var(--ink-dim); background: none; border: 0; padding: 8px; cursor: pointer; }

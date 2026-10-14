@@ -43,6 +43,8 @@ export interface GlobeEngineOptions {
   onError?: (msg: string) => void;
   /** draw the planned great circles even when corridors are on (the personal globe has no flown tracks) */
   alwaysPlanned?: boolean;
+  /** draw flown tracks only (no dotted planned great circles) and brighten / thicken them — the personal globe */
+  boldTracks?: boolean;
 }
 
 export interface GlobeEngine {
@@ -144,7 +146,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let texs: EarthTextures | null = null;
   let arcs: Arcs | null = null;
   let corridors: Corridors | null = null; // art:corridors
-  const planned = () => !!opts.alwaysPlanned || !(effects?.corridors ?? false); // art:corridors
+  const planned = () => !opts.boldTracks && (!!opts.alwaysPlanned || !(effects?.corridors ?? false)); // art:corridors
   let airports: Airports | null = null;
   let model: GlobeModel | null = null;
   let pickIndex: PickIndex | null = null;
@@ -357,6 +359,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     if (!model) return;
     arcs = createArcs(model, { planned: planned() });
+    if (opts.boldTracks) {
+      arcs.uniforms.uGain.value = 2.6;
+      arcs.uniforms.uWidthK.value = 1.7;
+    }
     earthGroup.add(arcs.mesh);
     if (effects?.corridors) {
       corridors = createCorridors(model);

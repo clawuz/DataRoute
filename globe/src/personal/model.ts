@@ -1,11 +1,14 @@
 import type { DayAirport } from "@collector/day-schema";
 import type { GlobeFlight, GlobeModel } from "../model/globe-model";
 import { REGIONS } from "@web/data/palette";
+import { plannedArc } from "../geo3d/great";
+import { PLANNED_CRUISE100 } from "../scene/arcs";
 import { destinationOf } from "./destinations";
 import type { PersonalRoute } from "./routes";
 
-const span = 86400;
-const E = new Float32Array(0);
+const SAMPLES = 48;
+/** the tracks are drawn, not flown: 0.35 s of track time per km keeps every sample closer than the arc code's coverage-gap limit */
+const SEC_PER_KM = 0.35;
 
 /**
  * A synthetic model the globe engine can draw: one planned great circle per route, no flown track.
@@ -14,7 +17,23 @@ const E = new Float32Array(0);
 export function buildPersonalModel(routes: PersonalRoute[]): GlobeModel {
   const airports: Record<string, DayAirport> = {};
   const traffic = new Map<string, number>();
+  // every route is drawn as a flown track (coloured by region, like the live flights), all ending at the same instant
+  const durs = routes.map((r) => Math.max(300, r.distKm * SEC_PER_KM));
+  const span = Math.max(600, ...durs) + 60;
   const flights = routes.map((r, i): GlobeFlight => {
+    const dur = durs[i];
+    const dep = span - 60 - dur;
+    const { points } = plannedArc({ lat: r.fromLat, lon: r.fromLon }, { lat: r.toLat, lon: r.toLon }, SAMPLES);
+    const t = new Float32Array(points.length);
+    const alt = new Float32Array(points.length);
+    const lat = new Float32Array(points.length);
+    const lon = new Float32Array(points.length);
+    points.forEach((p, k) => {
+      t[k] = dep + p.u * dur;
+      alt[k] = PLANNED_CRUISE100 * Math.pow(Math.sin(Math.PI * p.u), 0.6);
+      lat[k] = p.lat;
+      lon[k] = p.lon;
+    });
     for (const code of [r.from, r.to]) {
       const d = destinationOf(code);
       if (d) {
@@ -32,16 +51,16 @@ export function buildPersonalModel(routes: PersonalRoute[]): GlobeModel {
       region: r.region,
       regionIdx: regionIdx < 0 ? REGIONS.length - 1 : regionIdx,
       bearing: 0,
-      dep: 0,
-      end: span,
+      dep,
+      end: dep + dur,
       airborne: false,
-      t: E,
-      alt: E,
-      lat: E,
-      lon: E,
-      status: "LAST_CONTACT",
+      t,
+      alt,
+      lat,
+      lon,
+      status: "LANDED",
       gaps: [],
-      lastT: 0,
+      lastT: dep + dur,
       planned: { fromLat: r.fromLat, fromLon: r.fromLon, toLat: r.toLat, toLon: r.toLon, distKm: r.distKm },
     };
   });
