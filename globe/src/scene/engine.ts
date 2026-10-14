@@ -43,8 +43,8 @@ export interface GlobeEngineOptions {
   onError?: (msg: string) => void;
   /** draw the planned great circles even when corridors are on (the personal globe has no flown tracks) */
   alwaysPlanned?: boolean;
-  /** draw flown tracks only (no dotted planned great circles) and brighten / thicken them — the personal globe */
-  boldTracks?: boolean;
+  /** the personal globe: no airport markers (the routes meet at the hub on their own); lines are drawn exactly like the live globe */
+  noAirports?: boolean;
 }
 
 export interface GlobeEngine {
@@ -68,6 +68,8 @@ export interface GlobeEngine {
 }
 
 const DRAG_RAD_PER_PX = 0.0045;
+/** the personal globe's few routes are drawn against a live-like busiest corridor of this many flights */
+const PERSONAL_CORRIDOR_REF = 24;
 
 /** a sun direction behind the globe as seen from the camera, nudged so the terminator crosses the limb */
 export function nightSun(cam: [number, number, number]): [number, number, number] {
@@ -146,7 +148,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let texs: EarthTextures | null = null;
   let arcs: Arcs | null = null;
   let corridors: Corridors | null = null; // art:corridors
-  const planned = () => !opts.boldTracks && (!!opts.alwaysPlanned || !(effects?.corridors ?? false)); // art:corridors
+  const planned = () => !!opts.alwaysPlanned || !(effects?.corridors ?? false); // art:corridors
   let airports: Airports | null = null;
   let model: GlobeModel | null = null;
   let pickIndex: PickIndex | null = null;
@@ -359,15 +361,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     }
     if (!model) return;
     arcs = createArcs(model, { planned: planned() });
-    if (opts.boldTracks) {
-      arcs.uniforms.uGain.value = 1.0;
-      arcs.uniforms.uWidthK.value = 2.1;
-      arcs.uniforms.uHiMix.value = 0; // a sounding route stays in its own colour
-      arcs.uniforms.uHiFull.value = 1;
-    }
     earthGroup.add(arcs.mesh);
     if (effects?.corridors) {
-      corridors = createCorridors(model);
+      corridors = createCorridors(model, { refMax: opts.noAirports ? PERSONAL_CORRIDOR_REF : 0 });
       earthGroup.add(corridors.mesh);
     }
     if (sized) {
@@ -392,7 +388,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       model = m;
       if (m) {
         rebuildOverlays(); // art:corridors
-        if (!opts.boldTracks) { // the personal globe draws no airport rings: the tracks meet at the hub on their own
+        if (!opts.noAirports) { // the personal globe draws no airport rings: the tracks meet at the hub on their own
           airports = createAirports(m);
           earthGroup.add(airports.points);
         }

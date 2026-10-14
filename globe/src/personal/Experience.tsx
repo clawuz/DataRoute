@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
+import { routeKey } from "../audio/theory";
 import { composePiece, type PersonalNote, type PersonalPiece } from "./compose";
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
@@ -27,7 +28,6 @@ export function Experience({ selection, onBack }: Props) {
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
-  const litRef = useRef<((flight: number) => void) | null>(null);
   const noteCbRef = useRef<((n: PersonalNote) => void) | null>(null);
   const pieceRef = useRef<PersonalPiece | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,23 +49,18 @@ export function Experience({ selection, onBack }: Props) {
     const canvas = canvasRef.current!;
     let engine: GlobeEngine;
     try {
-      engine = createGlobeEngine(canvas, { reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches, onError: setError, boldTracks: true });
+      engine = createGlobeEngine(canvas, { reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches, onError: setError, noAirports: true });
     } catch (e) {
       setError(String(e));
       return;
     }
     engineRef.current = engine;
     engine.setNight(true); // always the night side: the lights and the routes read best on it
-    engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: false, sound: false, starMap: true });
+    engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     const model = buildPersonalModel(routes);
     engine.setModel(model, model.span, nowSec());
-    // the track of the route that is sounding is lit for a moment (the arcs keep their region colours)
-    let lit = { flight: -1, until: 0 };
-    litRef.current = (flight) => {
-      lit = { flight, until: performance.now() + 520 };
-    };
-    engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: performance.now() < lit.until ? lit.flight : -1, nowSec: nowSec() }));
+    engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: -1, nowSec: nowSec() }));
     void engine.loadTextures(() => {}).catch(() => {});
 
     // drag to turn the globe (the card and the video take whatever angle is on screen)
@@ -101,7 +96,7 @@ export function Experience({ selection, onBack }: Props) {
       noteCbRef.current = (n) => {
         const r = n.route >= 0 ? routes[n.route] : undefined;
         if (!r) return;
-        litRef.current?.(n.route);
+        engine.pulseRoute(routeKey(r.from, r.to, "")); // the live globe's flash: the corridor of the sounding route
       };
       // the music box: a note appears on the ribbon three seconds before it sounds
       planCbRef.current = (n, wallAt) => {

@@ -101,13 +101,14 @@ export interface CorridorBuffers {
 
 const R_KM = 6371.0088;
 
-export function buildCorridorBuffers(cs: Corridor[]): CorridorBuffers {
+/** `refMax`: the busiest corridor is taken to carry at least this many flights, so a handful of routes read as quiet (thin, cool) like the live globe's minor routes instead of all being 'the busiest' */
+export function buildCorridorBuffers(cs: Corridor[], refMax = 0): CorridorBuffers {
   const n = (CORRIDOR_POINTS - 1) * cs.length;
   const out: CorridorBuffers = {
     a: new Float32Array(n * 3), b: new Float32Array(n * 3), u: new Float32Array(n * 2), s: new Float32Array(n * 2),
     color: new Float32Array(n * 3), misc: new Float32Array(n * 4), count: n,
   };
-  const max = cs.length ? cs[0].count : 0;
+  const max = cs.length ? Math.max(cs[0].count, refMax) : 0;
   let i = 0;
   cs.forEach((c, ci) => {
     const w = corridorWeight(c.count, max);
@@ -209,9 +210,9 @@ export interface Corridors {
   dispose(): void;
 }
 
-export function createCorridors(m: GlobeModel): Corridors {
+export function createCorridors(m: GlobeModel, opts: { refMax?: number } = {}): Corridors {
   const corridors = buildCorridors(m);
-  const buf = buildCorridorBuffers(corridors);
+  const buf = buildCorridorBuffers(corridors, opts.refMax ?? 0);
   const geometry = new InstancedBufferGeometry();
   geometry.setIndex([0, 1, 2, 2, 1, 3]);
   geometry.setAttribute("position", new Float32BufferAttribute(new Float32Array(12), 3));
