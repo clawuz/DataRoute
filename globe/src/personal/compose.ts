@@ -179,8 +179,9 @@ export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalS
   // mostly symphonic; a mostly Turkish / Middle-Eastern selection leans to the folk sound
   const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
   const g = r();
-  // the live card's own symphonic recording is the base; the rule-built families colour it now and then
-  const genre: Genre = anatolian >= 0.5 && g < 0.2 ? "folk" : g < 0.6 ? "live" : g < 0.8 ? "symphonic" : g < 0.88 ? "chamber" : g < 0.95 ? "folk" : "pulse";
+  // mostly the symphonic sound built from the routes' own voices; the live card's recording, the chamber, folk and
+  // pulse families come now and then
+  const genre: Genre = anatolian >= 0.5 && g < 0.4 ? "folk" : g < 0.62 ? "symphonic" : g < 0.72 ? "live" : g < 0.84 ? "chamber" : g < 0.93 ? "folk" : "pulse";
   return {
     genre,
     bpm: lo + Math.floor(r() * (hi - lo + 1)),

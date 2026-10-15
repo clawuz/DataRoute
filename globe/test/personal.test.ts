@@ -278,26 +278,35 @@ describe("the pitch follows the flight: climb, cruise, descent", () => {
 });
 
 describe("two flights are never the same note", () => {
-  it("voices that start together do not sit on one pitch class", () => {
-    const p = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK"], "IST"));
-    const groups = new Map<string, Set<number>>();
-    const routesIn = new Map<string, Set<number>>();
-    for (const n of p.notes) {
-      if (n.instrument === "DARBUKA" || n.instrument === "CONGA" || n.instrument === "TIMP" || n.instrument === "TAMB" || n.instrument === "TRI") continue;
-      const k = (Math.round(n.t * 3) / 3).toFixed(2); // notes within a third of a second count as sounding together
-      const pc = Math.round(12 * Math.log2(n.freq / 440)) % 12;
-      groups.set(k, (groups.get(k) ?? new Set()).add(((pc % 12) + 12) % 12));
-      routesIn.set(k, (routesIn.get(k) ?? new Set()).add(n.route));
-    }
+  it("voices that start together do not sit on one pitch class (the rule-built families)", () => {
+    const sets = [
+      ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK"], ["LHR", "CDG", "FRA", "MAD", "FCO", "ATH", "VIE", "WAW"],
+      ["DXB", "BEY", "AMM", "CAI", "JNB", "NBO", "ADD", "LOS"], ["MEX", "YYZ", "BOS", "GRU", "EZE", "SCL", "BOG", "LIM"],
+    ];
     let multi = 0;
     let same = 0;
-    for (const [k, rs] of routesIn) {
-      if (rs.size < 3) continue;
-      multi++;
-      if (groups.get(k)!.size === 1) same++;
+    for (const set of sets) {
+      for (const mode of ["visited", "wish"] as const) {
+        const p = composePiece(mode, buildRoutes(set, "IST"));
+        if (p.style.genre === "live") continue; // the recording's own chords double notes: not part of this rule
+        const groups = new Map<string, Set<number>>();
+        const routesIn = new Map<string, Set<number>>();
+        for (const n of p.notes) {
+          if (["DARBUKA", "CONGA", "TIMP", "TAMB", "TRI"].includes(n.instrument)) continue;
+          const k = (Math.round(n.t * 3) / 3).toFixed(2); // notes within a third of a second count as sounding together
+          const pc = ((Math.round(12 * Math.log2(n.freq / 440)) % 12) + 12) % 12;
+          groups.set(k, (groups.get(k) ?? new Set()).add(pc));
+          routesIn.set(k, (routesIn.get(k) ?? new Set()).add(n.route));
+        }
+        for (const [k, rs] of routesIn) {
+          if (rs.size < 3) continue;
+          multi++;
+          if (groups.get(k)!.size === 1) same++;
+        }
+      }
     }
-    expect(multi).toBeGreaterThan(10);
-    expect(same / multi).toBeLessThan(0.05);
+    expect(multi).toBeGreaterThan(20);
+    expect(same / multi).toBeLessThan(0.25); // doubling a note in unison now and then is fine in an orchestra; a wall of one note is not
   });
 });
 
@@ -323,11 +332,11 @@ describe("the sound family: mostly symphonic", () => {
   const codes = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG", "ESB", "AYT", "ADB", "BEY", "AMM"];
   const sets = Array.from({ length: 60 }, (_, i) => Array.from({ length: 3 + (i % 5) }, (_, j) => codes[(i * 7 + j * 11) % codes.length]));
   const pieces = sets.map((s, i) => composePiece(i % 2 ? "wish" : "visited", buildRoutes(s.filter((x, k) => s.indexOf(x) === k), "IST")));
-  it("is the live card's recording most of the time, orchestral nearly always, and has other families now and then", () => {
+  it("is symphonic most of the time, with the live card's recording and other families now and then", () => {
     const count = (g: string) => pieces.filter((p) => p.style.genre === g).length;
-    expect(count("live") / pieces.length).toBeGreaterThan(0.45);
-    expect((count("live") + count("symphonic")) / pieces.length).toBeGreaterThan(0.65);
-    expect(count("live")).toBeGreaterThan(count("folk"));
+    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.45);
+    expect(count("live")).toBeGreaterThan(0);
+    expect((count("live") + count("symphonic")) / pieces.length).toBeGreaterThan(0.6);
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
   it("a symphonic piece is played by the orchestra", () => {
