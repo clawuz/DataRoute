@@ -24,6 +24,8 @@ ONE_SHOTS = [  # exact files under Percussion/
     "Timpani/Timpani1_Hit_v3_rr1_Sum.wav", "Timpani/Timpani2_Hit_v3_rr1_Sum.wav", "Timpani/Timpani3_Hit_v3_rr1_Sum.wav",
     "Timpani/Timpani4_Hit_v3_rr1_Sum.wav", "cymbal-crash1_mf_rr1.wav", "BDrumNewhit_v5_rr1_Sum.wav", "Snare2-HitSN_v5_rr1_Sum.wav",
     "Triangle3-HitM_v1_rr1_Sum.wav", "Tamb1-Hit_v1_rr1_Sum.wav", "gongHit_mf.wav",
+    # hand drums: the darbuka's dum / tek / ka
+    "Tumba-HitN_v3_rr1_Sum.wav", "Quinto-HitN_v2_rr1_Sum.wav", "Quinto-Tap1_v1_rr1_Sum.wav", "Conga-HitN_v2_rr1_Sum.wav", "Conga-Tap1_v1_rr1_Sum.wav",
 ]
 WHOLE = ["Percussion/Glock", "Percussion/Xylo", "Percussion/Marimba"]
 

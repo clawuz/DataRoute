@@ -13,11 +13,11 @@ export type Instrument =
   | "HARP" | "GUITAR" | "SAZ" | "KANUN" | "MARIMBA" | "CELLO" | "VIOLIN" | "FLUTE" | "ORGAN" | "STR"
   // recorded orchestra (the sample pack); each has a synthesised stand-in, see `baseOf`
   | "VIOLA" | "OBOE" | "BSN" | "PICC" | "HORN" | "TBN" | "TUBA" | "GLOCK" | "XYLO" | "TRI" | "TAMB" | "GONG"
-  | "VIOLIN_PIZZ" | "VIOLA_PIZZ" | "CELLO_PIZZ" | "BASS_PIZZ";
+  | "OUD" | "VIOLIN_PIZZ" | "VIOLA_PIZZ" | "CELLO_PIZZ" | "BASS_PIZZ";
 
 /** the synthesised voice that stands in for an instrument that has no synth of its own (and the scope lane it sits in) */
 const STAND_IN: Partial<Record<Instrument, Instrument>> = {
-  VIOLA: "VIOLIN", OBOE: "CLA", BSN: "CELLO", PICC: "FLUTE", HORN: "BRASS", TBN: "BRASS", TUBA: "BASS",
+  OUD: "MEA", VIOLA: "VIOLIN", OBOE: "CLA", BSN: "CELLO", PICC: "FLUTE", HORN: "BRASS", TBN: "BRASS", TUBA: "BASS",
   GLOCK: "EP", XYLO: "MARIMBA", TRI: "OHAT", TAMB: "SHAKER", GONG: "CRASH",
   VIOLIN_PIZZ: "HARP", VIOLA_PIZZ: "HARP", CELLO_PIZZ: "BASS", BASS_PIZZ: "BASS",
 };

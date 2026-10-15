@@ -136,6 +136,12 @@ const PERC: Record<string, [number, Instrument, number][]>[] = [
   { verse: [[0, "TIMP", 0.4]], build: [[0, "TIMP", 0.5], [0.75, "TIMP", 0.3], [2, "TIMP", 0.45]], chorus: [[0, "TIMP", 0.6], [0.75, "TIMP", 0.35], [2, "TIMP", 0.5], [2.75, "TIMP", 0.35]] },
   // 5 march
   { verse: [[0, "KICK", 0.4], [1, "KICK", 0.3], [2, "KICK", 0.4], [3, "KICK", 0.3]], build: [[0, "KICK", 0.5], [1, "SNARE", 0.4], [2, "KICK", 0.5], [3, "SNARE", 0.4], [3.5, "SNARE", 0.3]], chorus: [[0, "KICK", 0.6], [1, "SNARE", 0.5], [2, "KICK", 0.6], [3, "SNARE", 0.5], [3.5, "SNARE", 0.4], [0.5, "TAMB", 0.3], [2.5, "TAMB", 0.3]] },
+  // 6 darbuka (maqsum: dum tek . tek dum . tek .) — chosen when the selection is Turkish / Middle-Eastern
+  {
+    verse: [[0, "DARBUKA", 0.85], [1, "DARBUKA", 0.58], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.8], [3, "DARBUKA", 0.58]],
+    build: [[0, "DARBUKA", 0.85], [0.5, "DARBUKA", 0.3], [1, "DARBUKA", 0.58], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.8], [3, "DARBUKA", 0.58], [3.5, "DARBUKA", 0.3]],
+    chorus: [[0, "DARBUKA", 0.9], [0.5, "DARBUKA", 0.3], [1, "DARBUKA", 0.6], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.85], [2.5, "DARBUKA", 0.3], [3, "DARBUKA", 0.6], [3.5, "DARBUKA", 0.32]],
+  },
 ];
 
 interface Ensemble {
@@ -156,14 +162,14 @@ const ENSEMBLES: Ensemble[] = [
 /** highest pitch (Hz) each pitched instrument is given; higher notes are folded down an octave */
 const CEILING: Partial<Record<Instrument, number>> = {
   VIOLIN: 1320, VIOLA: 1000, STR: 1000, CELLO: 700, OBOE: 1175, CLA: 1175, FLUTE: 1400, PICC: 1568, HORN: 700,
-  TPT: 1047, HARP: 1568, GLOCK: 1568, XYLO: 1319, MARIMBA: 1047, SAZ: 880, KANUN: 1175, PNO: 1568, BSN: 466, TUBA: 220,
+  TPT: 1047, HARP: 1568, GLOCK: 1568, XYLO: 1319, MARIMBA: 1047, SAZ: 880, KANUN: 1175, OUD: 880, NEY: 1175, PNO: 1568, BSN: 466, TUBA: 220,
 };
 
 /** the lead instrument of a region; some regions have two or three voices that take turns by route */
 const LEAD: Record<string, Instrument[]> = {
-  DOM: ["SAZ"],
+  DOM: ["SAZ", "NEY"],
   EUR: ["VIOLIN", "OBOE"],
-  MEA: ["KANUN"],
+  MEA: ["KANUN", "OUD", "NEY"],
   AFR: ["MARIMBA", "XYLO"],
   ASI: ["HARP", "GLOCK", "FLUTE"],
   AME: ["FLUTE", "HORN", "CLA"],
@@ -201,16 +207,20 @@ function rng(seed: number): () => number {
 export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalStyle & { bpm: number } {
   const r = rng(routeHash(`${mode}|${routes.map((x) => x.key).join(">")}`));
   const [lo, hi] = BPM_RANGE[mode];
-  return {
+  // a mostly Turkish / Middle-Eastern selection gets the darbuka most of the time
+  const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
+  const style = {
     bpm: lo + Math.floor(r() * (hi - lo + 1)),
     groove: Math.floor(r() * LEAD_BEATS.length),
     arp: Math.floor(r() * ARPS.length),
-    perc: Math.floor(r() * PERC.length),
+    perc: Math.floor(r() * 6),
     ensemble: Math.floor(r() * ENSEMBLES.length),
     progression: Math.floor(r() * PROGS[mode].length),
     shift: KEY_SHIFTS[Math.floor(r() * KEY_SHIFTS.length)],
     swing: [0, 0, 0.12, 0.2][Math.floor(r() * 4)],
   };
+  if (anatolian >= 0.4 && r() < 0.75) style.perc = 6;
+  return style;
 }
 
 /**

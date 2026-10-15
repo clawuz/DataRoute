@@ -16,8 +16,25 @@ export interface SampleZone {
   vel?: [number, number];
 }
 
+/** one copy of the recording in a voice (a chorus of detuned copies makes a zither or a course of strings) */
+export interface SampleLayer {
+  /** cents */
+  detune: number;
+  gain: number;
+}
+
 export interface SampleInstrument {
+  /** build this voice from another instrument's recordings (e.g. a kanun from the harp) */
+  use?: string;
   zones: SampleZone[];
+  /** the voice is several copies of the recording, detuned against each other */
+  layers?: SampleLayer[];
+  /** a filter that shapes the colour of the voice */
+  filter?: { type: "lowpass" | "highpass" | "bandpass" | "peaking"; freq: number; q?: number; gain?: number };
+  /** the note starts this many semitones low and slides up in `glideSec` (a plucked-string "bend") */
+  glide?: { semitones: number; sec: number };
+  /** slow pitch vibrato that starts `after` seconds into the note */
+  vibrato?: { rate: number; cents: number; after: number };
   /** seconds of release after the note ends (default 0.35) */
   release?: number;
   /** level trim */
@@ -98,6 +115,7 @@ export function createSampler(ctx: AudioContext): Sampler {
         const base = manifestUrl.slice(0, manifestUrl.lastIndexOf("/") + 1);
         const jobs: Promise<void>[] = [];
         for (const [name, inst] of Object.entries(man.instruments)) {
+          if (inst.use) continue; // built from another instrument, below
           // an instrument counts as present once all of its zones are decoded
           const urls = [...new Set(inst.zones.map((z) => base + z.file))];
           jobs.push(
@@ -117,6 +135,10 @@ export function createSampler(ctx: AudioContext): Sampler {
           );
         }
         await Promise.all(jobs);
+        for (const [name, inst] of Object.entries(man.instruments)) {
+          const from = inst.use ? defs.get(inst.use) : undefined;
+          if (inst.use && from) defs.set(name, { ...from, ...inst, zones: from.zones });
+        }
       } catch {
         /* offline or a bad manifest: the synth plays */
       }
@@ -129,39 +151,84 @@ export function createSampler(ctx: AudioContext): Sampler {
       const z = pickZone(inst.zones, midiOf(freq), vel);
       const buf = z ? buffers.get(z.file) : undefined;
       if (!z || !buf) return false;
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
       const rate = inst.unpitched ? 1 : rateFor(freq, z.root);
-      src.playbackRate.setValueAtTime(rate, when);
-      // held longer than the recording: loop its steady part
-      if (inst.sustained && inst.loop && durSec * rate > buf.duration - (inst.release ?? 0.35)) {
-        src.loop = true;
-        src.loopStart = inst.loop[0];
-        src.loopEnd = Math.min(inst.loop[1], buf.duration);
-      }
-      const g = ctx.createGain();
       const peak = Math.max(0.0001, vel * (inst.gain ?? 1));
       const release = inst.release ?? 0.35;
       const hold = when + Math.max(0.05, durSec);
+      const tail = Math.max(release, inst.sustained ? release : 1.2);
+      const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, when);
       g.gain.linearRampToValueAtTime(peak, when + 0.008);
       if (inst.sustained) {
         g.gain.setValueAtTime(peak, hold);
         g.gain.exponentialRampToValueAtTime(0.0001, hold + release);
       } else {
-        // recorded decay plays out; only a short release if the note was meant to be short
+        // recorded decay plays out; a short release if the note was meant to be short
         g.gain.setValueAtTime(peak, Math.max(when + 0.01, hold));
-        g.gain.exponentialRampToValueAtTime(0.0001, hold + Math.max(release, 1.2));
+        g.gain.exponentialRampToValueAtTime(0.0001, hold + tail);
       }
-      src.connect(g);
+      let out: AudioNode = g;
+      let filt: BiquadFilterNode | null = null;
+      if (inst.filter) {
+        filt = ctx.createBiquadFilter();
+        filt.type = inst.filter.type;
+        filt.frequency.value = inst.filter.freq;
+        filt.Q.value = inst.filter.q ?? 0.8;
+        if (inst.filter.gain !== undefined) filt.gain.value = inst.filter.gain;
+        filt.connect(g);
+        out = filt;
+      }
       g.connect(dest);
-      src.onended = () => {
-        src.disconnect();
+      const layers = inst.layers ?? [{ detune: 0, gain: 1 }];
+      const stopAt = hold + tail + 0.1;
+      let live = layers.length;
+      const finish = () => {
+        if (--live > 0) return;
         g.disconnect();
+        filt?.disconnect();
         onEnd?.();
       };
-      src.start(when);
-      src.stop(hold + Math.max(release, inst.sustained ? release : 1.2) + 0.1);
+      for (const L of layers) {
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.setValueAtTime(rate, when);
+        const cents = L.detune + (inst.glide ? -inst.glide.semitones * 100 : 0);
+        src.detune.setValueAtTime(cents, when);
+        if (inst.glide) src.detune.linearRampToValueAtTime(L.detune, when + inst.glide.sec);
+        if (inst.vibrato) {
+          const lfo = ctx.createOscillator();
+          const depth = ctx.createGain();
+          lfo.frequency.value = inst.vibrato.rate;
+          depth.gain.setValueAtTime(0, when);
+          depth.gain.setValueAtTime(0, when + inst.vibrato.after);
+          depth.gain.linearRampToValueAtTime(inst.vibrato.cents, when + inst.vibrato.after + 0.4);
+          lfo.connect(depth);
+          depth.connect(src.detune);
+          lfo.start(when);
+          lfo.stop(stopAt);
+          lfo.onended = () => {
+            lfo.disconnect();
+            depth.disconnect();
+          };
+        }
+        // held longer than the recording: loop its steady part
+        if (inst.sustained && inst.loop && durSec * rate > buf.duration - release) {
+          src.loop = true;
+          src.loopStart = inst.loop[0];
+          src.loopEnd = Math.min(inst.loop[1], buf.duration);
+        }
+        const lg = ctx.createGain();
+        lg.gain.value = L.gain;
+        src.connect(lg);
+        lg.connect(out);
+        src.onended = () => {
+          src.disconnect();
+          lg.disconnect();
+          finish();
+        };
+        src.start(when);
+        src.stop(stopAt);
+      }
       return true;
     },
     dispose() {

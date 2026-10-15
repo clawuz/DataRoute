@@ -18,7 +18,7 @@ export const INSTRUMENT_COLOR: Record<Instrument, string> = {
   VIOLIN: "#c9a7ff", FLUTE: "#3FC8F2", ORGAN: "#d9dce3", STR: "#A98BFF",
   VIOLA: "#b79bff", OBOE: "#ff9f43", BSN: "#A98BFF", PICC: "#3FC8F2", HORN: "#fff1cf", TBN: "#fff1cf", TUBA: "#f2f4f8",
   GLOCK: "#9fe3ff", XYLO: "#7BD389", TRI: "#b6bcc9", TAMB: "#3FC8F2", GONG: "#fff1cf",
-  VIOLIN_PIZZ: "#c9a7ff", VIOLA_PIZZ: "#b79bff", CELLO_PIZZ: "#A98BFF", BASS_PIZZ: "#f2f4f8",
+  OUD: "#F7C548", VIOLIN_PIZZ: "#c9a7ff", VIOLA_PIZZ: "#b79bff", CELLO_PIZZ: "#A98BFF", BASS_PIZZ: "#f2f4f8",
 };
 
 /** Top-to-bottom lanes of the rhythm strip (the open hat shares the hat lane, see `laneOf`). */

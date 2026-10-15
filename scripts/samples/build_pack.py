@@ -137,6 +137,28 @@ def main():
         f = make(inst, rel, 3.5, "perc")
         man["instruments"][inst] = {"zones": [{"root": 60, "lo": 0, "hi": 127, "file": f}], "unpitched": True, "release": 0.3}
 
+    # darbuka: dum (deep), tek (open), ka (finger tap) by how hard it is struck — velocity layers, unpitched
+    dk = [("Percussion/Quinto-Tap1_v1_rr1_Sum.wav", 0.0, 0.42), ("Percussion/Quinto-HitN_v2_rr1_Sum.wav", 0.42, 0.72), ("Percussion/Tumba-HitN_v3_rr1_Sum.wav", 0.72, 1.0)]
+    if all(os.path.exists(os.path.join(SRC, r)) for r, _, _ in dk):
+        zs = []
+        for rel, lo, hi in dk:
+            zs.append({"root": 60, "lo": 0, "hi": 127, "file": make("DARBUKA", rel, 1.8, "darbuka"), "vel": [lo, hi]})
+        man["instruments"]["DARBUKA"] = {"zones": zs, "unpitched": True, "release": 0.25}
+    # def / bendir stand-in: the conga heel + tap, unpitched
+    cg = [("Percussion/Conga-Tap1_v1_rr1_Sum.wav", 0.0, 0.5), ("Percussion/Conga-HitN_v2_rr1_Sum.wav", 0.5, 1.0)]
+    if all(os.path.exists(os.path.join(SRC, r)) for r, _, _ in cg):
+        man["instruments"]["CONGA"] = {"zones": [{"root": 60, "lo": 0, "hi": 127, "file": make("CONGA", r, 1.8, "darbuka"), "vel": [a, b]} for r, a, b in cg], "unpitched": True, "release": 0.25}
+
+    # Turkish / Middle-Eastern voices, made from real recordings: detuned copies, a bend, a filter, a vibrato
+    man["instruments"]["KANUN"] = {"use": "HARP", "zones": [], "layers": [{"detune": -9, "gain": 0.55}, {"detune": 0, "gain": 0.8}, {"detune": 9, "gain": 0.55}],
+                                   "filter": {"type": "highpass", "freq": 280, "q": 0.7}, "release": 0.4, "gain": 0.5}
+    man["instruments"]["SAZ"] = {"use": "VIOLA_PIZZ", "zones": [], "layers": [{"detune": -6, "gain": 0.6}, {"detune": 6, "gain": 0.6}, {"detune": 1200, "gain": 0.16}],
+                                 "filter": {"type": "peaking", "freq": 1300, "q": 0.9, "gain": 7}, "glide": {"semitones": 1.2, "sec": 0.07}, "release": 0.4, "gain": 1.6}
+    man["instruments"]["OUD"] = {"use": "CELLO_PIZZ", "zones": [], "layers": [{"detune": 0, "gain": 0.8}, {"detune": -5, "gain": 0.4}, {"detune": 1200, "gain": 0.3}],
+                                 "filter": {"type": "lowpass", "freq": 3000, "q": 0.7}, "glide": {"semitones": 0.8, "sec": 0.05}, "release": 0.4, "gain": 1.7}
+    man["instruments"]["NEY"] = {"use": "FLUTE", "zones": [], "sustained": True, "layers": [{"detune": 0, "gain": 0.9}, {"detune": 4, "gain": 0.25}],
+                                 "filter": {"type": "lowpass", "freq": 3400, "q": 0.6}, "vibrato": {"rate": 4.6, "cents": 26, "after": 0.35}, "release": 0.4, "gain": 2.8, "loop": LOOP}
+
     tz = []
     for rel in TIMPANI:
         if os.path.exists(os.path.join(SRC, rel)):
