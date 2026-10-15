@@ -637,15 +637,18 @@ body.recording-reel .music-scope { opacity: 0; }
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
   border-bottom: 0;
-  padding: 8px 24px;
-  min-height: 52px;
+  padding: 8px 24px 20px;
+  min-height: 64px;
   box-sizing: border-box;
+  /* the lower edge dissolves into the page: no line */
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
 }
 .landing.v2.picker > .topbar .tk-lockup { height: 26px; }
 .landing.v2.picker > .topbar .landing-back { padding: 8px; min-height: 36px; }
 .landing.v2.picker { padding-top: 70px; }
 @media (max-width: 600px) {
-  .landing.v2.picker > .topbar { padding: 6px 16px; min-height: 46px; }
+  .landing.v2.picker > .topbar { padding: 6px 16px 18px; min-height: 58px; }
   .landing.v2.picker > .topbar .tk-lockup { height: 22px; }
   .landing.v2.picker { padding-top: 60px; }
 }
