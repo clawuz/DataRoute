@@ -10,7 +10,7 @@ size bucket (S ≤ 3 destinations, M ≤ 8, L more). At most 2 × 63 × 3 differ
 `public/personal/<key>.mp3`) is shared by everybody and the cost is bounded.
 
 ## Limits (functions/src/personal-music.ts)
-- **100 new tracks per UTC day** (`DAILY_CAP`), counted in Firestore `personalMusicDaily/<day>`.
+- **20 new tracks per UTC day** (`DAILY_CAP`), counted in Firestore `personalMusicDaily/<day>`.
 - **2 new tracks per visitor per day** (`PER_VISITOR_CAP`), the visitor being a hash of the IP with the day (`personalMusicVisitors/<day>_<hash>`).
 - **Attempts per address:** at most 10 requests an hour and 30 a day (`ATTEMPTS_PER_HOUR`, `ATTEMPTS_PER_DAY`), every request counted — cached, malformed or failed ones too. Over the limit the answer is `429 rate`. The counters (`personalMusicRate`) hold only a hash of the address and the day.
 - A cached track is always served, even when a cap is reached.
