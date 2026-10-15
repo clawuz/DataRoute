@@ -19,8 +19,9 @@ export function Backdrop() {
       return;
     }
     engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
+    engine.setPortraitFit(true);
     engine.setNight(true);
-    engine.setEffects({ cloudShadow: false, glare: true, aurora: true, corridors: false, sound: false, starMap: true });
+    engine.setEffects({ cloudShadow: false, glare: true, aurora: false, corridors: false, sound: false, starMap: true });
     engine.setModel(null, 0, Date.now() / 1000);
     engine.setFrameSource(() => {
       const t = Date.now() / 1000;

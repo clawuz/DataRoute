@@ -48,6 +48,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     pulseRoute: vi.fn(),
     setEffects: vi.fn(),
     setSpaceDim: vi.fn(),
+    setPortraitFit: vi.fn(),
     setNight: vi.fn(),
     centerOn: vi.fn(),
     setIdleSpin: vi.fn(),

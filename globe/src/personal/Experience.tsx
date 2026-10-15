@@ -68,7 +68,8 @@ export function Experience({ selection, onBack }: Props) {
     engineRef.current = engine;
     engine.setNight(true); // always the night side: the lights and the routes read best on it
     engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
-    engine.setEffects({ cloudShadow: true, glare: true, aurora: true, corridors: true, sound: false, starMap: true });
+    engine.setPortraitFit(true);
+    engine.setEffects({ cloudShadow: true, glare: true, aurora: false, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built
     const model = buildPersonalModel(routes);
@@ -315,6 +316,7 @@ export function Experience({ selection, onBack }: Props) {
       for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
       engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 15); // Istanbul starts in the middle, a little above the centre of the picture
       engine.setIdleSpin(kind === "VIDEO", 5); // the video turns (a visible 45° over its 15 s); the card holds still
+      engine.setPortraitFit(false); // the story picture keeps the framing it was drawn for
       engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
       await new Promise((r) => setTimeout(r, 450));
       const comp = document.createElement("canvas");
@@ -345,6 +347,7 @@ export function Experience({ selection, onBack }: Props) {
       engine.setAfterRender(null);
       engine.setIdleSpin(true, 1);
       engine.setLineScale(1);
+      engine.setPortraitFit(true);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
       setMaking(null);

@@ -27,10 +27,41 @@ interface Row extends Destination {
   hay: string;
 }
 
+/** what travellers type for a country besides the name we show (Türkiye is "Turkey" to most of the world) */
+const ALIAS: Record<string, string> = {
+  TR: "turkey turkiye",
+  US: "usa us america united states",
+  GB: "uk england britain scotland wales great britain",
+  AE: "uae emirates",
+  NL: "holland",
+  CZ: "czech republic czechia",
+  KR: "korea south korea",
+  KP: "north korea",
+  RU: "russia russian federation",
+  CD: "congo drc",
+  CI: "ivory coast",
+  MM: "burma",
+  MK: "macedonia",
+  VN: "vietnam viet nam",
+  CN: "china prc",
+  HK: "hong kong",
+  SZ: "swaziland eswatini",
+};
+
 const ROWS: Row[] = DESTINATIONS.map((d) => {
   const country = countryName(d.iso);
-  return { ...d, country, label: labelOf(d), hay: norm(`${d.city} ${d.iata} ${d.name} ${country}`) };
+  return { ...d, country, label: labelOf(d), hay: norm(`${d.city} ${d.iata} ${d.name} ${country} ${ALIAS[d.iso] ?? ""}`) };
 });
+
+/** best first: the code, a city that starts with the text, a word that starts with it, anywhere else */
+function rank(r: Row, needle: string): number {
+  if (norm(r.iata) === needle) return 0;
+  // the whole country was asked for ("usa", "turkey", "uk")
+  if ((ALIAS[r.iso] ?? "").split(" ").includes(needle) || norm(r.country) === needle) return 0.5;
+  if (norm(r.city).startsWith(needle)) return 1;
+  if (r.hay.split(/[\s,()-]+/).some((w) => w.startsWith(needle))) return 2;
+  return 3;
+}
 
 function groupByCountry(rows: Row[]): { iso: string; country: string; region: Region; items: Row[] }[] {
   const m = new Map<string, Row[]>();
@@ -132,7 +163,13 @@ export function Landing({ onCompose, onLive }: Props) {
   };
   const ready = !!home && picked.length >= minPlaces(home);
   const c = COPY[mode];
-  const hits = needle ? ROWS.filter((r) => r.hay.includes(needle)).slice(0, 7) : [];
+  const hits = needle
+    ? ROWS.filter((r) => r.hay.includes(needle))
+        .map((r) => ({ r, k: rank(r, needle) }))
+        .sort((a, b) => a.k - b.k || a.r.city.localeCompare(b.r.city))
+        .slice(0, 7)
+        .map((x) => x.r)
+    : [];
   const via = ready ? buildRoutes(picked, home).filter((r) => r.leg === 1).length : 0;
   const fromRow = home ? destinationOf(home) : undefined;
   const areaTabs: (AreaId | "ALL")[] = ["ALL", ...AREAS.map((a) => a.id).filter((id) => ROWS.some((x) => areaOf(x.iso) === id))];

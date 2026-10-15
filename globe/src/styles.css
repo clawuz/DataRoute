@@ -587,3 +587,9 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2 .field.live:focus-within .field-edit { color: var(--ink); }
 
 .landing.v2 .landing-sub, .landing.v2 .landing-title, .landing.v2 .picker-head, .landing.v2 .mode-desc, .landing.v2 .landing-fine span { text-wrap: balance; }
+
+/* touch targets: the back link and the area tabs are at least 40 px high */
+.landing.v2 .landing-back { padding: 12px 8px; min-height: 40px; display: inline-flex; align-items: center; }
+.landing.v2 .tab { min-height: 40px; }
+.personal-sub { line-height: 1.7; text-wrap: balance; }
+@media (max-width: 600px) { .personal-sub { font-size: 10px; letter-spacing: 0.1em; } }

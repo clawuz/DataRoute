@@ -64,6 +64,8 @@ export interface GlobeEngine {
   setEffects(e: Effects): void;
   /** holds back the stars and nebula behind the globe (1 = default) */
   setSpaceDim(k: number, nebula?: boolean): void;
+  /** on a portrait screen, widen the field of view so the globe fits the width */
+  setPortraitFit(on: boolean): void;
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
@@ -110,6 +112,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let idleSpin = true;
   let idleSpeed = 1;
   let lineScale = 1;
+  let portraitFit = false;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
   renderer.debug.onShaderError = (gl, program, vs, fs) => {
@@ -214,6 +217,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     bloom.resolution.scale = level.bloomScale; // fires a size reset: must precede the explicit sizing below
     composer.setSize(w, h, false);
     camera.aspect = w / h;
+    // a tall phone screen: widen the view so the globe (and the routes on it) fit the width instead of filling the height
+    camera.fov = portraitFit && h > w ? Math.min(64, Math.max(40, (2 * Math.atan(Math.tan((20 * Math.PI) / 180) / (w / h)) * 180) / Math.PI)) : 40;
     // ux: the globe sits lower so the top-centre title lockup has room (picking and label projection use the same matrix)
     // portrait phones carry the whole lockup + counters above the globe: it sits lower there
     camera.setViewOffset(w, h, 0, -Math.round(h > w ? Math.min(150, Math.max(70, h * 0.12)) : Math.min(56, Math.max(24, h * 0.06))), w, h);
@@ -465,6 +470,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     camMode() {
       return cam.mode;
+    },
+    setPortraitFit(on) {
+      portraitFit = on;
+      resize();
     },
     setSpaceDim(k, nebula = true) {
       space.setDim(k, nebula);
