@@ -832,3 +832,11 @@ body.personal-build .music-scope-label {
   padding: 6px 12px; border: 1px solid rgba(242, 245, 250, 0.45); border-radius: 99px; background: rgba(242, 245, 250, 0.08);
 }
 .landing.v2 button.field:hover .field-change { border-color: #e30a17; background: rgba(227, 10, 23, 0.18); }
+
+/* the CHANGE button blinks twice when the picker opens, so people know Istanbul is only the default */
+@keyframes change-blink {
+  0%, 100% { background: rgba(242, 245, 250, 0.08); border-color: rgba(242, 245, 250, 0.45); box-shadow: 0 0 0 0 rgba(227, 10, 23, 0); }
+  50% { background: rgba(227, 10, 23, 0.35); border-color: #e30a17; box-shadow: 0 0 0 5px rgba(227, 10, 23, 0.22); }
+}
+.landing.v2 .field-change { animation: change-blink 0.9s ease-in-out 0.7s 2; }
+@media (prefers-reduced-motion: reduce) { .landing.v2 .field-change { animation: none; } }

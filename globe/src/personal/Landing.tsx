@@ -5,7 +5,6 @@ import { MAX_DESTINATIONS, minPlaces, type PersonalMode, type PersonalSelection 
 import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 import { Backdrop } from "./Backdrop";
-import { guessHome } from "./locate";
 import { musicTileUrl } from "./music-tile";
 
 interface Props {
@@ -75,7 +74,7 @@ function groupByCountry(rows: Row[]): { iso: string; country: string; region: Re
 export function Landing({ onCompose, onLive }: Props) {
   const [step, setStep] = useState<Step>("mode");
   const [mode, setMode] = useState<PersonalMode>("visited");
-  const [home, setHome] = useState<string | undefined>(() => guessHome());
+  const [home, setHome] = useState<string | undefined>("IST");
   const [editFrom, setEditFrom] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
@@ -94,7 +93,7 @@ export function Landing({ onCompose, onLive }: Props) {
   const reset = () => {
     setStep("mode");
     setPicked([]);
-    setHome(guessHome());
+    setHome("IST");
     setEditFrom(false);
     setQ("");
     setArea("ALL");
