@@ -429,7 +429,9 @@ export function Experience({ selection, onBack }: Props) {
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="A 3D globe with your routes drawn on it, played as music" />
       <header className="topbar">
-        <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+        <button type="button" className="logo-link" onClick={onBack} aria-label="Turkish Airlines — back to the start">
+          <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+        </button>
         <button type="button" className="landing-back" onClick={onBack}>← NEW PIECE</button>
       </header>
       <div className="personal-hud">

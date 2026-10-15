@@ -102,7 +102,9 @@ export function Landing({ onCompose, onLive }: Props) {
 
   const bar = (back?: () => void) => (
     <header className="topbar">
-      <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+      <button type="button" className="logo-link" onClick={reset} aria-label="Turkish Airlines — back to the start">
+        <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+      </button>
       {back && (
         <button type="button" className="landing-back" onClick={back}>
           ← BACK

@@ -147,9 +147,12 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
       {onExit && (
-        <button type="button" className="live-back" onClick={onExit}>
-          ← BACK
-        </button>
+        <>
+          <button type="button" className="live-logo" onClick={onExit} aria-label="Turkish Airlines — back to the start" />
+          <button type="button" className="live-back" onClick={onExit}>
+            ← BACK
+          </button>
+        </>
       )}
     </>
   );
