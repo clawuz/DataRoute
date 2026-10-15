@@ -64,7 +64,11 @@ export interface PersonalPiece {
 
 /** the key is D by default (minor for a journey, major for a wish); semitones above A2 */
 const KEY_ROOT = 5;
-const KEY_SHIFTS = [0, 0, -2, 2, -3, 3];
+/**
+ * The AI tracks sit mostly in A minor / C major (and D, G, E): journeys are minor, wishes major, around those keys.
+ * Shifts are semitones from D.
+ */
+const KEY_SHIFTS: Record<PersonalMode, number[]> = { visited: [-5, -5, -5, 0, 2], wish: [-2, -2, 5, 0, -5] };
 const hz = (m: number): number => 110 * 2 ** (m / 12);
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
@@ -78,30 +82,33 @@ const PROGS: Record<PersonalMode, Chord[][]> = {
     [{ root: 5, third: 3 }, { root: 1, third: 4 }, { root: 8, third: 4 }, { root: 3, third: 4 }],
     [{ root: 5, third: 3 }, { root: 10, third: 3 }, { root: 1, third: 4 }, { root: 0, third: 4 }],
     [{ root: 5, third: 3 }, { root: 3, third: 4 }, { root: 1, third: 4 }, { root: 3, third: 4 }],
-    [{ root: 5, third: 3 }, { root: 8, third: 4 }, { root: 3, third: 4 }, { root: 10, third: 3 }],
+    [{ root: 5, third: 3 }, { root: 1, third: 4 }, { root: 5, third: 3 }, { root: 1, third: 4 }], // i – VI – i – VI (Am F Am F)
   ],
   wish: [
     [{ root: 5, third: 4 }, { root: 0, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }],
     [{ root: 5, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }, { root: 0, third: 4 }],
     [{ root: 5, third: 4 }, { root: 10, third: 4 }, { root: 0, third: 4 }, { root: 10, third: 4 }],
-    [{ root: 2, third: 3 }, { root: 10, third: 4 }, { root: 5, third: 4 }, { root: 0, third: 4 }],
+    [{ root: 5, third: 4 }, { root: 10, third: 4 }, { root: 5, third: 4 }, { root: 10, third: 4 }], // I – IV – I – IV (G C G C)
   ],
 };
 /** tempo ranges (bpm) keep a piece between about 2:25 and 3:15 */
-const BPM_RANGE: Record<PersonalMode, [number, number]> = { visited: [82, 96], wish: [92, 106] };
+const BPM_RANGE: Record<PersonalMode, [number, number]> = { visited: [80, 88], wish: [96, 104] };
 
 type Section = "intro" | "verse" | "build" | "chorus" | "break" | "outro";
-/** 64 bars: 8 intro, 16 verse, 8 build, 16 chorus, 8 break, 8 outro */
+/**
+ * 64 bars: 8 intro, 16 verse, 8 build, 20 chorus, 4 break, 8 outro. The AI tracks start at a quarter to a half of their
+ * loudest, rise to the top at about 70–80 % of their length and end still at 55–65 %: the same shape here.
+ */
 const FORM: [Section, number][] = [
   ["intro", 8],
   ["verse", 16],
   ["build", 8],
-  ["chorus", 16],
-  ["break", 8],
+  ["chorus", 20],
+  ["break", 4],
   ["outro", 8],
 ];
 const BARS = FORM.reduce((s, [, n]) => s + n, 0);
-const LEVEL: Record<Section, number> = { intro: 0.55, verse: 0.8, build: 0.9, chorus: 1, break: 0.6, outro: 0.5 };
+const LEVEL: Record<Section, number> = { intro: 0.45, verse: 0.72, build: 0.88, chorus: 1, break: 0.85, outro: 0.78 };
 /** how much busier a voice is in a section (added to its pulses) */
 const BUSY: Record<Section, number> = { intro: -1, verse: 0, build: 1, chorus: 1, break: -1, outro: -1 };
 
@@ -148,6 +155,10 @@ const CEILING: Partial<Record<Instrument, number>> = {
 };
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
+/** the lowest pitch (Hz) of an instrument's recording: lower notes are moved up an octave rather than stretched */
+const FLOOR: Partial<Record<Instrument, number>> = {
+  FLUTE: 262, PICC: 520, OBOE: 233, CLA: 147, VIOLIN: 196, VIOLA: 131, TPT: 165, HORN: 87, SAZ: 82, NEY: 294, XYLO: 349, GLOCK: 520, MARIMBA: 65, KANUN: 130, OUD: 55,
+};
 
 function sectionOf(bar: number): { section: Section; first: number; len: number } {
   let b = 0;
@@ -188,7 +199,7 @@ export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalS
     perc: Math.floor(r() * 3),
     ensemble: Math.floor(r() * 4),
     progression: Math.floor(r() * PROGS[mode].length),
-    shift: KEY_SHIFTS[Math.floor(r() * KEY_SHIFTS.length)],
+    shift: KEY_SHIFTS[mode][Math.floor(r() * KEY_SHIFTS[mode].length)],
     swing: [0, 0, 0.12, 0.2][Math.floor(r() * 4)],
   };
 }
@@ -229,11 +240,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   });
   let heldIdx = 0;
   const heldSlot = roles.map((r) => (r === "held" ? heldIdx++ : -1));
-  // the longest route and the first drawn one are the ones that keep playing through the break
-  const keep = new Set<number>([0, sorted[n - 1].i]);
-  // routes enter one after another over the first 28 bars, and leave in the same order through the outro
-  const entry = routes.map((_, i) => Math.floor((i * 28) / n));
-  const exit = routes.map((_, i) => BARS - 8 + 1 + Math.floor((i * 7) / n));
+  // routes come in one after another over the first 12 bars (the AI pieces start already at a quarter to a half of their
+  // loudest) and play to the end, which stays at about 60 %
+  const entry = routes.map((_, i) => Math.floor((i * 12) / n));
+  const exit = routes.map(() => BARS + 1);
   // a route's phrase is one flight: take-off, climb, cruise, descent, landing — longer for a longer route
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
   const phaseAt = (i: number, b: number, frac: number): number => ((((b - entry[i]) % phraseBars[i]) + phraseBars[i]) % phraseBars[i] + frac) / phraseBars[i];
@@ -245,8 +255,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   };
   const fit = (f: number, inst: Instrument): number => {
     const cap = CEILING[inst];
+    const floor = FLOOR[inst];
     let x = f;
     if (cap) while (x > cap) x /= 2;
+    if (floor) while (x < floor) x *= 2;
     return x;
   };
   const push = (i: number, t: number, d: number, instrument: Instrument, f: number, vel: number, p = 0.5): void => {
@@ -295,14 +307,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const t0 = b * bar;
     const chord = prog[Math.floor(b / 2) % prog.length];
     const level = LEVEL[section];
-    const fade = section === "outro" ? 1 - ((b - first) / len) * 0.7 : 1;
+    const fade = section === "outro" ? 1 - ((b - first) / len) * 0.25 : 1;
     const v = (x: number): number => x * level * fade;
     const cr = chord.root + st.shift;
     const tones = [0, chord.third, 7].map((x) => cr + x);
 
     for (let i = 0; i < n; i++) {
       if (b < entry[i] || b >= exit[i]) continue;
-      if (section === "break" && !keep.has(i)) continue;
       const r = routes[i];
       const h = routeHash(r.key + i);
       const role = roles[i];
@@ -333,7 +344,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           const w = ((deg[i] % 7) + 7) % 7;
           // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
           const total = w + lift + ((i * 2) % 5);
-          let semis = KEY_ROOT + st.shift + 12 + scale[total % 7] + 12 * Math.floor(total / 7);
+          let semis = KEY_ROOT + st.shift - 12 + scale[total % 7] + 12 * Math.floor(total / 7);
           if (s === onsets[0]) {
             // the first note of a bar rests on the nearest chord tone
             let best = semis;
@@ -361,7 +372,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         pat.forEach((on, s) => {
           if (!on) return;
           const p = phaseAt(i, b, s / steps);
-          const tone = tones[order[a++ % order.length]] + 24 + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+          const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
           push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
         });
       } else {

@@ -11,7 +11,7 @@ def token():
     if t:
         return t
     for line in open(os.path.join(os.path.dirname(__file__), "..", "..", ".env.local")):
-        m = re.match(r"^(FREESOUND_API_KEY|ELEVENLABS_API_KEY)=(.*)$", line.strip())
+        m = re.match(r"^(FREESOUND_API_KEY)=(.*)$", line.strip())
         if m and len(m.group(2).strip('"\'')) == 40:  # a Freesound token is 40 characters
             return m.group(2).strip().strip('"\'')
     sys.exit("no Freesound token found")
