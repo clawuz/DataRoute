@@ -9,6 +9,8 @@ import { countLabel, pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { AI_MESSAGE, characterOf, requestAi } from "./ai";
+import { analyze } from "./analyze";
+import { assignToRoutes, followAudio, type Follower } from "./follow";
 import { MusicScope } from "../hud/MusicScope";
 import { baseOf } from "../audio/theory";
 import { PITCH_MAX, PITCH_MIN } from "../audio/scope";
@@ -49,6 +51,10 @@ export function Experience({ selection, onBack }: Props) {
   /** the AI version: idle → composing → on (and back to "my version") */
   const [ai, setAi] = useState<"idle" | "composing" | "on">("idle");
   const aiAudioRef = useRef<HTMLAudioElement | null>(null);
+  /** the notes heard in the AI version, handed to the routes: they drive the music box and the lights while it plays */
+  const aiNotesRef = useRef<PersonalNote[] | null>(null);
+  const followerRef = useRef<Follower | null>(null);
+  const [aiSyncing, setAiSyncing] = useState(false);
   const aiUrlRef = useRef<string | null>(null);
   /** while the video is made: a still of the current view with a progress screen over it */
   const [making, setMaking] = useState<{ still: string; startedAt: number; kind: "VIDEO" | "CARD" } | null>(null);
@@ -163,6 +169,7 @@ export function Experience({ selection, onBack }: Props) {
       noteCbRef.current = null;
       planCbRef.current = null;
       aiAudioRef.current?.pause();
+      followerRef.current?.stop();
       engine.dispose();
     };
   }, [routes, piece, palette]);
@@ -181,7 +188,9 @@ export function Experience({ selection, onBack }: Props) {
     const id = setInterval(() => {
       const p = playerRef.current;
       if (!p || piece.duration <= 0) return;
-      const t = Math.min(p.position(), piece.duration);
+      const el = aiAudioRef.current;
+      // while the AI version plays the playhead is the audio element's, mapped onto the same form
+      const t = ai === "on" && el && el.duration > 0 ? ((el.currentTime % el.duration) / el.duration) * piece.duration : Math.min(p.position(), piece.duration);
       const sec = piece.sections.find((x) => t >= x.start && t < x.end) ?? piece.sections[piece.sections.length - 1];
       setScope((prev) => {
         const pos = Math.round((t / piece.duration) * 200) / 200;
@@ -189,7 +198,7 @@ export function Experience({ selection, onBack }: Props) {
       });
     }, 250);
     return () => clearInterval(id);
-  }, [piece]);
+  }, [piece, ai]);
 
   const musicHud: MusicHud = useMemo(
     () => ({
@@ -255,16 +264,45 @@ export function Experience({ selection, onBack }: Props) {
   const AI_ENDPOINT = (import.meta.env.VITE_PERSONAL_AI_URL as string | undefined) || "";
   const stopAi = () => {
     aiAudioRef.current?.pause();
+    followerRef.current?.stop();
+    followerRef.current = null;
     playerRef.current?.setSynthMuted(false);
+    // our own piece plays again, with its own lights
+    playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
     setAi("idle");
   };
   const startAiAudio = (el: HTMLAudioElement) => {
     el.currentTime = 0;
     void el.play().catch(() => {});
     playerRef.current?.setSynthMuted(true);
-    // the visuals restart with it: the ribbon and the route lights follow the same form
-    playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
+    followerRef.current?.stop();
+    followerRef.current = null;
+    const heard = aiNotesRef.current;
+    if (heard && heard.length > 0) {
+      // the lights follow what is heard: the page's own scheduling stops and the notes found in the AI version drive them
+      playerRef.current?.stop();
+      followerRef.current = followAudio(el, heard, (n, at) => planCbRef.current?.(n, at), (n) => noteCbRef.current?.(n));
+    } else {
+      playerRef.current?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
+    }
     setAi("on");
+  };
+  /** listens to the AI version once: where its notes are, handed to the routes */
+  const listenTo = async (url: string): Promise<void> => {
+    try {
+      const res = await fetch(url);
+      const data = await res.arrayBuffer();
+      const buf = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(data);
+      const mono = new Float32Array(buf.length);
+      for (let c = 0; c < buf.numberOfChannels; c++) {
+        const ch = buf.getChannelData(c);
+        for (let i = 0; i < mono.length; i++) mono[i] += ch[i] / buf.numberOfChannels;
+      }
+      await new Promise((r) => setTimeout(r, 0));
+      aiNotesRef.current = assignToRoutes(analyze(mono, buf.sampleRate), routes);
+    } catch {
+      aiNotesRef.current = null; // the lights then keep following the page's own piece
+    }
   };
   const toggleAi = async () => {
     if (ai === "composing") return;
@@ -283,6 +321,9 @@ export function Experience({ selection, onBack }: Props) {
       say(AI_MESSAGE[out.status], 5000);
       return;
     }
+    setAiSyncing(true);
+    await listenTo(out.url);
+    setAiSyncing(false);
     const el = new Audio();
     el.crossOrigin = "anonymous";
     el.loop = true;
@@ -465,7 +506,7 @@ export function Experience({ selection, onBack }: Props) {
       <div className="personal-actions">
         {AI_ENDPOINT && (
           <button type="button" className="ghost-btn" disabled={!!busy || ai === "composing"} onClick={() => void toggleAi()}>
-            {ai === "composing" ? "COMPOSING WITH AI · ABOUT A MINUTE…" : ai === "on" ? "AI VERSION · ON — BACK TO MINE" : "AI VERSION"}
+            {ai === "composing" ? (aiSyncing ? "SYNCING THE ROUTE LINES TO THE MUSIC…" : "COMPOSING WITH AI · ABOUT A MINUTE…") : ai === "on" ? "AI VERSION · ON — BACK TO MINE" : "AI VERSION"}
           </button>
         )}
         <button type="button" className="compose-btn" disabled={!!busy} onClick={() => setSheet(true)}>
