@@ -148,6 +148,7 @@ export function Landing({ onCompose, onLive }: Props) {
           <span>
             {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries
           </span>
+          <a className="credits-link" href="/credits.html">Sound credits</a>
         </p>
       </div>
     );

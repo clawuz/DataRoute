@@ -174,3 +174,39 @@ Built by `scripts/samples/fetch_vsco.py` + `scripts/samples/build_pack.py` (mono
 | TIMP | `timp/Timpani2_Hit_v3_rr1_Sum.mp3` | `sgossner/VSCO-2-CE/Percussion/Timpani/Timpani2_Hit_v3_rr1_Sum.wav` | CC0 1.0 |
 | TIMP | `timp/Timpani3_Hit_v3_rr1_Sum.mp3` | `sgossner/VSCO-2-CE/Percussion/Timpani/Timpani3_Hit_v3_rr1_Sum.wav` | CC0 1.0 |
 | TIMP | `timp/Timpani4_Hit_v3_rr1_Sum.mp3` | `sgossner/VSCO-2-CE/Percussion/Timpani/Timpani4_Hit_v3_rr1_Sum.wav` | CC0 1.0 |
+
+## Freesound files in the pack (via API, HQ previews)
+
+| Instrument | File | Title | Author | Licence | Page |
+|---|---|---|---|---|---|
+| SAZ | `saz/saz_717195.mp3` | Baglama_E | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717195/ |
+| SAZ | `saz/saz_717204.mp3` | Baglama_Gl | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717204/ |
+| SAZ | `saz/saz_717176.mp3` | Baglama_Ab | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717176/ |
+| SAZ | `saz/saz_717175.mp3` | Baglama_A | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717175/ |
+| SAZ | `saz/saz_717182.mp3` | Baglama_Bb | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717182/ |
+| SAZ | `saz/saz_717181.mp3` | Baglama_B | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717181/ |
+| SAZ | `saz/saz_717187.mp3` | Baglama_C | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717187/ |
+| SAZ | `saz/saz_717189.mp3` | Baglama_Cs | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717189/ |
+| SAZ | `saz/saz_717196.mp3` | Baglama_Eb | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717196/ |
+| SAZ | `saz/saz_717200.mp3` | Baglama_F | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717200/ |
+| SAZ | `saz/saz_717201.mp3` | Baglama_Fsharp | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717201/ |
+| SAZ | `saz/saz_717203.mp3` | Baglama_G | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717203/ |
+| SAZ | `saz/saz_717180.mp3` | Baglama_Ah | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717180/ |
+| SAZ | `saz/saz_717185.mp3` | Baglama_Bbh | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717185/ |
+| SAZ | `saz/saz_717186.mp3` | Baglama_Bh | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717186/ |
+| SAZ | `saz/saz_717188.mp3` | Baglama_Ch | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717188/ |
+| SAZ | `saz/saz_717194.mp3` | Baglama_Dh | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717194/ |
+| SAZ | `saz/saz_717199.mp3` | Baglama_Eh | fcerim | CC0 1.0 | https://freesound.org/people/fcerim/sounds/717199/ |
+| OUD | `oud/oud_motif_550876.mp3` | #1 Oud Motif D1.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550876/ |
+| OUD | `oud/oud_motif_550874.mp3` | #2 Oud Motif F#1.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550874/ |
+| OUD | `oud/oud_172682.mp3` | g2.wav | hammondman | CC0 1.0 | https://freesound.org/people/hammondman/sounds/172682/ |
+| OUD | `oud/oud_172683.mp3` | a2.wav | hammondman | CC0 1.0 | https://freesound.org/people/hammondman/sounds/172683/ |
+| OUD | `oud/oud_172684.mp3` | c3.wav | hammondman | CC0 1.0 | https://freesound.org/people/hammondman/sounds/172684/ |
+| OUD | `oud/oud_motif_550880.mp3` | #4 Oud Motif D2.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550880/ |
+| OUD | `oud/oud_motif_550879.mp3` | #5 Oud Motif F#2.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550879/ |
+| OUD | `oud/oud_motif_550882.mp3` | #8 Oud Motif F#3.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550882/ |
+| OUD | `oud/oud_motif_550878.mp3` | #6 Oud Motif A2.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550878/ |
+| OUD | `oud/oud_motif_550881.mp3` | #9 Oud Motif A3.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550881/ |
+| OUD | `oud/oud_motif_550875.mp3` | #10 Oud Motif C#4.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550875/ |
+| NEY | `ney/ney_328744.mp3` | Ney Phrase Single Note.wav | yurci | CC BY | https://freesound.org/people/yurci/sounds/328744/ |
+| DARBUKA | `darbuka/darbuka_252806.mp3` | darbuka-nut-dum-ortakenar-dortparmak014-000-L.wav | volkoaudio | CC BY | https://freesound.org/people/volkoaudio/sounds/252806/ |

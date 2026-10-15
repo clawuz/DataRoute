@@ -7,6 +7,7 @@ Needs ffmpeg/ffprobe. Source licence: CC0 1.0 (VSCO 2 Community Edition, Versili
 import json, math, os, re, struct, subprocess, sys
 
 SRC, OUT = sys.argv[1], sys.argv[2]
+FS = sys.argv[3] if len(sys.argv) > 3 else None  # fetched Freesound sounds (fetch_freesound.py)
 SEMI = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
 NOTE = re.compile(r"_([A-G]#?)(\d)(?=[_.])")
 SUS_LEN = 3.0
@@ -95,6 +96,98 @@ def zones_for(files):
     return out
 
 
+
+def pitch_fs(path, lo=60.0, hi=800.0, start=0.12, length=0.5):
+    """fundamental (Hz) by normalised autocorrelation on a steady slice; None when unclear"""
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "8000", "-t", f"{start + length:.2f}", "-f", "f32le", "-"], capture_output=True).stdout
+    xs = struct.unpack("<%df" % (len(raw) // 4), raw)
+    xs = xs[int(start * 8000):]
+    if len(xs) < 800:
+        return None
+    mean = sum(xs) / len(xs)
+    xs = [x - mean for x in xs]
+    e0 = sum(x * x for x in xs) or 1e-9
+    best, bl = 0.0, 0
+    for lag in range(int(8000 / hi), min(int(8000 / lo), len(xs) // 2)):
+        c = sum(xs[i] * xs[i + lag] for i in range(0, len(xs) - lag)) / e0
+        if c > best:
+            best, bl = c, lag
+    if best < 0.35 or bl == 0:
+        return None
+    return 8000 / bl
+
+
+def onsets(path, seconds=2.0):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-ac", "1", "-ar", "8000", "-t", f"{seconds}", "-f", "f32le", "-"], capture_output=True).stdout
+    xs = struct.unpack("<%df" % (len(raw) // 4), raw)
+    fr = 160  # 20 ms
+    en = [math.sqrt(sum(x * x for x in xs[i:i + fr]) / fr) for i in range(0, len(xs) - fr, fr)]
+    n, last = 0, -10
+    for i in range(2, len(en)):
+        if en[i] > 1.6 * max(en[i - 1], en[i - 2], 1e-4) and en[i] > 0.15 * max(en) and i - last > 6:
+            n += 1
+            last = i
+    return n
+
+
+def midi_of_hz(f):
+    return 69 + 12 * math.log2(f / 440)
+
+
+def build_freesound(man, ledger_fs):
+    led = json.load(open(os.path.join(FS, "freesound-ledger.json")))
+    by = {}
+    for r in led:
+        by.setdefault(r["instrument"], []).append(r)
+
+    def enc(r, slug, limit):
+        src = os.path.join(FS, r["file"])
+        rel = f"{slug}/{r['instrument'].lower()}_{r['id']}.mp3"
+        encode(src, os.path.join(OUT, rel), limit)
+        ledger_fs.append({"instrument": slug.upper(), "file": rel, "source": r["page"], "author": r["author"], "licence": r["licence"], "title": r["name"]})
+        return rel
+
+    def zones_from(rows, limit, slug, lo=60.0, hi=800.0, one_onset=False):
+        got = {}
+        for r in rows:
+            path = os.path.join(FS, r["file"])
+            if one_onset and onsets(path, 1.6) > 1:
+                continue
+            f = pitch_fs(path, lo, hi)
+            if not f:
+                continue
+            m = midi_of_hz(f)
+            k = round(m)
+            if k not in got or abs(m - k) < abs(got[k][0] - k):
+                got[k] = (m, r)
+        zs = []
+        ks = sorted(got)
+        for i, k in enumerate(ks):
+            m, r = got[k]
+            lo_ = 0 if i == 0 else (ks[i - 1] + k) // 2 + 1
+            hi_ = 127 if i == len(ks) - 1 else (k + ks[i + 1]) // 2
+            zs.append({"root": round(m, 2), "lo": lo_, "hi": hi_, "file": enc(r, slug, limit)})
+        return zs
+
+    saz = zones_from(by.get("SAZ", []), 2.4, "saz", 80, 700)
+    if len(saz) >= 6:
+        man["instruments"]["SAZ"] = {"zones": saz, "release": 0.45, "gain": 1.3, "maxShift": 7}
+    oud = zones_from(by.get("OUD", []) + by.get("OUD_MOTIF", []), 2.4, "oud", 50, 400, one_onset=True)
+    if len(oud) >= 3:
+        man["instruments"]["OUD"] = {"zones": oud, "release": 0.5, "gain": 1.5, "maxShift": 7}
+    ney = zones_from(by.get("NEY", []), 3.0, "ney", 180, 1200)
+    if ney:
+        man["instruments"]["NEY"] = {"zones": ney, "sustained": True, "release": 0.4, "gain": 1.6, "loop": [0.9, 2.2], "maxShift": 6}
+    dk = by.get("DARBUKA", [])
+    if dk and "DARBUKA" in man["instruments"]:
+        rel = enc(dk[0], "darbuka", 1.3)
+        zs = man["instruments"]["DARBUKA"]["zones"]
+        for z in zs:
+            if z.get("vel", [0, 0])[0] >= 0.72:
+                z["file"] = rel  # the open dum, from a real darbuka
+    return man
+
+
 def main():
     man = {"name": "VSCO 2 Community Edition (CC0), lite", "instruments": {}}
     ledger = []
@@ -166,6 +259,10 @@ def main():
     if tz:
         man["instruments"]["TIMP"] = {"zones": zones_for(tz), "release": 0.5}
 
+    ledger_fs = []
+    if FS and os.path.exists(os.path.join(FS, "freesound-ledger.json")):
+        build_freesound(man, ledger_fs)
+        json.dump(ledger_fs, open(os.environ.get("LEDGER_FS", "docs/music-pack-freesound-ledger.json"), "w"), indent=1)
     json.dump(man, open(os.path.join(OUT, "manifest.json"), "w"), indent=1)
     json.dump(ledger, open(os.environ.get("LEDGER", "docs/music-pack-lite-ledger.json"), "w"), indent=1)  # not shipped with the pack
     size = sum(os.path.getsize(os.path.join(r, f)) for r, _, fs in os.walk(OUT) for f in fs if f.endswith(".mp3"))

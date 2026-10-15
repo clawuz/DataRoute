@@ -45,6 +45,8 @@ export interface SampleInstrument {
   loop?: [number, number];
   /** a drum or a noise: played as recorded at any requested pitch */
   unpitched?: boolean;
+  /** a single recording stretched over a wide range sounds wrong: notes further than this many semitones from it are moved by octaves */
+  maxShift?: number;
 }
 
 export interface SampleManifest {
@@ -148,10 +150,15 @@ export function createSampler(ctx: AudioContext): Sampler {
     play(dest, instrument, freq, vel, when, durSec, onEnd) {
       const inst = defs.get(instrument);
       if (!inst) return false;
-      const z = pickZone(inst.zones, midiOf(freq), vel);
+      let f = freq;
+      const z = pickZone(inst.zones, midiOf(f), vel);
+      if (z && inst.maxShift) {
+        while (midiOf(f) - z.root > inst.maxShift) f /= 2;
+        while (z.root - midiOf(f) > inst.maxShift) f *= 2;
+      }
       const buf = z ? buffers.get(z.file) : undefined;
       if (!z || !buf) return false;
-      const rate = inst.unpitched ? 1 : rateFor(freq, z.root);
+      const rate = inst.unpitched ? 1 : rateFor(f, z.root);
       const peak = Math.max(0.0001, vel * (inst.gain ?? 1));
       const release = inst.release ?? 0.35;
       const hold = when + Math.max(0.05, durSec);
