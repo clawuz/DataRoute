@@ -747,3 +747,33 @@ body.personal-build .dep-now.dep-mark { letter-spacing: 0; transform: translateX
   body.personal-build .credit, body.personal-build .source { font-size: 8px; letter-spacing: 0.04em; line-height: 1.5; color: rgba(242, 245, 250, 0.45); }
   body.personal-build .credit { bottom: 3.4vmin; }
 }
+
+/* live screen: credit and source on one line, one after the other */
+@media (min-aspect-ratio: 1/1) {
+  body.personal-build .credit { bottom: 2.4vmin; white-space: nowrap; }
+  body.personal-build .source { bottom: 2.4vmin; left: calc(3vmin + 48em); white-space: nowrap; }
+}
+
+/* live screen (landscape): the right panel lines up with the left stack and has air between them;
+   the chart's glass takes in its hour labels */
+.personal-build .dep-globe .dep-plot::before { inset: -1.2vmin -1.4vmin -3.8vmin -1.4vmin; }
+@media (min-aspect-ratio: 1/1) {
+  body.personal-build .dep.dep-globe { right: 44vmin; bottom: 7.5vmin; }
+  body.personal-build .regions { bottom: 6.8vmin; right: 3vmin; width: 31vmin; }
+}
+
+/* live screen: the departures chart is one glass panel — its title, bars and hour labels all inside it, like the other panels */
+.personal-build .dep-globe .dep-plot::before { content: none; }
+.personal-build .dep.dep-globe {
+  background: rgba(2, 4, 12, 0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(242, 245, 250, 0.12); border-radius: 10px; padding: 1.4vmin 1.6vmin 1.2vmin; box-sizing: border-box;
+}
+/* the fine print: credit, then source, on one line from the left margin */
+body.personal-build .credit, body.personal-build .source { right: auto !important; transform: none !important; text-align: left; }
+body.personal-build .credit { left: 3vmin !important; }
+@media (min-aspect-ratio: 1/1) {
+  body.personal-build .source:not(.credit) { left: calc(3vmin + 49em) !important; }
+  body.personal-build .source:not(.credit)::before { content: "·"; margin-right: 0.8em; }
+  body.personal-build .dep.dep-globe { bottom: 7.5vmin; }
+  body.personal-build .regions { bottom: 7.5vmin; }
+}
