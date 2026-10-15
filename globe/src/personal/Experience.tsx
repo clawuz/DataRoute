@@ -32,11 +32,11 @@ interface Props {
  * by the note's pitch), so no two routes draw over each other. The sound is not changed.
  */
 function ribbonPitch(route: number, freq: number, count: number): number {
-  const bands = Math.min(Math.max(count, 1), 14);
+  const bands = Math.min(Math.max(count, 1), 24);
   const band = route % bands;
   const h = 1 / bands;
   const local = Math.min(1, Math.max(0, (69 + 12 * Math.log2(freq / 440) - 36) / 60)); // C2 … C7 inside the band
-  const y = band * h + h * 0.1 + local * h * 0.8;
+  const y = band * h + h * 0.18 + local * h * 0.64;
   return PITCH_MIN * (PITCH_MAX / PITCH_MIN) ** y;
 }
 
@@ -134,7 +134,7 @@ export function Experience({ selection, onBack }: Props) {
         const r = routes[n.route >= 0 ? n.route : n.via];
         if (!r || n.show === false) return; // the upper tones of a held chord sound but are not drawn again
         // the accompaniment is drawn softer than the line, so the line stays the picture
-        noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: ribbonPitch(n.route >= 0 ? n.route : n.via, n.freq, routes.length), vel: n.route >= 0 ? n.vel : n.vel * 0.55, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key, alt: n.alt });
+        noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: ribbonPitch(n.route >= 0 ? n.route : n.via, n.freq, routes.length), vel: n.route >= 0 ? n.vel : n.vel * 0.55, kind: "line", key: r.key, at: wallAt, durSec: n.drawDur ?? n.d, lineId: r.key, alt: n.alt });
       };
       const start = () => {
         player?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));

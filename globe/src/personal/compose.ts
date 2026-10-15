@@ -18,6 +18,8 @@ export interface PersonalNote {
   via: number;
   /** false: the note sounds but is not drawn again */
   show?: boolean;
+  /** how long the music box draws the note: never into the next note of the same route (the sound keeps `d`) */
+  drawDur?: number;
   /** altitude (ft) of the flight at this point of its phrase: climb, cruise, descent — the pitch follows it */
   alt: number;
 }
@@ -347,6 +349,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         });
       }
     }
+  }
+  // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
+  const byRoute = new Map<number, PersonalNote[]>();
+  for (const x of notes) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
+  for (const list of byRoute.values()) {
+    list.sort((a, b) => a.t - b.t);
+    list.forEach((x, k) => {
+      const next = list.slice(k + 1).find((y) => y.t > x.t + 1e-6);
+      x.drawDur = next ? Math.max(0.05, Math.min(x.d, (next.t - x.t) * 0.92)) : x.d;
+    });
   }
   const end = Math.max(...notes.map((x) => x.t + x.d));
   let atBar = 0;

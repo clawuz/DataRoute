@@ -317,3 +317,21 @@ describe("two flights are never the same note", () => {
     expect(same / multi).toBeLessThan(0.05);
   });
 });
+
+describe("the music box: a route's notes never overlap in the drawing", () => {
+  it("draws every note only until the next note of the same route", () => {
+    const p = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "ESB", "ADB"], "IST"));
+    const by = new Map<number, typeof p.notes>();
+    for (const n of p.notes) by.set(n.route, [...(by.get(n.route) ?? []), n]);
+    let checked = 0;
+    for (const list of by.values()) {
+      const s = [...list].sort((a, b) => a.t - b.t);
+      for (let k = 0; k + 1 < s.length; k++) {
+        if (s[k + 1].t - s[k].t < 1e-6) continue;
+        expect(s[k].t + (s[k].drawDur ?? s[k].d)).toBeLessThanOrEqual(s[k + 1].t + 1e-6);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
+});
