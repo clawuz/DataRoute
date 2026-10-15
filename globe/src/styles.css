@@ -630,5 +630,19 @@ body.recording-reel .music-scope { opacity: 0; }
 }
 
 /* the top bar (logo + back) stays above the scrolling list, solid and readable; the compose bar likewise at the bottom */
-.landing.v2 > .topbar { z-index: 20; background: #02030a; border-bottom: 1px solid rgba(242, 245, 250, 0.1); padding-bottom: 12px; }
+.landing.v2 > .topbar { z-index: 20; background: #02030a; border-bottom: 0; padding-bottom: 12px; }
 .landing.v2 > .picker-bar { z-index: 19; }
+
+/* live screen, new link: Back sits where it sits on every other screen (top right, in the top bar's own style);
+   on a phone the live/replay chip takes the place Back had, under the title */
+body.personal-build .live-back {
+  left: auto; right: 28px; top: 14px; z-index: 20;
+  background: none; border: 0; border-radius: 0; backdrop-filter: none; -webkit-backdrop-filter: none;
+  color: var(--ink-dim, rgba(242, 245, 250, 0.7)); font-size: clamp(11px, 1.4vmin, 14px); padding: 12px 8px; min-height: 40px;
+}
+body.personal-build .live-back:hover, body.personal-build .live-back:focus-visible { color: #f2f5fa; }
+@media (min-aspect-ratio: 1/1) { body.personal-build .counters { top: 64px; } }
+@media (max-aspect-ratio: 1/1) {
+  body.personal-build .live-back { right: 16px; top: 8px; }
+  body.personal-build .phase.gt-chip { position: fixed; left: 16px; top: 14vmin; margin: 0; z-index: 12; }
+}
