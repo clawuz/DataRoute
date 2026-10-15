@@ -741,3 +741,9 @@ body.personal-build .music-scope { bottom: 27vmin; }
 
 /* replay marker: centred exactly on the red line (no trailing letter-space, no edge shift) */
 body.personal-build .dep-now.dep-mark { letter-spacing: 0; transform: translateX(-50%) !important; line-height: 1; }
+
+/* live screen: the credit and source lines are fine print */
+@media (min-aspect-ratio: 1/1) {
+  body.personal-build .credit, body.personal-build .source { font-size: 8px; letter-spacing: 0.04em; line-height: 1.5; color: rgba(242, 245, 250, 0.45); }
+  body.personal-build .credit { bottom: 3.4vmin; }
+}
