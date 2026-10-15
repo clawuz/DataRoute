@@ -2,7 +2,9 @@
  * The bars of the music box (the scope's piano roll) as a tile for the entry title: note bars of different lengths
  * and colours on nine rows, drawn once to a canvas. The tile is 5.2 times as wide as it is high and has no seam.
  */
-const PALETTE = ["#7BD389", "#5AA9E6", "#B66BFF", "#FFD479", "#FF5CCB", "#FF3B47", "#4FD1C5", "#9AE66E"];
+const GOLDEN = 137.508;
+/** the music box colours its notes by walking the hue wheel by the golden angle: the same here, so no colour leads */
+const colorAt = (i: number): string => `hsl(${Math.round((i * GOLDEN + 12) % 360)}, 74%, 62%)`;
 
 /** a small deterministic generator, so the tile is the same every time */
 function rng(seed: number): () => number {
@@ -22,14 +24,17 @@ export interface Bar {
 
 export function tileBars(width = 520, rows = 9, seed = 11): Bar[] {
   const r = rng(seed);
+  // a few long notes and many short ones, as in the scope
+  const LENGTHS = [10, 14, 18, 24, 30, 40, 54, 72, 96, 128, 168];
   const out: Bar[] = [];
+  let n = 0;
   for (let row = 0; row < rows; row++) {
-    let x = Math.floor(r() * 40);
+    let x = Math.floor(r() * 50);
     for (;;) {
-      const len = [22, 34, 48, 70, 100][Math.floor(r() * 5)];
+      const len = LENGTHS[Math.floor(r() * r() * LENGTHS.length)] + Math.floor(r() * 8);
       if (x + len > width - 6) break;
-      if (r() < 0.38) out.push({ x, row, len, color: PALETTE[Math.floor(r() * PALETTE.length)] });
-      x += len + 14 + Math.floor(r() * 56);
+      if (r() < 0.5) out.push({ x, row, len, color: colorAt(n++) });
+      x += len + 6 + Math.floor(r() * 70);
     }
   }
   return out;
