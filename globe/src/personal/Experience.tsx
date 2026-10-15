@@ -72,7 +72,7 @@ export function Experience({ selection, onBack }: Props) {
   const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
   /** a studio piece that is like these picks (a finished file on the site: no request is made) */
-  const studio = useMemo(() => pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length), [selection, routes]);
+  const studio = useMemo(() => (routes.length < 2 ? null : pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length)), [selection, routes]);
   const autoStudio = useRef(false);
   const palette = useMemo(() => routePalette(routes), [routes]);
   const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
@@ -348,7 +348,7 @@ export function Experience({ selection, onBack }: Props) {
 
   // very few picks make a sparse piece of our own (one or two voices): they get the studio piece that is like them
   useEffect(() => {
-    if (!studio || routes.length > 2 || autoStudio.current) return;
+    if (!studio || routes.length !== 2 || autoStudio.current) return;
     autoStudio.current = true;
     setTimeout(() => void toggleAi(), 700);
     // eslint-disable-next-line react-hooks/exhaustive-deps

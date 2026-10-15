@@ -219,6 +219,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const bpm = st.bpm;
   const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre };
   if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [], style };
+  // one route: one instrument singing one melody that climbs and falls with the flight and comes home
+  if (routes.length === 1) return composeSolo(mode, routes[0], st, style);
   const beat = 60 / bpm;
   const bar = beat * 4;
   const n = routes.length;
@@ -415,4 +417,135 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     return LEVEL[sectionOf(b).section];
   });
   return { notes, duration: Math.max(end, BARS * bar) + 1.5, hook, bpm, sections, energy, style };
+}
+
+
+/** one bar of eighth-note steps: the lengths of its notes (each bar sums to 8) */
+const MOTIFS: Record<"sparse" | "mid" | "dense", number[][]> = {
+  sparse: [[2, 2, 4], [4, 2, 2], [6, 2], [3, 3, 2], [4, 4]],
+  mid: [[2, 2, 2, 2], [3, 1, 2, 2], [1, 1, 2, 2, 2], [2, 1, 1, 2, 2], [2, 2, 1, 1, 2]],
+  dense: [[1, 1, 2, 1, 1, 2], [2, 1, 1, 1, 1, 2], [1, 1, 1, 1, 2, 2], [1, 1, 2, 2, 1, 1], [2, 1, 1, 2, 1, 1]],
+};
+const MOTIF_OF: Record<Section, "sparse" | "mid" | "dense"> = { intro: "sparse", verse: "mid", build: "dense", chorus: "dense", break: "sparse", outro: "sparse" };
+/** the colour of a makam for Anatolian and Middle-Eastern routes: hicaz (a flat second, a raised third) and nihavend */
+const HICAZ = [0, 1, 4, 5, 7, 8, 10];
+const NIHAVEND = [0, 2, 3, 5, 7, 8, 11];
+
+/**
+ * A single route is a single voice, and it is given a tune: four-bar phrases that follow the flight (they climb with
+ * the take-off, hold up at the cruise and come down for the landing), steps and the odd leap, the first note of a bar on
+ * a chord tone, and every phrase ending on the home note of its chord, held — the last of the piece on the key's own
+ * root. The form, tempo, key and chords are the same as for any piece; the instrument is one for the whole piece.
+ */
+function composeSolo(mode: PersonalMode, route: PersonalRoute, st: PersonalStyle & { bpm: number }, style: PersonalStyle): PersonalPiece {
+  const beat = 60 / st.bpm;
+  const bar = beat * 4;
+  const step = beat / 2; // an eighth
+  const h = routeHash(route.key);
+  const makam = route.region === "DOM" || route.region === "MEA";
+  const scale = makam ? (mode === "wish" ? NIHAVEND : HICAZ) : mode === "wish" ? MAJOR : MINOR;
+  const prog = PROGS[mode][st.progression];
+  const pal = PALETTES.symphonic.melody;
+  const pool = (pal[route.region] ?? pal.UNK).slice(0, 3);
+  const inst: Instrument = pool[(h + st.ensemble) % pool.length];
+  // a bowed or blown line wants room below it, a piano or a plucked one the middle
+  const baseSemis = KEY_ROOT + st.shift + (inst === "NEY" || inst === "FLUTE" || inst === "OBOE" || inst === "CLA" || inst === "VIOLIN" ? 12 : 7);
+  const SECTION_LIFT: Record<Section, number> = { intro: 0, verse: 1, build: 3, chorus: 4, break: 1, outro: 0 };
+  const phraseBars = 4;
+  const notes: PersonalNote[] = [];
+  let deg = 0; // degrees above the base
+  let n = 0;
+
+  const pitchOf = (d: number): number => {
+    const o = Math.floor(d / 7);
+    return baseSemis + scale[((d % 7) + 7) % 7] + 12 * o;
+  };
+  const toneNear = (d: number, tones: number[]): number => {
+    // the chord tone closest to the degree's pitch, as a degree of the scale
+    const target = pitchOf(d);
+    let best = d;
+    let bd = Infinity;
+    for (let k = d - 5; k <= d + 5; k++) {
+      const p = pitchOf(k);
+      const isTone = tones.some((t) => ((p - t) % 12 + 12) % 12 === 0);
+      if (isTone && Math.abs(p - target) < bd) {
+        bd = Math.abs(p - target);
+        best = k;
+      }
+    }
+    return best;
+  };
+
+  for (let b = 0; b < BARS; b++) {
+    const { section, first } = sectionOf(b);
+    const chord = prog[Math.floor(b / 2) % prog.length];
+    const cr = chord.root + st.shift;
+    const tones = [0, chord.third, 7].map((x) => cr + x + 12 * 4); // pitch classes only matter (mod 12)
+    const inPhrase = b % phraseBars;
+    const lastBar = inPhrase === phraseBars - 1;
+    const lastOfPiece = b === BARS - 1;
+    // the bars of a phrase repeat one rhythm now and then (a tune is made of repeats), the cadence bar is short
+    const pool2 = MOTIFS[MOTIF_OF[section]];
+    const motif = lastBar ? [2, 2, 4] : pool2[(h + Math.floor(b / phraseBars) * 3 + (inPhrase % 2 === 1 ? 0 : inPhrase)) % pool2.length];
+    let at = 0;
+    motif.forEach((len, mi) => {
+      const pPhrase = (inPhrase * 8 + at) / (phraseBars * 8);
+      // the contour: climb 0–18 %, cruise, descent from 82 % — the same shape as the altitude of the flight
+      const height = altitudeFt(pPhrase, route.distKm) / cruiseFt(route.distKm);
+      const want = Math.round(height * 5) + SECTION_LIFT[section];
+      const lastNote = mi === motif.length - 1;
+      if (lastBar && lastNote) {
+        // home: the root of the chord (the key's own root at the very end)
+        const tonic = lastOfPiece ? [KEY_ROOT + st.shift + 12 * 4] : [cr + 12 * 4];
+        deg = toneNear(deg, tonic);
+      } else if (mi === 0) {
+        deg = toneNear(deg + Math.sign(want - deg), tones);
+      } else {
+        const diff = want - deg;
+        const r = routeHash(`${route.key}${b}${mi}`) % 7;
+        // mostly steps toward the contour; now and then a repeat, a neighbour or a leap of a third
+        let move = diff === 0 ? (r % 2 ? 1 : -1) : Math.sign(diff);
+        if (r === 0) move = 0;
+        if (r === 1) move = -Math.sign(diff || 1);
+        if (r === 2 && Math.abs(diff) >= 2) move *= 2;
+        deg += move;
+      }
+      deg = clamp(deg, -3, 14);
+      const t = b * bar + at * step;
+      const hold = lastOfPiece && lastNote ? 5 : 0; // the very last note rings on
+      const d = (len + hold) * step * 0.96;
+      const vel = clamp(LEVEL[section] * (0.58 + 0.3 * height) * (lastBar && lastNote ? 0.9 : 1), 0.1, 1);
+      const f = fitPitch(hz(pitchOf(deg)), inst);
+      notes.push({ t, d, instrument: inst, freq: f, vel, key: route.key, route: 0, via: 0, alt: altitudeFt(pPhrase, route.distKm) });
+      n++;
+      at += len;
+    });
+    if (first === b && section === "chorus") continue;
+  }
+  const end = Math.max(...notes.map((x) => x.t + x.d));
+  const byTime = notes;
+  byTime.forEach((x, k) => {
+    const next = byTime[k + 1];
+    x.drawDur = next ? Math.max(0.05, Math.min(x.d, (next.t - x.t) * 0.92)) : x.d;
+  });
+  let atBar = 0;
+  const sections = FORM.map(([name, m]) => {
+    const sec = { name, start: atBar * bar, end: (atBar + m) * bar };
+    atBar += m;
+    return sec;
+  });
+  const energy = Array.from({ length: 48 }, (_, i) => LEVEL[sectionOf(Math.min(BARS - 1, Math.floor(((i + 0.5) / 48) * BARS))).section]);
+  const chorusStart = FORM.slice(0, 3).reduce((a, [, m]) => a + m, 0) * bar;
+  void n;
+  return { notes, duration: Math.max(end, BARS * bar) + 1.5, hook: chorusStart, bpm: st.bpm, sections, energy, style };
+}
+
+/** an instrument's own range: above its ceiling or below its floor a note is moved by octaves */
+function fitPitch(f: number, inst: Instrument): number {
+  const cap = CEILING[inst];
+  const floor = FLOOR[inst];
+  let x = f;
+  if (cap) while (x > cap) x /= 2;
+  if (floor) while (x < floor) x *= 2;
+  return x;
 }

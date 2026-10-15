@@ -342,3 +342,49 @@ describe("the sound family: mostly symphonic", () => {
     for (const p of pieces.filter((x) => x.style.genre === "symphonic")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
 });
+
+describe("one route: one voice with a tune", () => {
+  const routes = buildRoutes(["GZP"], "IST");
+  const p = composePiece("wish", routes);
+  it("is a single instrument on a single route, one note at a time", () => {
+    expect(routes.length).toBe(1);
+    expect(new Set(p.notes.map((n) => n.instrument)).size).toBe(1);
+    expect(new Set(p.notes.map((n) => n.route))).toEqual(new Set([0]));
+    const s = [...p.notes].sort((a, b) => a.t - b.t);
+    for (let k = 0; k + 1 < s.length; k++) expect(s[k].t + s[k].d).toBeLessThanOrEqual(s[k + 1].t + 0.2);
+  });
+  it("moves: it goes up and comes down over more than an octave", () => {
+    const m = p.notes.map((n) => 69 + 12 * Math.log2(n.freq / 440));
+    expect(Math.max(...m) - Math.min(...m)).toBeGreaterThanOrEqual(12);
+    let ups = 0;
+    let downs = 0;
+    for (let k = 1; k < m.length; k++) {
+      if (m[k] > m[k - 1] + 0.5) ups++;
+      if (m[k] < m[k - 1] - 0.5) downs++;
+    }
+    expect(ups).toBeGreaterThan(30);
+    expect(downs).toBeGreaterThan(30);
+  });
+  it("rises with the flight: the cruise sits above the climb", () => {
+    const top = Math.max(...p.notes.map((n) => n.alt));
+    const cruise = p.notes.filter((n) => n.alt >= 0.9 * top).map((n) => Math.log2(n.freq));
+    const climb = p.notes.filter((n) => n.alt > 0 && n.alt < 0.8 * top).map((n) => Math.log2(n.freq));
+    expect(cruise.length).toBeGreaterThan(20);
+    expect(climb.length).toBeGreaterThan(5);
+    const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+    expect(mean(cruise)).toBeGreaterThan(mean(climb));
+  });
+  it("comes home: the phrases end on a held note, the piece on its root", () => {
+    const s = [...p.notes].sort((a, b) => a.t - b.t);
+    const last = s[s.length - 1];
+    const avg = s.reduce((x, n) => x + n.d, 0) / s.length;
+    expect(last.d).toBeGreaterThan(avg * 2);
+    // the root of the key: D (587 Hz class) moved by the piece's shift
+    const pcOf = (f: number) => (((Math.round(12 * Math.log2(f / 440)) % 12) + 12) % 12);
+    const root = (((9 - 2 + p.style.shift) % 12) + 12) % 12; // D is pitch class 2 relative to A=9? computed below from the key
+    void root;
+    const tonicPc = (((2 + p.style.shift) % 12) + 12) % 12; // D = 2 in a C-based pitch class count
+    const lastPc = (((pcOf(last.freq) + 9) % 12) + 12) % 12; // A-based → C-based
+    expect(lastPc).toBe(tonicPc);
+  });
+});
