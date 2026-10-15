@@ -628,3 +628,7 @@ body.recording-reel .music-scope { opacity: 0; }
 @media (max-aspect-ratio: 1/1) {
   .personal-hud ~ .music-scope, .personal-hud ~ .music-scope.compact { bottom: 20vmin; }
 }
+
+/* the top bar (logo + back) stays above the scrolling list, solid and readable; the compose bar likewise at the bottom */
+.landing.v2 > .topbar { z-index: 20; background: #02030a; border-bottom: 1px solid rgba(242, 245, 250, 0.1); padding-bottom: 12px; }
+.landing.v2 > .picker-bar { z-index: 19; }
