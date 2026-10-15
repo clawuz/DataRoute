@@ -118,8 +118,9 @@ export function Experience({ selection, onBack }: Props) {
       planCbRef.current = (n, wallAt) => {
         // the lead's own route, or for the accompaniment the route that leads its bar: every hit is on the ribbon
         const r = routes[n.route >= 0 ? n.route : n.via];
-        if (!r) return;
-        noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
+        if (!r || n.show === false) return; // the upper tones of a held chord sound but are not drawn again
+        // the accompaniment is drawn softer than the line, so the line stays the picture
+        noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.route >= 0 ? n.vel : n.vel * 0.55, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
       };
       const start = () => {
         player?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));

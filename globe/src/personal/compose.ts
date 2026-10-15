@@ -16,6 +16,8 @@ export interface PersonalNote {
   route: number;
   /** the route this note belongs to for display (the lead of its bar): every hit shows in the music box in its route's colour */
   via: number;
+  /** false for the upper tones of a held chord: they sound, but the music box shows the chord once */
+  show?: boolean;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -278,7 +280,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     via = lead % routes.length; // every hit of this bar is shown with the route that leads it
 
     // pad: the chord, held for two bars, re-struck on every second bar
-    if (onSecondBar) for (const m of tones) push({ t: t0, d: bar * 2 * 0.98, instrument: ens.pad, freq: hz(m + 12), vel: v(0.34) });
+    if (onSecondBar) tones.forEach((m, ti) => push({ t: t0, d: bar * 2 * 0.98, instrument: ens.pad, freq: hz(m + 12), vel: v(0.34), show: ti === 0 }));
     // a second colour joins the build and the chorus: a held fifth-less chord in the orchestra, a doubling elsewhere
     if (section === "build" || section === "chorus") {
       if (ens.colour === "GLOCK") {
@@ -286,7 +288,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         for (const [k, ti] of [[0, 0], [1.5, 2], [3, 1]] as [number, number][]) push({ t: at(t0, k), d: beat * 0.8, instrument: "GLOCK", freq: hz(tones[ti] + 24), vel: v(0.26) });
       } else if (onSecondBar) {
         const m = st.ensemble === 1 ? tones.slice(0, 2) : [tones[0]];
-        for (const x of m) push({ t: t0, d: bar * 2 * 0.95, instrument: ens.colour, freq: hz(x + (st.ensemble === 1 ? 12 : 24)), vel: v(0.24) });
+        m.forEach((x, xi) => push({ t: t0, d: bar * 2 * 0.95, instrument: ens.colour, freq: hz(x + (st.ensemble === 1 ? 12 : 24)), vel: v(0.24), show: xi === 0 }));
       }
     }
     // bass
@@ -347,7 +349,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   }
   // the last chord rings out
   const last = prog[Math.floor((BARS - 1) / 2) % prog.length];
-  for (const i of [0, last.third, 7]) push({ t: BARS * bar, d: bar * 1.6, instrument: ens.pad, freq: hz(root(last.root) + 12 + i), vel: 0.2 });
+  [0, last.third, 7].forEach((i, ti) => push({ t: BARS * bar, d: bar * 1.6, instrument: ens.pad, freq: hz(root(last.root) + 12 + i), vel: 0.2, show: ti === 0 }));
   const end = Math.max(...notes.map((n) => n.t + n.d));
   let atBar = 0;
   const sections = FORM.map(([name, n]) => {
