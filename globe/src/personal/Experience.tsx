@@ -69,7 +69,7 @@ export function Experience({ selection, onBack }: Props) {
     engine.setNight(true); // always the night side: the lights and the routes read best on it
     engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
     engine.setPortraitFit(true);
-    engine.setPortraitShift(30); // a phone: the globe sits higher, the music box lower
+    engine.setPortraitShift(-20); // a phone: the globe sits higher, the music box lower
     engine.setEffects({ cloudShadow: true, glare: true, aurora: false, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built
@@ -350,7 +350,7 @@ export function Experience({ selection, onBack }: Props) {
       engine.setIdleSpin(true, 1);
       engine.setLineScale(1);
       engine.setPortraitFit(true);
-      engine.setPortraitShift(30);
+      engine.setPortraitShift(-20);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
       setMaking(null);
