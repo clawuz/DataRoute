@@ -21,9 +21,13 @@ function defaultWrite(key: string, value: string): void {
   localStorage.setItem(key, value);
 }
 
-export function initArt(search: string, read: (key: string) => string | null = defaultRead): ArtState {
+export function initArt(
+  search: string,
+  read: (key: string) => string | null = defaultRead,
+  defaults: Partial<Pick<ArtState, "corridors" | "aurora" | "sound">> = {},
+): ArtState {
   if (new URLSearchParams(search).get("art") === "0") return { enabled: false, corridors: false, aurora: false, sound: false };
-  const s: ArtState = { enabled: true, ...DEFAULTS };
+  const s: ArtState = { enabled: true, ...DEFAULTS, ...defaults };
   try {
     const raw = read(ART_STORAGE_KEY);
     if (raw) {

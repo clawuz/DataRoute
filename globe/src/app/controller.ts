@@ -78,6 +78,8 @@ export interface GlobeControllerDeps {
   track?: DayTrack; // art:track
   /** wall clock of the sound engine's planner (seconds; default performance.now() / 1000) */ // art:sound
   clock?: () => number;
+  /** starting art switches when the visitor has stored none (the new link opens with the aurora on) */
+  artDefaults?: { aurora?: boolean };
 }
 
 export interface GlobeController {
@@ -106,7 +108,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let hidden = false;
   let hudTimer = 0;
   let perf = { fps: 0, level: 0 };
-  let art: ArtState = initArt(d.search ?? ""); // art:core
+  let art: ArtState = initArt(d.search ?? "", undefined, d.artDefaults); // art:core
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound

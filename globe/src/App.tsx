@@ -61,6 +61,7 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
         debug: params.get("debug") === "1",
         reducedMotion,
         search, // art:core
+        artDefaults: params.get("personal") === "1" || import.meta.env.VITE_PERSONAL === "1" ? { aurora: true } : undefined,
         noteBus, // art:sound
         onLabels: labelBus.emit,
         nowMs: () => Date.now(),
@@ -72,12 +73,37 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
     }
     controller.setTextureState(0, "");
     let maxProgress = 0;
+    // the new link: a first visitor sees the globe settle, then the day replays and the music comes in
+    const personalBuild = import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1";
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const startTour = () => {
+      if (!personalBuild) return;
+      let tries = 0;
+      const attempt = () => {
+        const s = store.get();
+        const ready = s.depHist.some((v) => v > 0);
+        if (!ready && tries++ < 12) {
+          timers.push(setTimeout(attempt, 1000));
+          return;
+        }
+        if (s.mode === "LIVE") controller?.onKey("r"); // the 24 h replay
+        timers.push(
+          setTimeout(() => {
+            if (!store.get().music.on) controller?.onKey("m"); // then the music
+          }, 800),
+        );
+      };
+      timers.push(setTimeout(attempt, 3500));
+    };
     engine
       .loadTextures((p) => {
         maxProgress = Math.max(maxProgress, p);
         controller?.setTextureState(maxProgress, "");
       })
-      .then((tier) => controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)"))
+      .then((tier) => {
+        controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
+        startTour();
+      })
       .catch((e) => {
         console.error("[textures]", e);
         controller?.setTextureState(1, "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
@@ -136,6 +162,7 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       document.documentElement.removeEventListener("pointerleave", leave);
       window.removeEventListener("blur", leave);
       if (reloadTimer !== undefined) clearTimeout(reloadTimer);
+      timers.forEach(clearTimeout);
       controller?.dispose();
       controller = null;
       engine.dispose();
