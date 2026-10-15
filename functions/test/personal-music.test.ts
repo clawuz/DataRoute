@@ -69,6 +69,9 @@ describe("character", () => {
     expect(parseCharacter({ ...good, regions: ["MARS"] })).toBeNull();
     expect(parseCharacter(null)).toBeNull();
   });
+  it("keys do not depend on the size either: one track per mode and regions", () => {
+    expect(characterKey({ mode: "wish", regions: ["EUR"], size: "S" })).toBe(characterKey({ mode: "wish", regions: ["EUR"], size: "L" }));
+  });
   it("keys do not depend on region order", () => {
     expect(characterKey({ mode: "wish", regions: ["ASI", "EUR"], size: "S" })).toBe(characterKey({ mode: "wish", regions: ["EUR", "ASI"], size: "S" }));
   });
@@ -78,8 +81,8 @@ describe("plan", () => {
   it("is a full piece, instrumental, with the mode's mood", () => {
     const p = buildPlan(parseCharacter(good)!);
     const ms = p.chunks.reduce((s, c) => s + c.duration_ms, 0);
-    expect(ms).toBeGreaterThan(140_000);
-    expect(ms).toBeLessThan(190_000);
+    expect(ms).toBeGreaterThan(80_000);
+    expect(ms).toBeLessThan(100_000);
     expect(p.chunks.length).toBe(6);
     expect(p.chunks[0].positive_styles).toContain("instrumental");
     expect(p.chunks[0].negative_styles).toContain("vocals");
@@ -105,13 +108,13 @@ describe("handleRequest", () => {
     expect((await handleRequest(mk(2), "v", d)).status).toBe("limit");
     expect(PER_VISITOR_CAP).toBe(2);
   });
-  it("stops at 100 new tracks a day, but cached ones still play", async () => {
+  it("stops at the day cap of new tracks, but cached ones still play", async () => {
     const d = deps();
     d.store.daily.set("2026-10-14", DAILY_CAP);
     expect((await handleRequest(good, "z", d)).status).toBe("cap");
     d.store.tracks.set(characterKey(parseCharacter(good)!), "https://files.example/x.mp3");
     expect((await handleRequest(good, "z", d)).status).toBe("ready");
-    expect(DAILY_CAP).toBe(100);
+    expect(DAILY_CAP).toBe(20);
   });
   it("gives the claim back when the composition fails", async () => {
     const d = deps({

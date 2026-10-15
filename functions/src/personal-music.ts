@@ -8,7 +8,7 @@
  * Guard rails: a hard cap of DAILY_CAP new tracks per UTC day, PER_VISITOR_CAP per visitor (IP hash) per day, and a kill
  * switch (PERSONAL_MUSIC_ENABLED=false). When any of them says no, the site keeps playing the music it composes itself.
  */
-export const DAILY_CAP = 100;
+export const DAILY_CAP = 20;
 export const PER_VISITOR_CAP = 2;
 /** every request counts — also cached, malformed and failed ones — so one address cannot hammer the endpoint */
 export const ATTEMPTS_PER_HOUR = 10;
@@ -42,7 +42,8 @@ export function parseCharacter(body: unknown): Character | null {
 }
 
 /** Cache key: the same character always maps to the same track. Region order does not matter. */
-export const characterKey = (c: Character): string => `${c.mode}-${[...c.regions].sort().join("")}-${c.size}`;
+// the size of the piece no longer changes the track (one length for everyone keeps the number of tracks, and the credit, small)
+export const characterKey = (c: Character): string => `${c.mode}-${[...c.regions].sort().join("")}`;
 
 const MODE_STYLES: Record<Mode, { name: string; tags: string[]; bpm: number }> = {
   visited: { name: "journey", tags: ["warm nostalgic orchestral", "memories of travel", "lyrical strings", "gentle piano", "reflective and heartfelt"], bpm: 84 },
@@ -67,7 +68,8 @@ const SECTIONS: { name: string; share: number; dyn: string[] }[] = [
   { name: "Outro", share: 0.12, dyn: ["fading", "resolving", "peaceful"] },
 ];
 
-const SIZE_MS: Record<Size, number> = { S: 150_000, M: 165_000, L: 180_000 };
+/** about a minute and a half for every character: the credit of a track follows its length */
+const SIZE_MS: Record<Size, number> = { S: 90_000, M: 90_000, L: 90_000 };
 
 export interface PlanChunk {
   text: string;
@@ -77,7 +79,7 @@ export interface PlanChunk {
   context_adherence: "high";
 }
 
-/** The ElevenLabs composition plan for a character: one chunk per part of the form, about 2:30–3:00 in all. */
+/** The ElevenLabs composition plan for a character: one chunk per part of the form, about 1:30 in all. */
 export function buildPlan(c: Character): { chunks: PlanChunk[] } {
   const total = SIZE_MS[c.size];
   const m = MODE_STYLES[c.mode];
