@@ -116,7 +116,8 @@ export function Experience({ selection, onBack }: Props) {
       };
       // the music box: a note appears on the ribbon three seconds before it sounds
       planCbRef.current = (n, wallAt) => {
-        const r = n.route >= 0 ? routes[n.route] : undefined;
+        // the lead's own route, or for the accompaniment the route that leads its bar: every hit is on the ribbon
+        const r = routes[n.route >= 0 ? n.route : n.via];
         if (!r) return;
         noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
       };

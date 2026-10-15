@@ -14,6 +14,8 @@ export interface PersonalNote {
   key: string;
   /** index into the routes; -1 for the accompaniment (pad, bass, arpeggio) */
   route: number;
+  /** the route this note belongs to for display (the lead of its bar): every hit shows in the music box in its route's colour */
+  via: number;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -151,6 +153,12 @@ const ENSEMBLES: Ensemble[] = [
   { pad: "STR", bass: "BASS_PIZZ", arp: "MARIMBA", counter: "VIOLA", colour: "GLOCK" },
 ];
 
+/** highest pitch (Hz) each pitched instrument is given; higher notes are folded down an octave */
+const CEILING: Partial<Record<Instrument, number>> = {
+  VIOLIN: 1320, VIOLA: 1000, STR: 1000, CELLO: 700, OBOE: 1175, CLA: 1175, FLUTE: 1400, PICC: 1568, HORN: 700,
+  TPT: 1047, HARP: 1568, GLOCK: 1568, XYLO: 1319, MARIMBA: 1047, SAZ: 880, KANUN: 1175, PNO: 1568, BSN: 466, TUBA: 220,
+};
+
 /** the lead instrument of a region; some regions have two or three voices that take turns by route */
 const LEAD: Record<string, Instrument[]> = {
   DOM: ["SAZ"],
@@ -229,7 +237,17 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const dists = routes.map((r) => r.distKm).sort((a, b) => a - b);
   const rank = (d: number): number => (dists.length < 2 ? 0.5 : dists.indexOf(d) / (dists.length - 1));
   const notes: PersonalNote[] = [];
-  const push = (n: Omit<PersonalNote, "key" | "route"> & { key?: string; route?: number }) => notes.push({ key: "", route: -1, ...n });
+  let via = 0; // the route of the bar being written (the lead that starts it)
+  /** nothing is written above what its instrument can carry: a very high single hit means nothing */
+  const fit = (f: number, inst: Instrument): number => {
+    const cap = CEILING[inst];
+    if (!cap) return f;
+    let x = f;
+    while (x > cap) x /= 2;
+    return x;
+  };
+  const push = (n: Omit<PersonalNote, "key" | "route" | "via"> & { key?: string; route?: number; via?: number }) =>
+    notes.push({ key: "", route: -1, via, ...n, freq: fit(n.freq, n.instrument) });
   /** an off-eighth leans late by `swing` of a beat */
   const at = (t0: number, slot: number): number => t0 + (slot * beat) + (Math.abs((slot * 2) % 2 - 1) < 1e-6 ? st.swing * beat * 0.33 : 0);
   const root = (m: number): number => m + st.shift;
@@ -247,13 +265,19 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const cr = root(chord.root);
     const tones = [0, chord.third, 7].map((i) => cr + i);
     const onSecondBar = b % 2 === 0;
+    via = lead % routes.length; // every hit of this bar is shown with the route that leads it
 
     // pad: the chord, held for two bars, re-struck on every second bar
     if (onSecondBar) for (const m of tones) push({ t: t0, d: bar * 2 * 0.98, instrument: ens.pad, freq: hz(m + 12), vel: v(0.34) });
     // a second colour joins the build and the chorus: a held fifth-less chord in the orchestra, a doubling elsewhere
-    if (onSecondBar && (section === "build" || section === "chorus")) {
-      const m = st.ensemble === 1 ? tones.slice(0, 2) : [tones[0]];
-      for (const x of m) push({ t: t0, d: bar * 2 * 0.95, instrument: ens.colour, freq: hz(x + (st.ensemble === 1 ? 12 : 24)), vel: v(0.24) });
+    if (section === "build" || section === "chorus") {
+      if (ens.colour === "GLOCK") {
+        // a bell is a single ping: it sparkles on the beat instead of holding a chord
+        for (const [k, ti] of [[0, 0], [1.5, 2], [3, 1]] as [number, number][]) push({ t: at(t0, k), d: beat * 0.8, instrument: "GLOCK", freq: hz(tones[ti] + 24), vel: v(0.26) });
+      } else if (onSecondBar) {
+        const m = st.ensemble === 1 ? tones.slice(0, 2) : [tones[0]];
+        for (const x of m) push({ t: t0, d: bar * 2 * 0.95, instrument: ens.colour, freq: hz(x + (st.ensemble === 1 ? 12 : 24)), vel: v(0.24) });
+      }
     }
     // bass
     const bb = section === "chorus" ? bassBeats.chorus : section === "intro" || section === "outro" || section === "break" ? bassBeats.light : bassBeats.full;

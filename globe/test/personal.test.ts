@@ -243,3 +243,15 @@ describe("arrangement: pieces differ in feel, not only in pitches", () => {
     expect(p.notes.some((n) => n.instrument === "TIMP" || n.instrument === "KICK" || n.instrument === "TAMB" || n.instrument === "TRI")).toBe(true);
   });
 });
+
+describe("arrangement: every hit has a route, nothing is written too high", () => {
+  const p = composePiece("wish", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX"], "LHR"));
+  it("gives every note a route to be shown with", () => {
+    for (const n of p.notes) expect(n.route >= 0 || (n.via >= 0 && n.via < 13)).toBe(true);
+    expect(p.notes.filter((n) => n.route < 0).length).toBeGreaterThan(p.notes.filter((n) => n.route >= 0).length);
+  });
+  it("keeps pitched instruments under their ceiling", () => {
+    const cap: Record<string, number> = { PICC: 1568, GLOCK: 1568, XYLO: 1319, FLUTE: 1400, HARP: 1568, VIOLIN: 1320 };
+    for (const n of p.notes) if (cap[n.instrument]) expect(n.freq, n.instrument).toBeLessThanOrEqual(cap[n.instrument] + 0.01);
+  });
+});
