@@ -297,15 +297,17 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           deg[i] += dir * stepSize * ((oi + b) % 3 === 0 ? 1 : 0) + (oi % 2 === 0 ? 0 : dir);
           // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
           const p = phaseAt(i, b, s / 8);
-          const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 7);
+          const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 5);
           const w = ((deg[i] % 7) + 7) % 7;
-          const total = w + lift;
+          // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
+          const total = w + lift + ((i * 2) % 5);
           let semis = KEY_ROOT + st.shift + 12 + scale[total % 7] + 12 * Math.floor(total / 7);
           if (s === onsets[0]) {
             // the first note of a bar rests on the nearest chord tone
             let best = semis;
             let bd = Infinity;
-            for (const tn of tones) for (const o of [-12, 0, 12, 24]) {
+            // ... and on its own chord tone (root, third, fifth by route), so the voices do not land on one pitch
+            for (const tn of [tones[i % 3]]) for (const o of [-12, 0, 12, 24]) {
               const c = tn + o;
               const dd = Math.abs(c - semis);
               if (dd < bd) { bd = dd; best = c; }
@@ -322,7 +324,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const k = clamp(3 + ((h >> 4) % 3) + BUSY[section] - sparse, 2, steps - 2);
         const pat = rotate(euclid(k, steps), (h >> 8) % steps);
         const inst = voiceOf[i];
-        const order = dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1];
+        const order = (dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1]).map((x) => (x + i) % 3);
         let a = 0;
         pat.forEach((on, s) => {
           if (!on) return;

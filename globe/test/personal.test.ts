@@ -293,3 +293,27 @@ describe("the pitch follows the flight: climb, cruise, descent", () => {
     expect(checked).toBeGreaterThan(0);
   });
 });
+
+describe("two flights are never the same note", () => {
+  it("voices that start together do not sit on one pitch class", () => {
+    const p = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK"], "IST"));
+    const groups = new Map<string, Set<number>>();
+    const routesIn = new Map<string, Set<number>>();
+    for (const n of p.notes) {
+      if (n.instrument === "DARBUKA" || n.instrument === "CONGA" || n.instrument === "TIMP" || n.instrument === "TAMB" || n.instrument === "TRI") continue;
+      const k = n.t.toFixed(2);
+      const pc = Math.round(12 * Math.log2(n.freq / 440)) % 12;
+      groups.set(k, (groups.get(k) ?? new Set()).add(((pc % 12) + 12) % 12));
+      routesIn.set(k, (routesIn.get(k) ?? new Set()).add(n.route));
+    }
+    let multi = 0;
+    let same = 0;
+    for (const [k, rs] of routesIn) {
+      if (rs.size < 3) continue;
+      multi++;
+      if (groups.get(k)!.size === 1) same++;
+    }
+    expect(multi).toBeGreaterThan(10);
+    expect(same / multi).toBeLessThan(0.05);
+  });
+});
