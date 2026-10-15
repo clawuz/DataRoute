@@ -819,3 +819,6 @@ body.personal-build .dep-globe > .label:first-child { margin-bottom: 2.4vmin; }
 
 /* the "click any flight" hint sits under the centre title, clear of the music box and the chart */
 @media (min-aspect-ratio: 1/1) { body.personal-build .first-hint { top: 78px; bottom: auto; } }
+
+/* the music box keeps one height: its caption always takes two lines, whether the count wraps or not */
+body.personal-build .music-scope-label { min-height: 3em; max-height: 3em; overflow: hidden; }
