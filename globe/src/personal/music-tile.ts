@@ -28,7 +28,7 @@ export function tileBars(width = 520, rows = 9, seed = 11): Bar[] {
     for (;;) {
       const len = [22, 34, 48, 70, 100][Math.floor(r() * 5)];
       if (x + len > width - 6) break;
-      if (r() < 0.62) out.push({ x, row, len, color: PALETTE[Math.floor(r() * PALETTE.length)] });
+      if (r() < 0.38) out.push({ x, row, len, color: PALETTE[Math.floor(r() * PALETTE.length)] });
       x += len + 14 + Math.floor(r() * 56);
     }
   }
