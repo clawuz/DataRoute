@@ -18,6 +18,8 @@ export interface PersonalNote {
   via: number;
   /** false: the note sounds but is not drawn again */
   show?: boolean;
+  /** altitude (ft) of the flight at this point of its phrase: climb, cruise, descent — the pitch follows it */
+  alt: number;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -117,6 +119,18 @@ const CEILING: Partial<Record<Instrument, number>> = {
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
 
+/** the cruising altitude (ft) of a flight of this length */
+export const cruiseFt = (distKm: number): number => (distKm < 300 ? 14000 : distKm < 800 ? 24000 : distKm < 1800 ? 31000 : distKm < 4000 ? 36000 : 39000);
+
+/** altitude (ft) at `p` (0 = take-off … 1 = landing) of a flight of `distKm`: a climb, the cruise, a descent */
+export function altitudeFt(p: number, distKm: number): number {
+  const c = cruiseFt(distKm);
+  const x = clamp(p, 0, 1);
+  if (x < 0.18) return Math.round((c * (x / 0.18) ** 0.8) / 100) * 100;
+  if (x > 0.82) return Math.round((c * ((1 - x) / 0.18) ** 0.8) / 100) * 100;
+  return c;
+}
+
 function sectionOf(bar: number): { section: Section; first: number; len: number } {
   let b = 0;
   for (const [s, n] of FORM) {
@@ -196,6 +210,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   // routes enter one after another over the first 28 bars, and leave in the same order through the outro
   const entry = routes.map((_, i) => Math.floor((i * 28) / n));
   const exit = routes.map((_, i) => BARS - 8 + 1 + Math.floor((i * 7) / n));
+  // a route's phrase is one flight: take-off, climb, cruise, descent, landing — longer for a longer route
+  const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
+  const phaseAt = (i: number, b: number, frac: number): number => ((((b - entry[i]) % phraseBars[i]) + phraseBars[i]) % phraseBars[i] + frac) / phraseBars[i];
 
   const swingAt = (t0: number, step: number, stepsPerBeat: number): number => {
     const k = step / stepsPerBeat; // beats
@@ -208,8 +225,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     if (cap) while (x > cap) x /= 2;
     return x;
   };
-  const push = (i: number, t: number, d: number, instrument: Instrument, f: number, vel: number): void => {
-    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i });
+  const push = (i: number, t: number, d: number, instrument: Instrument, f: number, vel: number, p = 0.5): void => {
+    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm) });
   };
 
   // every route gets its own instrument where its region has enough of them
@@ -270,7 +287,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
         const inst = voiceOf[i];
         const lag = (slot % 4) * beat * 0.5;
-        push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk));
+        push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk), phaseAt(i, b, 0));
       } else if (role === "melody") {
         const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6);
         const pat = rotate(euclid(k, 8), (h >> 6) % 8);
@@ -278,9 +295,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const onsets = pat.map((on, s) => (on ? s : -1)).filter((s) => s >= 0);
         onsets.forEach((s, oi) => {
           deg[i] += dir * stepSize * ((oi + b) % 3 === 0 ? 1 : 0) + (oi % 2 === 0 ? 0 : dir);
-          const d = ((deg[i] % 7) + 7) % 7;
-          const oct = Math.floor(deg[i] / 7);
-          let semis = KEY_ROOT + st.shift + 12 + scale[d] + 12 * clamp(oct, -1, 1);
+          // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
+          const p = phaseAt(i, b, s / 8);
+          const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 7);
+          const w = ((deg[i] % 7) + 7) % 7;
+          const total = w + lift;
+          let semis = KEY_ROOT + st.shift + 12 + scale[total % 7] + 12 * Math.floor(total / 7);
           if (s === onsets[0]) {
             // the first note of a bar rests on the nearest chord tone
             let best = semis;
@@ -294,7 +314,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           }
           const nextStep = onsets[oi + 1] ?? 8;
           const dur = Math.max(0.4, (nextStep - s) * 0.5) * beat * 0.95;
-          push(i, swingAt(t0, s, 2), dur, inst, hz(semis + (rk < 0.5 ? 12 : 0)), v(0.62 + 0.28 * (1 - rk)));
+          push(i, swingAt(t0, s, 2), dur, inst, hz(semis), v(0.62 + 0.28 * (1 - rk)), p);
         });
       } else if (role === "pluck") {
         const steps = st.arp === 1 ? 12 : st.arp === 0 ? 16 : 8;
@@ -306,8 +326,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         let a = 0;
         pat.forEach((on, s) => {
           if (!on) return;
-          const tone = tones[order[a++ % order.length]] + 24;
-          push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)));
+          const p = phaseAt(i, b, s / steps);
+          const tone = tones[order[a++ % order.length]] + 24 + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+          push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
         });
       } else {
         const steps = st.perc === 1 ? 12 : st.perc === 0 ? 16 : 8;
@@ -320,7 +341,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           const strong = s === 0 || s % spb === 0;
           // the darbuka's dum / tek / ka come from how hard the stroke is
           const vel = inst === "DARBUKA" ? (s === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
-          push(i, swingAt(t0, s, spb), beat * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(vel));
+          push(i, swingAt(t0, s, spb), beat * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(vel), phaseAt(i, b, s / steps));
         });
       }
     }

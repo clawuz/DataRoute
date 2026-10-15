@@ -262,3 +262,34 @@ describe("arrangement: nothing is written too high", () => {
     for (const n of p.notes) if (cap[n.instrument]) expect(n.freq, n.instrument).toBeLessThanOrEqual(cap[n.instrument] + 0.01);
   });
 });
+
+describe("the pitch follows the flight: climb, cruise, descent", () => {
+  const routes = buildRoutes(["DPS", "JFK", "NRT"], "IST");
+  const p = composePiece("visited", routes);
+  it("gives each note the altitude of its moment of the flight", () => {
+    for (const n of p.notes) {
+      expect(n.alt).toBeGreaterThanOrEqual(0);
+      expect(n.alt).toBeLessThanOrEqual(39000);
+    }
+    const mine = p.notes.filter((n) => n.route === 0);
+    expect(Math.max(...mine.map((n) => n.alt))).toBeGreaterThan(30000);
+    expect(Math.min(...mine.map((n) => n.alt))).toBeLessThan(15000);
+  });
+  it("is high at cruise and low near the ground for a melody voice", () => {
+    const voices = new Map<number, typeof p.notes>();
+    for (const n of p.notes) voices.set(n.route, [...(voices.get(n.route) ?? []), n]);
+    let checked = 0;
+    for (const ns of voices.values()) {
+      const hi = ns.filter((n) => n.alt >= 30000);
+      const lo = ns.filter((n) => n.alt > 0 && n.alt < 10000);
+      if (hi.length < 8 || lo.length < 4) continue;
+      const mean = (a: typeof ns) => a.reduce((s, n) => s + Math.log2(n.freq), 0) / a.length;
+      // a voice that sings (one instrument): its cruise notes sit above its climb notes
+      if (new Set(ns.map((n) => n.instrument)).size === 1) {
+        expect(mean(hi)).toBeGreaterThan(mean(lo));
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});
