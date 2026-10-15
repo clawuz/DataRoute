@@ -76,6 +76,23 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
     // the new link: a first visitor sees the globe settle, then the day replays and the music comes in
     const personalBuild = import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1";
     const timers: ReturnType<typeof setTimeout>[] = [];
+    // airport names that would be printed over a panel or a figure are dropped (checked a few times a second)
+    if (personalBuild) {
+      const SEL = ".counters, .flight-panel, .music-scope, .regions, .dep-globe, .title, .lockup, .events, .keys-btn, .live-back";
+      const sweep = () => {
+        const boxes = [...document.querySelectorAll<HTMLElement>(SEL)]
+          .map((e) => e.getBoundingClientRect())
+          .filter((r) => r.width > 0 && r.height > 0);
+        document.querySelectorAll<HTMLElement>(".airport-label").forEach((l) => {
+          const a = l.getBoundingClientRect();
+          const hit = boxes.some((b) => a.right > b.left - 4 && a.left < b.right + 4 && a.bottom > b.top - 4 && a.top < b.bottom + 4);
+          if (hit) l.setAttribute("data-covered", "");
+          else l.removeAttribute("data-covered");
+        });
+      };
+      const iv = setInterval(sweep, 250);
+      timers.push(iv as unknown as ReturnType<typeof setTimeout>);
+    }
     const startTour = () => {
       if (!personalBuild) return;
       let tries = 0;
