@@ -45,9 +45,11 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       return;
     }
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
-    if (import.meta.env.VITE_PERSONAL === "1") {
+    if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.35, false);
       engine.setPortraitFit(true);
+      engine.setBaseFov(48); // room around the globe for the side panels
+      document.body.classList.add("personal-build");
     }
     try {
       controller = createController({
