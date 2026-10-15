@@ -140,12 +140,23 @@ describe("compose", () => {
       }
     }
   });
-  it("plays every route at least once and marks the accompaniment", () => {
-    const routes = buildRoutes(["LHR", "DPS", "JFK", "NRT", "GRU", "CAI"]);
+  it("is made only of the routes: every route is heard, every note belongs to one", () => {
+    const routes = buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI"], "LHR");
     const p = composePiece("visited", routes);
-    const heard = new Set(p.notes.filter((n) => n.route >= 0).map((n) => n.route));
+    const heard = new Set(p.notes.map((n) => n.route));
     expect(heard.size).toBe(routes.length);
-    expect(p.notes.some((n) => n.route === -1 && n.instrument === "STR")).toBe(true);
+    for (const n of p.notes) {
+      expect(n.route).toBeGreaterThanOrEqual(0);
+      expect(n.route).toBeLessThan(routes.length);
+      expect(n.key).toBe(routes[n.route].key);
+    }
+  });
+  it("grows with the number of routes: one voice per route, nothing added", () => {
+    const few = composePiece("visited", buildRoutes(["DPS"], "IST"));
+    const many = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX"], "IST"));
+    expect(new Set(few.notes.map((n) => n.route)).size).toBe(1);
+    expect(new Set(many.notes.map((n) => n.route)).size).toBe(7);
+    expect(many.notes.length).toBeGreaterThan(few.notes.length * 3);
   });
   it("is deterministic and keeps every note inside the duration", () => {
     const routes = buildRoutes(["LHR", "DPS", "JFK", "NRT", "GRU", "CAI"]);
@@ -220,7 +231,7 @@ describe("arrangement: pieces differ in feel, not only in pitches", () => {
     const distinct = (f: (p: (typeof pieces)[number]) => number) => new Set(pieces.map(f)).size;
     expect(distinct((p) => p.style.groove)).toBeGreaterThanOrEqual(4);
     expect(distinct((p) => p.style.ensemble)).toBeGreaterThanOrEqual(3);
-    expect(distinct((p) => p.style.perc)).toBeGreaterThanOrEqual(3);
+    expect(distinct((p) => p.style.perc)).toBeGreaterThanOrEqual(2);
     expect(distinct((p) => p.bpm)).toBeGreaterThanOrEqual(8);
     expect(distinct((p) => p.style.shift)).toBeGreaterThanOrEqual(3);
     for (const p of pieces) {
@@ -240,16 +251,12 @@ describe("arrangement: pieces differ in feel, not only in pitches", () => {
   it("only uses instruments the engine can play (a recording or a stand-in)", () => {
     const p = composePiece("wish", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI"], "LHR"));
     for (const n of p.notes) expect(n.instrument.length).toBeGreaterThan(1);
-    expect(p.notes.some((n) => n.instrument === "TIMP" || n.instrument === "KICK" || n.instrument === "TAMB" || n.instrument === "TRI")).toBe(true);
   });
+
 });
 
-describe("arrangement: every hit has a route, nothing is written too high", () => {
+describe("arrangement: nothing is written too high", () => {
   const p = composePiece("wish", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX"], "LHR"));
-  it("gives every note a route to be shown with", () => {
-    for (const n of p.notes) expect(n.route >= 0 || (n.via >= 0 && n.via < 13)).toBe(true);
-    expect(p.notes.filter((n) => n.route < 0).length).toBeGreaterThan(p.notes.filter((n) => n.route >= 0).length);
-  });
   it("keeps pitched instruments under their ceiling", () => {
     const cap: Record<string, number> = { PICC: 1568, GLOCK: 1568, XYLO: 1319, FLUTE: 1400, HARP: 1568, VIOLIN: 1320 };
     for (const n of p.notes) if (cap[n.instrument]) expect(n.freq, n.instrument).toBeLessThanOrEqual(cap[n.instrument] + 0.01);

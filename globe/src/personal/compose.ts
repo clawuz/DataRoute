@@ -1,5 +1,5 @@
 import type { Instrument } from "../audio/theory";
-import { routeHash } from "../audio/theory";
+import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 
@@ -10,25 +10,25 @@ export interface PersonalNote {
   instrument: Instrument;
   freq: number;
   vel: number;
-  /** route key — what lights on the globe when the note sounds ("" for accompaniment) */
+  /** route key — what lights on the globe when the note sounds */
   key: string;
-  /** index into the routes; -1 for the accompaniment (pad, bass, arpeggio) */
+  /** index into the routes: every note belongs to exactly one route line of the globe */
   route: number;
-  /** the route this note belongs to for display (the lead of its bar): every hit shows in the music box in its route's colour */
+  /** the same as `route` (kept so that display code can ask for "the route of a note" in one way) */
   via: number;
-  /** false for the upper tones of a held chord: they sound, but the music box shows the chord once */
+  /** false: the note sounds but is not drawn again */
   show?: boolean;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
 export interface PersonalStyle {
-  /** lead / bass rhythm family 0..5 */
+  /** how busy the voices are: 0 sparse … 5 busy */
   groove: number;
-  /** arpeggio figure 0..5 */
+  /** subdivision of the plucked voices: 0 sixteenths, 1 triplets, 2 eighths */
   arp: number;
-  /** percussion figure 0..5 */
+  /** subdivision of the percussion voices: 0 sixteenths, 1 triplets, 2 eighths */
   perc: number;
-  /** orchestration 0..3 (chamber, orchestra, winds, pizzicato) */
+  /** which of a region's instruments leads: 0..3 */
   ensemble: number;
   /** chord progression 0..3 */
   progression: number;
@@ -55,31 +55,26 @@ export interface PersonalPiece {
 /** the key is D by default (minor for a journey, major for a wish); semitones above A2 */
 const KEY_ROOT = 5;
 const KEY_SHIFTS = [0, 0, -2, 2, -3, 3];
-
-/** semitones above A2 (110 Hz) → Hz */
 const hz = (m: number): number => 110 * 2 ** (m / 12);
-
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
 const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 
 interface Chord {
-  /** root, semitones above A2 (in D) */
   root: number;
   third: 3 | 4;
 }
-/** four progressions per mood (roots as in D) */
 const PROGS: Record<PersonalMode, Chord[][]> = {
   visited: [
-    [{ root: 5, third: 3 }, { root: 1, third: 4 }, { root: 8, third: 4 }, { root: 3, third: 4 }], // i – VI – III – VII
-    [{ root: 5, third: 3 }, { root: 10, third: 3 }, { root: 1, third: 4 }, { root: 0, third: 4 }], // i – iv – VI – V
-    [{ root: 5, third: 3 }, { root: 3, third: 4 }, { root: 1, third: 4 }, { root: 3, third: 4 }], // i – VII – VI – VII
-    [{ root: 5, third: 3 }, { root: 8, third: 4 }, { root: 3, third: 4 }, { root: 10, third: 3 }], // i – III – VII – iv
+    [{ root: 5, third: 3 }, { root: 1, third: 4 }, { root: 8, third: 4 }, { root: 3, third: 4 }],
+    [{ root: 5, third: 3 }, { root: 10, third: 3 }, { root: 1, third: 4 }, { root: 0, third: 4 }],
+    [{ root: 5, third: 3 }, { root: 3, third: 4 }, { root: 1, third: 4 }, { root: 3, third: 4 }],
+    [{ root: 5, third: 3 }, { root: 8, third: 4 }, { root: 3, third: 4 }, { root: 10, third: 3 }],
   ],
   wish: [
-    [{ root: 5, third: 4 }, { root: 0, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }], // I – V – vi – IV
-    [{ root: 5, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }, { root: 0, third: 4 }], // I – vi – IV – V
-    [{ root: 5, third: 4 }, { root: 10, third: 4 }, { root: 0, third: 4 }, { root: 10, third: 4 }], // I – IV – V – IV
-    [{ root: 2, third: 3 }, { root: 10, third: 4 }, { root: 5, third: 4 }, { root: 0, third: 4 }], // vi – IV – I – V
+    [{ root: 5, third: 4 }, { root: 0, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }],
+    [{ root: 5, third: 4 }, { root: 2, third: 3 }, { root: 10, third: 4 }, { root: 0, third: 4 }],
+    [{ root: 5, third: 4 }, { root: 10, third: 4 }, { root: 0, third: 4 }, { root: 10, third: 4 }],
+    [{ root: 2, third: 3 }, { root: 10, third: 4 }, { root: 5, third: 4 }, { root: 0, third: 4 }],
   ],
 };
 /** tempo ranges (bpm) keep a piece between about 2:25 and 3:15 */
@@ -96,90 +91,29 @@ const FORM: [Section, number][] = [
   ["outro", 8],
 ];
 const BARS = FORM.reduce((s, [, n]) => s + n, 0);
+const LEVEL: Record<Section, number> = { intro: 0.55, verse: 0.8, build: 0.9, chorus: 1, break: 0.6, outro: 0.5 };
+/** how much busier a voice is in a section (added to its pulses) */
+const BUSY: Record<Section, number> = { intro: -1, verse: 0, build: 1, chorus: 1, break: -1, outro: -1 };
 
-/** where the lead notes fall in a bar (beats), per rhythm family and section */
-const LEAD_BEATS: Record<Section, number[]>[] = [
-  { intro: [0], verse: [0, 2], build: [0, 1, 2, 3], chorus: [0, 1.5, 2, 3], break: [0, 2], outro: [0] }, // straight
-  { intro: [0], verse: [0, 1.5, 3], build: [0, 0.75, 1.5, 2.5, 3], chorus: [0, 0.75, 1.5, 2.5, 3.25], break: [0, 2.5], outro: [0, 2] }, // syncopated
-  { intro: [0], verse: [0, 4 / 3, 8 / 3], build: [0, 4 / 3, 8 / 3, 10 / 3], chorus: [0, 2 / 3, 4 / 3, 2, 8 / 3, 10 / 3], break: [0, 8 / 3], outro: [0, 4 / 3] }, // triplets
-  { intro: [0], verse: [0], build: [0, 2], chorus: [0, 1, 2, 3], break: [0], outro: [0] }, // long and sparse
-  { intro: [0, 2], verse: [0, 0.5, 1, 2, 3], build: [0, 0.5, 1, 1.5, 2, 3], chorus: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5], break: [0, 1, 2], outro: [0, 1] }, // driving eighths
-  { intro: [0], verse: [0, 0.75, 2, 2.75], build: [0, 0.75, 1.5, 2, 2.75, 3.5], chorus: [0, 0.75, 1.5, 2, 2.75, 3.5], break: [0, 2.75], outro: [0, 2] }, // dotted
-];
-/** bass hits per bar: light (intro / break / outro), full (verse / build) and chorus */
-const BASS_BEATS: { light: number[]; full: number[]; chorus: number[] }[] = [
-  { light: [0], full: [0, 2], chorus: [0, 1, 2, 3] },
-  { light: [0], full: [0, 1.5, 2.5], chorus: [0, 1.5, 2, 3] },
-  { light: [0], full: [0, 4 / 3, 8 / 3], chorus: [0, 2 / 3, 4 / 3, 2, 8 / 3] },
-  { light: [0], full: [0], chorus: [0, 2] },
-  { light: [0], full: [0, 1, 2, 3], chorus: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5] },
-  { light: [0], full: [0, 1.75, 3], chorus: [0, 0.75, 1.75, 2.5, 3] },
-];
-/** arpeggio figures: [beat, chord tone 0..2, octave 0..1] */
-const ARPS: [number, number, number][][] = [
-  [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b, i) => [b, [0, 1, 2, 1, 0, 1, 2, 1][i], 0] as [number, number, number]),
-  [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5].map((b, i) => [b, [0, 2, 1, 2, 0, 2, 1, 2][i], 0] as [number, number, number]),
-  Array.from({ length: 12 }, (_, i) => [i / 3, [0, 1, 2, 2, 1, 0][i % 6], 0] as [number, number, number]),
-  [0, 1, 2, 3].map((b, i) => [b, [0, 1, 2, 1][i], 1] as [number, number, number]),
-  [0, 0.75, 1.5, 2, 2.75, 3.5].map((b, i) => [b, [0, 1, 2, 1, 2, 1][i], 0] as [number, number, number]),
-  [0, 1, 2.5, 3].map((b, i) => [b, [0, 2, 1, 2][i], 1] as [number, number, number]),
-];
-/** percussion figures per section family: [beat, instrument, velocity] */
-const PERC: Record<string, [number, Instrument, number][]>[] = [
-  // 0 light touch
-  { verse: [[0, "TRI", 0.3]], build: [[0, "TRI", 0.35], [2, "TAMB", 0.3]], chorus: [[0, "TRI", 0.4], [1, "TAMB", 0.3], [3, "TAMB", 0.3]] },
-  // 1 timpani and cymbal
-  { verse: [], build: [[0, "TIMP", 0.5], [2, "TIMP", 0.4]], chorus: [[0, "TIMP", 0.6], [2, "TIMP", 0.45], [3.5, "TIMP", 0.4]] },
-  // 2 pulse
-  { verse: [[0, "KICK", 0.5], [2, "KICK", 0.45]], build: [[0, "KICK", 0.6], [1, "SNARE", 0.35], [2, "KICK", 0.5], [3, "SNARE", 0.4]], chorus: [[0, "KICK", 0.7], [1, "SNARE", 0.5], [2, "KICK", 0.6], [3, "SNARE", 0.55], [1.5, "TAMB", 0.3], [3.5, "TAMB", 0.3]] },
-  // 3 shaker texture
-  { verse: [[0.5, "TAMB", 0.25], [1.5, "TAMB", 0.25], [2.5, "TAMB", 0.25], [3.5, "TAMB", 0.25]], build: [[0, "TRI", 0.3], [0.5, "TAMB", 0.3], [1.5, "TAMB", 0.3], [2.5, "TAMB", 0.3], [3.5, "TAMB", 0.3]], chorus: [[0, "TRI", 0.4], [0.5, "TAMB", 0.35], [1, "TAMB", 0.25], [1.5, "TAMB", 0.35], [2.5, "TAMB", 0.35], [3.5, "TAMB", 0.35]] },
-  // 4 heartbeat
-  { verse: [[0, "TIMP", 0.4]], build: [[0, "TIMP", 0.5], [0.75, "TIMP", 0.3], [2, "TIMP", 0.45]], chorus: [[0, "TIMP", 0.6], [0.75, "TIMP", 0.35], [2, "TIMP", 0.5], [2.75, "TIMP", 0.35]] },
-  // 5 march
-  { verse: [[0, "KICK", 0.4], [1, "KICK", 0.3], [2, "KICK", 0.4], [3, "KICK", 0.3]], build: [[0, "KICK", 0.5], [1, "SNARE", 0.4], [2, "KICK", 0.5], [3, "SNARE", 0.4], [3.5, "SNARE", 0.3]], chorus: [[0, "KICK", 0.6], [1, "SNARE", 0.5], [2, "KICK", 0.6], [3, "SNARE", 0.5], [3.5, "SNARE", 0.4], [0.5, "TAMB", 0.3], [2.5, "TAMB", 0.3]] },
-  // 6 darbuka (maqsum: dum tek . tek dum . tek .) — chosen when the selection is Turkish / Middle-Eastern
-  {
-    verse: [[0, "DARBUKA", 0.85], [1, "DARBUKA", 0.58], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.8], [3, "DARBUKA", 0.58]],
-    build: [[0, "DARBUKA", 0.85], [0.5, "DARBUKA", 0.3], [1, "DARBUKA", 0.58], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.8], [3, "DARBUKA", 0.58], [3.5, "DARBUKA", 0.3]],
-    chorus: [[0, "DARBUKA", 0.9], [0.5, "DARBUKA", 0.3], [1, "DARBUKA", 0.6], [1.5, "DARBUKA", 0.55], [2, "DARBUKA", 0.85], [2.5, "DARBUKA", 0.3], [3, "DARBUKA", 0.6], [3.5, "DARBUKA", 0.32]],
-  },
-];
+/** what a route plays: the long routes hold the chord, the middle ones sing, the short ones pluck or drum */
+type Role = "held" | "melody" | "pluck" | "perc";
 
-interface Ensemble {
-  pad: Instrument;
-  bass: Instrument;
-  arp: Instrument;
-  counter: Instrument;
-  /** a second colour that joins the build and the chorus */
-  colour: Instrument;
-}
-const ENSEMBLES: Ensemble[] = [
-  { pad: "STR", bass: "CELLO", arp: "HARP", counter: "OBOE", colour: "VIOLIN" },
-  { pad: "STR", bass: "CELLO", arp: "HARP", counter: "CLA", colour: "HORN" },
-  { pad: "STR", bass: "BSN", arp: "HARP", counter: "FLUTE", colour: "PICC" },
-  { pad: "STR", bass: "BASS_PIZZ", arp: "MARIMBA", counter: "VIOLA", colour: "GLOCK" },
-];
+const HELD: Record<string, Instrument[]> = {
+  DOM: ["NEY", "VIOLA"], EUR: ["CELLO", "VIOLA", "BSN"], MEA: ["NEY", "CELLO"], AFR: ["HORN", "BSN"], ASI: ["FLUTE", "VIOLA"], AME: ["HORN", "CELLO"], UNK: ["VIOLA"],
+};
+const MELODY: Record<string, Instrument[]> = {
+  DOM: ["SAZ", "NEY"], EUR: ["VIOLIN", "OBOE", "CLA"], MEA: ["KANUN", "OUD", "NEY"], AFR: ["MARIMBA", "XYLO"], ASI: ["HARP", "FLUTE", "GLOCK"], AME: ["FLUTE", "HORN", "CLA"], UNK: ["VIOLA"],
+};
+const PLUCK: Record<string, Instrument[]> = {
+  DOM: ["SAZ", "OUD"], EUR: ["HARP", "VIOLIN_PIZZ"], MEA: ["KANUN", "OUD"], AFR: ["MARIMBA", "XYLO"], ASI: ["GLOCK", "HARP"], AME: ["HARP", "VIOLA_PIZZ"], UNK: ["HARP"],
+};
+const PERC: Record<string, Instrument> = { DOM: "DARBUKA", MEA: "DARBUKA", AFR: "CONGA", ASI: "TRI", EUR: "TIMP", AME: "TAMB", UNK: "TAMB" };
 
 /** highest pitch (Hz) each pitched instrument is given; higher notes are folded down an octave */
 const CEILING: Partial<Record<Instrument, number>> = {
   VIOLIN: 1320, VIOLA: 1000, STR: 1000, CELLO: 700, OBOE: 1175, CLA: 1175, FLUTE: 1400, PICC: 1568, HORN: 700,
   TPT: 1047, HARP: 1568, GLOCK: 1568, XYLO: 1319, MARIMBA: 1047, SAZ: 880, KANUN: 1175, OUD: 880, NEY: 1175, PNO: 1568, BSN: 466, TUBA: 220,
 };
-
-/** the lead instrument of a region; some regions have two or three voices that take turns by route */
-const LEAD: Record<string, Instrument[]> = {
-  DOM: ["SAZ", "NEY"],
-  EUR: ["VIOLIN", "OBOE"],
-  MEA: ["KANUN", "OUD", "NEY"],
-  AFR: ["MARIMBA", "XYLO"],
-  ASI: ["HARP", "GLOCK", "FLUTE"],
-  AME: ["FLUTE", "HORN", "CLA"],
-  UNK: ["VIOLA"],
-};
-
-const LEVEL: Record<Section, number> = { intro: 0.55, verse: 0.8, build: 0.9, chorus: 1, break: 0.6, outro: 0.5 };
-const ARP_ON: Record<Section, boolean> = { intro: false, verse: true, build: true, chorus: true, break: false, outro: false };
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
 
@@ -209,28 +143,27 @@ function rng(seed: number): () => number {
 export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalStyle & { bpm: number } {
   const r = rng(routeHash(`${mode}|${routes.map((x) => x.key).join(">")}`));
   const [lo, hi] = BPM_RANGE[mode];
-  // a mostly Turkish / Middle-Eastern selection gets the darbuka most of the time
-  const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
-  const style = {
+  return {
     bpm: lo + Math.floor(r() * (hi - lo + 1)),
-    groove: Math.floor(r() * LEAD_BEATS.length),
-    arp: Math.floor(r() * ARPS.length),
-    perc: Math.floor(r() * 6),
-    ensemble: Math.floor(r() * ENSEMBLES.length),
+    groove: Math.floor(r() * 6),
+    arp: Math.floor(r() * 3),
+    perc: Math.floor(r() * 3),
+    ensemble: Math.floor(r() * 4),
     progression: Math.floor(r() * PROGS[mode].length),
     shift: KEY_SHIFTS[Math.floor(r() * KEY_SHIFTS.length)],
     swing: [0, 0, 0.12, 0.2][Math.floor(r() * 4)],
   };
-  if (anatolian >= 0.4 && r() < 0.75) style.perc = 6;
-  return style;
 }
 
+const rotate = <T,>(a: T[], k: number): T[] => (a.length === 0 ? a : a.map((_, i) => a[(i + k) % a.length]));
+
 /**
- * A full piece (about two and a half to three minutes) built from the routes. Deterministic.
- * The notes come from the routes: each route is a motif (its hash picks the scale degrees, its distance the interval
- * size and the note length, its region the voice). The arrangement comes from the whole selection: tempo, key,
- * progression, rhythm family, arpeggio, percussion and the orchestration are chosen from it, so two people's pieces
- * differ in feel and not only in pitches.
+ * A full piece (about two and a half to three minutes) made ONLY from the route lines of the globe. Deterministic.
+ * Every route is one voice: its region picks the instrument family, its length the part it plays (long routes hold
+ * the chord, middle ones sing, short ones pluck or drum), its hash the rhythm and the walk of the melody, its
+ * direction whether the line climbs or falls. Routes enter one after another as they are "drawn" and the form
+ * (intro, verse, build, chorus, break, outro) shapes how much of each voice is heard. Nothing is played that is not
+ * a route: with one route there is one voice; with twenty there are twenty.
  */
 export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
   const st = styleFor(mode, routes);
@@ -239,33 +172,74 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [], style };
   const beat = 60 / bpm;
   const bar = beat * 4;
+  const n = routes.length;
   const scale = mode === "wish" ? MAJOR : MINOR;
   const prog = PROGS[mode][st.progression];
-  const ens = ENSEMBLES[st.ensemble];
-  const leadBeats = LEAD_BEATS[st.groove];
-  const bassBeats = BASS_BEATS[st.groove];
-  const arpFig = ARPS[st.arp];
-  const percFig = PERC[st.perc];
-  const dists = routes.map((r) => r.distKm).sort((a, b) => a - b);
-  const rank = (d: number): number => (dists.length < 2 ? 0.5 : dists.indexOf(d) / (dists.length - 1));
   const notes: PersonalNote[] = [];
-  let via = 0; // the route of the bar being written (the lead that starts it)
-  /** nothing is written above what its instrument can carry: a very high single hit means nothing */
+
+  // roles by the length of the route
+  const sorted = routes.map((r, i) => ({ i, d: r.distKm })).sort((a, b) => a.d - b.d || a.i - b.i);
+  const rank = new Map<number, number>();
+  sorted.forEach((x, k) => rank.set(x.i, n < 2 ? 0.5 : k / (n - 1)));
+  const roles: Role[] = routes.map((_, i) => {
+    const rk = rank.get(i) ?? 0.5;
+    if (n === 1) return "melody";
+    if (n === 2) return rk < 0.5 ? "pluck" : "melody";
+    if (rk >= 0.67) return "held";
+    if (rk < 0.25 && n >= 4) return "perc";
+    return rk < 0.5 ? "pluck" : "melody";
+  });
+  let heldIdx = 0;
+  const heldSlot = roles.map((r) => (r === "held" ? heldIdx++ : -1));
+  // the longest route and the first drawn one are the ones that keep playing through the break
+  const keep = new Set<number>([0, sorted[n - 1].i]);
+  // routes enter one after another over the first 28 bars, and leave in the same order through the outro
+  const entry = routes.map((_, i) => Math.floor((i * 28) / n));
+  const exit = routes.map((_, i) => BARS - 8 + 1 + Math.floor((i * 7) / n));
+
+  const swingAt = (t0: number, step: number, stepsPerBeat: number): number => {
+    const k = step / stepsPerBeat; // beats
+    const off = Math.abs((k * 2) % 2 - 1) < 1e-6;
+    return t0 + k * beat + (off ? st.swing * beat * 0.33 : 0);
+  };
   const fit = (f: number, inst: Instrument): number => {
     const cap = CEILING[inst];
-    if (!cap) return f;
     let x = f;
-    while (x > cap) x /= 2;
+    if (cap) while (x > cap) x /= 2;
     return x;
   };
-  const push = (n: Omit<PersonalNote, "key" | "route" | "via"> & { key?: string; route?: number; via?: number }) =>
-    notes.push({ key: "", route: -1, via, ...n, freq: fit(n.freq, n.instrument) });
-  /** an off-eighth leans late by `swing` of a beat */
-  const at = (t0: number, slot: number): number => t0 + (slot * beat) + (Math.abs((slot * 2) % 2 - 1) < 1e-6 ? st.swing * beat * 0.33 : 0);
-  const root = (m: number): number => m + st.shift;
+  const push = (i: number, t: number, d: number, instrument: Instrument, f: number, vel: number): void => {
+    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i });
+  };
+
+  // every route gets its own instrument where its region has enough of them
+  const taken = new Set<string>();
+  const choose = (list: Instrument[], h: number, i: number, role: string): Instrument => {
+    for (let o = 0; o < list.length; o++) {
+      const c = list[(h + st.ensemble + i + o) % list.length];
+      if (!taken.has(c)) {
+        taken.add(c);
+        return c;
+      }
+    }
+    return list[(h + st.ensemble + i) % list.length];
+  };
+  const voiceOf = routes.map((r, i) => {
+    const h = routeHash(r.key + i);
+    const role = roles[i];
+    if (role === "held") return choose(HELD[r.region] ?? HELD.UNK, h, i, role);
+    if (role === "melody") return choose(MELODY[r.region] ?? MELODY.UNK, h, i, role);
+    if (role === "pluck") return choose(PLUCK[r.region] ?? PLUCK.UNK, h, i, role);
+    return PERC[r.region] ?? "TAMB";
+  });
 
   let hook = 0;
-  let lead = 0; // round-robin over the routes, one step per lead note
+  // per-voice walk state
+  const deg = routes.map((r, i) => routeHash(r.key + i) % scale.length);
+  // pulses a bar for a singing voice; with only a few routes each voice carries more of the piece
+  const lone = n <= 2 ? 2 : n <= 4 ? 1 : 0;
+  const dens = (h: number): number => 2 + (h % 3) + (st.groove >= 3 ? 1 : 0) - (st.groove === 0 ? 1 : 0) + lone;
+
   for (let b = 0; b < BARS; b++) {
     const { section, first, len } = sectionOf(b);
     if (section === "chorus" && b === first) hook = b * bar;
@@ -273,94 +247,93 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const chord = prog[Math.floor(b / 2) % prog.length];
     const level = LEVEL[section];
     const fade = section === "outro" ? 1 - ((b - first) / len) * 0.7 : 1;
-    const v = (x: number): number => clamp(x * level * fade, 0.05, 1);
-    const cr = root(chord.root);
-    const tones = [0, chord.third, 7].map((i) => cr + i);
-    const onSecondBar = b % 2 === 0;
-    via = lead % routes.length; // every hit of this bar is shown with the route that leads it
+    const v = (x: number): number => x * level * fade;
+    const cr = chord.root + st.shift;
+    const tones = [0, chord.third, 7].map((x) => cr + x);
 
-    // pad: the chord, held for two bars, re-struck on every second bar
-    if (onSecondBar) tones.forEach((m, ti) => push({ t: t0, d: bar * 2 * 0.98, instrument: ens.pad, freq: hz(m + 12), vel: v(0.34), show: ti === 0 }));
-    // a second colour joins the build and the chorus: a held fifth-less chord in the orchestra, a doubling elsewhere
-    if (section === "build" || section === "chorus") {
-      if (ens.colour === "GLOCK") {
-        // a bell is a single ping: it sparkles on the beat instead of holding a chord
-        for (const [k, ti] of [[0, 0], [1.5, 2], [3, 1]] as [number, number][]) push({ t: at(t0, k), d: beat * 0.8, instrument: "GLOCK", freq: hz(tones[ti] + 24), vel: v(0.26) });
-      } else if (onSecondBar) {
-        const m = st.ensemble === 1 ? tones.slice(0, 2) : [tones[0]];
-        m.forEach((x, xi) => push({ t: t0, d: bar * 2 * 0.95, instrument: ens.colour, freq: hz(x + (st.ensemble === 1 ? 12 : 24)), vel: v(0.24), show: xi === 0 }));
-      }
-    }
-    // bass
-    const bb = section === "chorus" ? bassBeats.chorus : section === "intro" || section === "outro" || section === "break" ? bassBeats.light : bassBeats.full;
-    bb.forEach((k, i) => push({ t: at(t0, k), d: beat * (ens.bass === "BASS_PIZZ" ? 0.5 : 0.9), instrument: ens.bass, freq: hz(cr - 12 + (section === "chorus" && i % 2 === 1 ? 7 : 0)), vel: v(0.5) }));
-    // arpeggio
-    if (ARP_ON[section]) {
-      for (const [k, ti, oct] of arpFig) push({ t: at(t0, k), d: beat * 0.7, instrument: ens.arp, freq: hz(tones[ti] + 24 + 12 * oct), vel: v(0.28 + (Math.round(k * 2) % 2 === 0 ? 0.06 : 0)) });
-    }
-    // percussion
-    const pf = section === "verse" || section === "intro" || section === "break" || section === "outro" ? percFig.verse : section === "build" ? percFig.build : percFig.chorus;
-    if (section !== "intro" && section !== "outro") {
-      for (const [k, inst, pv] of pf) push({ t: at(t0, k), d: beat * 0.5, instrument: inst, freq: inst === "TIMP" ? hz(cr - 12) : 200, vel: v(pv) });
-    }
-    // a cymbal or gong opens each big section
-    if (b === first && (section === "build" || section === "chorus") && st.perc !== 3) push({ t: t0, d: bar, instrument: section === "chorus" ? "CRASH" : "GONG", freq: 300, vel: v(section === "chorus" ? 0.5 : 0.35) });
-
-    // the lead: the route motifs, with a breath at the end of a phrase
-    const phraseEnd = section === "verse" && (b - first) % 8 === 7;
-    for (const slot of leadBeats[section]) {
-      if (phraseEnd && slot > 0) continue;
-      const i = lead % routes.length;
+    for (let i = 0; i < n; i++) {
+      if (b < entry[i] || b >= exit[i]) continue;
+      if (section === "break" && !keep.has(i)) continue;
       const r = routes[i];
       const h = routeHash(r.key + i);
-      const rk = rank(r.distKm);
-      const step = r.distKm < 1500 ? 1 : r.distKm < 4000 ? 2 : 3;
-      const degree = (h + lead * step) % scale.length;
-      let semis = KEY_ROOT + st.shift + 12 + scale[degree] + (rk > 0.66 ? -12 : rk < 0.33 ? 12 : 0);
-      // strong beats rest on the nearest chord tone, so the motif always agrees with the chord under it
-      if (slot === 0) {
-        let best = semis;
-        let bd = Infinity;
-        for (const tone of tones) {
-          for (const o of [-12, 0, 12, 24]) {
-            const cand = tone + o;
-            const dd = Math.abs(cand - semis);
-            if (dd < bd) {
-              bd = dd;
-              best = cand;
+      const role = roles[i];
+      const rk = rank.get(i) ?? 0.5;
+      const dir = r.toLon >= r.fromLon ? 1 : -1;
+      const stepSize = r.distKm < 1500 ? 1 : r.distKm < 4000 ? 2 : 3;
+      // many routes: each is a little sparser, so twenty voices do not become noise
+      const sparse = Math.floor(n / 8);
+
+      if (role === "held") {
+        // the chord, one tone per long route, held two bars and struck again
+        if (b % 2 !== 0 && b > entry[i]) continue;
+        const slot = heldSlot[i];
+        const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
+        const inst = voiceOf[i];
+        push(i, t0, bar * 2 * 0.98, inst, hz(tone - 12 + 12), v(0.42 + 0.15 * rk));
+      } else if (role === "melody") {
+        const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6);
+        const pat = rotate(euclid(k, 8), (h >> 6) % 8);
+        const inst = voiceOf[i];
+        const onsets = pat.map((on, s) => (on ? s : -1)).filter((s) => s >= 0);
+        onsets.forEach((s, oi) => {
+          deg[i] += dir * stepSize * ((oi + b) % 3 === 0 ? 1 : 0) + (oi % 2 === 0 ? 0 : dir);
+          const d = ((deg[i] % 7) + 7) % 7;
+          const oct = Math.floor(deg[i] / 7);
+          let semis = KEY_ROOT + st.shift + 12 + scale[d] + 12 * clamp(oct, -1, 1);
+          if (s === onsets[0]) {
+            // the first note of a bar rests on the nearest chord tone
+            let best = semis;
+            let bd = Infinity;
+            for (const tn of tones) for (const o of [-12, 0, 12, 24]) {
+              const c = tn + o;
+              const dd = Math.abs(c - semis);
+              if (dd < bd) { bd = dd; best = c; }
             }
+            semis = best;
           }
-        }
-        semis = best;
+          const nextStep = onsets[oi + 1] ?? 8;
+          const dur = Math.max(0.4, (nextStep - s) * 0.5) * beat * 0.95;
+          push(i, swingAt(t0, s, 2), dur, inst, hz(semis + (rk < 0.5 ? 12 : 0)), v(0.62 + 0.28 * (1 - rk)));
+        });
+      } else if (role === "pluck") {
+        const steps = st.arp === 1 ? 12 : st.arp === 0 ? 16 : 8;
+        const spb = steps / 4;
+        const k = clamp(3 + ((h >> 4) % 3) + BUSY[section] - sparse, 2, steps - 2);
+        const pat = rotate(euclid(k, steps), (h >> 8) % steps);
+        const inst = voiceOf[i];
+        const order = dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1];
+        let a = 0;
+        pat.forEach((on, s) => {
+          if (!on) return;
+          const tone = tones[order[a++ % order.length]] + 24;
+          push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)));
+        });
+      } else {
+        const steps = st.perc === 1 ? 12 : st.perc === 0 ? 16 : 8;
+        const spb = steps / 4;
+        const k = clamp(3 + (h % 4) + BUSY[section] - sparse, 2, steps - 2);
+        const pat = rotate(euclid(k, steps), 0);
+        const inst = voiceOf[i];
+        pat.forEach((on, s) => {
+          if (!on) return;
+          const strong = s === 0 || s % spb === 0;
+          // the darbuka's dum / tek / ka come from how hard the stroke is
+          const vel = inst === "DARBUKA" ? (s === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
+          push(i, swingAt(t0, s, spb), beat * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(vel));
+        });
       }
-      const gap = leadBeats[section].length > 1 ? 4 / leadBeats[section].length : 4;
-      const d = Math.min(beat * gap * 0.95, beat * (slot === 0 ? 1.4 + rk * 2.2 : 0.7 + rk * 0.9));
-      const voices = LEAD[r.region] ?? LEAD.UNK;
-      const inst = voices[(h + st.ensemble) % voices.length];
-      push({ t: at(t0, slot), d, instrument: inst, freq: hz(semis), vel: v(0.62 + 0.3 * (1 - rk)), key: r.key, route: i });
-      if (section === "chorus") push({ t: at(t0, slot), d, instrument: inst, freq: hz(semis + 12), vel: v(0.34) });
-      // the counter-melody answers on the off beats from the verse on: a third above the line
-      if (section !== "intro" && section !== "outro" && slot === leadBeats[section][leadBeats[section].length - 1] && !phraseEnd) {
-        const cs = semis + (scale[(degree + 2) % scale.length] - scale[degree] + 12) % 12 + (section === "break" ? 0 : 0);
-        push({ t: at(t0, Math.min(3.5, slot + 1)), d: beat * 1.2, instrument: ens.counter, freq: hz(cs), vel: v(0.4) });
-      }
-      lead++;
     }
   }
-  // the last chord rings out
-  const last = prog[Math.floor((BARS - 1) / 2) % prog.length];
-  [0, last.third, 7].forEach((i, ti) => push({ t: BARS * bar, d: bar * 1.6, instrument: ens.pad, freq: hz(root(last.root) + 12 + i), vel: 0.2, show: ti === 0 }));
-  const end = Math.max(...notes.map((n) => n.t + n.d));
+  const end = Math.max(...notes.map((x) => x.t + x.d));
   let atBar = 0;
-  const sections = FORM.map(([name, n]) => {
-    const sec = { name, start: atBar * bar, end: (atBar + n) * bar };
-    atBar += n;
+  const sections = FORM.map(([name, m]) => {
+    const sec = { name, start: atBar * bar, end: (atBar + m) * bar };
+    atBar += m;
     return sec;
   });
   const energy = Array.from({ length: 48 }, (_, i) => {
     const b = Math.min(BARS - 1, Math.floor(((i + 0.5) / 48) * BARS));
-    const { section } = sectionOf(b);
-    return LEVEL[section];
+    return LEVEL[sectionOf(b).section];
   });
-  return { notes, duration: end + 1.5, hook, bpm, sections, energy, style };
+  return { notes, duration: Math.max(end, BARS * bar) + 1.5, hook, bpm, sections, energy, style };
 }
