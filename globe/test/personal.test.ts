@@ -205,3 +205,41 @@ describe("route colours", () => {
     expect([Math.round(r), Math.round(g), Math.round(b)]).toEqual([1, 0, 0]);
   });
 });
+
+describe("arrangement: pieces differ in feel, not only in pitches", () => {
+  const sets = [
+    ["DPS", "JFK"], ["NRT", "GRU", "CAI"], ["LHR", "CDG", "FRA", "MAD"], ["SYD", "LAX"], ["DXB", "BKK", "SIN", "KUL"],
+    ["JNB", "NBO"], ["MEX", "YYZ", "BOS"], ["ICN", "HKG"], ["ATH", "FCO", "VIE"], ["CPT", "ADD", "LOS"], ["SCL", "EZE"], ["DEL", "BOM", "CMB"],
+  ];
+  it("chooses its arrangement from the selection, the same way every time", () => {
+    const r = buildRoutes(["DPS", "JFK", "NRT"], "LHR");
+    expect(composePiece("visited", r).style).toEqual(composePiece("visited", r).style);
+  });
+  it("spreads people over rhythm families, tempos, keys and orchestrations", () => {
+    const pieces = sets.flatMap((s) => (["visited", "wish"] as const).map((m) => composePiece(m, buildRoutes(s, "IST"))));
+    const distinct = (f: (p: (typeof pieces)[number]) => number) => new Set(pieces.map(f)).size;
+    expect(distinct((p) => p.style.groove)).toBeGreaterThanOrEqual(4);
+    expect(distinct((p) => p.style.ensemble)).toBeGreaterThanOrEqual(3);
+    expect(distinct((p) => p.style.perc)).toBeGreaterThanOrEqual(3);
+    expect(distinct((p) => p.bpm)).toBeGreaterThanOrEqual(8);
+    expect(distinct((p) => p.style.shift)).toBeGreaterThanOrEqual(3);
+    for (const p of pieces) {
+      expect(p.duration).toBeGreaterThan(140);
+      expect(p.duration).toBeLessThan(200);
+    }
+  });
+  it("two different selections do not share an onset pattern", () => {
+    const sig = (s: string[]) => {
+      const p = composePiece("visited", buildRoutes(s, "IST"));
+      const bar = (60 / p.bpm) * 4;
+      return p.notes.filter((n) => n.route >= 0 && n.t < 8 * bar * 4).map((n) => Math.round(((n.t % bar) / bar) * 48)).sort((a, b) => a - b).join(",");
+    };
+    const sigs = new Set(sets.map(sig));
+    expect(sigs.size).toBeGreaterThanOrEqual(5);
+  });
+  it("only uses instruments the engine can play (a recording or a stand-in)", () => {
+    const p = composePiece("wish", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI"], "LHR"));
+    for (const n of p.notes) expect(n.instrument.length).toBeGreaterThan(1);
+    expect(p.notes.some((n) => n.instrument === "TIMP" || n.instrument === "KICK" || n.instrument === "TAMB" || n.instrument === "TRI")).toBe(true);
+  });
+});

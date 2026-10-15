@@ -1,6 +1,6 @@
 import { activeSampler } from "./sampler";
 import type { NoteKind } from "./notes-bus";
-import type { Instrument } from "./theory";
+import { baseOf, type Instrument } from "./theory";
 
 /** What a recipe needs of a planned note (`PlannedNote` is one). */
 export interface SynthNote {
@@ -253,7 +253,7 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
   const land = n.kind === "arr";
   const k = land ? 2 : 1;
   const peak = 0.22 * n.vel * o.gainScale;
-  const r: Instrument = n.instrument;
+  const r: Instrument = baseOf(n.instrument); // no recording: the closest synthesised voice
   const dur = n.durSec ?? DEFAULT_DUR_SEC;
   // sustained: hold until `t + dur`, then release; plucked: decays × `ring(main decay)`
   const hold = t + dur;

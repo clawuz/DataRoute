@@ -10,7 +10,18 @@ export type Instrument =
   | RegionName | "PNO" | "NEY" | "CLA" | "SAX" | "TPT"
   | "EP" | "BASS" | "KICK" | "SNARE" | "HAT" | "OHAT" | "KEYS" | "BRASS"
   | "TOM" | "CRASH" | "SHAKER" | "RISER" | "DARBUKA" | "CONGA" | "TAIKO" | "TIMP"
-  | "HARP" | "GUITAR" | "SAZ" | "KANUN" | "MARIMBA" | "CELLO" | "VIOLIN" | "FLUTE" | "ORGAN" | "STR";
+  | "HARP" | "GUITAR" | "SAZ" | "KANUN" | "MARIMBA" | "CELLO" | "VIOLIN" | "FLUTE" | "ORGAN" | "STR"
+  // recorded orchestra (the sample pack); each has a synthesised stand-in, see `baseOf`
+  | "VIOLA" | "OBOE" | "BSN" | "PICC" | "HORN" | "TBN" | "TUBA" | "GLOCK" | "XYLO" | "TRI" | "TAMB" | "GONG"
+  | "VIOLIN_PIZZ" | "VIOLA_PIZZ" | "CELLO_PIZZ" | "BASS_PIZZ";
+
+/** the synthesised voice that stands in for an instrument that has no synth of its own (and the scope lane it sits in) */
+const STAND_IN: Partial<Record<Instrument, Instrument>> = {
+  VIOLA: "VIOLIN", OBOE: "CLA", BSN: "CELLO", PICC: "FLUTE", HORN: "BRASS", TBN: "BRASS", TUBA: "BASS",
+  GLOCK: "EP", XYLO: "MARIMBA", TRI: "OHAT", TAMB: "SHAKER", GONG: "CRASH",
+  VIOLIN_PIZZ: "HARP", VIOLA_PIZZ: "HARP", CELLO_PIZZ: "BASS", BASS_PIZZ: "BASS",
+};
+export const baseOf = (i: Instrument): Instrument => STAND_IN[i] ?? i;
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */
 export function euclid(k: number, n: number): boolean[] {

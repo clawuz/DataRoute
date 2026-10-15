@@ -10,6 +10,7 @@ import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { AI_MESSAGE, characterOf, requestAi } from "./ai";
 import { MusicScope } from "../hud/MusicScope";
+import { baseOf } from "../audio/theory";
 import { createNoteBus } from "../audio/notes-bus";
 import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
@@ -117,7 +118,7 @@ export function Experience({ selection, onBack }: Props) {
       planCbRef.current = (n, wallAt) => {
         const r = n.route >= 0 ? routes[n.route] : undefined;
         if (!r) return;
-        noteBus.emit({ instrument: n.instrument, lane: n.instrument, freq: n.freq, pitch: n.freq, vel: n.vel, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
+        noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: n.freq, vel: n.vel, kind: "line", key: r.key, at: wallAt, durSec: n.d, lineId: r.key });
       };
       const start = () => {
         player?.play(piece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
