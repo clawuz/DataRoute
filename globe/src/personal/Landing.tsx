@@ -6,6 +6,7 @@ import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, c
 import { buildRoutes } from "./routes";
 import { Backdrop } from "./Backdrop";
 import { guessHome } from "./locate";
+import { musicTileUrl } from "./music-tile";
 
 interface Props {
   onCompose(sel: PersonalSelection): void;
@@ -79,6 +80,7 @@ export function Landing({ onCompose, onLive }: Props) {
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
   const [area, setArea] = useState<AreaId | "ALL">("ALL");
+  const tile = useMemo(() => musicTileUrl(), []);
 
   const needle = norm(q.trim());
   const filtered = useMemo(
@@ -113,7 +115,7 @@ export function Landing({ onCompose, onLive }: Props) {
         <Backdrop />
         {bar()}
         <p className="landing-eyebrow">A WORLD OF MUSIC</p>
-        <h1 className="landing-title">Every journey has a sound.<br />Choose yours.</h1>
+        <h1 className="landing-title">Every journey has a sound.<br /><span className="title-music" style={tile ? { backgroundImage: `url(${tile}), linear-gradient(#f2f5fa, #f2f5fa)` } : undefined}>Choose yours.</span></h1>
         <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("pick"); }}>
