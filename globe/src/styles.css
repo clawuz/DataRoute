@@ -667,3 +667,9 @@ body.personal-build .live-back:hover, body.personal-build .live-back:focus-visib
   body.personal-build .live-back { right: 16px; top: 8px; }
   body.personal-build .phase.gt-chip { position: fixed; left: 16px; top: 14vmin; margin: 0; z-index: 12; }
 }
+
+/* the picker is locked sideways on a phone: it only scrolls up and down; the area tabs keep their own sideways strip */
+.landing.v2 { overflow-x: hidden; overscroll-behavior-x: none; touch-action: pan-y; max-width: 100vw; }
+.landing.v2 .region-tabs { touch-action: pan-x pan-y; overscroll-behavior-x: contain; max-width: 100%; }
+.landing.v2 .picker-groups, .landing.v2 .fields, .landing.v2 .tray, .landing.v2 .search-hits { max-width: 100%; box-sizing: border-box; }
+html, body { overflow-x: hidden; overscroll-behavior-x: none; }
