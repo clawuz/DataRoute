@@ -9,7 +9,7 @@ import { countLabel, pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { AI_MESSAGE, characterOf, requestAi } from "./ai";
-import { LIBRARY, pickTrack } from "./library";
+import { AUTO_AT, LIBRARY, pickTrack } from "./library";
 import { analyze } from "./analyze";
 import { assignToRoutes, followAudio, type Follower } from "./follow";
 import { MusicScope } from "../hud/MusicScope";
@@ -346,9 +346,10 @@ export function Experience({ selection, onBack }: Props) {
     startAiAudio(el);
   };
 
-  // very few picks make a sparse piece of our own (one or two voices): they get the studio piece that is like them
+  // a studio piece that is really like the picks (the mode and the main region agree) starts by itself, from two routes
+  // on; a lone route keeps its own single instrument. Anything less alike is offered with the button.
   useEffect(() => {
-    if (!studio || routes.length !== 2 || autoStudio.current) return;
+    if (!studio || routes.length < 2 || studio.score < AUTO_AT || autoStudio.current) return;
     autoStudio.current = true;
     setTimeout(() => void toggleAi(), 700);
     // eslint-disable-next-line react-hooks/exhaustive-deps

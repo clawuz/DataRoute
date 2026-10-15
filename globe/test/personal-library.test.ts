@@ -24,3 +24,14 @@ describe("the studio library", () => {
     expect(pickTrack(LIBRARY, "wish", ["DOM", "MEA", "AFR"], 5)).toBeNull();
   });
 });
+
+import { AUTO_AT } from "../src/personal/library";
+describe("what starts by itself", () => {
+  it("starts for the same mode and main region, not for a looser likeness", () => {
+    expect(pickTrack(LIBRARY, "visited", ["EUR"], 3)!.score).toBeGreaterThanOrEqual(AUTO_AT);
+    expect(pickTrack(LIBRARY, "visited", ["DOM", "EUR"], 3)!.score).toBeGreaterThanOrEqual(AUTO_AT);
+    // a wish with only Asia as its second region: there is a track, but it is not that alike
+    const loose = pickTrack(LIBRARY, "visited", ["MEA", "ASI"], 3);
+    expect(loose === null || loose.score < AUTO_AT).toBe(true);
+  });
+});
