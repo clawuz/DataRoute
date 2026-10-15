@@ -367,10 +367,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
         });
       } else {
-        const steps = st.perc === 1 ? 12 : st.perc === 0 ? 16 : 8;
+        // an orchestra's percussion is sparing: timpani, triangle and tambourine land on the beats, a few times a bar
+        const orchestral = st.genre === "symphonic" || st.genre === "chamber";
+        const steps = orchestral ? 8 : st.perc === 1 ? 12 : st.perc === 0 ? 16 : 8;
         const spb = steps / 4;
-        const k = clamp(3 + (h % 4) + BUSY[section] - sparse, 2, steps - 2);
-        const pat = rotate(euclid(k, steps), 0);
+        const k = orchestral ? clamp(1 + (h % 2) + (BUSY[section] > 0 ? 1 : 0) - (sparse > 0 ? 1 : 0), 1, 3) : clamp(3 + (h % 4) + BUSY[section] - sparse, 2, steps - 2);
+        const pat = rotate(euclid(k, steps), orchestral ? 0 : 0);
         const inst = voiceOf[i];
         pat.forEach((on, s) => {
           if (!on) return;
