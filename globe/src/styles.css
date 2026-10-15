@@ -630,7 +630,8 @@ body.recording-reel .music-scope { opacity: 0; }
 }
 
 /* the top bar (logo + back) stays above the scrolling list, solid and readable; the compose bar likewise at the bottom */
-.landing.v2 > .topbar { z-index: 20; background: #02030a; border-bottom: 0; padding-bottom: 12px; }
+.landing.v2 > .topbar { z-index: 20; }
+.landing.v2.picker > .topbar { background: #02030a; border-bottom: 0; padding-bottom: 12px; }
 .landing.v2 > .picker-bar { z-index: 19; }
 
 /* live screen, new link: Back sits where it sits on every other screen (top right, in the top bar's own style);
