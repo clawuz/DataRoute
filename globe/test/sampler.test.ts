@@ -25,7 +25,8 @@ describe("sampler: notes and zones", () => {
   it("pitches a recording by the distance from its root, within a limit", () => {
     expect(rateFor(freqOf(60), 60)).toBeCloseTo(1, 9);
     expect(rateFor(freqOf(72), 72 - 12, 12)).toBeCloseTo(2, 9);
-    expect(rateFor(freqOf(67), 60)).toBeCloseTo(2 ** (6 / 12), 9); // 7 semitones away is held to 6
+    expect(rateFor(freqOf(67), 60)).toBeCloseTo(2 ** (7 / 12), 9);
+    expect(rateFor(freqOf(90), 60, 6)).toBeCloseTo(2 ** (6 / 12), 9); // a stated limit holds
   });
 });
 

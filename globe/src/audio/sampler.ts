@@ -24,6 +24,10 @@ export interface SampleInstrument {
   gain?: number;
   /** the note may be held: sample is long enough to sustain; otherwise it plays out as recorded */
   sustained?: boolean;
+  /** seconds [start, end] of the steady part, looped when a note is held longer than the recording */
+  loop?: [number, number];
+  /** a drum or a noise: played as recorded at any requested pitch */
+  unpitched?: boolean;
 }
 
 export interface SampleManifest {
@@ -53,7 +57,7 @@ export function pickZone(zones: SampleZone[], midi: number, vel = 0.7): SampleZo
 }
 
 /** playback rate that moves a recording at `rootMidi` to `freq`, kept within ±`limit` semitones of the root */
-export function rateFor(freq: number, rootMidi: number, limit = 6): number {
+export function rateFor(freq: number, rootMidi: number, limit = 12): number {
   const semis = Math.max(-limit, Math.min(limit, midiOf(freq) - rootMidi));
   return 2 ** (semis / 12);
 }
@@ -127,7 +131,14 @@ export function createSampler(ctx: AudioContext): Sampler {
       if (!z || !buf) return false;
       const src = ctx.createBufferSource();
       src.buffer = buf;
-      src.playbackRate.setValueAtTime(rateFor(freq, z.root), when);
+      const rate = inst.unpitched ? 1 : rateFor(freq, z.root);
+      src.playbackRate.setValueAtTime(rate, when);
+      // held longer than the recording: loop its steady part
+      if (inst.sustained && inst.loop && durSec * rate > buf.duration - (inst.release ?? 0.35)) {
+        src.loop = true;
+        src.loopStart = inst.loop[0];
+        src.loopEnd = Math.min(inst.loop[1], buf.duration);
+      }
       const g = ctx.createGain();
       const peak = Math.max(0.0001, vel * (inst.gain ?? 1));
       const release = inst.release ?? 0.35;

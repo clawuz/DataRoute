@@ -22,4 +22,4 @@ Every file that goes into a pack must be listed here with its source and licence
 
 | Pack | Instrument | File | Source | Licence | Credit needed |
 |---|---|---|---|---|---|
-| — | (none yet) | | | | |
+| lite | strings, woodwinds, brass, harp, mallets, percussion (30 instruments) | see [music-pack-lite-ledger.md](music-pack-lite-ledger.md) | VSCO 2 Community Edition | CC0 1.0 | no |
