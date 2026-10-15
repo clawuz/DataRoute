@@ -1,3 +1,4 @@
+import { activeSampler } from "./sampler";
 import type { NoteKind } from "./notes-bus";
 import type { Instrument } from "./theory";
 
@@ -237,6 +238,16 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
     v({ type: "sawtooth", freq: f, peak, attack, decay, hold, at: t, lowpass: { start: 1800 * o.cutoffScale, q: 0.7 }, vibrato: vib, out: growl });
     noise({ type: "bandpass", freq: f, q: 2 }, t, 0.1 * peak, attack, decay, () => growl.disconnect(), hold);
   };
+  // a sampled version of this instrument, once its pack has arrived: the recording plays instead of the synthesis
+  {
+    const sam = activeSampler();
+    if (sam?.has(n.instrument)) {
+      live++;
+      const played = sam.play(pan, n.instrument, n.freq, Math.min(1, n.vel * o.gainScale * 1.1), n.when, n.durSec ?? DEFAULT_DUR_SEC, release);
+      if (played) return { cut() {} };
+      live--;
+    }
+  }
   const t = n.when;
   const f = n.freq;
   const land = n.kind === "arr";

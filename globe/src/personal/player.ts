@@ -1,4 +1,5 @@
 import { playNote } from "../audio/instruments";
+import { createSampler, setActiveSampler } from "../audio/sampler";
 import type { PersonalNote, PersonalPiece } from "./compose";
 
 export interface PersonalPlayer {
@@ -50,6 +51,11 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   bus.connect(conv);
   conv.connect(wet);
   wet.connect(master);
+
+  // recorded instruments, when a pack is published; until it has arrived (or without one) the synthesis plays
+  const sampler = createSampler(ctx);
+  setActiveSampler(sampler);
+  void sampler.load("/samples/lite/manifest.json");
 
   let tap: MediaStreamAudioDestinationNode | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
@@ -130,6 +136,8 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;
+      sampler.dispose();
+      setActiveSampler(null);
       void ctx.close().catch(() => {});
     },
   };
