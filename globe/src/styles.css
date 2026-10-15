@@ -633,7 +633,7 @@ body.recording-reel .music-scope { opacity: 0; }
 .landing.v2 > .topbar { z-index: 20; }
 /* picker top bar: thin black frosted glass; the list slides under it */
 .landing.v2.picker > .topbar {
-  background: rgba(2, 3, 10, 0.55);
+  background: linear-gradient(90deg, rgba(2, 3, 10, 0.5) 0%, rgba(2, 3, 10, 0.16) 30%, rgba(2, 3, 10, 0.16) 70%, rgba(2, 3, 10, 0.5) 100%);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
   border-bottom: 0;
