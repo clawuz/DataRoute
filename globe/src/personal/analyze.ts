@@ -147,7 +147,7 @@ export function analyze(samples: Float32Array, sampleRate: number, maxNotes = 18
   }
   // peaks above a moving threshold
   const W = Math.round((0.5 * fs) / HOP);
-  const minGap = Math.max(2, Math.round((0.07 * fs) / HOP));
+  const minGap = Math.max(2, Math.round((0.055 * fs) / HOP));
   const peaks: number[] = [];
   let last = -1e9;
   for (let f = 2; f < frames - 2; f++) {
@@ -161,7 +161,7 @@ export function analyze(samples: Float32Array, sampleRate: number, maxNotes = 18
     }
     m /= c;
     const sd = Math.sqrt(Math.max(0, s2 / c - m * m));
-    const thr = m + 0.9 * sd + 0.02;
+    const thr = m + 0.6 * sd + 0.015;
     const isMax = flux[f] >= flux[f - 1] && flux[f] >= flux[f + 1] && flux[f] > flux[f - 2] && flux[f] >= flux[f + 2];
     if (isMax && flux[f] > thr && f - last >= minGap) {
       peaks.push(f);

@@ -1,4 +1,4 @@
-import { pcOfRoute, rankIn, W_DUR } from "../audio/route-fit";
+import { rankIn } from "../audio/route-fit";
 import { routeHash } from "../audio/theory";
 import type { Instrument } from "../audio/theory";
 import type { PersonalNote } from "./compose";
@@ -7,40 +7,47 @@ import type { Onset } from "./analyze";
 import type { PersonalRoute } from "./routes";
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
-const pcDist = (a: number, b: number): number => {
-  const d = Math.abs(a - b) % 12;
-  return Math.min(d, 12 - d);
-};
 const hzOf = (midi: number): number => 440 * 2 ** ((midi - 69) / 12);
 
 /** the voice shown for a heard note, by its register (the ribbon colours come from the route) */
 const laneOf = (midi: number, voiced: boolean): Instrument => (!voiced ? "TIMP" : midi < 50 ? "CELLO" : midi < 62 ? "VIOLA" : midi < 74 ? "VIOLIN" : "FLUTE");
 
 /**
- * Hands each heard note to the route that fits it best, as the live card does (pitch class ↔ the route's colour,
- * register ↔ the flight's altitude, a long note ↔ a long route). A route shows one note at a time, so the voices
- * of the music box are exactly the person's routes. The notes are not played again — they only drive the lights.
+ * Hands each heard note to a route so that every route is a line of music: long routes take the low voices, short ones
+ * the high voices (the register band of a route follows its length), and a route keeps the notes that continue its
+ * own line (the nearest to the one it just played). A route shows one note at a time, so the voices of the music box
+ * are exactly the person's routes. The notes are not played again — they only drive the lights.
  */
 export function assignToRoutes(onsets: Onset[], routes: PersonalRoute[]): PersonalNote[] {
   const n = routes.length;
   if (n === 0) return [];
   const durRank = rankIn(onsets.map((o) => o.d).sort((a, b) => a - b));
   const lenRank = rankIn(routes.map((r) => r.distKm).sort((a, b) => a - b));
-  const pcs = routes.map((r, i) => pcOfRoute(r.key + i));
   const phrase = routes.map((r) => clamp(Math.round(10 + 40 * lenRank(r.distKm)), 12, 48));
+  // the register band of each route: the long routes the low quantiles of the heard pitches, the short ones the high ones
+  const voiced = onsets.filter((o) => o.voiced).map((o) => o.midi).sort((a, b) => a - b);
+  const q = (p: number): number => (voiced.length ? voiced[Math.min(voiced.length - 1, Math.floor(p * voiced.length))] : 60);
+  const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((a, b) => b.d - a.d || a.i - b.i); // longest first = lowest
+  const centre = new Array<number>(n).fill(60);
+  order.forEach((x, k) => {
+    centre[x.i] = q((k + 0.5) / n);
+  });
   const busy = new Array<number>(n).fill(-1e9);
+  const lastMidi = new Array<number>(n).fill(NaN);
+  const lastAt = new Array<number>(n).fill(-1e9);
   const out: PersonalNote[] = [];
   for (const o of onsets) {
     let best = -1;
     let bestScore = Infinity;
     for (let i = 0; i < n; i++) {
-      if (o.t < busy[i] + 0.08) continue;
-      const alt = altitudeFt((o.t % phrase[i]) / phrase[i], routes[i].distKm);
-      const regP = 48 + (clamp(alt, 0, 41000) / 41000) * 36;
-      let score = pcDist(pcs[i], Math.round(o.midi) % 12) + (Math.abs(regP - o.midi) / 12) * 0.6 + W_DUR * Math.abs(lenRank(routes[i].distKm) - durRank(o.d));
-      // a hit without pitch belongs to the shorter routes
-      if (!o.voiced) score += 3 * lenRank(routes[i].distKm);
-      score += (routeHash(routes[i].key + i + Math.round(o.t * 10)) % 100) / 1000; // a stable tie-break
+      if (o.t < busy[i] + 0.05) continue;
+      let score = Math.abs(o.midi - centre[i]) * 0.5;
+      // continuing the line: a note near the one the route just played, soon after
+      if (!Number.isNaN(lastMidi[i]) && o.t - lastAt[i] < 2.5) score += Math.abs(o.midi - lastMidi[i]) * 0.8;
+      else score += 3; // a route that has been silent takes a note a little less willingly
+      score += Math.abs(lenRank(routes[i].distKm) - durRank(o.d)) * 1.5; // a long note to a long route
+      if (!o.voiced) score += 6 * lenRank(routes[i].distKm); // hits without pitch go to the lower voices
+      score += (routeHash(routes[i].key + i + Math.round(o.t * 10)) % 100) / 2000; // a stable tie-break
       if (score < bestScore) {
         bestScore = score;
         best = i;
@@ -48,6 +55,8 @@ export function assignToRoutes(onsets: Onset[], routes: PersonalRoute[]): Person
     }
     if (best < 0) continue;
     busy[best] = o.t + o.d;
+    lastMidi[best] = o.midi;
+    lastAt[best] = o.t;
     const r = routes[best];
     out.push({
       t: o.t,
