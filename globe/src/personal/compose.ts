@@ -500,7 +500,7 @@ function composeSolo(mode: PersonalMode, route: PersonalRoute, st: PersonalStyle
     // the flight over sixteen bars
     const pFlight = (within + 0.5) / 16;
     const height = altitudeFt(pFlight, route.distKm) / cruiseFt(route.distKm);
-    const lift = Math.round(height * 4) + (partIdx === 2 ? 3 : 0) + (section === "chorus" || section === "build" ? 2 : 0);
+    const lift = Math.round(height * 6) + (partIdx === 2 ? 2 : 0) + (section === "chorus" || section === "build" ? 1 : 0);
     // the bar's rhythm: the theme's, thinned in a sparse part, split into more notes in a busy one
     let rhythm = themeRhythm[inPart].slice();
     const busy = MOTIF_OF[section];
@@ -526,13 +526,14 @@ function composeSolo(mode: PersonalMode, route: PersonalRoute, st: PersonalStyle
     ticks.forEach((len, k) => {
       const lastNote = k === ticks.length - 1;
       const cadence = inPart === 3 && lastNote;
-      if (k === 0) deg = nearTone(deg + (inPart === 0 ? 0 : sign * (moves[0] ?? 0)), chordPcs);
+      // each bar starts back near the middle, so that the climb of the flight (the lift) is what raises the tune
+      if (k === 0) deg = nearTone(Math.trunc(deg / 2) + (inPart === 0 ? 0 : sign * (moves[0] ?? 0)), chordPcs);
       else deg += sign * (moves[Math.min(k, moves.length - 1)] ?? 0);
       if (cadence) {
         const end = partIdx === 1 ? cr + 7 : partIdx === 2 ? cr + chord.third : within === 15 && b === BARS - 1 ? KEY_ROOT + st.shift : cr;
         deg = nearTone(deg, [end]);
       }
-      deg = clamp(deg, -4, 13);
+      deg = clamp(deg, -4, 6);
       const hold = cadence && b === BARS - 1 ? 60 : 0;
       const tt = b * TICKS * 4 + at + (st.swing > 0 && Math.round(at / 6) % 2 === 1 && (at % 6 === 0) ? Math.round(st.swing * 6) : 0);
       const vel = LEVEL[section] * (0.58 + 0.3 * height) * (cadence ? 0.9 : 1);
