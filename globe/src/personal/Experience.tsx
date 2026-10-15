@@ -9,6 +9,7 @@ import { countLabel, pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
 import { AI_MESSAGE, characterOf, requestAi } from "./ai";
+import { LIBRARY, pickTrack } from "./library";
 import { analyze } from "./analyze";
 import { assignToRoutes, followAudio, type Follower } from "./follow";
 import { MusicScope } from "../hud/MusicScope";
@@ -70,6 +71,9 @@ export function Experience({ selection, onBack }: Props) {
 
   const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
+  /** a studio piece that is like these picks (a finished file on the site: no request is made) */
+  const studio = useMemo(() => pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length), [selection, routes]);
+  const autoStudio = useRef(false);
   const palette = useMemo(() => routePalette(routes), [routes]);
   const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
 
@@ -315,25 +319,40 @@ export function Experience({ selection, onBack }: Props) {
       return;
     }
     setAi("composing");
-    const out = await requestAi(AI_ENDPOINT, characterOf(selection.mode, routes, selection.places.length));
-    if (out.status !== "ready") {
-      setAi("idle");
-      say(AI_MESSAGE[out.status], 5000);
-      return;
+    let url: string;
+    if (studio) {
+      // a finished studio piece that is like these picks: it is a file of the site
+      url = `/library/${studio.track.file}`;
+    } else {
+      const r = await requestAi(AI_ENDPOINT, characterOf(selection.mode, routes, selection.places.length));
+      if (r.status !== "ready") {
+        setAi("idle");
+        say(AI_MESSAGE[r.status], 5000);
+        return;
+      }
+      url = r.url;
     }
     setAiSyncing(true);
-    await listenTo(out.url);
+    await listenTo(url);
     setAiSyncing(false);
     const el = new Audio();
     el.crossOrigin = "anonymous";
     el.loop = true;
     el.preload = "auto";
-    el.src = out.url;
+    el.src = url;
     aiAudioRef.current = el;
-    aiUrlRef.current = out.url;
+    aiUrlRef.current = url;
     playerRef.current?.attachElement(el);
     startAiAudio(el);
   };
+
+  // very few picks make a sparse piece of our own (one or two voices): they get the studio piece that is like them
+  useEffect(() => {
+    if (!studio || routes.length > 2 || autoStudio.current) return;
+    autoStudio.current = true;
+    setTimeout(() => void toggleAi(), 700);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studio]);
 
   /**
    * The Story scene shared by the card and the video: the globe scene itself laid out as 1080×1920 (the stage canvas is given
@@ -504,9 +523,9 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
       <div className="personal-actions">
-        {AI_ENDPOINT && (
+        {(AI_ENDPOINT || studio) && (
           <button type="button" className="ghost-btn" disabled={!!busy || ai === "composing"} onClick={() => void toggleAi()}>
-            {ai === "composing" ? (aiSyncing ? "SYNCING THE ROUTE LINES TO THE MUSIC…" : "COMPOSING WITH AI · ABOUT A MINUTE…") : ai === "on" ? "AI VERSION · ON — BACK TO MINE" : "AI VERSION"}
+            {ai === "composing" ? (aiSyncing ? "SYNCING THE ROUTE LINES TO THE MUSIC…" : studio ? "OPENING THE ORCHESTRA VERSION…" : "COMPOSING WITH AI · ABOUT A MINUTE…") : ai === "on" ? "ORCHESTRA VERSION · ON — BACK TO MINE" : "ORCHESTRA VERSION"}
           </button>
         )}
         <button type="button" className="compose-btn" disabled={!!busy} onClick={() => setSheet(true)}>

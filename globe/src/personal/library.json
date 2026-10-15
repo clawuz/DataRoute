@@ -1,0 +1,111 @@
+[
+ {
+  "file": "visited-EUR.mp3",
+  "mode": "visited",
+  "regions": [
+   "EUR"
+  ],
+  "seconds": 90,
+  "label": "Europe, a journey"
+ },
+ {
+  "file": "wish-AME.mp3",
+  "mode": "wish",
+  "regions": [
+   "AME"
+  ],
+  "seconds": 90,
+  "label": "The Americas, a wish"
+ },
+ {
+  "file": "wish-ASI.mp3",
+  "mode": "wish",
+  "regions": [
+   "ASI"
+  ],
+  "seconds": 90,
+  "label": "Asia, a wish"
+ },
+ {
+  "file": "visited-ASIEUR.mp3",
+  "mode": "visited",
+  "regions": [
+   "ASI",
+   "EUR"
+  ],
+  "seconds": 90,
+  "label": "Asia and Europe, a journey"
+ },
+ {
+  "file": "wish-AMEASI.mp3",
+  "mode": "wish",
+  "regions": [
+   "AME",
+   "ASI"
+  ],
+  "seconds": 90,
+  "label": "The Americas and Asia, a wish"
+ },
+ {
+  "file": "visited-AFRMEA.mp3",
+  "mode": "visited",
+  "regions": [
+   "AFR",
+   "MEA"
+  ],
+  "seconds": 90,
+  "label": "Africa and the Middle East, a journey"
+ },
+ {
+  "file": "visited-DOM.mp3",
+  "mode": "visited",
+  "regions": [
+   "DOM"
+  ],
+  "seconds": 90,
+  "label": "Turkish melodies, a journey"
+ },
+ {
+  "file": "visited-AMEASIEUR.mp3",
+  "mode": "visited",
+  "regions": [
+   "AME",
+   "ASI",
+   "EUR"
+  ],
+  "seconds": 90,
+  "label": "Three continents, a journey"
+ },
+ {
+  "file": "wish-AFRASIEUR.mp3",
+  "mode": "wish",
+  "regions": [
+   "AFR",
+   "ASI",
+   "EUR"
+  ],
+  "seconds": 90,
+  "label": "Three continents, a wish"
+ },
+ {
+  "file": "visited-DOMEUR-M.mp3",
+  "mode": "visited",
+  "regions": [
+   "DOM",
+   "EUR"
+  ],
+  "seconds": 166,
+  "label": "Türkiye and Europe, a long journey"
+ },
+ {
+  "file": "visited-AMEASIEUR-L.mp3",
+  "mode": "visited",
+  "regions": [
+   "AME",
+   "ASI",
+   "EUR"
+  ],
+  "seconds": 180,
+  "label": "Three continents, a long journey"
+ }
+]
