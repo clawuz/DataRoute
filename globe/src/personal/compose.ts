@@ -264,12 +264,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       const sparse = Math.floor(n / 8);
 
       if (role === "held") {
-        // the chord, one tone per long route, held two bars and struck again
-        if (b % 2 !== 0 && b > entry[i]) continue;
+        // the chord, one tone per long route, rolled: each long route enters a little after the one before it and holds
+        // to the end of the bar, so the music box shows a staircase and not three bars on top of each other
         const slot = heldSlot[i];
         const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
         const inst = voiceOf[i];
-        push(i, t0, bar * 2 * 0.98, inst, hz(tone - 12 + 12), v(0.42 + 0.15 * rk));
+        const lag = (slot % 4) * beat * 0.5;
+        push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk));
       } else if (role === "melody") {
         const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6);
         const pat = rotate(euclid(k, 8), (h >> 6) % 8);
