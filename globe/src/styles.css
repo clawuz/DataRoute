@@ -689,8 +689,8 @@ body.personal-build .live-back:hover, body.personal-build .live-back:focus-visib
   body.personal-build .phase.gt-chip { position: fixed; z-index: 12; margin: 0; }
 }
 
-/* live screen: the sound state is in the box's own buttons; no label in the box's corner */
-body.personal-build .music-scope-off { display: none; }
+/* live screen: no "SOUND ON" line under the LIVE text (the box keeps its own sound label and buttons) */
+body.personal-build .art-notes, body.personal-build .title .art-notes { display: none; }
 
 /* live screen, new link: the take-off / landing lines pass one after another — two at most, each a few seconds —
    and sit well clear of the music box */
