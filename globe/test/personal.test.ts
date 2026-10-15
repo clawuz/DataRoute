@@ -156,7 +156,7 @@ describe("compose", () => {
     const many = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX"], "IST"));
     expect(new Set(few.notes.map((n) => n.route)).size).toBe(1);
     expect(new Set(many.notes.map((n) => n.route)).size).toBe(7);
-    expect(many.notes.length).toBeGreaterThan(few.notes.length * 3);
+    expect(many.notes.length).toBeGreaterThan(few.notes.length * 2); // a lone route is given a tune of its own, so the step is smaller
   });
   it("is deterministic and keeps every note inside the duration", () => {
     const routes = buildRoutes(["LHR", "DPS", "JFK", "NRT", "GRU", "CAI"]);
