@@ -623,3 +623,8 @@ body.recording-reel .music-scope { opacity: 0; }
   body.personal-build .dep, body.personal-build .dep.dep-globe { bottom: 2vmin; }
   body.personal-build .music-scope, body.personal-build .music-scope.compact { bottom: 22vmin; }
 }
+
+/* the result screen on a phone: the music box a little lower, clear of the share button */
+@media (max-aspect-ratio: 1/1) {
+  .personal-hud ~ .music-scope, .personal-hud ~ .music-scope.compact { bottom: 20vmin; }
+}

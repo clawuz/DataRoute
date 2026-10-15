@@ -69,6 +69,7 @@ export function Experience({ selection, onBack }: Props) {
     engine.setNight(true); // always the night side: the lights and the routes read best on it
     engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
     engine.setPortraitFit(true);
+    engine.setPortraitShift(30); // a phone: the globe sits higher, the music box lower
     engine.setEffects({ cloudShadow: true, glare: true, aurora: false, corridors: true, sound: false, starMap: true });
     const nowSec = () => Date.now() / 1000;
     setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built
@@ -317,6 +318,7 @@ export function Experience({ selection, onBack }: Props) {
       engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 15); // Istanbul starts in the middle, a little above the centre of the picture
       engine.setIdleSpin(kind === "VIDEO", 5); // the video turns (a visible 45° over its 15 s); the card holds still
       engine.setPortraitFit(false); // the story picture keeps the framing it was drawn for
+      engine.setPortraitShift(null);
       engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
       await new Promise((r) => setTimeout(r, 450));
       const comp = document.createElement("canvas");
@@ -348,6 +350,7 @@ export function Experience({ selection, onBack }: Props) {
       engine.setIdleSpin(true, 1);
       engine.setLineScale(1);
       engine.setPortraitFit(true);
+      engine.setPortraitShift(30);
       canvas.style.cssText = "";
       document.body.classList.remove("recording-reel");
       setMaking(null);
