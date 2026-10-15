@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { REGION_HEX } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
 import { MAX_DESTINATIONS, minPlaces, type PersonalMode, type PersonalSelection } from "./codec";
@@ -79,6 +79,8 @@ export function Landing({ onCompose, onLive }: Props) {
   const [editFrom, setEditFrom] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [q, setQ] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => setScrolled(false), [step]);
   const [area, setArea] = useState<AreaId | "ALL">("ALL");
   const tile = useMemo(() => musicTileUrl(), []);
 
@@ -179,7 +181,7 @@ export function Landing({ onCompose, onLive }: Props) {
   const sections = AREAS.map((a) => ({ ...a, groups: groups.filter((g) => areaOf(g.iso) === a.id) })).filter((a) => a.groups.length > 0);
 
   return (
-    <div className="landing v2 picker" role="main">
+    <div className={`landing v2 picker${scrolled ? " scrolled" : ""}`} role="main" onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 6)}>
       <Backdrop />
       {bar(reset)}
       <h1 className="picker-head">{c.head}</h1>

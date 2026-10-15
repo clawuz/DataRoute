@@ -631,41 +631,28 @@ body.recording-reel .music-scope { opacity: 0; }
 
 /* the top bar (logo + back) stays above the scrolling list, solid and readable; the compose bar likewise at the bottom */
 .landing.v2 > .topbar { z-index: 20; }
-/* picker top bar: thin black frosted glass; the list slides under it */
-.landing.v2.picker > .topbar {
+/* the top bar is the same on every page: same height, logo and Back in the same places.
+   On the picker, once the list is scrolled, it turns to thin black frosted glass that fades out at its lower edge. */
+.topbar { height: 64px; padding: 0 28px; box-sizing: border-box; background: none; }
+.topbar .tk-lockup { height: 34px; }
+.topbar .landing-back, .landing.v2 .landing-back { padding: 0 4px; min-height: 40px; display: inline-flex; align-items: center; }
+.landing.v2 > .topbar, .landing.v2.picker > .topbar { background: none; padding: 0 28px; min-height: 0; height: 64px; }
+.landing.v2.picker > .topbar .tk-lockup { height: 34px; }
+.landing.v2.picker { padding-top: 96px; }
+.landing.v2.picker.scrolled > .topbar {
   background: linear-gradient(90deg, rgba(2, 3, 10, 0.5) 0%, rgba(2, 3, 10, 0.16) 30%, rgba(2, 3, 10, 0.16) 70%, rgba(2, 3, 10, 0.5) 100%);
   -webkit-backdrop-filter: blur(16px) saturate(1.4);
   backdrop-filter: blur(16px) saturate(1.4);
-  border-bottom: 0;
-  padding: 8px 24px 20px;
-  min-height: 64px;
-  box-sizing: border-box;
-  /* the lower edge dissolves into the page: no line */
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  height: 76px;
 }
-.landing.v2.picker > .topbar .tk-lockup { height: 26px; }
-.landing.v2.picker > .topbar .landing-back { padding: 8px; min-height: 36px; }
-.landing.v2.picker { padding-top: 70px; }
+.landing.v2.picker > .topbar { transition: background 0.2s ease; }
 @media (max-width: 600px) {
-  .landing.v2.picker > .topbar { padding: 6px 16px 18px; min-height: 58px; }
-  .landing.v2.picker > .topbar .tk-lockup { height: 22px; }
-  .landing.v2.picker { padding-top: 60px; }
-}
-.landing.v2 > .picker-bar { z-index: 19; }
-
-/* live screen, new link: Back sits where it sits on every other screen (top right, in the top bar's own style);
-   on a phone the live/replay chip takes the place Back had, under the title */
-body.personal-build .live-back {
-  left: auto; right: 28px; top: 14px; z-index: 20;
-  background: none; border: 0; border-radius: 0; backdrop-filter: none; -webkit-backdrop-filter: none;
-  color: var(--ink-dim, rgba(242, 245, 250, 0.7)); font-size: clamp(11px, 1.4vmin, 14px); padding: 12px 8px; min-height: 40px;
-}
-body.personal-build .live-back:hover, body.personal-build .live-back:focus-visible { color: #f2f5fa; }
-@media (min-aspect-ratio: 1/1) { body.personal-build .counters { top: 64px; } }
-@media (max-aspect-ratio: 1/1) {
-  body.personal-build .live-back { right: 16px; top: 8px; }
-  body.personal-build .phase.gt-chip { position: fixed; left: 16px; top: 14vmin; margin: 0; z-index: 12; }
+  .topbar, .landing.v2 > .topbar, .landing.v2.picker > .topbar { height: 56px; padding: 0 16px; }
+  .topbar .tk-lockup, .landing.v2.picker > .topbar .tk-lockup { height: 28px; }
+  .landing.v2.picker { padding-top: 78px; }
+  .landing.v2.picker.scrolled > .topbar { height: 66px; }
 }
 
 /* the picker is locked sideways on a phone: it only scrolls up and down; the area tabs keep their own sideways strip */
@@ -673,3 +660,31 @@ body.personal-build .live-back:hover, body.personal-build .live-back:focus-visib
 .landing.v2 .region-tabs { touch-action: pan-x pan-y; overscroll-behavior-x: contain; max-width: 100%; }
 .landing.v2 .picker-groups, .landing.v2 .fields, .landing.v2 .tray, .landing.v2 .search-hits { max-width: 100%; box-sizing: border-box; }
 html, body { overflow-x: hidden; overscroll-behavior-x: none; }
+
+/* live screen: the airline lockup in the same place as the top bar of every page, Back in the same place too */
+body.personal-build .title.gt { left: 28px; top: 15px; }
+body.personal-build .title .gt-h1 { display: block; width: 206px; height: 34px; font-size: 0; background: url("/brand/tk-lockup-light.png") left center / contain no-repeat; }
+body.personal-build .title .gt-h1 > * { display: none; }
+body.personal-build .title .gt-rule { display: none; }
+body.personal-build .title .phase.gt-chip { margin-top: 10px; }
+body.personal-build .live-back { top: 12px; right: 28px; }
+@media (max-aspect-ratio: 1/1) {
+  body.personal-build .title.gt { left: 16px; top: 14px; }
+  body.personal-build .title .gt-h1 { width: 170px; height: 28px; }
+  body.personal-build .live-back { top: 8px; right: 16px; left: auto; width: auto; }
+  body.personal-build .phase.gt-chip { top: 60px; left: 16px; }
+}
+
+/* live screen, new link: Back is styled and placed as on every other screen (plain text, top right);
+   on a phone the live/replay chip takes the place Back used to have, under the logo */
+body.personal-build .live-back {
+  left: auto; z-index: 20;
+  background: none; border: 0; border-radius: 0; backdrop-filter: none; -webkit-backdrop-filter: none;
+  color: var(--ink-dim, rgba(242, 245, 250, 0.7)); font-size: clamp(11px, 1.4vmin, 14px); padding: 0 4px; min-height: 40px;
+  display: inline-flex; align-items: center;
+}
+body.personal-build .live-back:hover, body.personal-build .live-back:focus-visible { color: #f2f5fa; border: 0; }
+@media (min-aspect-ratio: 1/1) { body.personal-build .counters { top: 76px; } }
+@media (max-aspect-ratio: 1/1) {
+  body.personal-build .phase.gt-chip { position: fixed; z-index: 12; margin: 0; }
+}
