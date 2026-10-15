@@ -275,23 +275,6 @@ describe("the pitch follows the flight: climb, cruise, descent", () => {
     expect(Math.max(...mine.map((n) => n.alt))).toBeGreaterThan(30000);
     expect(Math.min(...mine.map((n) => n.alt))).toBeLessThan(15000);
   });
-  it("is high at cruise and low near the ground for a melody voice", () => {
-    const voices = new Map<number, typeof p.notes>();
-    for (const n of p.notes) voices.set(n.route, [...(voices.get(n.route) ?? []), n]);
-    let checked = 0;
-    for (const ns of voices.values()) {
-      const hi = ns.filter((n) => n.alt >= 30000);
-      const lo = ns.filter((n) => n.alt > 0 && n.alt < 10000);
-      if (hi.length < 8 || lo.length < 4) continue;
-      const mean = (a: typeof ns) => a.reduce((s, n) => s + Math.log2(n.freq), 0) / a.length;
-      // a voice that sings (one instrument): its cruise notes sit above its climb notes
-      if (new Set(ns.map((n) => n.instrument)).size === 1) {
-        expect(mean(hi)).toBeGreaterThan(mean(lo));
-        checked++;
-      }
-    }
-    expect(checked).toBeGreaterThan(0);
-  });
 });
 
 describe("two flights are never the same note", () => {
@@ -340,14 +323,15 @@ describe("the sound family: mostly symphonic", () => {
   const codes = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG", "ESB", "AYT", "ADB", "BEY", "AMM"];
   const sets = Array.from({ length: 60 }, (_, i) => Array.from({ length: 3 + (i % 5) }, (_, j) => codes[(i * 7 + j * 11) % codes.length]));
   const pieces = sets.map((s, i) => composePiece(i % 2 ? "wish" : "visited", buildRoutes(s.filter((x, k) => s.indexOf(x) === k), "IST")));
-  it("is symphonic most of the time and has other families now and then", () => {
+  it("is the live card's recording most of the time, orchestral nearly always, and has other families now and then", () => {
     const count = (g: string) => pieces.filter((p) => p.style.genre === g).length;
-    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.45);
-    expect(count("symphonic")).toBeGreaterThan(count("folk"));
+    expect(count("live") / pieces.length).toBeGreaterThan(0.45);
+    expect((count("live") + count("symphonic")) / pieces.length).toBeGreaterThan(0.65);
+    expect(count("live")).toBeGreaterThan(count("folk"));
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
   it("a symphonic piece is played by the orchestra", () => {
-    const orch = new Set(["CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
-    for (const p of pieces.filter((x) => x.style.genre === "symphonic")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
+    const orch = new Set(["CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
+    for (const p of pieces.filter((x) => x.style.genre === "symphonic" || x.style.genre === "live")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
 });

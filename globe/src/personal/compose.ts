@@ -2,6 +2,9 @@ import type { Instrument } from "../audio/theory";
 import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
+import { altitudeFt, cruiseFt } from "./flight";
+import { composeFromTrack, liveStyleFor } from "./compose-live";
+export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
 export interface PersonalNote {
@@ -44,7 +47,7 @@ export interface PersonalStyle {
   genre: Genre;
 }
 
-export type Genre = "symphonic" | "chamber" | "folk" | "pulse";
+export type Genre = "live" | "symphonic" | "chamber" | "folk" | "pulse";
 
 export interface PersonalPiece {
   notes: PersonalNote[];
@@ -108,7 +111,7 @@ type Role = "held" | "melody" | "pluck" | "perc";
 
 type Palette = { held: Record<string, Instrument[]>; melody: Record<string, Instrument[]>; pluck: Record<string, Instrument[]>; perc: Record<string, Instrument> };
 /** the sound of each genre: which instruments a route may take, by its region */
-const PALETTES: Record<Genre, Palette> = {
+const PALETTES: Record<Exclude<Genre, "live">, Palette> = {
   // the orchestra: strings, winds, horns and trumpets, harp and bells, timpani; the regional instruments are only colour
   symphonic: {
     held: { EUR: ["CELLO", "VIOLA", "BSN"], AME: ["HORN", "CELLO"], ASI: ["VIOLA", "CELLO"], AFR: ["HORN", "BSN"], MEA: ["CELLO", "BSN"], DOM: ["CELLO", "VIOLA"], UNK: ["VIOLA"] },
@@ -147,18 +150,6 @@ const CEILING: Partial<Record<Instrument, number>> = {
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
 
-/** the cruising altitude (ft) of a flight of this length */
-export const cruiseFt = (distKm: number): number => (distKm < 300 ? 14000 : distKm < 800 ? 24000 : distKm < 1800 ? 31000 : distKm < 4000 ? 36000 : 39000);
-
-/** altitude (ft) at `p` (0 = take-off … 1 = landing) of a flight of `distKm`: a climb, the cruise, a descent */
-export function altitudeFt(p: number, distKm: number): number {
-  const c = cruiseFt(distKm);
-  const x = clamp(p, 0, 1);
-  if (x < 0.18) return Math.round((c * (x / 0.18) ** 0.8) / 100) * 100;
-  if (x > 0.82) return Math.round((c * ((1 - x) / 0.18) ** 0.8) / 100) * 100;
-  return c;
-}
-
 function sectionOf(bar: number): { section: Section; first: number; len: number } {
   let b = 0;
   for (const [s, n] of FORM) {
@@ -188,7 +179,8 @@ export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalS
   // mostly symphonic; a mostly Turkish / Middle-Eastern selection leans to the folk sound
   const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
   const g = r();
-  const genre: Genre = anatolian >= 0.5 && g < 0.45 ? "folk" : g < 0.64 ? "symphonic" : g < 0.77 ? "chamber" : g < 0.89 ? "folk" : "pulse";
+  // the live card's own symphonic recording is the base; the rule-built families colour it now and then
+  const genre: Genre = anatolian >= 0.5 && g < 0.2 ? "folk" : g < 0.6 ? "live" : g < 0.8 ? "symphonic" : g < 0.88 ? "chamber" : g < 0.95 ? "folk" : "pulse";
   return {
     genre,
     bpm: lo + Math.floor(r() * (hi - lo + 1)),
@@ -217,6 +209,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const bpm = st.bpm;
   const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre };
   if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [], style };
+  if (st.genre === "live") {
+    const ls = liveStyleFor(mode, routes);
+    return composeFromTrack(mode, routes, { ...style, shift: ls.shift, swing: 0 });
+  }
   const beat = 60 / bpm;
   const bar = beat * 4;
   const n = routes.length;
@@ -277,7 +273,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const voiceOf = routes.map((r, i) => {
     const h = routeHash(r.key + i);
     const role = roles[i];
-    const pal = PALETTES[st.genre];
+    const pal = PALETTES[st.genre === "live" ? "symphonic" : st.genre];
     if (role === "held") return choose(pal.held[r.region] ?? pal.held.UNK, h, i, role);
     if (role === "melody") return choose(pal.melody[r.region] ?? pal.melody.UNK, h, i, role);
     if (role === "pluck") return choose(pal.pluck[r.region] ?? pal.pluck.UNK, h, i, role);
