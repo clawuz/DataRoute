@@ -301,7 +301,7 @@ describe("two flights are never the same note", () => {
     const routesIn = new Map<string, Set<number>>();
     for (const n of p.notes) {
       if (n.instrument === "DARBUKA" || n.instrument === "CONGA" || n.instrument === "TIMP" || n.instrument === "TAMB" || n.instrument === "TRI") continue;
-      const k = n.t.toFixed(2);
+      const k = (Math.round(n.t * 3) / 3).toFixed(2); // notes within a third of a second count as sounding together
       const pc = Math.round(12 * Math.log2(n.freq / 440)) % 12;
       groups.set(k, (groups.get(k) ?? new Set()).add(((pc % 12) + 12) % 12));
       routesIn.set(k, (routesIn.get(k) ?? new Set()).add(n.route));
@@ -333,5 +333,21 @@ describe("the music box: a route's notes never overlap in the drawing", () => {
       }
     }
     expect(checked).toBeGreaterThan(100);
+  });
+});
+
+describe("the sound family: mostly symphonic", () => {
+  const codes = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG", "ESB", "AYT", "ADB", "BEY", "AMM"];
+  const sets = Array.from({ length: 60 }, (_, i) => Array.from({ length: 3 + (i % 5) }, (_, j) => codes[(i * 7 + j * 11) % codes.length]));
+  const pieces = sets.map((s, i) => composePiece(i % 2 ? "wish" : "visited", buildRoutes(s.filter((x, k) => s.indexOf(x) === k), "IST")));
+  it("is symphonic most of the time and has other families now and then", () => {
+    const count = (g: string) => pieces.filter((p) => p.style.genre === g).length;
+    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.45);
+    expect(count("symphonic")).toBeGreaterThan(count("folk"));
+    expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
+  });
+  it("a symphonic piece is played by the orchestra", () => {
+    const orch = new Set(["CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
+    for (const p of pieces.filter((x) => x.style.genre === "symphonic")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
 });
