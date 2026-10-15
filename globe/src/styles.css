@@ -663,16 +663,16 @@ html, body { overflow-x: hidden; overscroll-behavior-x: none; }
 
 /* live screen: the airline lockup in the same place as the top bar of every page, Back in the same place too */
 body.personal-build .title.gt { left: 28px; top: 15px; }
-body.personal-build .title .gt-h1 { display: block; width: 206px; height: 34px; font-size: 0; background: url("/brand/tk-lockup-light.png") left center / contain no-repeat; }
-body.personal-build .title .gt-h1 > * { display: none; }
-body.personal-build .title .gt-rule { display: none; }
+body.personal-build .title .gt-h1 { display: block; }
+body.personal-build .title .gt-h1 .gt-main { display: none; }
+body.personal-build .title .gt-h1::before { content: ""; display: block; width: 206px; height: 34px; margin-bottom: 8px; background: url("/brand/tk-lockup-light.png") left center / contain no-repeat; }
 body.personal-build .title .phase.gt-chip { margin-top: 10px; }
 body.personal-build .live-back { top: 12px; right: 28px; }
 @media (max-aspect-ratio: 1/1) {
   body.personal-build .title.gt { left: 16px; top: 14px; }
-  body.personal-build .title .gt-h1 { width: 170px; height: 28px; }
+  body.personal-build .title .gt-h1::before { width: 170px; height: 28px; margin-bottom: 6px; }
   body.personal-build .live-back { top: 8px; right: 16px; left: auto; width: auto; }
-  body.personal-build .phase.gt-chip { top: 60px; left: 16px; }
+  body.personal-build .phase.gt-chip { top: 76px; left: 16px; }
 }
 
 /* live screen, new link: Back is styled and placed as on every other screen (plain text, top right);
@@ -688,3 +688,6 @@ body.personal-build .live-back:hover, body.personal-build .live-back:focus-visib
 @media (max-aspect-ratio: 1/1) {
   body.personal-build .phase.gt-chip { position: fixed; z-index: 12; margin: 0; }
 }
+
+/* live screen: the sound state is in the box's own buttons; no label in the box's corner */
+body.personal-build .music-scope-off { display: none; }
