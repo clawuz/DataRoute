@@ -825,3 +825,10 @@ body.personal-build .music-scope-label {
   white-space: nowrap !important; overflow: hidden; text-overflow: clip;
   font-size: clamp(9px, 1.2vmin, 10px) !important; letter-spacing: 0.05em !important; line-height: 1.5; min-height: 1.5em; max-height: 1.5em;
 }
+
+/* the From field says it can be changed */
+.landing.v2 .field-change {
+  flex: none; font-family: var(--label); font-size: 11px; letter-spacing: 0.14em; color: #f2f5fa;
+  padding: 6px 12px; border: 1px solid rgba(242, 245, 250, 0.45); border-radius: 99px; background: rgba(242, 245, 250, 0.08);
+}
+.landing.v2 button.field:hover .field-change { border-color: #e30a17; background: rgba(227, 10, 23, 0.18); }

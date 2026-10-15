@@ -195,7 +195,7 @@ export function Landing({ onCompose, onLive }: Props) {
             <span className="chip-flag">{flagOf(fromRow.iso)}</span>
             <span className="field-value">{fromRow.city}</span>
             <span className="chip-code">{fromRow.iata}</span>
-            <span className="field-edit" aria-hidden="true">✎</span>
+            <span className="field-change">✎ CHANGE</span>
           </button>
         ) : (
           <label className="field from live">
