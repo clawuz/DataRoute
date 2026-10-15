@@ -784,3 +784,14 @@ body.personal-build .credit { left: 3vmin !important; }
 .live-logo { display: none; }
 body.personal-build .live-logo { display: block; position: fixed; left: 28px; top: 15px; width: 206px; height: 34px; z-index: 21; background: none; border: 0; padding: 0; cursor: pointer; }
 @media (max-aspect-ratio: 1/1) { body.personal-build .live-logo { left: 16px; top: 14px; width: 170px; height: 28px; } }
+
+/* live screen: every panel is the same glass — one radius, one border, one fill, one inner padding */
+body.personal-build .music-scope, body.personal-build .regions, body.personal-build .dep.dep-globe, body.personal-build .keys-btn, body.personal-build .events .event {
+  border-radius: 10px;
+  border: 1px solid rgba(242, 245, 250, 0.12);
+  background: rgba(2, 4, 12, 0.6);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+body.personal-build .music-scope, body.personal-build .regions, body.personal-build .dep.dep-globe { padding: 1.4vmin 1.6vmin 1.2vmin; box-sizing: border-box; }
+body.personal-build .keys-btn { padding: 0.9vmin 1.6vmin; color: var(--ink-dim); }
+body.personal-build .keys-help { bottom: 1.8vmin; right: 3vmin; }
