@@ -3,7 +3,6 @@ import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt } from "./flight";
-import { composeFromTrack, liveStyleFor } from "./compose-live";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -47,7 +46,7 @@ export interface PersonalStyle {
   genre: Genre;
 }
 
-export type Genre = "live" | "symphonic" | "chamber" | "folk" | "pulse";
+export type Genre = "symphonic" | "chamber" | "folk" | "pulse";
 
 export interface PersonalPiece {
   notes: PersonalNote[];
@@ -111,19 +110,19 @@ type Role = "held" | "melody" | "pluck" | "perc";
 
 type Palette = { held: Record<string, Instrument[]>; melody: Record<string, Instrument[]>; pluck: Record<string, Instrument[]>; perc: Record<string, Instrument> };
 /** the sound of each genre: which instruments a route may take, by its region */
-const PALETTES: Record<Exclude<Genre, "live">, Palette> = {
+const PALETTES: Record<Genre, Palette> = {
   // the orchestra: strings, winds, horns and trumpets, harp and bells, timpani; the regional instruments are only colour
   symphonic: {
-    held: { EUR: ["CELLO", "VIOLA", "BSN"], AME: ["HORN", "CELLO"], ASI: ["VIOLA", "CELLO"], AFR: ["HORN", "BSN"], MEA: ["CELLO", "BSN"], DOM: ["CELLO", "VIOLA"], UNK: ["VIOLA"] },
-    melody: { EUR: ["VIOLIN", "OBOE", "CLA"], AME: ["HORN", "TPT", "FLUTE"], ASI: ["FLUTE", "VIOLIN", "OBOE"], AFR: ["CLA", "OBOE", "TPT"], MEA: ["OBOE", "NEY", "VIOLIN"], DOM: ["VIOLIN", "NEY", "OBOE"], UNK: ["VIOLIN"] },
-    pluck: { EUR: ["HARP", "VIOLIN_PIZZ"], AME: ["HARP", "VIOLA_PIZZ"], ASI: ["GLOCK", "HARP"], AFR: ["XYLO", "HARP"], MEA: ["HARP", "GLOCK"], DOM: ["HARP", "VIOLA_PIZZ"], UNK: ["HARP"] },
+    held: { EUR: ["PNO", "CELLO", "VIOLA", "BSN"], AME: ["PNO", "HORN", "CELLO"], ASI: ["PNO", "VIOLA", "CELLO"], AFR: ["HORN", "PNO", "BSN"], MEA: ["PNO", "CELLO", "BSN"], DOM: ["PNO", "CELLO", "VIOLA"], UNK: ["PNO", "VIOLA"] },
+    melody: { EUR: ["PNO", "VIOLIN", "OBOE", "CLA"], AME: ["PNO", "HORN", "TPT", "FLUTE"], ASI: ["PNO", "FLUTE", "VIOLIN", "OBOE"], AFR: ["CLA", "PNO", "OBOE", "TPT"], MEA: ["PNO", "OBOE", "NEY", "VIOLIN"], DOM: ["PNO", "VIOLIN", "NEY", "OBOE"], UNK: ["PNO", "VIOLIN"] },
+    pluck: { EUR: ["PNO", "HARP", "VIOLIN_PIZZ"], AME: ["PNO", "HARP", "VIOLA_PIZZ"], ASI: ["PNO", "GLOCK", "HARP"], AFR: ["PNO", "XYLO", "HARP"], MEA: ["PNO", "HARP", "GLOCK"], DOM: ["PNO", "HARP", "VIOLA_PIZZ"], UNK: ["PNO", "HARP"] },
     perc: { EUR: "TIMP", AME: "TIMP", ASI: "TRI", AFR: "TAMB", MEA: "TIMP", DOM: "TIMP", UNK: "TAMB" },
   },
   // a smaller room: strings, a few winds, harp; no brass, no drums
   chamber: {
     held: { EUR: ["CELLO", "VIOLA"], AME: ["CELLO", "BSN"], ASI: ["VIOLA", "CELLO"], AFR: ["BSN", "CELLO"], MEA: ["CELLO", "BSN"], DOM: ["VIOLA", "CELLO"], UNK: ["VIOLA"] },
-    melody: { EUR: ["VIOLIN", "OBOE"], AME: ["FLUTE", "CLA"], ASI: ["FLUTE", "VIOLIN"], AFR: ["CLA", "OBOE"], MEA: ["OBOE", "VIOLIN"], DOM: ["VIOLIN", "OBOE"], UNK: ["VIOLIN"] },
-    pluck: { EUR: ["HARP", "VIOLIN_PIZZ"], AME: ["HARP", "VIOLA_PIZZ"], ASI: ["HARP", "GLOCK"], AFR: ["HARP", "VIOLA_PIZZ"], MEA: ["HARP", "VIOLIN_PIZZ"], DOM: ["HARP", "VIOLA_PIZZ"], UNK: ["HARP"] },
+    melody: { EUR: ["PNO", "VIOLIN", "OBOE"], AME: ["PNO", "FLUTE", "CLA"], ASI: ["PNO", "FLUTE", "VIOLIN"], AFR: ["PNO", "CLA", "OBOE"], MEA: ["PNO", "OBOE", "VIOLIN"], DOM: ["PNO", "VIOLIN", "OBOE"], UNK: ["PNO", "VIOLIN"] },
+    pluck: { EUR: ["PNO", "HARP", "VIOLIN_PIZZ"], AME: ["PNO", "HARP", "VIOLA_PIZZ"], ASI: ["PNO", "HARP", "GLOCK"], AFR: ["PNO", "HARP", "VIOLA_PIZZ"], MEA: ["PNO", "HARP", "VIOLIN_PIZZ"], DOM: ["PNO", "HARP", "VIOLA_PIZZ"], UNK: ["PNO", "HARP"] },
     perc: { EUR: "TRI", AME: "TRI", ASI: "TRI", AFR: "TRI", MEA: "TRI", DOM: "TRI", UNK: "TRI" },
   },
   // the regions' own instruments
@@ -179,9 +178,8 @@ export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalS
   // mostly symphonic; a mostly Turkish / Middle-Eastern selection leans to the folk sound
   const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
   const g = r();
-  // mostly the symphonic sound built from the routes' own voices; the live card's recording, the chamber, folk and
-  // pulse families come now and then
-  const genre: Genre = anatolian >= 0.5 && g < 0.4 ? "folk" : g < 0.62 ? "symphonic" : g < 0.72 ? "live" : g < 0.84 ? "chamber" : g < 0.93 ? "folk" : "pulse";
+  // mostly the symphonic sound built from the routes' own voices; chamber, folk and pulse families come now and then
+  const genre: Genre = anatolian >= 0.5 && g < 0.4 ? "folk" : g < 0.72 ? "symphonic" : g < 0.86 ? "chamber" : g < 0.94 ? "folk" : "pulse";
   return {
     genre,
     bpm: lo + Math.floor(r() * (hi - lo + 1)),
@@ -210,10 +208,6 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const bpm = st.bpm;
   const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre };
   if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [], style };
-  if (st.genre === "live") {
-    const ls = liveStyleFor(mode, routes);
-    return composeFromTrack(mode, routes, { ...style, shift: ls.shift, swing: 0 });
-  }
   const beat = 60 / bpm;
   const bar = beat * 4;
   const n = routes.length;
@@ -261,10 +255,17 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
 
   // every route gets its own instrument where its region has enough of them
   const taken = new Set<string>();
+  let pianos = 0;
   const choose = (list: Instrument[], h: number, i: number, role: string): Instrument => {
+    // the piano is a prominent voice: two routes may take it (a singing one and a plucking one); the other instruments
+    // are not repeated
+    if (list.includes("PNO") && pianos < 2 && (role === "melody" || role === "pluck") && (pianos === 0 || role === "pluck")) {
+      pianos++;
+      return "PNO";
+    }
     for (let o = 0; o < list.length; o++) {
       const c = list[(h + st.ensemble + i + o) % list.length];
-      if (!taken.has(c)) {
+      if (c !== "PNO" && !taken.has(c)) {
         taken.add(c);
         return c;
       }
@@ -274,7 +275,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const voiceOf = routes.map((r, i) => {
     const h = routeHash(r.key + i);
     const role = roles[i];
-    const pal = PALETTES[st.genre === "live" ? "symphonic" : st.genre];
+    const pal = PALETTES[st.genre];
     if (role === "held") return choose(pal.held[r.region] ?? pal.held.UNK, h, i, role);
     if (role === "melody") return choose(pal.melody[r.region] ?? pal.melody.UNK, h, i, role);
     if (role === "pluck") return choose(pal.pluck[r.region] ?? pal.pluck.UNK, h, i, role);

@@ -28,6 +28,7 @@ ONE_SHOTS = [  # exact files under Percussion/
     "Tumba-HitN_v3_rr1_Sum.wav", "Quinto-HitN_v2_rr1_Sum.wav", "Quinto-Tap1_v1_rr1_Sum.wav", "Conga-HitN_v2_rr1_Sum.wav", "Conga-Tap1_v1_rr1_Sum.wav",
 ]
 WHOLE = ["Percussion/Glock", "Percussion/Xylo", "Percussion/Marimba"]
+PIANO = "Keys/Upright Nr1/"  # one velocity layer (mf, else f), every few notes over the range
 
 
 def midi(path):
@@ -62,6 +63,20 @@ def main():
     pick += spread([t for t in blobs if t["path"].startswith("Strings/Harp/")], 12)
     for folder in WHOLE:
         pick += [t for t in blobs if t["path"].startswith(folder + "/")]
+    pn = {}
+    for t in blobs:
+        if not t["path"].startswith(PIANO):
+            continue
+        m = re.search(r"_([A-G]#?\d)_(mf|f|pp)_RR1", t["path"])
+        k = midi(t["path"].replace(PIANO, "x_", 1)) if m else None
+        if k is None:
+            continue
+        pref = {"mf": 0, "f": 1, "pp": 2}[m.group(2)]
+        if k not in pn or pref < pn[k][0]:
+            pn[k] = (pref, t)
+    ks = sorted(pn)
+    for k in ks:
+        pick.append(pn[k][1])
     want = {f"Percussion/{p}" for p in ONE_SHOTS}
     pick += [t for t in blobs if t["path"] in want]
     seen, uniq = set(), []

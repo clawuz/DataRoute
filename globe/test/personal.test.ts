@@ -288,7 +288,6 @@ describe("two flights are never the same note", () => {
     for (const set of sets) {
       for (const mode of ["visited", "wish"] as const) {
         const p = composePiece(mode, buildRoutes(set, "IST"));
-        if (p.style.genre === "live") continue; // the recording's own chords double notes: not part of this rule
         const groups = new Map<string, Set<number>>();
         const routesIn = new Map<string, Set<number>>();
         for (const n of p.notes) {
@@ -332,15 +331,14 @@ describe("the sound family: mostly symphonic", () => {
   const codes = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG", "ESB", "AYT", "ADB", "BEY", "AMM"];
   const sets = Array.from({ length: 60 }, (_, i) => Array.from({ length: 3 + (i % 5) }, (_, j) => codes[(i * 7 + j * 11) % codes.length]));
   const pieces = sets.map((s, i) => composePiece(i % 2 ? "wish" : "visited", buildRoutes(s.filter((x, k) => s.indexOf(x) === k), "IST")));
-  it("is symphonic most of the time, with the live card's recording and other families now and then", () => {
+  it("is symphonic most of the time and has other families now and then", () => {
     const count = (g: string) => pieces.filter((p) => p.style.genre === g).length;
-    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.45);
-    expect(count("live")).toBeGreaterThan(0);
-    expect((count("live") + count("symphonic")) / pieces.length).toBeGreaterThan(0.6);
+    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.55);
+    expect(count("symphonic")).toBeGreaterThan(count("folk"));
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
   it("a symphonic piece is played by the orchestra", () => {
-    const orch = new Set(["CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
-    for (const p of pieces.filter((x) => x.style.genre === "symphonic" || x.style.genre === "live")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
+    const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
+    for (const p of pieces.filter((x) => x.style.genre === "symphonic")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
 });

@@ -25,6 +25,7 @@ SPEC = {
     "CELLO_PIZZ": ("Strings/Cello Section/pizzT/", "pizz"),
     "BASS_PIZZ": ("Strings/Solo Contrabass/Pizz/", "pizz"),
     "HARP": ("Strings/Harp/", "harp"),
+    "PNO": ("Keys/Upright Nr1/", "pno"),
     "FLUTE": ("Woodwinds/Flute/susvib/", "sus"),
     "OBOE": ("Woodwinds/Oboe/Vib/", "sus"),
     "CLA": ("Woodwinds/Clarinet/susLong/", "sus"),
@@ -214,7 +215,7 @@ def main():
             m = midi(rel)
             if m is not None and m not in by:
                 by[m] = rel
-        limit = {"sus": SUS_LEN, "pizz": 1.6, "harp": 3.2, "bell": 3.0}[kind]
+        limit = {"sus": SUS_LEN, "pizz": 1.6, "harp": 3.2, "bell": 3.0, "pno": 4.0}[kind]
         slug = inst.lower()
         zs = [(m, make(inst, rel, limit, slug)) for m, rel in by.items()]
         entry = {"zones": zones_for(zs)}
