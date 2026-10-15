@@ -614,3 +614,12 @@ body.recording-reel .music-scope { opacity: 0; }
 /* the tile is drawn 1em high, so it is 5.2em wide: moving it by one tile loops without a seam */
 @keyframes staff-drift { from { background-position: 0 50%, 0 0; } to { background-position: -5.2em 50%, 0 0; } }
 @media (prefers-reduced-motion: reduce) { .landing.v2 .title-music { animation: none; } }
+
+/* the new link, live screen on a phone: no counters or credit line; the globe sits higher, Back under the title,
+   the music box and the departures chart lower */
+@media (max-aspect-ratio: 1/1) {
+  body.personal-build .counters, body.personal-build .credit, body.personal-build .source { display: none; }
+  body.personal-build .live-back { top: 14vmin; }
+  body.personal-build .dep, body.personal-build .dep.dep-globe { bottom: 2vmin; }
+  body.personal-build .music-scope, body.personal-build .music-scope.compact { bottom: 22vmin; }
+}

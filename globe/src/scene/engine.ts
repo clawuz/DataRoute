@@ -68,6 +68,8 @@ export interface GlobeEngine {
   setPortraitFit(on: boolean): void;
   /** the vertical field of view of a landscape screen (40 by default); wider = a smaller globe with more room around it */
   setBaseFov(deg: number): void;
+  /** how far (px) a portrait screen lowers the globe for the header above it; null = the default */
+  setPortraitShift(px: number | null): void;
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
@@ -116,6 +118,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let lineScale = 1;
   let portraitFit = false;
   let baseFov = 40;
+  let portraitShift: number | null = null;
   const renderer = new WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", stencil: false });
   renderer.outputColorSpace = LinearSRGBColorSpace; // colours are authored in display space
   renderer.debug.onShaderError = (gl, program, vs, fs) => {
@@ -224,7 +227,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     camera.fov = portraitFit && h > w ? Math.min(64, Math.max(40, (2 * Math.atan(Math.tan((20 * Math.PI) / 180) / (w / h)) * 180) / Math.PI)) : baseFov;
     // ux: the globe sits lower so the top-centre title lockup has room (picking and label projection use the same matrix)
     // portrait phones carry the whole lockup + counters above the globe: it sits lower there
-    camera.setViewOffset(w, h, 0, -Math.round(h > w ? Math.min(150, Math.max(70, h * 0.12)) : Math.min(56, Math.max(24, h * 0.06))), w, h);
+    camera.setViewOffset(w, h, 0, -Math.round(h > w ? (portraitShift ?? Math.min(150, Math.max(70, h * 0.12))) : Math.min(56, Math.max(24, h * 0.06))), w, h);
     camera.updateProjectionMatrix();
     const pr = renderer.getPixelRatio();
     space.nebula.setSize(w * pr, h * pr, 0.35 * level.tunnelScale);
@@ -473,6 +476,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     camMode() {
       return cam.mode;
+    },
+    setPortraitShift(px) {
+      portraitShift = px;
+      resize();
     },
     setBaseFov(deg) {
       baseFov = deg;

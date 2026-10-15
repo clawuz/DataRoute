@@ -49,6 +49,7 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       engine.setSpaceDim(0.35, false);
       engine.setPortraitFit(true);
       engine.setBaseFov(48); // room around the globe for the side panels
+      engine.setPortraitShift(16); // no counters on a phone here: the globe sits higher
       document.body.classList.add("personal-build");
     }
     try {

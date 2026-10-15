@@ -50,6 +50,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     setSpaceDim: vi.fn(),
     setPortraitFit: vi.fn(),
     setBaseFov: vi.fn(),
+    setPortraitShift: vi.fn(),
     setNight: vi.fn(),
     centerOn: vi.fn(),
     setIdleSpin: vi.fn(),
