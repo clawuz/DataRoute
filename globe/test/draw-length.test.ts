@@ -144,3 +144,39 @@ describe("a relative of the tune, not the tune", () => {
     });
   }
 });
+
+import { pickShown, type Playing } from "../src/audio/scope";
+
+describe("the now-playing list with more routes than rows", () => {
+  it("every route gets a row within a few seconds, never more than six", () => {
+    const routes = Array.from({ length: 14 }, (_, i) => `R${i}-X`);
+    const shownAt = new Map<string, number>();
+    let prev: string[] = [];
+    const seen = new Set<string>();
+    for (let t = 0; t < 20; t += 0.16) {
+      // every route sounds, each note kept 1.2 s, new notes arrive all the time
+      const live: Playing[] = routes.map((r, i) => ({ route: r, note: "A4", until: t + 1.2 - (((t * 5 + i) % 3) * 0.1) }));
+      const cur = pickShown(live, prev, shownAt, t, 6);
+      expect(cur.length).toBeLessThanOrEqual(6);
+      prev = cur.map((p) => p.route);
+      cur.forEach((p) => seen.add(p.route));
+    }
+    // routes that sound all the time do not keep their rows for ever: all fourteen come up within 20 s
+    expect(seen.size).toBe(14);
+  });
+  it("rows that stop sounding make room for the routes that waited longest", () => {
+    const routes = Array.from({ length: 12 }, (_, i) => `R${i}-X`);
+    const shownAt = new Map<string, number>();
+    let prev: string[] = [];
+    const seen = new Set<string>();
+    for (let t = 0; t < 30; t += 0.16) {
+      // each route sounds only for 1.2 s out of every 3 s, at its own phase
+      const live: Playing[] = routes.filter((_, i) => ((t + i * 0.25) % 3) < 1.2).map((r) => ({ route: r, note: "A4", until: t + 0.5 }));
+      const cur = pickShown(live, prev, shownAt, t, 6);
+      expect(cur.length).toBeLessThanOrEqual(6);
+      prev = cur.map((p) => p.route);
+      cur.forEach((p) => seen.add(p.route));
+    }
+    expect(seen.size).toBe(12);
+  });
+});
