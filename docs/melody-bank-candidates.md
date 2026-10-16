@@ -182,3 +182,13 @@ Kural: popüler bir kaydın aranjmanı (örneğin Simon & Garfunkel'in El Cóndo
 2. Hook rotası bu listeyi çalar; ana kartın ölçeği (makam / majör / minör) ve ritmi uygulanır, bir iki yerde irtifa eğrisine göre değiştirilir.
 3. Bölgeye göre seçim: from ülkesi ve varış ülkesi ezgi havuzunu belirler.
 4. Her ezgi için: kaynak nota (Mutopia / IMSLP / Nottingham), telif notu ve doğrulama tarihi bu dosyaya eklenir.
+
+## 11. Uygulama durumu (2026-10-16)
+
+`globe/src/personal/melodies.ts` içinde **12 ezgi** kodlandı; hepsi `checked: false` (nota baskıyla karşılaştırılmadı, kulakla denenmeli):
+
+Neşeye Övgü, Für Elise, Frère Jacques, 5. Senfoni motifi, Rondo alla turca, Canon in D (keman hattı), Ah! vous dirai-je maman (Twinkle), Amazing Grace, Oh! Susanna, La Cucaracha, Auld Lang Syne, Sakura Sakura.
+
+Seçim: from ülkesinin ezgisi (yoksa varış ülkelerinin; İstanbul aktarma noktası sayılmaz). Yalnızca kartın ölçeği tam yarım seslerden oluşan 7 notalı bir majör ya da minör ölçekse ve ezginin modu ölçeğin üçlüsüne uyuyorsa kullanılır; aksi halde hook rotadan üretilir (makam renkli kartlarda ezgi çalmaz). Ezgi kullanıldığında akor ilerlemesi ezginin moduna göre seçilir. Hook rotası ezgiyi verse bölümünde bir kez, build/nakarat/break'te her turda çalar (`style.tune`).
+
+Henüz kodlanmayan ve kaynak doğrulaması bekleyenler (ilk 30'dan): Üsküdar'a Gider İken, Sarı Gelin, Çanakkale İçinde, Harmandalı, Kalamatianos, Bahar (Vivaldi), Brahms Lullaby, Mavi Tuna, Gymnopédie 1, Clair de Lune, Habanera, Funiculì Funiculà, Santa Lucia, Greensleeves, Scarborough Fair, Danny Boy, Peer Gynt Solveig, Ievan Polkka, Kalinka, Arirang, Mo Li Hua, Bahay Kubo, Salma Ya Salama, Hava Nagila, Lamma Bada Yatathana, Shosholoza, Siyahamba, De Colores. Bunlarda nota dizisini hatırlamaya güvenmek yanlış nota riski taşıdığı için bir nota kaynağından (Mutopia, IMSLP, Nottingham folk veri tabanı vb.) doğrulayarak eklenecek; Türk ezgileri makam renkli olduğu için ayrıca mikro aralıklı notasyon gerektirir.

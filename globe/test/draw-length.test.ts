@@ -77,3 +77,35 @@ describe("a popular-song arrangement made of the routes", () => {
     expect(same).toBeGreaterThan(5);
   });
 });
+
+import { TUNES } from "../src/personal/melodies";
+
+describe("well-known melodies in the hook", () => {
+  const homes = ["VIE", "FRA", "JFK", "LHR", "CDG", "MEX", "NRT", "AMS", "DUB", "EDI", "ZRH", "BRU", "ATH", "SOF", "MAD", "LAX", "YYZ", "SYD", "HKG"];
+  const pieces = homes.flatMap((h) => (["visited", "wish"] as const).map((m) => ({ h, m, p: composePiece(m, buildRoutes(["IST", "DXB", "LHR", "JFK", "CDG"].filter((x) => x !== h), h)) })));
+  it("uses several tunes across different starting places", () => {
+    const used = new Set(pieces.map((x) => x.p.style.tune).filter(Boolean));
+    expect(used.size).toBeGreaterThanOrEqual(4);
+  });
+  it("the hook route plays the tune's own intervals at the start of the tune", () => {
+    const hit = pieces.filter((x) => x.p.style.tune);
+    expect(hit.length).toBeGreaterThan(5);
+    for (const { p } of hit.slice(0, 12)) {
+      const tune = TUNES.find((t) => t.id === p.style.tune)!;
+      const first = p.hook;
+      // the notes of any route that begin at the first chorus bar, in order, with the tune's intervals
+      const byRoute = new Map<number, typeof p.notes>();
+      for (const n of p.notes) if (n.t >= first - 1e-6 && n.t < first + 30) byRoute.set(n.route, [...(byRoute.get(n.route) ?? []), n]);
+      const want = tune.notes.slice(0, 6).map(([s]) => s - tune.notes[0][0]);
+      const ok = [...byRoute.values()].some((ns) => {
+        const s = [...ns].sort((a, b) => a.t - b.t);
+        for (let st = 0; st + 6 <= s.length; st++) {
+          const m = s.slice(st, st + 6).map((n) => 12 * Math.log2(n.freq / s[st].freq));
+          if (m.every((x, k) => Math.abs(x - want[k]) < 0.5 || Math.abs(Math.abs(x - want[k]) - 12) < 0.5)) return true;
+        }
+        return false;
+      });
+      expect(ok, tune.id).toBe(true);
+    }
+  });
+});

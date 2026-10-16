@@ -4,6 +4,7 @@ import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
+import { tuneFor } from "./melodies";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -47,6 +48,8 @@ export interface PersonalStyle {
   genre: Genre;
   /** the genre cards of the piece (see genres.ts): the main one first */
   cards?: string[];
+  /** a well-known public-domain melody played by the hook route (see melodies.ts) */
+  tune?: string;
 }
 
 export type Genre = "symphonic" | "chamber" | "folk" | "pulse";
@@ -324,7 +327,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     visited: [[[0, 3], [8, 4], [3, 4], [10, 4]], [[0, 3], [10, 4], [8, 4], [10, 4]], [[0, 3], [5, 3], [8, 4], [7, 4]], [[0, 3], [8, 4], [3, 4], [7, 4]]],
     wish: [[[0, 4], [7, 4], [9, 3], [5, 4]], [[9, 3], [5, 4], [0, 4], [7, 4]], [[0, 4], [9, 3], [5, 4], [7, 4]], [[0, 4], [5, 4], [9, 3], [7, 4]]],
   };
-  const popProg: Chord[] = (plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third }));
+  // a well-known melody for the hook (only when it suits the scale of the card): the chords then follow its mode
+  const tune = tuneFor(plan.main, mode, routes);
+  if (tune) style.tune = tune.id;
+  const popProg: Chord[] = (tune ? POP_PROGS[tune.mode === "major" ? "wish" : "visited"][st.progression % 4] : plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third }));
 
   // the hook of each hook route: two bars of scale degrees (an arch that comes back to a chord tone), built from the route
   const L = scale.length;
@@ -367,6 +373,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   })();
   const hook = hookStart;
   const deg = routes.map(() => 0);
+  const END_T = BARS * bar;
 
   for (let b = 0; b < BARS; b++) {
     const { section, first, len: slen } = sectionOf(b);
@@ -397,6 +404,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           const tone = (b % 4 === 3 && k === roots.length - 1 ? tones[2] : tones[0]) - 12 + (occ[i] > 0 ? 12 : 0);
           push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92, inst, hz(tone), v(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
         });
+      } else if (rl === "hook" && tune && occ[i] === 0) {
+        // the melody plays through when its bars begin: once in a verse, every time in the build, chorus and break
+        const startOk = section === "verse" ? Math.floor((b - first) / tune.bars) % 2 === 0 && (b - first) % tune.bars === 0 : b % tune.bars === 0;
+        if (!startOk) continue;
+        let off = 0;
+        for (const [semis, beats] of tune.notes) {
+          const when = t0 + off * beat;
+          if (when < END_T - 1e-6) push(i, when, beats * beat * 0.95, inst, hz(KEY_ROOT + st.shift + 12 + semis), v(0.78), phaseAt(i, b + Math.floor(off / 4), (off % 4) / 4));
+          off += beats;
+        }
       } else if (rl === "hook") {
         // in the verse the hook only answers (two bars of four); in the chorus it is there all the time
         if (section === "verse" && b % 4 >= 2) continue;
