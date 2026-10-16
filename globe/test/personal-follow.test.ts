@@ -56,3 +56,26 @@ describe("handing the heard notes to the routes", () => {
     expect(assignToRoutes(on, routes)).toEqual(assignToRoutes(on, routes));
   });
 });
+
+describe("note length in a mix and on the routes", () => {
+  it("a held tone keeps its length although other voices start over it", () => {
+    const sr = 22050;
+    const x = tones([[0.9, 523, 0.25], [1.4, 659, 0.25], [1.9, 784, 0.25]], 4, sr);
+    for (let i = Math.floor(0.5 * sr); i < Math.floor(2.9 * sr); i++) {
+      const u = i / sr - 0.5;
+      x[i] += 0.5 * Math.min(1, u / 0.01) * Math.min(1, (2.4 - u) / 0.1) * Math.sin(2 * Math.PI * 196 * (i / sr));
+    }
+    const got = analyze(x, sr);
+    const held = got.find((o) => Math.abs(o.t - 0.5) < 0.1)!;
+    expect(held.d).toBeGreaterThan(1.2);
+  });
+  it("long notes go to long routes and short notes to short routes", () => {
+    const routes = buildRoutes(["DPS", "JFK", "NRT", "ESB", "ADB"], "IST");
+    const on: { t: number; d: number; midi: number; vel: number; voiced: boolean }[] = [];
+    for (let i = 0; i < 60; i++) on.push({ t: i * 0.6, d: [0.12, 0.3, 0.7, 1.4, 2.4][i % 5], midi: 50 + ((i * 7) % 24), vel: 0.7, voiced: true });
+    const notes = assignToRoutes(on, routes);
+    const byLen = routes.map((r, i) => ({ km: r.distKm, d: notes.filter((n) => n.route === i).map((n) => n.d) })).filter((x) => x.d.length > 2).sort((a, b) => a.km - b.km);
+    const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+    expect(avg(byLen[byLen.length - 1].d)).toBeGreaterThan(avg(byLen[0].d) * 1.5);
+  });
+});

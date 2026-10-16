@@ -41,11 +41,11 @@ export function assignToRoutes(onsets: Onset[], routes: PersonalRoute[]): Person
     let bestScore = Infinity;
     for (let i = 0; i < n; i++) {
       if (o.t < busy[i] + 0.05) continue;
-      let score = Math.abs(o.midi - centre[i]) * 0.5;
+      let score = Math.abs(o.midi - centre[i]) * 0.3;
       // continuing the line: a note near the one the route just played, soon after
       if (!Number.isNaN(lastMidi[i]) && o.t - lastAt[i] < 2.5) score += Math.abs(o.midi - lastMidi[i]) * 0.8;
       else score += 3; // a route that has been silent takes a note a little less willingly
-      score += Math.abs(lenRank(routes[i].distKm) - durRank(o.d)) * 1.5; // a long note to a long route
+      score += Math.abs(lenRank(routes[i].distKm) - durRank(o.d)) * 6; // a long note to a long route, a short note to a short one
       if (!o.voiced) score += 6 * lenRank(routes[i].distKm); // hits without pitch go to the lower voices
       score += (routeHash(routes[i].key + i + Math.round(o.t * 10)) % 100) / 2000; // a stable tie-break
       if (score < bestScore) {

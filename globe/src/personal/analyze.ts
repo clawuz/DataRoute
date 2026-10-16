@@ -185,7 +185,19 @@ export function analyze(samples: Float32Array, sampleRate: number, maxNotes = 18
     const b = Math.min(y.length, a + Math.floor(0.16 * fs));
     const hz = pitchOf(y, a, b, fs);
     const vel = Math.min(1, Math.max(0.12, Math.sqrt(peak / ref) * 0.8));
-    out.push({ t, d, midi: hz ? 69 + 12 * Math.log2(hz / 440) : 45, vel, voiced: !!hz });
+    const midi = hz ? 69 + 12 * Math.log2(hz / 440) : 45;
+    // in a mix the next onset is usually another voice's: a pitched note rings for as long as its pitch is still heard
+    let ring = d;
+    if (hz) {
+      for (let w = 1; w <= 16; w++) {
+        const wa = a + Math.floor(w * 0.15 * fs);
+        const wb = Math.min(y.length, wa + Math.floor(0.16 * fs));
+        const h2 = pitchOf(y, wa, wb, fs);
+        if (!h2 || Math.abs(69 + 12 * Math.log2(h2 / 440) - midi) > 1.2) break;
+        ring = 0.03 + w * 0.15 + 0.1;
+      }
+    }
+    out.push({ t, d: Math.min(3, Math.max(d, ring)), midi, vel, voiced: !!hz });
   }
   // a very busy recording: keep the strongest
   if (out.length > maxNotes) {
