@@ -192,7 +192,8 @@ export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalS
   const genre: Genre = anatolian >= 0.5 && g < 0.4 ? "folk" : g < 0.72 ? "symphonic" : g < 0.86 ? "chamber" : g < 0.94 ? "folk" : "pulse";
   return {
     genre,
-    bpm: lo + Math.floor(r() * (hi - lo + 1)),
+    // a busy selection is a livelier piece: many routes lift the tempo (up to 16 bpm)
+    bpm: lo + Math.floor(r() * (hi - lo + 1)) + clamp((routes.length - 3) * 2, 0, 16),
     groove: Math.floor(r() * 6),
     arp: Math.floor(r() * 3),
     perc: Math.floor(r() * 3),
@@ -241,9 +242,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   });
   let heldIdx = 0;
   const heldSlot = roles.map((r) => (r === "held" ? heldIdx++ : -1));
-  // routes come in one after another over the first 12 bars (the AI pieces start already at a quarter to a half of their
+  // routes come in one after another over the first 4 to 12 bars (the more routes, the faster) (the AI pieces start already at a quarter to a half of their
   // loudest) and play to the end, which stays at about 60 %
-  const entry = routes.map((_, i) => Math.floor((i * 12) / n));
+  // a busy selection comes in faster: the routes are all in within the first four bars; a few routes take twelve
+  const entry = routes.map((_, i) => Math.floor((i * (n > 6 ? 4 : n > 3 ? 8 : 12)) / n));
   const exit = routes.map(() => BARS + 1);
   // a route's phrase is one flight: take-off, climb, cruise, descent, landing — longer for a longer route
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
@@ -340,7 +342,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     // which routes are heard in which section: the verse thins, the break nearly empties, the chorus has them all
     const heard = (sec: Section): boolean => {
       if (n <= 3 || role === "held") return sec !== "break" || heldSlot[i] === 0 || i % 4 === 0;
-      if (sec === "intro") return i % 3 === 0;
+      if (sec === "intro") return n > 6 ? i % 3 !== 2 : i % 3 === 0;
       if (sec === "verse") return i % 3 !== 1;
       if (sec === "break") return i % 4 === 0;
       if (sec === "outro") return i % 2 === 0;

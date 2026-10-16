@@ -133,7 +133,7 @@ describe("compose", () => {
     for (const mode of ["visited", "wish"] as const) {
       for (const n of [1, 5, 25]) {
         const p = composePiece(mode, buildRoutes(all.slice(0, n), "IST"));
-        expect(p.duration, `${mode} ${n}`).toBeGreaterThan(140);
+        expect(p.duration, `${mode} ${n}`).toBeGreaterThan(120);
         expect(p.duration, `${mode} ${n}`).toBeLessThan(200);
         expect(p.hook).toBeGreaterThan(40);
         expect(p.hook).toBeLessThan(p.duration - 30);
