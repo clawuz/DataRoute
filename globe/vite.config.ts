@@ -19,7 +19,7 @@ export default defineConfig({
           .replace(/(<meta name="description" content=")[^"]*/, "$1" + DESC)
           .replace(/(<meta property="og:title" content=")[^"]*/, "$1A World of Music · Turkish Airlines")
           .replace(/(<meta property="og:description" content=")[^"]*/, "$1" + DESC)
-          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, URL + "/og-world-2.jpg") // a new file name: chat apps keep the old image of a link in their cache
+          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, URL + "/og-world-3.jpg") // a new file name: chat apps keep the old image of a link in their cache
           .replace(
             '<meta name="twitter:card"',
             `<meta property="og:site_name" content="Turkish Airlines" />\n    <meta property="og:url" content="${URL}/" />\n    <meta property="og:locale" content="en" />\n    <meta property="og:image:alt" content="Turkish Airlines — A World of Music: every journey has a sound. Choose yours." />\n    <meta name="twitter:title" content="A World of Music · Turkish Airlines" />\n    <meta name="twitter:description" content="${DESC}" />\n    <meta name="twitter:card"`,
