@@ -334,7 +334,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const lag = (slot % 4) * beat * 0.5;
         push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk), phaseAt(i, b, 0));
       } else if (role === "melody") {
-        const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6);
+        const k = clamp(dens(h) + BUSY[section] - sparse - Math.round(2 * rk), 1, 6); // a long route sings fewer, longer notes
         const pat = rotate(euclid(k, 8), (h >> 6) % 8);
         const inst = voiceOf[i];
         const onsets = pat.map((on, s) => (on ? s : -1)).filter((s) => s >= 0);
@@ -360,7 +360,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
             semis = best;
           }
           const nextStep = onsets[oi + 1] ?? 8;
-          const dur = Math.max(0.4, (nextStep - s) * 0.5) * beat * 0.95;
+          const dur = Math.max(0.4, (nextStep - s) * 0.5) * beat * 0.95 * (0.55 + 0.9 * rk); // the note is as long as the route
           push(i, swingAt(t0, s, 2), dur, inst, hz(semis), v(0.62 + 0.28 * (1 - rk)), p);
         });
       } else if (role === "pluck") {
@@ -375,7 +375,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           if (!on) return;
           const p = phaseAt(i, b, s / steps);
           const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-          push(i, swingAt(t0, s, spb), beat * 0.7, inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
+          push(i, swingAt(t0, s, spb), beat * (0.3 + 0.9 * rk), inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
         });
       } else {
         // an orchestra's percussion is sparing: timpani, triangle and tambourine land on the beats, a few times a bar
@@ -402,7 +402,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     list.sort((a, b) => a.t - b.t);
     list.forEach((x, k) => {
       const next = list.slice(k + 1).find((y) => y.t > x.t + 1e-6);
-      x.drawDur = drawLength(rank.get(x.route) ?? 0.5, x.d, next ? next.t - x.t : null);
+      x.drawDur = drawLength(x.d, next ? next.t - x.t : null);
     });
   }
   const end = Math.max(...notes.map((x) => x.t + x.d));

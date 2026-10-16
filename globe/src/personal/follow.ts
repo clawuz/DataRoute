@@ -76,7 +76,7 @@ export function assignToRoutes(onsets: Onset[], routes: PersonalRoute[]): Person
   for (const list of by.values()) {
     list.forEach((x, k) => {
       const next = list[k + 1];
-      x.drawDur = drawLength(lenRank(routes[x.route].distKm), x.d, next ? next.t - x.t : null);
+      x.drawDur = drawLength(x.d, next ? next.t - x.t : null);
     });
   }
   return out;
