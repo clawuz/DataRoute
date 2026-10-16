@@ -185,13 +185,18 @@ Kural: popüler bir kaydın aranjmanı (örneğin Simon & Garfunkel'in El Cóndo
 
 ## 11. Uygulama durumu (2026-10-16)
 
-`globe/src/personal/melodies.ts` içinde **12 ezgi** kodlandı; hepsi `checked: false` (nota baskıyla karşılaştırılmadı, kulakla denenmeli):
+`globe/src/personal/melodies.ts` içinde **23 ezgi** var. Hepsi PDMX derlemesindeki telifsiz (kamu malı / CC0) transkripsiyonlarla karşılaştırıldı (`scripts/music/extract-tunes.py`: bir başlığın bütün transkripsiyonlarını çıkarır, birbirine en yakın olanı, medoid'i, seçer). `checked: true` olanlar birçok transkripsiyonla örtüşüyor; `false` olanlar yalnızca bir iki kaynakta ya da hiç bulunamadı.
 
-Neşeye Övgü, Für Elise, Frère Jacques, 5. Senfoni motifi, Rondo alla turca, Canon in D (keman hattı), Ah! vous dirai-je maman (Twinkle), Amazing Grace, Oh! Susanna, La Cucaracha, Auld Lang Syne, Sakura Sakura.
+| Ezgi | Kaynak (transkripsiyon sayısı / örtüşen) | checked |
+|---|---|---|
+| Neşeye Övgü, Für Elise, Frère Jacques, Canon in D, Twinkle, Amazing Grace, Oh! Susanna, La Cucaracha, Auld Lang Syne, Sakura, Rondo alla turca | hafızadan yazıldı, sonra PDMX konsensüsüyle birebir doğrulandı | ✓ |
+| Greensleeves (88/36), Scarborough Fair (24/12), Londonderry Air (45/32), Kalinka (7/6), De Colores (8/8), Santa Lucia (24/21), 'O sole mio (18/13), Loch Lomond (28/12), Brahms Lullaby (17/9) | PDMX konsensüsü | ✓ |
+| Mo Li Hua (1/1), Üsküdar'a gider iken (3/2) | az transkripsiyon, kulakla doğrulanmalı | ✗ |
+| 5. Senfoni motifi | hafızadan, çok bilinen 4 nota | ✗ |
 
-Seçim: from ülkesinin ezgisi (yoksa varış ülkelerinin; İstanbul aktarma noktası sayılmaz). Yalnızca kartın ölçeği tam yarım seslerden oluşan 7 notalı bir majör ya da minör ölçekse ve ezginin modu ölçeğin üçlüsüne uyuyorsa kullanılır; aksi halde hook rotadan üretilir (makam renkli kartlarda ezgi çalmaz). Ezgi kullanıldığında akor ilerlemesi ezginin moduna göre seçilir. Hook rotası ezgiyi verse bölümünde bir kez, build/nakarat/break'te her turda çalar (`style.tune`).
+Seçim: from ülkesinin ezgisi (yoksa varış ülkelerinin; İstanbul aktarma noktası sayılmaz). Yalnızca kartın ölçeği tam yarım seslerden oluşan 7 notalı bir majör ya da minör ölçekse ve ezginin modu ölçeğin üçlüsüne uyuyorsa kullanılır; aksi halde hook rotadan üretilir (makam renkli kartlarda ezgi çalmaz). 3/4 ve 6/8 ezgilerin her ölçüsü parçanın 4 vuruşluk ölçüsüne gerilir (`bpb`). Ezgi kullanıldığında akor ilerlemesi ezginin moduna göre seçilir. Hook rotası ezgiyi verse bölümünde bir kez, build/nakarat/break'te her turda çalar (`style.tune`).
 
-Henüz kodlanmayan ve kaynak doğrulaması bekleyenler (ilk 30'dan): Üsküdar'a Gider İken, Sarı Gelin, Çanakkale İçinde, Harmandalı, Kalamatianos, Bahar (Vivaldi), Brahms Lullaby, Mavi Tuna, Gymnopédie 1, Clair de Lune, Habanera, Funiculì Funiculà, Santa Lucia, Greensleeves, Scarborough Fair, Danny Boy, Peer Gynt Solveig, Ievan Polkka, Kalinka, Arirang, Mo Li Hua, Bahay Kubo, Salma Ya Salama, Hava Nagila, Lamma Bada Yatathana, Shosholoza, Siyahamba, De Colores. Bunlarda nota dizisini hatırlamaya güvenmek yanlış nota riski taşıdığı için bir nota kaynağından (Mutopia, IMSLP, Nottingham folk veri tabanı vb.) doğrulayarak eklenecek; Türk ezgileri makam renkli olduğu için ayrıca mikro aralıklı notasyon gerektirir.
+Henüz yok (kaynak bulunamadı ya da ölçek uyumsuz): Sarı Gelin, Çanakkale İçinde, Harmandalı, Kalamatianos, Bahar (Vivaldi), Mavi Tuna, Gymnopédie 1, Clair de Lune, Habanera, Funiculì Funiculà, Peer Gynt Solveig, Ievan Polkka, Arirang, Hava Nagila, Lamma Bada Yatathana, Shosholoza, Siyahamba, Bahay Kubo, Salma Ya Salama. Makam renkli Türk ve Arap ezgileri ayrıca mikro aralıklı ölçekle (kartın kesirli derecelerine) bağlanmalı.
 
 ### Birebir aynı değil: ezginin "akrabası" (2026-10-16)
 

@@ -6,7 +6,8 @@ import type { PersonalRoute } from "./routes";
 /**
  * Well-known public-domain and traditional melodies (see docs/melody-bank-candidates.md). A hook route plays one of them,
  * from the place the trip starts from or one of its destinations. Notes are [semitones above the tonic, beats].
- * Written from the scores as remembered and not yet checked against an edition: listen before trusting one (`checked`).
+ * Each tune is cross-checked against the public-domain transcriptions of the PDMX corpus (scripts/music/extract-tunes.py);
+ * `checked: false` ones have not been, listen before trusting them.
  */
 export interface Tune {
   id: string;
@@ -15,9 +16,11 @@ export interface Tune {
   iso: string[];
   mode: "major" | "minor";
   notes: [number, number][];
+  /** beats in a bar of the written tune (3 for a waltz): each bar is stretched to the four beats of a bar of the piece; default 4 */
+  bpb?: number;
   /** bars (4/4) the tune takes before it comes round again */
   bars: number;
-  /** whether the notes were checked against a printed edition */
+  /** true: the notes agree with several public-domain transcriptions of the tune (PDMX consensus); false: not cross-checked */
   checked: boolean;
 }
 
@@ -25,16 +28,16 @@ const q = (semis: number, beats = 1): [number, number] => [semis, beats];
 
 export const TUNES: Tune[] = [
   {
-    id: "ode-to-joy", name: "Ode to Joy (Beethoven, d. 1827)", iso: ["DE", "AT", "BE", "NL", "CH", "LU"], mode: "major", bars: 8, checked: false,
+    id: "ode-to-joy", name: "Ode to Joy (Beethoven, d. 1827)", iso: ["DE", "AT", "BE", "NL", "CH", "LU"], mode: "major", bars: 8, checked: true,
     notes: [q(4), q(4), q(5), q(7), q(7), q(5), q(4), q(2), q(0), q(0), q(2), q(4), q(4, 1.5), q(2, 0.5), q(2, 2),
       q(4), q(4), q(5), q(7), q(7), q(5), q(4), q(2), q(0), q(0), q(2), q(4), q(2, 1.5), q(0, 0.5), q(0, 2)],
   },
   {
-    id: "fur-elise", name: "Für Elise (Beethoven, d. 1827)", iso: ["DE", "AT", "IT", "PL", "HU", "CZ"], mode: "minor", bars: 4, checked: false,
+    id: "fur-elise", name: "Für Elise (Beethoven, d. 1827)", iso: ["DE", "AT", "IT", "PL", "HU", "CZ"], mode: "minor", bars: 4, checked: true,
     notes: [q(7, 0.5), q(6, 0.5), q(7, 0.5), q(6, 0.5), q(7, 0.5), q(2, 0.5), q(5, 0.5), q(3, 0.5), q(0, 1.5), q(-9, 0.5), q(-5, 0.5), q(0, 0.5), q(2, 1.5), q(-5, 0.5), q(-1, 0.5), q(2, 0.5), q(3, 1.5)],
   },
   {
-    id: "frere-jacques", name: "Frère Jacques (traditional, France)", iso: ["FR", "BE", "CA", "CH"], mode: "major", bars: 8, checked: false,
+    id: "frere-jacques", name: "Frère Jacques (traditional, France)", iso: ["FR", "BE", "CA", "CH"], mode: "major", bars: 8, checked: true,
     notes: [q(0), q(2), q(4), q(0), q(0), q(2), q(4), q(0), q(4), q(5), q(7, 2), q(4), q(5), q(7, 2),
       q(7, 0.5), q(9, 0.5), q(7, 0.5), q(5, 0.5), q(4), q(0), q(7, 0.5), q(9, 0.5), q(7, 0.5), q(5, 0.5), q(4), q(0), q(0), q(-5), q(0, 2), q(0), q(-5), q(0, 2)],
   },
@@ -43,40 +46,85 @@ export const TUNES: Tune[] = [
     notes: [q(7, 0.5), q(7, 0.5), q(7, 0.5), q(3, 3), q(5, 0.5), q(5, 0.5), q(5, 0.5), q(2, 3)],
   },
   {
-    id: "rondo-alla-turca", name: "Rondo alla turca (Mozart, d. 1791)", iso: ["TR", "AT", "GR", "BG", "RS"], mode: "minor", bars: 4, checked: false,
+    id: "rondo-alla-turca", name: "Rondo alla turca (Mozart, d. 1791)", iso: ["TR", "AT", "GR", "BG", "RS"], mode: "minor", bars: 4, checked: true,
     notes: [q(2, 0.25), q(0, 0.25), q(-1, 0.25), q(0, 0.25), q(3, 1), q(5, 0.25), q(3, 0.25), q(2, 0.25), q(3, 0.25), q(7, 1)],
   },
   {
-    id: "canon-in-d", name: "Canon in D, violin line (Pachelbel, d. 1706)", iso: ["DE", "AT", "CH"], mode: "major", bars: 4, checked: false,
+    id: "canon-in-d", name: "Canon in D, violin line (Pachelbel, d. 1706)", iso: ["DE", "AT", "CH"], mode: "major", bars: 4, checked: true,
     notes: [q(4, 2), q(2, 2), q(0, 2), q(-1, 2), q(-3, 2), q(-5, 2), q(-3, 2), q(-1, 2)],
   },
   {
-    id: "twinkle", name: "Ah! vous dirai-je, maman (traditional, France)", iso: ["FR", "GB", "US", "CA", "AU"], mode: "major", bars: 8, checked: false,
+    id: "twinkle", name: "Ah! vous dirai-je, maman (traditional, France)", iso: ["FR", "GB", "US", "CA", "AU"], mode: "major", bars: 8, checked: true,
     notes: [q(0), q(0), q(7), q(7), q(9), q(9), q(7, 2), q(5), q(5), q(4), q(4), q(2), q(2), q(0, 2),
       q(7), q(7), q(5), q(5), q(4), q(4), q(2, 2), q(7), q(7), q(5), q(5), q(4), q(4), q(2, 2),
       q(0), q(0), q(7), q(7), q(9), q(9), q(7, 2), q(5), q(5), q(4), q(4), q(2), q(2), q(0, 2)],
   },
   {
-    id: "amazing-grace", name: "Amazing Grace (traditional)", iso: ["US", "GB", "IE", "CA", "AU", "NZ"], mode: "major", bars: 8, checked: false,
+    id: "amazing-grace", name: "Amazing Grace (traditional)", iso: ["US", "GB", "IE", "CA", "AU", "NZ"], mode: "major", bars: 8, checked: true,
     notes: [q(-5), q(0, 2), q(4, 0.5), q(0, 0.5), q(4, 2), q(2), q(0, 2), q(-3), q(-5, 2), q(-5), q(0, 2), q(4, 0.5), q(0, 0.5), q(4, 2), q(2), q(7, 3)],
   },
   {
-    id: "oh-susanna", name: "Oh! Susanna (Foster, d. 1864)", iso: ["US", "CA", "MX"], mode: "major", bars: 8, checked: false,
-    notes: [q(0, 0.5), q(2, 0.5), q(4), q(7), q(7, 1.5), q(9, 0.5), q(7), q(4), q(0), q(2, 0.5), q(4, 0.5), q(4), q(2), q(0), q(2, 2),
-      q(0, 0.5), q(2, 0.5), q(4), q(7), q(7, 1.5), q(9, 0.5), q(7), q(4), q(0), q(2, 0.5), q(4, 0.5), q(4), q(2), q(2), q(0, 2)],
+    id: "oh-susanna", name: "Oh! Susanna (Foster, d. 1864)", iso: ["US", "CA", "MX"], mode: "major", bars: 8, checked: true,
+    notes: [q(0, 0.5), q(2, 0.5), q(4), q(7), q(7, 1.5), q(9, 0.5), q(7), q(4), q(0, 1.5), q(2, 0.5), q(4), q(4), q(2), q(0), q(2, 3),
+      q(0, 0.5), q(2, 0.5), q(4), q(7), q(7, 1.5), q(9, 0.5), q(7), q(4), q(0, 1.5), q(2, 0.5), q(4), q(4), q(2), q(2), q(0, 3)],
   },
   {
-    id: "la-cucaracha", name: "La Cucaracha (traditional, Mexico)", iso: ["MX", "ES", "CU", "CO", "AR", "PE", "CL"], mode: "major", bars: 4, checked: false,
+    id: "la-cucaracha", name: "La Cucaracha (traditional, Mexico)", iso: ["MX", "ES", "CU", "CO", "AR", "PE", "CL"], mode: "major", bars: 4, checked: true,
     notes: [q(0, 0.5), q(0, 0.5), q(0, 0.5), q(5, 1), q(9, 1.5), q(0, 0.5), q(0, 0.5), q(0, 0.5), q(5, 1), q(9, 1.5),
       q(5, 0.5), q(5, 0.5), q(4, 0.5), q(4, 0.5), q(2, 0.5), q(2, 0.5), q(0, 2)],
   },
   {
-    id: "auld-lang-syne", name: "Auld Lang Syne (traditional, Scotland)", iso: ["GB", "IE", "US", "CA", "AU", "NZ"], mode: "major", bars: 8, checked: false,
+    id: "auld-lang-syne", name: "Auld Lang Syne (traditional, Scotland)", iso: ["GB", "IE", "US", "CA", "AU", "NZ"], mode: "major", bars: 8, checked: true,
     notes: [q(-5), q(0, 1.5), q(0, 0.5), q(0), q(4), q(2, 1.5), q(0, 0.5), q(2), q(4), q(0, 1.5), q(0, 0.5), q(4), q(7), q(9, 3), q(9, 1.5), q(7, 0.5), q(4), q(4), q(0, 1.5), q(2, 0.5), q(4), q(0), q(0, 1.5), q(-3, 0.5), q(-5), q(-5), q(0, 3)],
   },
   {
-    id: "sakura", name: "Sakura Sakura (traditional, Japan)", iso: ["JP"], mode: "minor", bars: 8, checked: false,
+    id: "sakura", name: "Sakura Sakura (traditional, Japan)", iso: ["JP"], mode: "minor", bars: 8, checked: true,
     notes: [q(0), q(0), q(2, 2), q(0), q(0), q(2, 2), q(0), q(2), q(3, 2), q(2), q(0), q(2, 2), q(0, 0.5), q(-4, 0.5), q(-5, 3)],
+  },
+  // transcribed by consensus of public-domain transcriptions in the PDMX corpus (scripts/music/extract-tunes.py)
+  {
+    id: "greensleeves", name: "Greensleeves (traditional, England)", iso: ["GB"], mode: "minor", bars: 8, checked: true, bpb: 3,
+    notes: [q(0, 0.5), q(3), q(5, 0.5), q(7, 0.75), q(8, 0.25), q(7, 0.5), q(5), q(2, 0.5), q(-2, 0.75), q(0, 0.25), q(2, 0.5), q(3), q(0, 0.5), q(0, 0.75), q(-1, 0.25), q(0, 0.5), q(2), q(-5), q(0, 0.5), q(3), q(5, 0.5), q(7, 0.75), q(8, 0.25), q(7, 0.5), q(5), q(2, 0.5), q(-2, 0.75), q(0, 0.25), q(2, 0.5), q(3, 0.75), q(2, 0.25), q(0, 0.5), q(-1, 0.75), q(-3, 0.25), q(-1, 0.5), q(0), q(0, 1.5), q(10)],
+  },
+  {
+    id: "scarborough-fair", name: "Scarborough Fair (traditional, England)", iso: ["GB", "US"], mode: "minor", bars: 8, checked: true, bpb: 3,
+    notes: [q(0, 2.0), q(0), q(7, 2.0), q(7), q(2), q(3), q(2), q(0, 4.0), q(7), q(10), q(12, 2.0), q(10), q(7), q(9), q(5), q(7, 5.0)],
+  },
+  {
+    id: "londonderry-air", name: "Londonderry Air / Danny Boy (traditional, Ireland)", iso: ["IE", "GB", "US"], mode: "major", bars: 8, checked: true,
+    notes: [q(11, 0.5), q(12, 0.5), q(14, 0.5), q(16, 1.5), q(14, 0.5), q(16, 0.5), q(21, 0.5), q(19, 0.5), q(16, 0.5), q(14, 0.5), q(12, 0.5), q(9, 1.5), q(12, 0.5), q(16, 0.5), q(17, 0.5), q(19, 1.5), q(21, 0.5), q(19, 0.5), q(16, 0.5), q(12, 0.5), q(16, 0.5), q(14, 2.5), q(11, 0.5), q(12, 0.5), q(14, 0.5), q(16, 1.5), q(14, 0.5), q(16, 0.5), q(21, 0.5), q(19, 0.5), q(16, 0.5), q(14, 0.5), q(12, 0.5), q(9, 1.5), q(11, 0.5), q(12, 0.5), q(14, 0.5), q(16, 1.5), q(17, 0.5), q(16, 0.5), q(14, 0.5), q(12, 0.5), q(14, 0.5), q(12, 2.5)],
+  },
+  {
+    id: "kalinka", name: "Kalinka (Larionov, d. 1889)", iso: ["RU", "UA", "BY", "KZ"], mode: "minor", bars: 8, checked: true, bpb: 2,
+    notes: [q(7), q(5), q(2, 0.5), q(3, 0.5), q(5), q(2, 0.5), q(3, 0.5), q(5), q(3, 0.5), q(2, 0.5), q(0), q(7, 0.5), q(7, 0.5), q(5, 0.75), q(3, 0.25), q(2, 0.5), q(3, 0.5), q(5), q(2, 0.5), q(3, 0.5), q(5), q(3, 0.5), q(2, 0.5), q(0)],
+  },
+  {
+    id: "de-colores", name: "De Colores (traditional, Spain / Latin America)", iso: ["MX", "ES", "AR", "CL", "PE", "CO", "US"], mode: "major", bars: 8, checked: true,
+    notes: [q(7, 2.5), q(5, 0.5), q(5, 0.5), q(4, 1.5), q(4, 0.5), q(5, 0.5), q(7, 0.5), q(7, 0.75), q(7, 0.25), q(7, 0.5), q(5, 0.5), q(4, 0.5), q(7, 0.5), q(7, 0.75), q(7, 0.25), q(7, 0.5), q(5, 0.5), q(4, 0.5), q(7, 0.5), q(5, 2.5), q(5, 2.5), q(4, 0.5), q(4, 0.5), q(2, 1.5), q(5, 0.5), q(7, 0.5), q(9, 0.5), q(9, 0.75), q(9, 0.25), q(9, 0.5), q(7, 0.5), q(5, 0.5), q(9, 0.5), q(9, 0.75), q(9, 0.25), q(9, 0.5), q(7, 0.5), q(5, 0.5), q(9, 0.5), q(7, 2.5), q(7, 2.5)],
+  },
+  {
+    id: "santa-lucia", name: "Santa Lucia (Cottrau, d. 1879)", iso: ["IT", "MT"], mode: "major", bars: 8, checked: true, bpb: 3,
+    notes: [q(7, 0.5), q(7, 0.75), q(12, 0.25), q(12, 0.25), q(11, 0.25), q(11), q(5, 0.5), q(5, 0.75), q(9, 0.25), q(9, 0.25), q(7, 0.25), q(7), q(4, 0.5), q(9, 0.5), q(7, 0.5), q(7, 0.25), q(6, 0.25), q(5), q(5, 0.5), q(4, 0.5), q(2, 0.5), q(9, 0.5), q(7), q(7, 0.5), q(7, 0.75), q(12, 0.25), q(12, 0.25), q(11, 0.25), q(11), q(5, 0.5), q(5, 0.75), q(9, 0.25), q(9, 0.25), q(7, 0.25), q(7), q(4, 0.5), q(9, 0.5), q(7, 0.5), q(5, 0.25), q(6, 0.25), q(5), q(5, 0.5), q(4, 0.5), q(2, 0.5), q(9, 0.5), q(7)],
+  },
+  {
+    id: "o-sole-mio", name: "'O sole mio (di Capua, d. 1917)", iso: ["IT"], mode: "major", bars: 8, checked: true,
+    notes: [q(7), q(5), q(4), q(2, 2.0), q(0, 2.0), q(0), q(2), q(4), q(0), q(-1, 2.0), q(-3, 3.0), q(-1), q(0), q(2), q(-1), q(-3), q(-3, 3.0), q(-1), q(0), q(2), q(-3), q(-5), q(-5, 3.0)],
+  },
+  {
+    id: "loch-lomond", name: "Loch Lomond (traditional, Scotland)", iso: ["GB", "IE"], mode: "major", bars: 8, checked: true,
+    notes: [q(7), q(12), q(12, 0.5), q(14, 0.5), q(16), q(14, 0.5), q(12, 0.5), q(14), q(14, 0.5), q(12, 0.5), q(9), q(7, 0.5), q(7, 0.5), q(12), q(12), q(12), q(16, 0.5), q(19, 0.5), q(21, 2.0), q(19), q(19), q(21), q(21, 0.5), q(19, 0.5), q(16), q(16, 0.5), q(19, 0.5), q(17, 0.5), q(16, 0.5), q(14, 0.5), q(12, 0.5), q(9), q(7, 0.5), q(9, 0.5), q(12, 0.5), q(12, 0.5), q(16, 0.5), q(19, 0.5), q(21), q(19, 0.5), q(16, 0.5), q(14, 2.0), q(12)],
+  },
+  {
+    id: "brahms-lullaby", name: "Brahms' Lullaby (Brahms, d. 1897)", iso: ["DE", "AT", "CH", "LU"], mode: "major", bars: 8, checked: true, bpb: 3,
+    notes: [q(4, 0.5), q(4, 0.5), q(7, 1.5), q(4, 0.5), q(4), q(7, 2.0), q(4, 0.5), q(7, 0.5), q(12), q(11, 1.5), q(9, 0.5), q(9), q(7), q(2, 0.5), q(4, 0.5), q(5), q(2), q(2, 0.5), q(4, 0.5), q(5, 2.0), q(2, 0.5), q(5, 0.5), q(11, 0.5), q(9, 0.5), q(7), q(11), q(12, 2.0)],
+  },
+  {
+    id: "jasmine-flower", name: "Mo Li Hua / Jasmine Flower (traditional, China)", iso: ["CN", "TW", "HK", "SG"], mode: "major", bars: 8, checked: false,
+    notes: [q(4), q(4, 0.5), q(7, 0.5), q(9, 0.5), q(12, 0.5), q(12, 0.5), q(9, 0.5), q(7), q(7, 0.5), q(9, 0.5), q(7, 2.0), q(4), q(4, 0.5), q(7, 0.5), q(9, 0.5), q(12, 0.5), q(12, 0.5), q(9, 0.5), q(7), q(7, 0.5), q(9, 0.5), q(7, 2.0), q(7), q(7), q(7), q(4, 0.5), q(7, 0.5), q(9), q(9), q(7, 2.0), q(4), q(2, 0.5), q(4, 0.5), q(7), q(4, 0.5), q(2, 0.5), q(0), q(0, 0.5), q(2, 0.5), q(0, 2.0)],
+  },
+  {
+    id: "uskudar", name: "Üsküdar'a gider iken (traditional, Türkiye)", iso: ["TR"], mode: "minor", bars: 8, checked: false, bpb: 2,
+    notes: [q(0, 0.75), q(7, 0.25), q(7, 0.5), q(7, 0.5), q(8, 0.25), q(7, 0.25), q(8, 0.25), q(12, 0.25), q(7, 0.75), q(7, 0.25), q(5, 0.75), q(5, 0.25), q(3, 0.5), q(5, 0.5), q(7, 0.25), q(8, 0.25), q(7, 0.25), q(5, 0.25), q(3, 0.25), q(2, 0.25), q(0, 0.5), q(0, 0.75), q(7, 0.25), q(7, 0.5), q(7, 0.5), q(8, 0.25), q(7, 0.25), q(8, 0.25), q(12, 0.25), q(7, 0.75), q(7, 0.25), q(5, 0.75), q(5, 0.25), q(3, 0.5), q(5, 0.5), q(7, 0.25), q(8, 0.25), q(7, 0.25), q(5, 0.25), q(3, 0.25), q(2, 0.25), q(0, 0.5)],
   },
 ];
 
