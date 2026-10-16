@@ -4,7 +4,7 @@ import type { DayCurveHud, MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
   DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRACK_MAX_POINTS, TRACK_MAX_TRAILS, TRACK_RIBBON_SEC, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
-  dayLabel, noteBar, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, windowAt, trailIdOf, type Lane, type Playing, type Trail,
+  dayLabel, noteBar, pickShown, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, windowAt, trailIdOf, type Lane, type Playing, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -274,8 +274,13 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
+    const shownAt = new Map<string, number>();
+    let shown: string[] = [];
     const list = setInterval(() => { // art:track — the NOW PLAYING list refreshes ~6 Hz
-      const cur = playingNow(playing.current, wallSec(), 6);
+      // with more routes than rows each route gets its turn (see pickShown)
+      const now = wallSec();
+      const cur = pickShown(playingNow(playing.current, now, 99), shown, shownAt, now, 6);
+      shown = cur.map((p) => p.route);
       setNowList((prev) => (prev.length === cur.length && prev.every((p, i) => p.route === cur[i].route && p.note === cur[i].note) ? prev : cur));
     }, 160);
     return () => {

@@ -189,12 +189,33 @@ export interface Playing {
 }
 
 /** Adds a sounding route note; one entry per route (the latest note wins), kept for the note's length (≥ `minHold` s). */
-export function playingPush(list: Playing[], n: NoteEvent, now: number, minHold = 0.7): Playing[] {
+export function playingPush(list: Playing[], n: NoteEvent, now: number, minHold = 1.2): Playing[] {
   const route = routeOfNote(n);
   if (!route) return list;
   const next = list.filter((p) => p.route !== route);
   next.unshift({ route, note: noteName(n.freq), alt: n.alt, until: now + Math.max(minHold, n.durSec) });
   return next;
+}
+
+/**
+ * The rows of the NOW PLAYING list when more routes sound than there are rows: the rows already on show keep their place
+ * while they still sound, and the free rows go to the routes that have waited longest for one (never shown first). So with
+ * fourteen routes every route comes up within a few seconds instead of the same six always winning.
+ * `shownAt` is updated in place; `prev` is the routes shown by the last call.
+ */
+const SHOWN_HOLD = 2.5;
+export function pickShown(live: Playing[], prev: string[], shownAt: Map<string, number>, now: number, max: number): Playing[] {
+  const waiting = live.filter((p) => !prev.includes(p.route));
+  // a row stays while it sounds, but at most `HOLD` s when other routes are waiting (a route that sounds all the time must not keep its row for ever)
+  const stay = prev
+    .map((r) => live.find((p) => p.route === r))
+    .filter((p): p is Playing => !!p && (waiting.length === 0 || now - (shownAt.get(p.route) ?? now) < SHOWN_HOLD));
+  const rest = waiting.sort((a, b) => (shownAt.get(a.route) ?? -1) - (shownAt.get(b.route) ?? -1));
+  // a row that is released goes to the end of the queue: its `shownAt` is the time it was put on show
+  for (const r of prev) if (!stay.some((p) => p.route === r)) shownAt.set(r, now);
+  const out = [...stay, ...rest].slice(0, max);
+  for (const p of out) if (!prev.includes(p.route)) shownAt.set(p.route, now);
+  return out;
 }
 
 /** Entries still sounding at `now`, newest first, at most `max`. */
