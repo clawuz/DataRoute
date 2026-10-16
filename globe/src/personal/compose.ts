@@ -332,9 +332,28 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const hit = role === "perc" ? val * 2 : val;
     let a = 0;
     let k = 0;
+    // the rhythm figure of the route: a cell of 3 to 5 places with a few rests (a rest lets the note before it ring on);
+    // a long, chord-holding route has no rests inside its figure
+    const cellLen = [4, 3, 5, 4][(h >>> 3) % 4];
+    const cellHits = role === "held" ? cellLen : clamp(Math.round(cellLen * (0.6 + 0.1 * ((h >>> 5) % 3))), 2, cellLen - 1);
+    const cell = rotate(euclid(cellHits, cellLen), (h >>> 9) % cellLen);
+    // which routes are heard in which section: the verse thins, the break nearly empties, the chorus has them all
+    const heard = (sec: Section): boolean => {
+      if (n <= 3 || role === "held") return sec !== "break" || heldSlot[i] === 0 || i % 4 === 0;
+      if (sec === "intro") return i % 3 === 0;
+      if (sec === "verse") return i % 3 !== 1;
+      if (sec === "break") return i % 4 === 0;
+      if (sec === "outro") return i % 2 === 0;
+      return true;
+    };
     for (let t = entry[i] * bar; t < END - 1e-6; t += hit, k++) {
       const b = Math.min(BARS - 1, Math.floor(t / bar));
       const { section } = sectionOf(b);
+      const slot = k % cellLen;
+      if (!cell[slot] || !heard(section)) continue;
+      // a rest after the note lets it ring on
+      let ring = 1;
+      while (ring < 2 && !cell[(slot + ring) % cellLen]) ring++;
       const level = LEVEL[section];
       const fade = section === "outro" ? 1 - ((b - sectionOf(b).first) / sectionOf(b).len) * 0.25 : 1;
       const v = (x: number): number => x * level * fade;
@@ -342,12 +361,18 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       const cr = chord.root + st.shift;
       const tones = [0, chord.third, 7].map((x) => cr + x);
       const p = phaseAt(i, b, (t - b * bar) / bar);
-      const dur = Math.max(0.1, hit * 0.95);
+      // take-off and landing are sparse and soft, the climb and the cruise are full
+      if (role !== "held" && role !== "perc" && (p < 0.12 || p > 0.9) && k % 2 === 1) continue;
+      const flight = 0.6 + 0.4 * Math.sin(Math.PI * p);
+      const accent = slot === 0 ? 1.12 : 0.92;
+      const dur = Math.max(0.1, hit * 0.95 * ring);
+      // the weak places of a short note lean back a little
+      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? st.swing * hit * 0.33 : 0);
       if (role === "held") {
         // the chord, one tone per long route
         const slot = heldSlot[i];
         const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
-        push(i, t, dur, inst, hz(tone), v(0.4 + 0.12 * rk), p);
+        push(i, tAt, dur, inst, hz(tone), v((0.4 + 0.12 * rk) * flight * accent), p);
       } else if (role === "melody") {
         deg[i] += dir * stepSize * (k % 3 === 0 ? 1 : 0) + (k % 2 === 0 ? 0 : dir);
         // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
@@ -367,11 +392,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           }
           semis = best;
         }
-        push(i, t, dur, inst, hz(semis), v(0.62 + 0.28 * (1 - rk)), p);
+        push(i, tAt, dur, inst, hz(semis), v((0.62 + 0.28 * (1 - rk)) * flight * accent), p);
       } else if (role === "pluck") {
         const order = (dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1]).map((x) => (x + i) % 3);
         const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-        push(i, t, dur, inst, hz(tone), v(0.34 + 0.12 * (Math.abs(t - b * bar) < 1e-6 ? 1 : 0)), p);
+        push(i, tAt, dur, inst, hz(tone), v((0.34 + 0.12 * (Math.abs(t - b * bar) < 1e-6 ? 1 : 0)) * flight * accent), p);
       } else {
         const strong = Math.abs(t - b * bar) < 1e-6 || k % 2 === 0;
         const vel = inst === "DARBUKA" ? (k % 4 === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
