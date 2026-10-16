@@ -17,7 +17,7 @@ export default defineConfig({
           .replace(/(<meta name="description" content=")[^"]*/, "$1Turn the places you have been, or dream of, into music. Turkish Airlines, flying to more countries than any other airline in the world.")
           .replace(/(<meta property="og:title" content=")[^"]*/, "$1A World of Music · Turkish Airlines")
           .replace(/(<meta property="og:description" content=")[^"]*/, "$1Every journey has a sound. Choose yours.")
-          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, "https://worldofmusic-tk.web.app/og.jpg");
+          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, "https://worldofmusic-tk.web.app/og-world.jpg"); // a new file name: chat apps keep the old image of a link in their cache
       },
     },
   ],
