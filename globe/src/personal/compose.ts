@@ -110,7 +110,6 @@ const FORM: [Section, number][] = [
 const BARS = FORM.reduce((s, [, n]) => s + n, 0);
 const LEVEL: Record<Section, number> = { intro: 0.45, verse: 0.72, build: 0.88, chorus: 1, break: 0.85, outro: 0.78 };
 /** how much busier a voice is in a section (added to its pulses) */
-const BUSY: Record<Section, number> = { intro: -1, verse: 0, build: 1, chorus: 1, break: -1, outro: -1 };
 
 /** what a route plays: the long routes hold the chord, the middle ones sing, the short ones pluck or drum */
 type Role = "held" | "melody" | "pluck" | "perc";
@@ -250,11 +249,6 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
   const phaseAt = (i: number, b: number, frac: number): number => ((((b - entry[i]) % phraseBars[i]) + phraseBars[i]) % phraseBars[i] + frac) / phraseBars[i];
 
-  const swingAt = (t0: number, step: number, stepsPerBeat: number): number => {
-    const k = step / stepsPerBeat; // beats
-    const off = Math.abs((k * 2) % 2 - 1) < 1e-6;
-    return t0 + k * beat + (off ? st.swing * beat * 0.33 : 0);
-  };
   const fit = (f: number, inst: Instrument): number => {
     const cap = CEILING[inst];
     const floor = FLOOR[inst];
@@ -306,105 +300,85 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   let hook = 0;
   // per-voice walk state
   const deg = routes.map((r, i) => routeHash(r.key + i) % scale.length);
-  // pulses a bar for a singing voice; with only a few routes each voice carries more of the piece
-  const lone = n <= 2 ? 2 : n <= 4 ? 1 : 0;
-  const dens = (h: number): number => 2 + (h % 3) + (st.groove >= 3 ? 1 : 0) - (st.groove === 0 ? 1 : 0) + lone;
 
-  for (let b = 0; b < BARS; b++) {
-    const { section, first, len } = sectionOf(b);
-    if (section === "chorus" && b === first) hook = b * bar;
-    const t0 = b * bar;
-    const chord = prog[Math.floor(b / 2) % prog.length];
-    const level = LEVEL[section];
-    const fade = section === "outro" ? 1 - ((b - first) / len) * 0.25 : 1;
-    const v = (x: number): number => x * level * fade;
-    const cr = chord.root + st.shift;
-    const tones = [0, chord.third, 7].map((x) => cr + x);
-
-    for (let i = 0; i < n; i++) {
-      if (b < entry[i] || b >= exit[i]) continue;
-      const r = routes[i];
-      const h = routeHash(r.key + i);
-      const role = roles[i];
-      const rk = rank.get(i) ?? 0.5;
-      const dir = r.toLon >= r.fromLon ? 1 : -1;
-      const stepSize = r.distKm < 1500 ? 1 : r.distKm < 4000 ? 2 : 3;
-      // many routes: each is a little sparser, so twenty voices do not become noise
-      const sparse = Math.floor(n / 8);
-
+  // the note-value ladder: a route plays ONE note value for the whole piece, and the value follows its length — the
+  // shortest route ticks in eighths, the longest holds three beats. Many routes are many layered pulses.
+  const VALUES = [0.5, 0.75, 1, 1.5, 2, 3]; // in beats
+  const spread = Math.min(1, (n - 1) / 4);
+  const valueOf = routes.map((_, i) => VALUES[clamp(Math.round(2.5 + ((rank.get(i) ?? 0.5) - 0.5) * 5 * spread), 0, 5)]);
+  // the first chorus bar is where the hook lies
+  {
+    let at = 0;
+    for (const [name, m] of FORM) {
+      if (name === "chorus") {
+        hook = at * bar;
+        break;
+      }
+      at += m;
+    }
+  }
+  const END = BARS * bar;
+  for (let i = 0; i < n; i++) {
+    const r = routes[i];
+    const h = routeHash(r.key + i);
+    const role = roles[i];
+    const rk = rank.get(i) ?? 0.5;
+    const dir = r.toLon >= r.fromLon ? 1 : -1;
+    const stepSize = r.distKm < 1500 ? 1 : r.distKm < 4000 ? 2 : 3;
+    const inst = voiceOf[i];
+    const val = valueOf[i] * beat;
+    const orchestral = st.genre === "symphonic" || st.genre === "chamber";
+    // a percussion route hits on its value but only on the strong places, so the drums stay sparing
+    const hit = role === "perc" ? val * 2 : val;
+    let a = 0;
+    let k = 0;
+    for (let t = entry[i] * bar; t < END - 1e-6; t += hit, k++) {
+      const b = Math.min(BARS - 1, Math.floor(t / bar));
+      const { section } = sectionOf(b);
+      const level = LEVEL[section];
+      const fade = section === "outro" ? 1 - ((b - sectionOf(b).first) / sectionOf(b).len) * 0.25 : 1;
+      const v = (x: number): number => x * level * fade;
+      const chord = prog[Math.floor(b / 2) % prog.length];
+      const cr = chord.root + st.shift;
+      const tones = [0, chord.third, 7].map((x) => cr + x);
+      const p = phaseAt(i, b, (t - b * bar) / bar);
+      const dur = Math.max(0.1, hit * 0.95);
       if (role === "held") {
-        // the chord, one tone per long route, rolled: each long route enters a little after the one before it and holds
-        // to the end of the bar, so the music box shows a staircase and not three bars on top of each other
+        // the chord, one tone per long route
         const slot = heldSlot[i];
         const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
-        const inst = voiceOf[i];
-        const lag = (slot % 4) * beat * 0.5;
-        push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk), phaseAt(i, b, 0));
+        push(i, t, dur, inst, hz(tone), v(0.4 + 0.12 * rk), p);
       } else if (role === "melody") {
-        const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6 - Math.round(4 * rk)); // a long route sings fewer, longer notes
-        const pat = rotate(euclid(k, 8), (h >> 6) % 8);
-        const inst = voiceOf[i];
-        const onsets = pat.map((on, s) => (on ? s : -1)).filter((s) => s >= 0);
-        onsets.forEach((s, oi) => {
-          deg[i] += dir * stepSize * ((oi + b) % 3 === 0 ? 1 : 0) + (oi % 2 === 0 ? 0 : dir);
-          // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
-          const p = phaseAt(i, b, s / 8);
-          const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 5);
-          const w = ((deg[i] % 7) + 7) % 7;
-          // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
-          const total = w + lift + ((i * 2) % 5);
-          let semis = KEY_ROOT + st.shift - 12 + scale[total % 7] + 12 * Math.floor(total / 7);
-          if (s === onsets[0]) {
-            // the first note of a bar rests on the nearest chord tone
-            let best = semis;
-            let bd = Infinity;
-            // ... and on its own chord tone (root, third, fifth by route), so the voices do not land on one pitch
-            for (const tn of [tones[i % 3]]) for (const o of [-12, 0, 12, 24]) {
-              const c = tn + o;
-              const dd = Math.abs(c - semis);
-              if (dd < bd) { bd = dd; best = c; }
-            }
-            semis = best;
+        deg[i] += dir * stepSize * (k % 3 === 0 ? 1 : 0) + (k % 2 === 0 ? 0 : dir);
+        // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
+        const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 5);
+        const w = ((deg[i] % 7) + 7) % 7;
+        // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
+        const total = w + lift + ((i * 2) % 5);
+        let semis = KEY_ROOT + st.shift - 12 + scale[total % 7] + 12 * Math.floor(total / 7);
+        if (Math.abs(t - b * bar) < 1e-6) {
+          // the first note of a bar rests on its own chord tone (root, third, fifth by route)
+          let best = semis;
+          let bd = Infinity;
+          for (const o of [-12, 0, 12, 24]) {
+            const c2 = tones[i % 3] + o;
+            const dd = Math.abs(c2 - semis);
+            if (dd < bd) { bd = dd; best = c2; }
           }
-          const nextStep = onsets[oi + 1] ?? 8;
-          const dur = Math.max(0.4, (nextStep - s) * 0.5) * beat * 0.95 * (0.55 + 0.9 * rk); // the note is as long as the route
-          push(i, swingAt(t0, s, 2), dur, inst, hz(semis), v(0.62 + 0.28 * (1 - rk)), p);
-        });
+          semis = best;
+        }
+        push(i, t, dur, inst, hz(semis), v(0.62 + 0.28 * (1 - rk)), p);
       } else if (role === "pluck") {
-        const steps = st.arp === 1 ? 12 : st.arp === 0 ? 16 : 8;
-        const spb = steps / 4;
-        const k = clamp(3 + ((h >> 4) % 3) + BUSY[section] - sparse, 2, steps - 2);
-        const pat = rotate(euclid(k, steps), (h >> 8) % steps);
-        const inst = voiceOf[i];
         const order = (dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1]).map((x) => (x + i) % 3);
-        let a = 0;
-        pat.forEach((on, s) => {
-          if (!on) return;
-          const p = phaseAt(i, b, s / steps);
-          const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-          push(i, swingAt(t0, s, spb), beat * (0.3 + 0.9 * rk), inst, hz(tone), v(0.34 + 0.12 * (s === 0 ? 1 : 0)), p);
-        });
+        const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+        push(i, t, dur, inst, hz(tone), v(0.34 + 0.12 * (Math.abs(t - b * bar) < 1e-6 ? 1 : 0)), p);
       } else {
-        // an orchestra's percussion is sparing: timpani, triangle and tambourine land on the beats, a few times a bar
-        const orchestral = st.genre === "symphonic" || st.genre === "chamber";
-        const steps = orchestral ? 8 : st.perc === 1 ? 12 : st.perc === 0 ? 16 : 8;
-        const spb = steps / 4;
-        const k = orchestral ? clamp(1 + (h % 2) + (BUSY[section] > 0 ? 1 : 0) - (sparse > 0 ? 1 : 0), 1, 3) : clamp(3 + (h % 4) + BUSY[section] - sparse, 2, steps - 2);
-        const pat = rotate(euclid(k, steps), orchestral ? 0 : 0);
-        const inst = voiceOf[i];
-        pat.forEach((on, s) => {
-          if (!on) return;
-          const strong = s === 0 || s % spb === 0;
-          // the darbuka's dum / tek / ka come from how hard the stroke is
-          const vel = inst === "DARBUKA" ? (s === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
-          push(i, swingAt(t0, s, spb), beat * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(vel), phaseAt(i, b, s / steps));
-        });
+        const strong = Math.abs(t - b * bar) < 1e-6 || k % 2 === 0;
+        const vel = inst === "DARBUKA" ? (k % 4 === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
+        push(i, t, hit * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(orchestral && k % 2 ? vel * 0.7 : vel), p);
       }
     }
   }
-  // note length is in proportion to route length: from about 0.3 s for the shortest route to about 1.4 s for the longest
-  // (the chord tones of the long routes are held for that long, not for the whole bar)
-  for (const x of notes) if (roles[x.route] !== "perc") x.d = Math.min(x.d, 0.3 + 1.1 * (rank.get(x.route) ?? 0.5));
   // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
   const byRoute = new Map<number, PersonalNote[]>();
   for (const x of notes) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
