@@ -43,6 +43,9 @@ function ribbonPitch(route: number, freq: number, count: number): number {
   return PITCH_MIN * (PITCH_MAX / PITCH_MIN) ** y;
 }
 
+/** the studio (orchestra) version is parked: the piece is always the one the site composes from the route lines */
+const STUDIO_ON = false;
+
 export function Experience({ selection, onBack }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const playerRef = useRef<PersonalPlayer | null>(null);
@@ -72,7 +75,7 @@ export function Experience({ selection, onBack }: Props) {
   const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
   const piece = useMemo(() => composePiece(selection.mode, routes), [selection.mode, routes]);
   /** a studio piece that is like these picks (a finished file on the site: no request is made) */
-  const studio = useMemo(() => (routes.length < 2 ? null : pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length)), [selection, routes]);
+  const studio = useMemo(() => (!STUDIO_ON || routes.length < 2 ? null : pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length)), [selection, routes]);
   const autoStudio = useRef(false);
   const palette = useMemo(() => routePalette(routes), [routes]);
   const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
@@ -524,7 +527,7 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
       <div className="personal-actions">
-        {(AI_ENDPOINT || studio) && (
+        {STUDIO_ON && (AI_ENDPOINT || studio) && (
           <button type="button" className="ghost-btn" disabled={!!busy || ai === "composing"} onClick={() => void toggleAi()}>
             {ai === "composing" ? (aiSyncing ? "SYNCING THE ROUTE LINES TO THE MUSIC…" : studio ? "OPENING THE ORCHESTRA VERSION…" : "COMPOSING WITH AI · ABOUT A MINUTE…") : ai === "on" ? "ORCHESTRA VERSION · ON — BACK TO MINE" : "ORCHESTRA VERSION"}
           </button>

@@ -296,6 +296,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     return pal.perc[r.region] ?? "TAMB";
   });
 
+  // with more than three routes the piano is always there, as a steady voice (a plucking route first, else a singing one)
+  if (n > 3 && !voiceOf.includes("PNO")) {
+    const pick = (role: Role): number => roles.reduce((best, r, i) => (r === role && (best < 0 || (rank.get(i) ?? 0) > (rank.get(best) ?? 0)) ? i : best), -1);
+    const at = pick("pluck") >= 0 ? pick("pluck") : pick("melody");
+    if (at >= 0) voiceOf[at] = "PNO";
+  }
+
   let hook = 0;
   // per-voice walk state
   const deg = routes.map((r, i) => routeHash(r.key + i) % scale.length);

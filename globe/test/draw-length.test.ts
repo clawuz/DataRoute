@@ -28,3 +28,21 @@ describe("note length follows route length", () => {
     expect(mean(rows.slice(-third))).toBeGreaterThan(mean(rows.slice(0, third)) * 1.8);
   });
 });
+
+describe("the piano with more than three routes", () => {
+  const links = [
+    "?v=SZG,TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=FCO",
+    "?v=JFK,LAX,MIA,YYZ,GRU",
+    "?w=DPS,NRT,SYD,BKK,SIN",
+    "?v=ADB,ESB,AYT,TZX,DLM,BJV",
+    "?v=CAI,DXB,DOH,AMM,JED",
+    "?v=NBO,JNB,CPT,LOS,ACC",
+  ];
+  for (const l of links) {
+    it(`has a piano: ${l}`, () => {
+      const sel = selectionFromSearch(l)!;
+      const p = composePiece(sel.mode, buildRoutes(sel.places, sel.home));
+      expect(p.notes.some((n) => n.instrument === "PNO")).toBe(true);
+    });
+  }
+});
