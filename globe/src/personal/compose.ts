@@ -3,6 +3,7 @@ import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
+import { planCards } from "./genres";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -44,6 +45,8 @@ export interface PersonalStyle {
   swing: number;
   /** the family of sound: mostly symphonic; chamber, folk (regional instruments) and pulse (hand drums) now and then */
   genre: Genre;
+  /** the genre cards of the piece (see genres.ts): the main one first */
+  cards?: string[];
 }
 
 export type Genre = "symphonic" | "chamber" | "folk" | "pulse";
@@ -184,16 +187,14 @@ function rng(seed: number): () => number {
 /** the arrangement chosen for a selection */
 export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalStyle & { bpm: number } {
   const r = rng(routeHash(`${mode}|${routes.map((x) => x.key).join(">")}`));
-  const [lo, hi] = BPM_RANGE[mode];
-  // mostly symphonic; a mostly Turkish / Middle-Eastern selection leans to the folk sound
-  const anatolian = routes.length === 0 ? 0 : routes.filter((x) => x.region === "DOM" || x.region === "MEA").length / routes.length;
-  const g = r();
-  // mostly the symphonic sound built from the routes' own voices; chamber, folk and pulse families come now and then
-  const genre: Genre = anatolian >= 0.5 && g < 0.4 ? "folk" : g < 0.72 ? "symphonic" : g < 0.86 ? "chamber" : g < 0.94 ? "folk" : "pulse";
+  // the music of the place the trip starts from sets the tempo, the family of sound and (in composePiece) the scale
+  const card = planCards(mode, routes).main;
+  const [lo, hi] = card.bpm;
+  // a wish is a little brighter; a busy selection is a livelier piece: many routes lift the tempo (up to 16 bpm)
+  const bpm = clamp(lo + Math.floor(r() * (hi - lo + 1)) + (mode === "wish" ? 6 : 0) + clamp((routes.length - 3) * 2, 0, 16), 76, 126);
   return {
-    genre,
-    // a busy selection is a livelier piece: many routes lift the tempo (up to 16 bpm)
-    bpm: lo + Math.floor(r() * (hi - lo + 1)) + clamp((routes.length - 3) * 2, 0, 16),
+    genre: card.family,
+    bpm,
     groove: Math.floor(r() * 6),
     arp: Math.floor(r() * 3),
     perc: Math.floor(r() * 3),
@@ -217,15 +218,16 @@ const rotate = <T,>(a: T[], k: number): T[] => (a.length === 0 ? a : a.map((_, i
 export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
   const st = styleFor(mode, routes);
   const bpm = st.bpm;
-  const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre };
+  const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre, cards: [...new Set([planCards(mode, routes).main.id, ...planCards(mode, routes).perRoute.map((c) => c.id)])] };
   if (routes.length === 0) return { notes: [], duration: 0, hook: 0, bpm, sections: [], energy: [], style };
   // one route: one instrument singing one melody that climbs and falls with the flight and comes home
   if (routes.length === 1) return composeSolo(mode, routes[0], st, style);
   const beat = 60 / bpm;
   const bar = beat * 4;
   const n = routes.length;
-  const scale = mode === "wish" ? MAJOR : MINOR;
-  const prog = PROGS[mode][st.progression];
+  const plan = planCards(mode, routes);
+  const scale = mode === "wish" ? plan.main.scaleWish ?? plan.main.scale : plan.main.scale;
+  const prog: Chord[] = plan.main.prog ? plan.main.prog.map(([off, third]) => ({ root: KEY_ROOT + off, third })) : PROGS[mode][st.progression];
   const notes: PersonalNote[] = [];
 
   // roles by the length of the route
@@ -285,11 +287,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const voiceOf = routes.map((r, i) => {
     const h = routeHash(r.key + i);
     const role = roles[i];
-    const pal = PALETTES[st.genre];
-    if (role === "held") return choose(pal.held[r.region] ?? pal.held.UNK, h, i, role);
-    if (role === "melody") return choose(pal.melody[r.region] ?? pal.melody.UNK, h, i, role);
-    if (role === "pluck") return choose(pal.pluck[r.region] ?? pal.pluck.UNK, h, i, role);
-    return pal.perc[r.region] ?? "TAMB";
+    const card = plan.perRoute[i];
+    if (role === "held") return choose(card.held, h, i, role);
+    if (role === "melody") return choose(card.melody, h, i, role);
+    if (role === "pluck") return choose(card.pluck, h, i, role);
+    return card.perc;
   });
 
   // with more than three routes the piano is always there, as a steady voice (a plucking route first, else a singing one)
@@ -334,11 +336,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const hit = role === "perc" ? val * 2 : val;
     let a = 0;
     let k = 0;
-    // the rhythm figure of the route: a cell of 3 to 5 places with a few rests (a rest lets the note before it ring on);
-    // a long, chord-holding route has no rests inside its figure
-    const cellLen = [4, 3, 5, 4][(h >>> 3) % 4];
-    const cellHits = role === "held" ? cellLen : clamp(Math.round(cellLen * (0.6 + 0.1 * ((h >>> 5) % 3))), 2, cellLen - 1);
-    const cell = rotate(euclid(cellHits, cellLen), (h >>> 9) % cellLen);
+    // the figure of the route comes from its genre card (an aksak 9/8, a clave, a bell pattern); its unit is set so that
+    // the average note is the route's note value. A rest lets the note before it ring on. A chord-holding route has none.
+    const card = plan.perRoute[i];
+    const fig = role === "held" ? [1] : card.cell;
+    const acc = role === "held" ? [1] : card.accent ?? fig.map(() => 1);
+    const unit = hit / (fig.reduce((x, y) => x + Math.abs(y), 0) / fig.length);
+    const start0 = role === "held" ? 0 : (h >>> 9) % fig.length;
     // which routes are heard in which section: the verse thins, the break nearly empties, the chorus has them all
     const heard = (sec: Section): boolean => {
       if (n <= 3 || role === "held") return sec !== "break" || heldSlot[i] === 0 || i % 4 === 0;
@@ -348,14 +352,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       if (sec === "outro") return i % 2 === 0;
       return true;
     };
-    for (let t = entry[i] * bar; t < END - 1e-6; t += hit, k++) {
+    for (let tc = entry[i] * bar; tc < END - 1e-6; k++) {
+      const slot = (start0 + k) % fig.length;
+      const len = Math.abs(fig[slot]) * unit;
+      const t = tc;
+      tc += len;
       const b = Math.min(BARS - 1, Math.floor(t / bar));
       const { section } = sectionOf(b);
-      const slot = k % cellLen;
-      if (!cell[slot] || !heard(section)) continue;
-      // a rest after the note lets it ring on
-      let ring = 1;
-      while (ring < 2 && !cell[(slot + ring) % cellLen]) ring++;
+      if (fig[slot] < 0 || !heard(section)) continue;
+      const firstOfBar = t - b * bar < len * 0.999;
+      const nx = fig[(slot + 1) % fig.length];
       const level = LEVEL[section];
       const fade = section === "outro" ? 1 - ((b - sectionOf(b).first) / sectionOf(b).len) * 0.25 : 1;
       const v = (x: number): number => x * level * fade;
@@ -366,10 +372,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       // take-off and landing are sparse and soft, the climb and the cruise are full
       if (role !== "held" && role !== "perc" && (p < 0.12 || p > 0.9) && k % 2 === 1) continue;
       const flight = 0.6 + 0.4 * Math.sin(Math.PI * p);
-      const accent = slot === 0 ? 1.12 : 0.92;
-      const dur = Math.max(0.1, hit * 0.95 * ring);
+      const accent = acc[slot] || 1;
+      const dur = Math.max(0.1, len * 0.95 + (nx < 0 ? Math.abs(nx) * unit * 0.95 : 0));
       // the weak places of a short note lean back a little
-      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? st.swing * hit * 0.33 : 0);
+      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? st.swing * len * 0.33 : 0);
       if (role === "held") {
         // the chord, one tone per long route
         const slot = heldSlot[i];
@@ -379,11 +385,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         deg[i] += dir * stepSize * (k % 3 === 0 ? 1 : 0) + (k % 2 === 0 ? 0 : dir);
         // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
         const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 5);
-        const w = ((deg[i] % 7) + 7) % 7;
+        const w = ((deg[i] % scale.length) + scale.length) % scale.length;
         // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
         const total = w + lift + ((i * 2) % 5);
-        let semis = KEY_ROOT + st.shift - 12 + scale[total % 7] + 12 * Math.floor(total / 7);
-        if (Math.abs(t - b * bar) < 1e-6) {
+        let semis = KEY_ROOT + st.shift - 12 + scale[total % scale.length] + 12 * Math.floor(total / scale.length);
+        if (firstOfBar) {
           // the first note of a bar rests on its own chord tone (root, third, fifth by route)
           let best = semis;
           let bd = Infinity;
@@ -398,9 +404,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       } else if (role === "pluck") {
         const order = (dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1]).map((x) => (x + i) % 3);
         const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-        push(i, tAt, dur, inst, hz(tone), v((0.34 + 0.12 * (Math.abs(t - b * bar) < 1e-6 ? 1 : 0)) * flight * accent), p);
+        push(i, tAt, dur, inst, hz(tone), v((0.34 + 0.12 * (firstOfBar ? 1 : 0)) * flight * accent), p);
       } else {
-        const strong = Math.abs(t - b * bar) < 1e-6 || k % 2 === 0;
+        const strong = firstOfBar || k % 2 === 0;
         const vel = inst === "DARBUKA" ? (k % 4 === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
         push(i, t, hit * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(orchestral && k % 2 ? vel * 0.7 : vel), p);
       }

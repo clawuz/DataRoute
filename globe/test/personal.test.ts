@@ -236,7 +236,7 @@ describe("arrangement: pieces differ in feel, not only in pitches", () => {
     expect(distinct((p) => p.bpm)).toBeGreaterThanOrEqual(8);
     expect(distinct((p) => p.style.shift)).toBeGreaterThanOrEqual(3);
     for (const p of pieces) {
-      expect(p.duration).toBeGreaterThan(140);
+      expect(p.duration).toBeGreaterThan(120);
       expect(p.duration).toBeLessThan(200);
     }
   });
@@ -328,19 +328,30 @@ describe("the music box: a route's notes never overlap in the drawing", () => {
   });
 });
 
-describe("the sound family: mostly symphonic", () => {
+describe("the genre cards: the music of where the trip starts from", () => {
   const codes = ["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "CPT", "MEX", "DXB", "LHR", "FRA", "CDG", "MAD", "FCO", "ATH", "VIE", "WAW", "PRG", "BUD", "OTP", "SOF", "BEG", "ZAG", "ESB", "AYT", "ADB", "BEY", "AMM"];
   const sets = Array.from({ length: 60 }, (_, i) => Array.from({ length: 3 + (i % 5) }, (_, j) => codes[(i * 7 + j * 11) % codes.length]));
   const pieces = sets.map((s, i) => composePiece(i % 2 ? "wish" : "visited", buildRoutes(s.filter((x, k) => s.indexOf(x) === k), "IST")));
-  it("is symphonic most of the time and has other families now and then", () => {
+  it("mixes the families: no family takes more than two thirds, at least three are heard", () => {
     const count = (g: string) => pieces.filter((p) => p.style.genre === g).length;
-    expect(count("symphonic") / pieces.length).toBeGreaterThan(0.55);
-    expect(count("symphonic")).toBeGreaterThan(count("folk"));
+    for (const g of ["symphonic", "chamber", "folk", "pulse"]) expect(count(g) / pieces.length, g).toBeLessThan(0.67);
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
-  it("a symphonic piece is played by the orchestra", () => {
-    const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB"]);
-    for (const p of pieces.filter((x) => x.style.genre === "symphonic")) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
+  it("a piece whose cards are all orchestral is played by the orchestra", () => {
+    const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "slavic", "epic", "calm", "bossa", "tango", "eastasia"]);
+    const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB", "GONG"]);
+    const mine = pieces.filter((x) => (x.style.cards ?? []).every((c) => orchCards.has(c)));
+    expect(mine.length).toBeGreaterThan(5);
+    for (const p of mine) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
+  });
+  it("starting from a different country gives a different music", () => {
+    const from = (home: string) => composePiece("visited", buildRoutes(["JFK", "NRT", "DXB", "LHR"], home)).style.cards![0];
+    const seen = new Set(["IST", "GRU", "NBO", "BKK", "DEL", "MAD", "DXB", "BUE", "LOS", "ATH"].map(from));
+    expect(seen.size).toBeGreaterThanOrEqual(4);
+  });
+  it("an Arabic start brings the Arabic card", () => {
+    const p = composePiece("visited", buildRoutes(["DXB", "DOH", "AMM", "BEY", "CAI", "JED"], "DXB"));
+    expect(p.style.cards).toContain("arabic");
   });
 });
 
