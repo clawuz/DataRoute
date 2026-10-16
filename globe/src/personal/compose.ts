@@ -334,7 +334,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const lag = (slot % 4) * beat * 0.5;
         push(i, t0 + lag, bar - lag - beat * 0.05, inst, hz(tone), v(0.4 + 0.12 * rk), phaseAt(i, b, 0));
       } else if (role === "melody") {
-        const k = clamp(dens(h) + BUSY[section] - sparse - Math.round(2 * rk), 1, 6); // a long route sings fewer, longer notes
+        const k = clamp(dens(h) + BUSY[section] - sparse, 1, 6 - Math.round(4 * rk)); // a long route sings fewer, longer notes
         const pat = rotate(euclid(k, 8), (h >> 6) % 8);
         const inst = voiceOf[i];
         const onsets = pat.map((on, s) => (on ? s : -1)).filter((s) => s >= 0);
@@ -395,6 +395,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       }
     }
   }
+  // note length is in proportion to route length: from about 0.3 s for the shortest route to about 1.4 s for the longest
+  // (the chord tones of the long routes are held for that long, not for the whole bar)
+  for (const x of notes) if (roles[x.route] !== "perc") x.d = Math.min(x.d, 0.3 + 1.1 * (rank.get(x.route) ?? 0.5));
   // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
   const byRoute = new Map<number, PersonalNote[]>();
   for (const x of notes) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
