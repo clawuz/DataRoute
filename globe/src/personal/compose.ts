@@ -2,7 +2,7 @@ import type { Instrument } from "../audio/theory";
 import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
-import { altitudeFt, cruiseFt } from "./flight";
+import { altitudeFt, cruiseFt, drawLength } from "./flight";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -402,7 +402,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     list.sort((a, b) => a.t - b.t);
     list.forEach((x, k) => {
       const next = list.slice(k + 1).find((y) => y.t > x.t + 1e-6);
-      x.drawDur = next ? Math.max(0.05, Math.min(x.d, (next.t - x.t) * 0.92)) : x.d;
+      x.drawDur = drawLength(rank.get(x.route) ?? 0.5, x.d, next ? next.t - x.t : null);
     });
   }
   const end = Math.max(...notes.map((x) => x.t + x.d));

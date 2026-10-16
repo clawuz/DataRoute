@@ -11,3 +11,15 @@ export function altitudeFt(p: number, distKm: number): number {
   if (x > 0.82) return Math.round((c * ((1 - x) / 0.18) ** 0.8) / 100) * 100;
   return c;
 }
+
+/**
+ * How long the music box draws a note of a route: a short route's note stays short, a long route's note is held until its
+ * next note begins (rk = the route's length rank 0..1, d = the note's own length, gap = seconds to the route's next note).
+ */
+export function drawLength(rk: number, d: number, gap: number | null): number {
+  const full = gap === null ? Math.max(d, 0.6 + 1.6 * rk) : Math.max(0.05, gap * 0.92);
+  const short = Math.min(d, 0.32);
+  const w = Math.pow(clamp01(rk), 1.1);
+  return Math.max(0.05, Math.min(full, short + (full - short) * w));
+}
+const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));

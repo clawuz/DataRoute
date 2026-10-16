@@ -2,7 +2,7 @@ import { rankIn } from "../audio/route-fit";
 import { routeHash } from "../audio/theory";
 import type { Instrument } from "../audio/theory";
 import type { PersonalNote } from "./compose";
-import { altitudeFt } from "./flight";
+import { altitudeFt, drawLength } from "./flight";
 import type { Onset } from "./analyze";
 import type { PersonalRoute } from "./routes";
 
@@ -76,7 +76,7 @@ export function assignToRoutes(onsets: Onset[], routes: PersonalRoute[]): Person
   for (const list of by.values()) {
     list.forEach((x, k) => {
       const next = list[k + 1];
-      x.drawDur = next ? Math.max(0.05, Math.min(x.d, (next.t - x.t) * 0.92)) : x.d;
+      x.drawDur = drawLength(lenRank(routes[x.route].distKm), x.d, next ? next.t - x.t : null);
     });
   }
   return out;
