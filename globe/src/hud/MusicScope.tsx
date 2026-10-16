@@ -193,7 +193,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
       const px0 = wide ? 0.78 * w : w; // the reading line (generative: the right edge)
       const xOf = (t: number) => px0 - (now - t) * pxPerSec;
       const yOf = (y: number) => (1 - y) * ribbonH;
-      const labels: { x: number; y: number; text: string; color: string }[] = [];
+      const labels: { x: number; y: number; text: string; color: string; v: number }[] = [];
       for (const tr of trails.values()) {
         const age = Math.max(0, now - tr.lastHit);
         g.globalAlpha = base * (wide ? 1 : Math.max(0.15, 1 - age / ribbonSec));
@@ -220,7 +220,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             g.shadowBlur = sounding ? 6 * dpr : 0; // a tight glow, not a blob (additive blending)
             const hh = sounding ? barH * 1.7 : barH;
             g.fillRect(x, yOf(p.y) - hh / 2, bw, hh);
-            if (sounding && p.v > 0.8) labels.push({ x, y: yOf(p.y) - barH * 2, text: tr.lineId.replace("-", "→"), color: tr.color });
+            if (sounding) labels.push({ x, y: yOf(p.y) - barH * 2, text: tr.lineId.replace("-", "→"), color: tr.color, v: p.v });
           } else g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
         }
         g.shadowBlur = 0;
@@ -232,10 +232,11 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
         planePath(g, px0, 0, 9 * dpr); // an aeroplane (nose up) instead of a triangle
         g.fill();
       }
-      // ribbon+: the strongest notes name their route
+      // ribbon+: every note under the line may name its route (the intro's soft notes too); the five strongest do
+      labels.sort((a, b) => b.v - a.v);
       g.globalAlpha = 1;
       g.font = `${Math.round(9 * dpr)}px ui-monospace, monospace`;
-      for (const l of labels.slice(-5)) {
+      for (const l of labels.slice(0, 5)) {
         g.fillStyle = l.color;
         g.fillText(l.text, Math.min(l.x, w - 54 * dpr), Math.max(10 * dpr, l.y));
       }
