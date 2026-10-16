@@ -192,3 +192,10 @@ Neşeye Övgü, Für Elise, Frère Jacques, 5. Senfoni motifi, Rondo alla turca,
 Seçim: from ülkesinin ezgisi (yoksa varış ülkelerinin; İstanbul aktarma noktası sayılmaz). Yalnızca kartın ölçeği tam yarım seslerden oluşan 7 notalı bir majör ya da minör ölçekse ve ezginin modu ölçeğin üçlüsüne uyuyorsa kullanılır; aksi halde hook rotadan üretilir (makam renkli kartlarda ezgi çalmaz). Ezgi kullanıldığında akor ilerlemesi ezginin moduna göre seçilir. Hook rotası ezgiyi verse bölümünde bir kez, build/nakarat/break'te her turda çalar (`style.tune`).
 
 Henüz kodlanmayan ve kaynak doğrulaması bekleyenler (ilk 30'dan): Üsküdar'a Gider İken, Sarı Gelin, Çanakkale İçinde, Harmandalı, Kalamatianos, Bahar (Vivaldi), Brahms Lullaby, Mavi Tuna, Gymnopédie 1, Clair de Lune, Habanera, Funiculì Funiculà, Santa Lucia, Greensleeves, Scarborough Fair, Danny Boy, Peer Gynt Solveig, Ievan Polkka, Kalinka, Arirang, Mo Li Hua, Bahay Kubo, Salma Ya Salama, Hava Nagila, Lamma Bada Yatathana, Shosholoza, Siyahamba, De Colores. Bunlarda nota dizisini hatırlamaya güvenmek yanlış nota riski taşıdığı için bir nota kaynağından (Mutopia, IMSLP, Nottingham folk veri tabanı vb.) doğrulayarak eklenecek; Türk ezgileri makam renkli olduğu için ayrıca mikro aralıklı notasyon gerektirir.
+
+### Birebir aynı değil: ezginin "akrabası" (2026-10-16)
+
+Hook ezgiyi aynen çalmaz; `varyTune(tune, seed)` aynı uzunluk, aynı ritim iskeleti, aynı kontur ve aynı ilk/son notayla ezginin bir akrabasını üretir:
+- geçiş notalarının yaklaşık üçte biri ölçek içinde 1–2 basamak oynar,
+- bazı 1 vuruşluk notalar ikiye bölünür (ikinci yarısı bir basamak yanda),
+- ezginin her turu farklı bir akraba olur (tohum = ezgi + seçim + tur sırası), aynı seçim yine aynı parçayı verir.

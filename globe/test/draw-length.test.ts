@@ -87,7 +87,7 @@ describe("well-known melodies in the hook", () => {
     const used = new Set(pieces.map((x) => x.p.style.tune).filter(Boolean));
     expect(used.size).toBeGreaterThanOrEqual(4);
   });
-  it("the hook route plays the tune's own intervals at the start of the tune", () => {
+  it("the hook route plays a relative of the tune, starting like it", () => {
     const hit = pieces.filter((x) => x.p.style.tune);
     expect(hit.length).toBeGreaterThan(5);
     for (const { p } of hit.slice(0, 12)) {
@@ -101,11 +101,46 @@ describe("well-known melodies in the hook", () => {
         const s = [...ns].sort((a, b) => a.t - b.t);
         for (let st = 0; st + 6 <= s.length; st++) {
           const m = s.slice(st, st + 6).map((n) => 12 * Math.log2(n.freq / s[st].freq));
-          if (m.every((x, k) => Math.abs(x - want[k]) < 0.5 || Math.abs(Math.abs(x - want[k]) - 12) < 0.5)) return true;
+          // a relative of the tune: the first note is the tune's and at least four of the six notes are the same
+          const hits = m.filter((x, k) => Math.abs(x - want[k]) < 0.5 || Math.abs(Math.abs(x - want[k]) - 12) < 0.5).length;
+          if (hits >= 4 && Math.abs(m[0]) < 0.01) return true;
         }
         return false;
       });
       expect(ok, tune.id).toBe(true);
     }
   });
+});
+
+import { varyTune } from "../src/personal/melodies";
+
+describe("a relative of the tune, not the tune", () => {
+  for (const tune of TUNES) {
+    it(`${tune.id}: the same shape and length, but not the same notes`, () => {
+      const total = (ns: [number, number][]) => ns.reduce((a, [, b]) => a + b, 0);
+      const v = varyTune(tune, 12345);
+      expect(total(v)).toBeCloseTo(total(tune.notes), 6);
+      expect(v[0][0]).toBe(tune.notes[0][0]);
+      expect(v[v.length - 1][0]).toBe(tune.notes[tune.notes.length - 1][0]);
+      // not identical (for tunes with enough passing notes) …
+      const same = v.length === tune.notes.length && v.every((x, k) => x[0] === tune.notes[k][0] && x[1] === tune.notes[k][1]);
+      if (tune.notes.length >= 12) expect(same).toBe(false);
+      // … and deterministic, and different on another turn
+      expect(varyTune(tune, 12345)).toEqual(v);
+      // the contour is kept: most steps go the same way
+      if (v.length === tune.notes.length) {
+        let agree = 0;
+        let moves = 0;
+        for (let k = 1; k < v.length; k++) {
+          const a = Math.sign(tune.notes[k][0] - tune.notes[k - 1][0]);
+          const b = Math.sign(v[k][0] - v[k - 1][0]);
+          if (a !== 0) {
+            moves++;
+            if (a === b) agree++;
+          }
+        }
+        if (moves > 5) expect(agree / moves).toBeGreaterThan(0.6);
+      }
+    });
+  }
 });

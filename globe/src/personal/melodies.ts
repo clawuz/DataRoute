@@ -102,3 +102,47 @@ export function tuneFor(main: GenreCard, mode: "visited" | "wish", routes: Perso
   if (!list.length) return null;
   return list[(seed >>> 6) % list.length];
 }
+
+const SCALE_OF: Record<Tune["mode"], number[]> = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] };
+
+/** a small seeded generator (mulberry32) */
+function mulberry(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * A relative of the tune, not the tune: the same length, the same rhythm skeleton, the same contour and the same first
+ * and last notes, but about a third of the passing notes move a step or two inside the scale and some beats are split in
+ * two. Each turn of the tune (a different `seed`) is a different relative, so it is never played the same way twice.
+ */
+export function varyTune(tune: Tune, seed: number): [number, number][] {
+  const rnd = mulberry(seed);
+  const scale = SCALE_OF[tune.mode];
+  const idxOf = (semis: number): number => scale.indexOf((((semis % 12) + 12) % 12));
+  const shifted = (semis: number, delta: number): number => {
+    const i = idxOf(semis);
+    if (i < 0) return semis;
+    const oct = Math.floor(semis / 12);
+    const j = i + delta;
+    return scale[((j % 7) + 7) % 7] + 12 * (oct + Math.floor(j / 7));
+  };
+  const out: [number, number][] = [];
+  const n = tune.notes.length;
+  tune.notes.forEach(([semis, beats], k) => {
+    const edge = k === 0 || k >= n - 2 || beats >= 1.5;
+    let s2 = semis;
+    if (!edge && rnd() < 0.3) s2 = shifted(semis, (rnd() < 0.7 ? 1 : 2) * (rnd() < 0.5 ? 1 : -1));
+    if (!edge && beats === 1 && rnd() < 0.12) {
+      // one beat becomes two halves: the second a step away
+      out.push([s2, 0.5], [shifted(s2, rnd() < 0.5 ? 1 : -1), 0.5]);
+    } else out.push([s2, beats]);
+  });
+  return out;
+}

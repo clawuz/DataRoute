@@ -4,7 +4,7 @@ import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
-import { tuneFor } from "./melodies";
+import { tuneFor, varyTune } from "./melodies";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -409,7 +409,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const startOk = section === "verse" ? Math.floor((b - first) / tune.bars) % 2 === 0 && (b - first) % tune.bars === 0 : b % tune.bars === 0;
         if (!startOk) continue;
         let off = 0;
-        for (const [semis, beats] of tune.notes) {
+        // a relative of the tune, a different one on every turn: the same shape, a few passing notes moved
+        const turn = varyTune(tune, routeHash(tune.id + routes.map((r) => r.key).join(">")) + Math.floor(b / tune.bars));
+        for (const [semis, beats] of turn) {
           const when = t0 + off * beat;
           if (when < END_T - 1e-6) push(i, when, beats * beat * 0.95, inst, hz(KEY_ROOT + st.shift + 12 + semis), v(0.78), phaseAt(i, b + Math.floor(off / 4), (off % 4) / 4));
           off += beats;
