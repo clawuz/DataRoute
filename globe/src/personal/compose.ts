@@ -307,7 +307,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
 
   // the note-value ladder: a route plays ONE note value for the whole piece, and the value follows its length — the
   // shortest route ticks in eighths, the longest holds three beats. Many routes are many layered pulses.
-  const VALUES = [0.5, 0.75, 1, 1.5, 2, 3]; // in beats
+  // lively cards start a step lower: the shortest routes tick in sixteenths
+  const VALUES = plan.main.fast ? [0.25, 0.5, 0.75, 1, 2, 3] : [0.5, 0.75, 1, 1.5, 2, 3]; // in beats
   const spread = Math.min(1, (n - 1) / 4);
   const valueOf = routes.map((_, i) => VALUES[clamp(Math.round(2.5 + ((rank.get(i) ?? 0.5) - 0.5) * 5 * spread), 0, 5)]);
   // the first chorus bar is where the hook lies
@@ -375,7 +376,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       const accent = acc[slot] || 1;
       const dur = Math.max(0.1, len * 0.95 + (nx < 0 ? Math.abs(nx) * unit * 0.95 : 0));
       // the weak places of a short note lean back a little
-      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? st.swing * len * 0.33 : 0);
+      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? (card.swing ?? st.swing) * len * 0.33 : 0);
       if (role === "held") {
         // the chord, one tone per long route
         const slot = heldSlot[i];

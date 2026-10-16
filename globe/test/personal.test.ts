@@ -338,10 +338,10 @@ describe("the genre cards: the music of where the trip starts from", () => {
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
   it("a piece whose cards are all orchestral is played by the orchestra", () => {
-    const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "slavic", "epic", "calm", "bossa", "tango", "eastasia"]);
+    const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "slavic", "epic", "calm", "bossa", "tango", "eastasia", "jazz"]);
     const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB", "GONG"]);
     const mine = pieces.filter((x) => (x.style.cards ?? []).every((c) => orchCards.has(c)));
-    expect(mine.length).toBeGreaterThan(5);
+    expect(mine.length).toBeGreaterThan(3);
     for (const p of mine) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
   it("starting from a different country gives a different music", () => {

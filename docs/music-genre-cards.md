@@ -77,3 +77,22 @@ Her kart `style.ts` benzeri bir ayar nesnesine dönüşür:
 - Kartın tempo, ölçek, ilerleme, ritim figürü (usul), vurgu ve enstrümanları `compose.ts` içinde kullanılıyor.
 - Parçanın kartları `style.cards` alanında.
 - Henüz yapılmadı: referans veri setlerinden istatistik çıkarma (indirme onayı bekliyor), kartların kulakla doğrulanması.
+
+## 6. Referans verisinden çıkanlar (2026-10-16)
+
+İndirilenler (yalnızca istatistik çıkarmak için, depoya eklenmedi; `scripts/music/analyze-refdata.py` ile işlendi, sonuç `docs/music-reference-stats.json`):
+
+| Veri | Kaynak | Boyut | Lisans | Ne için kullanıldı |
+|---|---|---|---|---|
+| SymbTr v2.4.3 (2200 Türk makam parçası) | [github.com/MTG/SymbTr](https://github.com/MTG/SymbTr) | 24 MB zip | CC BY-NC-SA 4.0 | Yalnızca sayılar: makam dereceleri, usul başına nota süresi kalıpları. Parça ya da melodi alınmadı. |
+| PDMX.csv (254 bin skorun metadata'sı) | [zenodo.org/records/15571083](https://zenodo.org/records/15571083) | 225 MB | CC BY 4.0 (parçalar kamu malı) | Tür dağılımı |
+| PDMX mid.tar.gz (254 bin MIDI) | aynı kayıt | 214 MB | aynı | Tür başına 300 parçadan nota aralığı, ölçü, ritim figürü istatistiği |
+
+SymbTr ticari olmayan lisanslı olduğu için yalnızca istatistik (derece ağırlıkları, süre dağılımı) kullanıldı, dosya ya da melodi kullanılmadı. Mutopia indirilmedi: klasörlerini tek tek gezmek gerekiyor ve PDMX klasiği zaten kapsıyor.
+
+Bulgular ve kartlara yansıması:
+- **Makam dereceleri (SymbTr):** Hicaz, Uşşak, Nihavent, Rast, Segah gerçek 53-koma aralıklarıyla ölçüldü (örneğin Hicaz: 0, 1.13, 3.85, 4.98, 7.02, 9.28, 9.96 yarım ses). Kartlardaki ölçekler artık kesirli yarım seslerle bu değerleri kullanıyor, böylece 12'li eşit perdede çalmak yerine makamın kendi aralıkları duyuluyor.
+- **Usul kalıpları (SymbTr):** aksak 9/8'in en sık melodik figürü `1/4 + 7 sekizlik`, Sofyan 4/4 `1/4 + 6 sekizlik`, Düyek `1/4, 1/8, 1/4, 1/8, 1/4`, Curcuna 10/8 `3+2+1+1+1+1+1`. Anadolu ve İran kartlarının figürleri bunlara çekildi.
+- **Nota aralıkları (PDMX):** gerçek müzikte iki nota arası genelde 0,25–1 vuruş. Soundtrack, pop, elektronik ve barokta 16'lıklar yaygın (yaklaşık %30), halkta sekizlik baskın (%61). Bu yüzden hareketli kartlarda en kısa rotalar 16'lık (`fast`) çalıyor.
+- **Bar figürleri (PDMX):** caz `x.x.x.x.` (zayıf vuruşlara yaslanan çeyreklikler) baskın, funk/soul `x..x..xx` (3+3+1+1), elektronik/pop düz sekizlik `xxxxxxxx`. Üç yeni kart: **Jazz swing**, **Funk & soul**, **Electro pop**.
+- **Güvenilmeyen alan:** PDMX tempo bilgisi MuseScore'un varsayılan 120 bpm'ine yığıldığı için kullanılmadı. Tür başına enstrüman dağılımı da MIDI programlarının kabaca bir yansıması, yalnızca not düşüldü.

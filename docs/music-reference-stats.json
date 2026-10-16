@@ -1,0 +1,2422 @@
+{
+ "symbtr": {
+  "usuls": {
+   "aksak": {
+    "pieces": 303,
+    "meter": "9/8",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 57
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 33
+     },
+     {
+      "cell": [
+       16,
+       2
+      ],
+      "bars": 25
+     }
+    ]
+   },
+   "sofyan": {
+    "pieces": 288,
+    "meter": "4/4",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 136
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 123
+     },
+     {
+      "cell": [
+       4,
+       4,
+       2,
+       2,
+       4
+      ],
+      "bars": 108
+     }
+    ]
+   },
+   "düyek": {
+    "pieces": 247,
+    "meter": "8/8",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       2,
+       4,
+       2,
+       4
+      ],
+      "bars": 251
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 194
+     },
+     {
+      "cell": [
+       2,
+       2,
+       4,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 104
+     }
+    ]
+   },
+   "aksaksemâî": {
+    "pieces": 128,
+    "meter": "10/8",
+    "cells16": [
+     {
+      "cell": [
+       12,
+       4,
+       4
+      ],
+      "bars": 11
+     },
+     {
+      "cell": [
+       12,
+       8
+      ],
+      "bars": 9
+     },
+     {
+      "cell": [
+       6,
+       4,
+       2,
+       3,
+       1,
+       1,
+       1,
+       1,
+       1
+      ],
+      "bars": 7
+     }
+    ]
+   },
+   "curcuna": {
+    "pieces": 111,
+    "meter": "10/8",
+    "cells16": [
+     {
+      "cell": [
+       6,
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 22
+     },
+     {
+      "cell": [
+       4,
+       2,
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 15
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 13
+     }
+    ]
+   },
+   "ağıraksak": {
+    "pieces": 108,
+    "meter": "9/4",
+    "cells16": []
+   },
+   "nîmsofyan": {
+    "pieces": 99,
+    "meter": "2/4",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       4
+      ],
+      "bars": 30
+     },
+     {
+      "cell": [
+       6,
+       1,
+       1
+      ],
+      "bars": 25
+     },
+     {
+      "cell": [
+       6,
+       2
+      ],
+      "bars": 18
+     }
+    ]
+   },
+   "semâî": {
+    "pieces": 98,
+    "meter": "3/4",
+    "cells16": [
+     {
+      "cell": [
+       8,
+       4
+      ],
+      "bars": 680
+     },
+     {
+      "cell": [
+       4,
+       4,
+       4
+      ],
+      "bars": 551
+     },
+     {
+      "cell": [
+       4,
+       8
+      ],
+      "bars": 361
+     }
+    ]
+   },
+   "senginsemâî": {
+    "pieces": 72,
+    "meter": "6/4",
+    "cells16": [
+     {
+      "cell": [
+       16,
+       8
+      ],
+      "bars": 2
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       6,
+       2,
+       4,
+       2
+      ],
+      "bars": 2
+     },
+     {
+      "cell": [
+       2,
+       4,
+       2,
+       4,
+       2,
+       2,
+       2,
+       2,
+       4
+      ],
+      "bars": 1
+     }
+    ]
+   },
+   "türkaksağı": {
+    "pieces": 61,
+    "meter": "5/8",
+    "cells16": [
+     {
+      "cell": [
+       6,
+       2,
+       2
+      ],
+      "bars": 38
+     },
+     {
+      "cell": [
+       6,
+       1,
+       1,
+       1,
+       1
+      ],
+      "bars": 24
+     },
+     {
+      "cell": [
+       8,
+       2
+      ],
+      "bars": 21
+     }
+    ]
+   },
+   "yürüksemâî (6/4)": {
+    "pieces": 52,
+    "meter": "6/4",
+    "cells16": [
+     {
+      "cell": [
+       16,
+       8
+      ],
+      "bars": 4
+     },
+     {
+      "cell": [
+       2,
+       2,
+       8,
+       8,
+       4
+      ],
+      "bars": 2
+     },
+     {
+      "cell": [
+       4,
+       4,
+       4,
+       4,
+       4,
+       4
+      ],
+      "bars": 2
+     }
+    ]
+   },
+   "yürüksemâî ii": {
+    "pieces": 46,
+    "meter": "6/8",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 56
+     },
+     {
+      "cell": [
+       10,
+       2
+      ],
+      "bars": 33
+     },
+     {
+      "cell": [
+       4,
+       2,
+       4,
+       2
+      ],
+      "bars": 31
+     }
+    ]
+   },
+   "k. curcuna": {
+    "pieces": 45,
+    "meter": "10/8",
+    "cells16": [
+     {
+      "cell": [
+       6,
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 15
+     },
+     {
+      "cell": [
+       6,
+       4,
+       2,
+       4,
+       4
+      ],
+      "bars": 12
+     },
+     {
+      "cell": [
+       4,
+       2,
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 11
+     }
+    ]
+   },
+   "müsemmen": {
+    "pieces": 38,
+    "meter": "8/8",
+    "cells16": [
+     {
+      "cell": [
+       2,
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 40
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 36
+     },
+     {
+      "cell": [
+       2,
+       2,
+       2,
+       2,
+       2,
+       2,
+       4
+      ],
+      "bars": 18
+     }
+    ]
+   },
+   "düyek (8/4)": {
+    "pieces": 31,
+    "meter": "8/4",
+    "cells16": []
+   },
+   "devr-i kebîr": {
+    "pieces": 31,
+    "meter": "28/4",
+    "cells16": []
+   },
+   "devr-i hindî": {
+    "pieces": 30,
+    "meter": "7/4",
+    "cells16": []
+   },
+   "devr-i hindî (7/8)": {
+    "pieces": 28,
+    "meter": "7/8",
+    "cells16": [
+     {
+      "cell": [
+       4,
+       2,
+       2,
+       2,
+       4
+      ],
+      "bars": 13
+     },
+     {
+      "cell": [
+       4,
+       4,
+       2,
+       2,
+       2
+      ],
+      "bars": 12
+     },
+     {
+      "cell": [
+       4,
+       2,
+       2,
+       2,
+       2,
+       2
+      ],
+      "bars": 10
+     }
+    ]
+   },
+   "devr-i revân-ı hindî": {
+    "pieces": 25,
+    "meter": "14/8",
+    "cells16": []
+   },
+   "muhammes": {
+    "pieces": 22,
+    "meter": "32/4",
+    "cells16": []
+   }
+  },
+  "makams": {
+   "hicaz": {
+    "pieces": 157,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.17
+     },
+     {
+      "koma": 5,
+      "semitones": 1.13,
+      "weight": 0.095
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.054
+     },
+     {
+      "koma": 17,
+      "semitones": 3.85,
+      "weight": 0.071
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.041
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.122
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.102
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.067
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.061
+     }
+    ]
+   },
+   "nihavent": {
+    "pieces": 130,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.146
+     },
+     {
+      "koma": 9,
+      "semitones": 2.04,
+      "weight": 0.073
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.08
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.081
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.067
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.139
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.068
+     },
+     {
+      "koma": 35,
+      "semitones": 7.92,
+      "weight": 0.054
+     },
+     {
+      "koma": 45,
+      "semitones": 10.19,
+      "weight": 0.042
+     }
+    ]
+   },
+   "ussak": {
+    "pieces": 118,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.157
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.056
+     },
+     {
+      "koma": 7,
+      "semitones": 1.58,
+      "weight": 0.081
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.073
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.106
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.128
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.062
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.075
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.046
+     }
+    ]
+   },
+   "rast": {
+    "pieces": 109,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.145
+     },
+     {
+      "koma": 9,
+      "semitones": 2.04,
+      "weight": 0.074
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.08
+     },
+     {
+      "koma": 17,
+      "semitones": 3.85,
+      "weight": 0.09
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.07
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.113
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.082
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.05
+     },
+     {
+      "koma": 49,
+      "semitones": 11.09,
+      "weight": 0.059
+     }
+    ]
+   },
+   "huzzam": {
+    "pieces": 96,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.101
+     },
+     {
+      "koma": 5,
+      "semitones": 1.13,
+      "weight": 0.063
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.077
+     },
+     {
+      "koma": 14,
+      "semitones": 3.17,
+      "weight": 0.143
+     },
+     {
+      "koma": 20,
+      "semitones": 4.53,
+      "weight": 0.072
+     },
+     {
+      "koma": 30,
+      "semitones": 6.79,
+      "weight": 0.084
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.045
+     },
+     {
+      "koma": 36,
+      "semitones": 8.15,
+      "weight": 0.101
+     },
+     {
+      "koma": 49,
+      "semitones": 11.09,
+      "weight": 0.059
+     }
+    ]
+   },
+   "segah": {
+    "pieces": 92,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.142
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.051
+     },
+     {
+      "koma": 5,
+      "semitones": 1.13,
+      "weight": 0.069
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.09
+     },
+     {
+      "koma": 14,
+      "semitones": 3.17,
+      "weight": 0.137
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.057
+     },
+     {
+      "koma": 27,
+      "semitones": 6.11,
+      "weight": 0.049
+     },
+     {
+      "koma": 36,
+      "semitones": 8.15,
+      "weight": 0.061
+     },
+     {
+      "koma": 49,
+      "semitones": 11.09,
+      "weight": 0.1
+     }
+    ]
+   },
+   "huseyni": {
+    "pieces": 92,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.134
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.057
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.076
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.077
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.085
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.096
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.123
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.063
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.058
+     }
+    ]
+   },
+   "mahur": {
+    "pieces": 88,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.143
+     },
+     {
+      "koma": 9,
+      "semitones": 2.04,
+      "weight": 0.061
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.079
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.054
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.075
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.126
+     },
+     {
+      "koma": 40,
+      "semitones": 9.06,
+      "weight": 0.05
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.064
+     },
+     {
+      "koma": 50,
+      "semitones": 11.32,
+      "weight": 0.049
+     }
+    ]
+   },
+   "hicazkar": {
+    "pieces": 79,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.151
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.057
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.068
+     },
+     {
+      "koma": 15,
+      "semitones": 3.4,
+      "weight": 0.045
+     },
+     {
+      "koma": 17,
+      "semitones": 3.85,
+      "weight": 0.046
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.063
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.071
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.116
+     },
+     {
+      "koma": 36,
+      "semitones": 8.15,
+      "weight": 0.049
+     }
+    ]
+   },
+   "kurdilihicazkar": {
+    "pieces": 70,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.216
+     },
+     {
+      "koma": 4,
+      "semitones": 0.91,
+      "weight": 0.053
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.039
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.063
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.081
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.099
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.063
+     },
+     {
+      "koma": 35,
+      "semitones": 7.92,
+      "weight": 0.05
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.085
+     }
+    ]
+   },
+   "muhayyer": {
+    "pieces": 66,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.21
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.041
+     },
+     {
+      "koma": 7,
+      "semitones": 1.58,
+      "weight": 0.065
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.04
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.087
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.1
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.078
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.078
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.085
+     }
+    ]
+   },
+   "saba": {
+    "pieces": 65,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.134
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.083
+     },
+     {
+      "koma": 7,
+      "semitones": 1.58,
+      "weight": 0.112
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.164
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.104
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.063
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.051
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.056
+     },
+     {
+      "koma": 48,
+      "semitones": 10.87,
+      "weight": 0.044
+     }
+    ]
+   },
+   "acemasiran": {
+    "pieces": 63,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.151
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.06
+     },
+     {
+      "koma": 9,
+      "semitones": 2.04,
+      "weight": 0.069
+     },
+     {
+      "koma": 18,
+      "semitones": 4.08,
+      "weight": 0.07
+     },
+     {
+      "koma": 23,
+      "semitones": 5.21,
+      "weight": 0.104
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.084
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.057
+     },
+     {
+      "koma": 40,
+      "semitones": 9.06,
+      "weight": 0.056
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.062
+     }
+    ]
+   },
+   "beyati": {
+    "pieces": 62,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.13
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.049
+     },
+     {
+      "koma": 7,
+      "semitones": 1.58,
+      "weight": 0.056
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.077
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.087
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.151
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.073
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.052
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.059
+     }
+    ]
+   },
+   "buselik": {
+    "pieces": 57,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.124
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.081
+     },
+     {
+      "koma": 9,
+      "semitones": 2.04,
+      "weight": 0.072
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.064
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.091
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.08
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.064
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.079
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.077
+     }
+    ]
+   },
+   "karcigar": {
+    "pieces": 53,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.141
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.06
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.075
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.087
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.122
+     },
+     {
+      "koma": 28,
+      "semitones": 6.34,
+      "weight": 0.036
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.046
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.056
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.071
+     }
+    ]
+   },
+   "hicaz_humayun": {
+    "pieces": 38,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.131
+     },
+     {
+      "koma": 5,
+      "semitones": 1.13,
+      "weight": 0.125
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.108
+     },
+     {
+      "koma": 17,
+      "semitones": 3.85,
+      "weight": 0.053
+     },
+     {
+      "koma": 19,
+      "semitones": 4.3,
+      "weight": 0.062
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.086
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.066
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.084
+     },
+     {
+      "koma": 46,
+      "semitones": 10.42,
+      "weight": 0.057
+     }
+    ]
+   },
+   "acemkurdi": {
+    "pieces": 37,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.13
+     },
+     {
+      "koma": 1,
+      "semitones": 0.23,
+      "weight": 0.055
+     },
+     {
+      "koma": 4,
+      "semitones": 0.91,
+      "weight": 0.059
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.079
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.076
+     },
+     {
+      "koma": 23,
+      "semitones": 5.21,
+      "weight": 0.061
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.068
+     },
+     {
+      "koma": 35,
+      "semitones": 7.92,
+      "weight": 0.085
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.094
+     }
+    ]
+   },
+   "evic": {
+    "pieces": 33,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.167
+     },
+     {
+      "koma": 5,
+      "semitones": 1.13,
+      "weight": 0.084
+     },
+     {
+      "koma": 10,
+      "semitones": 2.26,
+      "weight": 0.051
+     },
+     {
+      "koma": 14,
+      "semitones": 3.17,
+      "weight": 0.102
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.049
+     },
+     {
+      "koma": 27,
+      "semitones": 6.11,
+      "weight": 0.114
+     },
+     {
+      "koma": 36,
+      "semitones": 8.15,
+      "weight": 0.104
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.066
+     },
+     {
+      "koma": 49,
+      "semitones": 11.09,
+      "weight": 0.052
+     }
+    ]
+   },
+   "muhayyerkurdi": {
+    "pieces": 32,
+    "degrees": [
+     {
+      "koma": 0,
+      "semitones": 0.0,
+      "weight": 0.218
+     },
+     {
+      "koma": 4,
+      "semitones": 0.91,
+      "weight": 0.08
+     },
+     {
+      "koma": 13,
+      "semitones": 2.94,
+      "weight": 0.089
+     },
+     {
+      "koma": 22,
+      "semitones": 4.98,
+      "weight": 0.102
+     },
+     {
+      "koma": 31,
+      "semitones": 7.02,
+      "weight": 0.105
+     },
+     {
+      "koma": 32,
+      "semitones": 7.25,
+      "weight": 0.024
+     },
+     {
+      "koma": 35,
+      "semitones": 7.92,
+      "weight": 0.08
+     },
+     {
+      "koma": 41,
+      "semitones": 9.28,
+      "weight": 0.057
+     },
+     {
+      "koma": 44,
+      "semitones": 9.96,
+      "weight": 0.077
+     }
+    ]
+   }
+  }
+ },
+ "pdmx": {
+  "classical": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 75,
+    "median": 120,
+    "p90": 140
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     104
+    ],
+    [
+     "3/4",
+     45
+    ],
+    [
+     "1/8",
+     32
+    ],
+    [
+     "2/2",
+     25
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     327
+    ],
+    [
+     "ensemble",
+     183
+    ],
+    [
+     "pipe",
+     111
+    ],
+    [
+     "strings",
+     81
+    ],
+    [
+     "brass",
+     39
+    ],
+    [
+     "reed",
+     36
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.303,
+    "0.5": 0.324,
+    "0.75": 0.034,
+    "1": 0.237,
+    "1.5": 0.014,
+    "2": 0.072,
+    "3": 0.007,
+    "4": 0.01
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     842
+    ],
+    [
+     "x.x.x.x.",
+     717
+    ],
+    [
+     "x...x...",
+     198
+    ],
+    [
+     "x...x.x.",
+     139
+    ],
+    [
+     "x.xxx.x.",
+     119
+    ],
+    [
+     "x.x.x.xx",
+     117
+    ],
+    [
+     "x.x.x...",
+     106
+    ],
+    [
+     "x.xxx.xx",
+     76
+    ]
+   ]
+  },
+  "folk": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 80,
+    "median": 120,
+    "p90": 132
+   },
+   "time_signatures": [
+    [
+     "1/8",
+     61
+    ],
+    [
+     "1/4",
+     61
+    ],
+    [
+     "4/4",
+     59
+    ],
+    [
+     "2/4",
+     33
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     365
+    ],
+    [
+     "ensemble",
+     29
+    ],
+    [
+     "organ",
+     13
+    ],
+    [
+     "strings",
+     12
+    ],
+    [
+     "brass",
+     12
+    ],
+    [
+     "reed",
+     6
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.146,
+    "0.5": 0.612,
+    "0.75": 0.03,
+    "1": 0.157,
+    "1.5": 0.027,
+    "2": 0.021,
+    "3": 0.006,
+    "4": 0.002
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     292
+    ],
+    [
+     "x.x.x.x.",
+     151
+    ],
+    [
+     "x...x.x.",
+     89
+    ],
+    [
+     "x.xxxxxx",
+     51
+    ],
+    [
+     "x.x.x...",
+     48
+    ],
+    [
+     "x.x.x.xx",
+     47
+    ],
+    [
+     "x.x.xxx.",
+     43
+    ],
+    [
+     "x.xxx.xx",
+     40
+    ]
+   ]
+  },
+  "soundtrack": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 74,
+    "median": 120,
+    "p90": 164
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     188
+    ],
+    [
+     "1/4",
+     31
+    ],
+    [
+     "3/4",
+     30
+    ],
+    [
+     "6/8",
+     15
+    ]
+   ],
+   "instrument_families": [
+    [
+     "strings",
+     524
+    ],
+    [
+     "brass",
+     316
+    ],
+    [
+     "piano",
+     270
+    ],
+    [
+     "reed",
+     185
+    ],
+    [
+     "ensemble",
+     133
+    ],
+    [
+     "guitar",
+     92
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.315,
+    "0.5": 0.494,
+    "0.75": 0.021,
+    "1": 0.128,
+    "1.5": 0.018,
+    "2": 0.017,
+    "3": 0.004,
+    "4": 0.003
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     4387
+    ],
+    [
+     "x.x.x.x.",
+     1035
+    ],
+    [
+     "x...x...",
+     335
+    ],
+    [
+     "xxxxxxx.",
+     244
+    ],
+    [
+     "x.xxxxxx",
+     238
+    ],
+    [
+     "x.x.x...",
+     230
+    ],
+    [
+     "xxxxx.xx",
+     212
+    ],
+    [
+     "xxxxxx.x",
+     196
+    ]
+   ]
+  },
+  "pop": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 70,
+    "median": 120,
+    "p90": 150
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     228
+    ],
+    [
+     "2/4",
+     14
+    ],
+    [
+     "1/4",
+     13
+    ],
+    [
+     "3/4",
+     12
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     392
+    ],
+    [
+     "brass",
+     331
+    ],
+    [
+     "strings",
+     319
+    ],
+    [
+     "reed",
+     186
+    ],
+    [
+     "ensemble",
+     151
+    ],
+    [
+     "bass",
+     87
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.227,
+    "0.5": 0.548,
+    "0.75": 0.031,
+    "1": 0.149,
+    "1.5": 0.022,
+    "2": 0.016,
+    "3": 0.003,
+    "4": 0.004
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     4406
+    ],
+    [
+     "x.x.x.x.",
+     985
+    ],
+    [
+     "x.xxxxxx",
+     665
+    ],
+    [
+     "x.xxx.xx",
+     380
+    ],
+    [
+     "xxxxx.xx",
+     342
+    ],
+    [
+     "x.x.x.xx",
+     342
+    ],
+    [
+     "xxxxxxx.",
+     336
+    ],
+    [
+     "xxxxx.x.",
+     331
+    ]
+   ]
+  },
+  "jazz": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 80,
+    "median": 120,
+    "p90": 180
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     184
+    ],
+    [
+     "3/4",
+     26
+    ],
+    [
+     "2/4",
+     26
+    ],
+    [
+     "1/4",
+     23
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     440
+    ],
+    [
+     "brass",
+     398
+    ],
+    [
+     "reed",
+     234
+    ],
+    [
+     "strings",
+     158
+    ],
+    [
+     "bass",
+     146
+    ],
+    [
+     "guitar",
+     141
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.312,
+    "0.5": 0.422,
+    "0.75": 0.023,
+    "1": 0.192,
+    "1.5": 0.026,
+    "2": 0.018,
+    "3": 0.003,
+    "4": 0.003
+   },
+   "top_bar_figures_8ths": [
+    [
+     "x.x.x.x.",
+     3294
+    ],
+    [
+     "xxxxxxxx",
+     2248
+    ],
+    [
+     "x.xxxxxx",
+     406
+    ],
+    [
+     "x...x...",
+     390
+    ],
+    [
+     "x.x.x...",
+     352
+    ],
+    [
+     "x.x.x.xx",
+     300
+    ],
+    [
+     "xxxxxxx.",
+     293
+    ],
+    [
+     "x...x.x.",
+     268
+    ]
+   ]
+  },
+  "electronic": {
+   "pieces": 300,
+   "tempo_bpm": {
+    "p10": 76,
+    "median": 120,
+    "p90": 165
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     214
+    ],
+    [
+     "3/4",
+     18
+    ],
+    [
+     "2/4",
+     18
+    ],
+    [
+     "1/4",
+     8
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     355
+    ],
+    [
+     "brass",
+     304
+    ],
+    [
+     "strings",
+     288
+    ],
+    [
+     "reed",
+     185
+    ],
+    [
+     "guitar",
+     75
+    ],
+    [
+     "ensemble",
+     69
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.307,
+    "0.5": 0.502,
+    "0.75": 0.032,
+    "1": 0.123,
+    "1.5": 0.014,
+    "2": 0.016,
+    "3": 0.003,
+    "4": 0.003
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     6190
+    ],
+    [
+     "x.x.x.x.",
+     1393
+    ],
+    [
+     "x.xxxxxx",
+     439
+    ],
+    [
+     "x.xxx.xx",
+     416
+    ],
+    [
+     "x...x...",
+     405
+    ],
+    [
+     "xxxx.xxx",
+     316
+    ],
+    [
+     "x...x.x.",
+     314
+    ],
+    [
+     "xxxxxxx.",
+     280
+    ]
+   ]
+  },
+  "worldmusic": {
+   "pieces": 242,
+   "tempo_bpm": {
+    "p10": 75,
+    "median": 120,
+    "p90": 150
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     136
+    ],
+    [
+     "2/4",
+     41
+    ],
+    [
+     "3/4",
+     18
+    ],
+    [
+     "1/4",
+     11
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     430
+    ],
+    [
+     "strings",
+     337
+    ],
+    [
+     "brass",
+     283
+    ],
+    [
+     "reed",
+     153
+    ],
+    [
+     "guitar",
+     100
+    ],
+    [
+     "ensemble",
+     71
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.293,
+    "0.5": 0.525,
+    "0.75": 0.028,
+    "1": 0.113,
+    "1.5": 0.025,
+    "2": 0.011,
+    "3": 0.003,
+    "4": 0.002
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     2535
+    ],
+    [
+     "x.x.x.x.",
+     602
+    ],
+    [
+     "xx.xxxxx",
+     312
+    ],
+    [
+     ".xxxxxxx",
+     267
+    ],
+    [
+     "x.xxxxxx",
+     245
+    ],
+    [
+     "x...x...",
+     204
+    ],
+    [
+     "x..xx..x",
+     199
+    ],
+    [
+     "x.xxx.xx",
+     177
+    ]
+   ]
+  },
+  "rbfunksoul": {
+   "pieces": 150,
+   "tempo_bpm": {
+    "p10": 75,
+    "median": 120,
+    "p90": 164
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     115
+    ],
+    [
+     "1/4",
+     10
+    ],
+    [
+     "2/4",
+     6
+    ],
+    [
+     "2/2",
+     5
+    ]
+   ],
+   "instrument_families": [
+    [
+     "piano",
+     256
+    ],
+    [
+     "brass",
+     249
+    ],
+    [
+     "reed",
+     162
+    ],
+    [
+     "guitar",
+     115
+    ],
+    [
+     "strings",
+     114
+    ],
+    [
+     "ensemble",
+     91
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.235,
+    "0.5": 0.513,
+    "0.75": 0.034,
+    "1": 0.154,
+    "1.5": 0.038,
+    "2": 0.017,
+    "3": 0.005,
+    "4": 0.004
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     1411
+    ],
+    [
+     "x.x.x.x.",
+     539
+    ],
+    [
+     "x..x..xx",
+     367
+    ],
+    [
+     "x.xxx.xx",
+     208
+    ],
+    [
+     "x.xxxxxx",
+     200
+    ],
+    [
+     "x.xx.xxx",
+     148
+    ],
+    [
+     "xxxx.xxx",
+     147
+    ],
+    [
+     "xx.xxxxx",
+     136
+    ]
+   ]
+  },
+  "newage": {
+   "pieces": 20,
+   "tempo_bpm": {
+    "p10": 56,
+    "median": 80,
+    "p90": 120
+   },
+   "time_signatures": [
+    [
+     "4/4",
+     11
+    ],
+    [
+     "6/8",
+     3
+    ],
+    [
+     "2/4",
+     2
+    ],
+    [
+     "7/8",
+     1
+    ]
+   ],
+   "instrument_families": [
+    [
+     "brass",
+     24
+    ],
+    [
+     "piano",
+     22
+    ],
+    [
+     "synth fx",
+     16
+    ],
+    [
+     "strings",
+     13
+    ],
+    [
+     "reed",
+     7
+    ],
+    [
+     "chromatic perc",
+     7
+    ]
+   ],
+   "onset_gap_beats_share": {
+    "0.25": 0.274,
+    "0.5": 0.6,
+    "0.75": 0.017,
+    "1": 0.082,
+    "1.5": 0.013,
+    "2": 0.012,
+    "3": 0.003,
+    "4": 0.0
+   },
+   "top_bar_figures_8ths": [
+    [
+     "xxxxxxxx",
+     162
+    ],
+    [
+     "x.xxxxxx",
+     27
+    ],
+    [
+     "xxxx..x.",
+     26
+    ],
+    [
+     "xxxxxxx.",
+     21
+    ],
+    [
+     "x..xxxxx",
+     20
+    ],
+    [
+     "x.x.xxxx",
+     17
+    ],
+    [
+     "xxxxx.x.",
+     14
+    ],
+    [
+     "x.xxx.xx",
+     14
+    ]
+   ]
+  }
+ }
+}

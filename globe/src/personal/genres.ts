@@ -16,6 +16,8 @@ export interface GenreCard {
   name: string;
   /** the family of sound used by the rest of the page */
   family: Family;
+  /** the shortest routes tick in sixteenths (soundtrack, pop, electronic and baroque lines are about a third sixteenths in the PDMX corpus) */
+  fast?: boolean;
   /** tempo range (bpm); clamped to 76–126 so every piece stays a full-length piece */
   bpm: [number, number];
   /** semitones above the tonic: 5 or 7 notes */
@@ -33,6 +35,8 @@ export interface GenreCard {
   melody: Instrument[];
   pluck: Instrument[];
   perc: Instrument;
+  /** how late the off-eighths lean (fraction of a beat); omitted: the piece's own swing */
+  swing?: number;
 }
 
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -40,8 +44,12 @@ const MAJOR = [0, 2, 4, 5, 7, 9, 11];
 const DORIAN = [0, 2, 3, 5, 7, 9, 10];
 const MIXO = [0, 2, 4, 5, 7, 9, 10];
 const LYDIAN = [0, 2, 4, 6, 7, 9, 11];
-const HICAZ = [0, 1, 4, 5, 7, 8, 10];
-const USSAK = [0, 1, 3, 5, 7, 8, 10];
+// the makams as the SymbTr corpus plays them (semitones above the karar; the intervals are in 53 commas, so not all are equal temperament)
+const HICAZ = [0, 1.13, 3.85, 4.98, 7.02, 9.28, 9.96];
+const USSAK = [0, 1.58, 2.94, 4.98, 7.02, 9.28, 9.96];
+const NIHAVENT = [0, 2.04, 2.94, 4.98, 7.02, 7.92, 10.19];
+const RAST = [0, 2.04, 3.85, 4.98, 7.02, 9.28, 11.09];
+const SEGAH = [0, 1.13, 3.17, 4.98, 6.11, 8.15, 11.09];
 const HARMONIC = [0, 2, 3, 5, 7, 8, 11];
 const BHAIRAV = [0, 1, 4, 5, 7, 8, 11];
 const MINOR_PENT = [0, 3, 5, 7, 10];
@@ -51,12 +59,12 @@ const MIYAKO = [0, 1, 5, 7, 8];
 const PELOG = [0, 1, 3, 7, 8];
 
 export const CARDS: GenreCard[] = [
-  { id: "cinematic", name: "Cinematic orchestra", family: "symphonic", bpm: [84, 108], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.12, 0.9, 0.95, 0.9], held: ["PNO", "CELLO", "VIOLA", "HORN"], melody: ["PNO", "VIOLIN", "HORN", "OBOE"], pluck: ["PNO", "HARP", "VIOLA_PIZZ"], perc: "TIMP" },
+  { id: "cinematic", fast: true, name: "Cinematic orchestra", family: "symphonic", bpm: [84, 108], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.12, 0.9, 0.95, 0.9], held: ["PNO", "CELLO", "VIOLA", "HORN"], melody: ["PNO", "VIOLIN", "HORN", "OBOE"], pluck: ["PNO", "HARP", "VIOLA_PIZZ"], perc: "TIMP" },
   { id: "romantic", name: "Romantic piano", family: "chamber", bpm: [76, 92], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1], accent: [1.15, 0.85, 0.85], held: ["CELLO", "VIOLA", "BSN"], melody: ["PNO", "VIOLIN", "FLUTE"], pluck: ["PNO", "HARP"], perc: "TRI" },
-  { id: "baroque", name: "Baroque strings", family: "chamber", bpm: [92, 120], scale: MINOR, scaleWish: MAJOR, cell: [1, 1], accent: [1.1, 0.9], held: ["CELLO", "VIOLA", "BSN"], melody: ["VIOLIN", "OBOE", "FLUTE", "PNO"], pluck: ["HARP", "VIOLIN_PIZZ", "PNO"], perc: "TRI" },
-  { id: "anatolian", name: "Anatolian folk", family: "folk", bpm: [88, 112], scale: USSAK, scaleWish: HICAZ, cell: [2, 2, 2, 3], accent: [1.2, 0.85, 0.85, 1], prog: [[0, 3], [10, 4], [8, 4], [0, 3]], held: ["NEY", "CELLO", "VIOLA"], melody: ["SAZ", "NEY", "VIOLIN", "PNO"], pluck: ["SAZ", "OUD", "HARP"], perc: "DARBUKA" },
-  { id: "karsilama", name: "Karşılama", family: "folk", bpm: [106, 124], scale: HICAZ, cell: [2, 2, 2, 3], accent: [1.25, 0.8, 0.85, 1.05], prog: [[0, 4], [1, 4], [0, 4], [10, 4]], held: ["CELLO", "VIOLA"], melody: ["CLA", "VIOLIN", "SAZ", "PNO"], pluck: ["SAZ", "HARP"], perc: "DARBUKA" },
-  { id: "arabic", name: "Arabic maqsum", family: "folk", bpm: [84, 104], scale: HICAZ, cell: [1, 1, -1, 1, 1, -1, 1, -1], accent: [1.25, 0.9, 0, 0.95, 1.15, 0, 0.9, 0], prog: [[0, 4], [1, 4], [0, 4], [7, 4]], held: ["NEY", "CELLO", "VIOLA"], melody: ["OUD", "KANUN", "NEY", "PNO"], pluck: ["OUD", "KANUN", "HARP"], perc: "DARBUKA" },
+  { id: "baroque", fast: true, name: "Baroque strings", family: "chamber", bpm: [92, 120], scale: MINOR, scaleWish: MAJOR, cell: [1, 1], accent: [1.1, 0.9], held: ["CELLO", "VIOLA", "BSN"], melody: ["VIOLIN", "OBOE", "FLUTE", "PNO"], pluck: ["HARP", "VIOLIN_PIZZ", "PNO"], perc: "TRI" },
+  { id: "anatolian", name: "Anatolian folk", family: "folk", bpm: [88, 112], scale: USSAK, scaleWish: HICAZ, cell: [2, 1, 1, 1, 1, 1, 1, 1], accent: [1.25, 0.85, 0.9, 0.85, 0.9, 0.85, 0.9, 0.85], prog: [[0, 3], [10, 4], [8, 4], [0, 3]], held: ["NEY", "CELLO", "VIOLA"], melody: ["SAZ", "NEY", "VIOLIN", "PNO"], pluck: ["SAZ", "OUD", "HARP"], perc: "DARBUKA" },
+  { id: "karsilama", name: "Karşılama", family: "folk", bpm: [106, 124], scale: HICAZ, scaleWish: NIHAVENT, cell: [2, 2, 2, 3], accent: [1.25, 0.8, 0.85, 1.05], prog: [[0, 4], [1, 4], [0, 4], [10, 4]], held: ["CELLO", "VIOLA"], melody: ["CLA", "VIOLIN", "SAZ", "PNO"], pluck: ["SAZ", "HARP"], perc: "DARBUKA" },
+  { id: "arabic", name: "Arabic maqsum", family: "folk", bpm: [84, 104], scale: HICAZ, scaleWish: RAST, cell: [1, 1, -1, 1, 1, -1, 1, -1], accent: [1.25, 0.9, 0, 0.95, 1.15, 0, 0.9, 0], prog: [[0, 4], [1, 4], [0, 4], [7, 4]], held: ["NEY", "CELLO", "VIOLA"], melody: ["OUD", "KANUN", "NEY", "PNO"], pluck: ["OUD", "KANUN", "HARP"], perc: "DARBUKA" },
   { id: "hindustani", name: "Indian rupak", family: "folk", bpm: [80, 108], scale: BHAIRAV, scaleWish: LYDIAN, cell: [3, 2, 2], accent: [1.25, 0.9, 0.95], prog: [[0, 4], [5, 4], [0, 4], [7, 4]], held: ["NEY", "VIOLA", "CELLO"], melody: ["KANUN", "FLUTE", "VIOLIN", "PNO"], pluck: ["KANUN", "HARP"], perc: "DARBUKA" },
   { id: "eastasia", name: "East Asian pentatonic", family: "chamber", bpm: [76, 96], scale: MIYAKO, scaleWish: YO, cell: [2, 1, -1, 2], accent: [1.15, 0.9, 0, 1], prog: [[0, 3], [5, 4], [0, 3], [7, 4]], held: ["CELLO", "VIOLA"], melody: ["FLUTE", "PNO", "HARP"], pluck: ["HARP", "GLOCK", "PNO"], perc: "GONG" },
   { id: "gamelan", name: "Gamelan cycle", family: "pulse", bpm: [88, 112], scale: PELOG, scaleWish: MAJOR_PENT, cell: [1, -1, 1, 1], accent: [1.2, 0, 0.9, 1], prog: [[0, 3], [5, 4], [0, 3], [7, 4]], held: ["GONG", "CELLO"], melody: ["GLOCK", "MARIMBA", "XYLO", "PNO"], pluck: ["GLOCK", "MARIMBA", "HARP"], perc: "GONG" },
@@ -70,11 +78,15 @@ export const CARDS: GenreCard[] = [
   { id: "nordic", name: "Nordic ambient", family: "chamber", bpm: [76, 88], scale: DORIAN, scaleWish: LYDIAN, cell: [3, -1, 4, 2], accent: [1.1, 0, 1, 0.9], held: ["CELLO", "VIOLA", "HORN"], melody: ["PNO", "FLUTE", "HARP"], pluck: ["HARP", "GLOCK", "PNO"], perc: "TRI" },
   { id: "slavic", name: "Slavic march & waltz", family: "symphonic", bpm: [92, 118], scale: HARMONIC, scaleWish: MAJOR, cell: [2, 1, 1, 2], accent: [1.2, 0.9, 0.9, 1], held: ["CELLO", "HORN", "BSN"], melody: ["VIOLIN", "CLA", "HORN", "PNO"], pluck: ["HARP", "VIOLA_PIZZ"], perc: "TIMP" },
   { id: "centralasia", name: "Central Asian gallop", family: "folk", bpm: [92, 116], scale: HICAZ, scaleWish: MIXO, cell: [2, 1, 1], accent: [1.2, 0.9, 0.9], prog: [[0, 4], [10, 4], [0, 4], [7, 4]], held: ["NEY", "CELLO"], melody: ["NEY", "KANUN", "SAZ"], pluck: ["SAZ", "KANUN"], perc: "DARBUKA" },
-  { id: "dance", name: "Lively percussion", family: "pulse", bpm: [108, 124], scale: MAJOR_PENT, scaleWish: MAJOR, cell: [1, 1, 2, 1, 1, 2], accent: [1.15, 0.85, 1, 0.85, 0.85, 1], prog: [[0, 4], [7, 4], [9, 3], [5, 4]], held: ["BSN", "CELLO", "HORN"], melody: ["MARIMBA", "XYLO", "PNO"], pluck: ["MARIMBA", "XYLO", "GLOCK"], perc: "CONGA" },
-  { id: "epic", name: "Epic action", family: "symphonic", bpm: [112, 126], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.2, 0.85, 0.95, 0.85], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["VIOLIN", "TPT", "HORN", "PNO"], pluck: ["VIOLA_PIZZ", "HARP", "PNO"], perc: "TIMP" },
+  { id: "dance", fast: true, name: "Lively percussion", family: "pulse", bpm: [108, 124], scale: MAJOR_PENT, scaleWish: MAJOR, cell: [1, 1, 2, 1, 1, 2], accent: [1.15, 0.85, 1, 0.85, 0.85, 1], prog: [[0, 4], [7, 4], [9, 3], [5, 4]], held: ["BSN", "CELLO", "HORN"], melody: ["MARIMBA", "XYLO", "PNO"], pluck: ["MARIMBA", "XYLO", "GLOCK"], perc: "CONGA" },
+  { id: "epic", fast: true, name: "Epic action", family: "symphonic", bpm: [112, 126], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.2, 0.85, 0.95, 0.85], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["VIOLIN", "TPT", "HORN", "PNO"], pluck: ["VIOLA_PIZZ", "HARP", "PNO"], perc: "TIMP" },
   { id: "calm", name: "Calm ambient", family: "chamber", bpm: [76, 84], scale: LYDIAN, scaleWish: MAJOR, cell: [4, 2, 2], accent: [1.1, 0.9, 0.9], prog: [[0, 4], [7, 4], [9, 3], [5, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["PNO", "FLUTE", "GLOCK"], pluck: ["HARP", "GLOCK", "PNO"], perc: "TRI" },
   { id: "mariachi", name: "Caribbean & Mexican", family: "folk", bpm: [100, 120], scale: MIXO, scaleWish: MAJOR, cell: [2, 1, 2, 1, 2, 1], accent: [1.2, 0.8, 1, 0.8, 1, 0.8], prog: [[0, 4], [5, 4], [7, 4], [0, 4]], held: ["CELLO", "BSN"], melody: ["TPT", "VIOLIN", "HARP"], pluck: ["HARP", "VIOLA_PIZZ"], perc: "TAMB" },
-  { id: "persian", name: "Persian dastgah", family: "folk", bpm: [84, 106], scale: USSAK, scaleWish: MAJOR, cell: [2, 1, 2, 1, 1, 1], accent: [1.2, 0.85, 1, 0.85, 0.9, 0.9], prog: [[0, 3], [1, 4], [0, 3], [10, 4]], held: ["NEY", "CELLO"], melody: ["KANUN", "NEY", "VIOLIN", "PNO"], pluck: ["KANUN", "OUD"], perc: "DARBUKA" },
+  { id: "persian", name: "Persian dastgah", family: "folk", bpm: [84, 106], scale: SEGAH, scaleWish: RAST, cell: [3, 2, 1, 1, 1, 1, 1], accent: [1.25, 1, 0.85, 0.9, 0.85, 0.9, 0.85], prog: [[0, 3], [1, 4], [0, 3], [10, 4]], held: ["NEY", "CELLO"], melody: ["KANUN", "NEY", "VIOLIN", "PNO"], pluck: ["KANUN", "OUD"], perc: "DARBUKA" },
+  // from the PDMX bar figures: jazz leans on the off-beat quarters (x.x.x.x.), funk and soul on 3+3+1+1 (x..x..xx), electronic and pop on straight eighths
+  { id: "jazz", name: "Jazz swing", family: "chamber", fast: true, bpm: [100, 126], scale: [0, 2, 3, 5, 7, 9, 10], scaleWish: [0, 2, 4, 5, 7, 9, 10], cell: [2, 1, 2, 1], accent: [1.1, 0.85, 1.05, 0.85], prog: [[0, 3], [5, 4], [7, 4], [0, 3]], held: ["CELLO", "BSN", "VIOLA"], melody: ["PNO", "TPT", "CLA", "FLUTE"], pluck: ["PNO", "VIOLA_PIZZ", "HARP"], perc: "TAMB", swing: 0.22 },
+  { id: "funk", name: "Funk & soul", family: "pulse", bpm: [92, 112], scale: [0, 3, 5, 6, 7, 10], scaleWish: [0, 2, 4, 7, 9], cell: [3, 3, 1, 1], accent: [1.25, 1.05, 0.9, 1.1], prog: [[0, 3], [5, 3], [0, 3], [7, 4]], held: ["BSN", "CELLO"], melody: ["PNO", "TPT", "CLA"], pluck: ["PNO", "MARIMBA", "XYLO"], perc: "CONGA", swing: 0.12 },
+  { id: "pop", name: "Electro pop", family: "pulse", fast: true, bpm: [104, 124], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1, 1, 1, 1, 1], accent: [1.15, 0.8, 1, 0.8, 1.05, 0.8, 1, 0.8], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["PNO", "FLUTE", "XYLO", "VIOLIN"], pluck: ["PNO", "GLOCK", "MARIMBA"], perc: "TAMB" },
 ];
 
 const byId = (id: string): GenreCard => CARDS.find((c) => c.id === id) ?? CARDS[0];
@@ -85,16 +97,16 @@ const BY_ISO: Record<string, string[]> = {
   EG: ["arabic"], SA: ["arabic"], AE: ["arabic"], QA: ["arabic"], KW: ["arabic"], BH: ["arabic"], OM: ["arabic"], JO: ["arabic"], LB: ["arabic"], SY: ["arabic"], IQ: ["arabic"], YE: ["arabic"], MA: ["arabic", "flamenco"], DZ: ["arabic"], TN: ["arabic"], LY: ["arabic"], SD: ["arabic"],
   IR: ["persian"], AF: ["persian", "centralasia"], KZ: ["centralasia"], UZ: ["centralasia"], KG: ["centralasia"], TM: ["centralasia"], TJ: ["centralasia"], AZ: ["centralasia", "anatolian"], GE: ["centralasia", "slavic"], AM: ["slavic", "anatolian"],
   IN: ["hindustani"], PK: ["hindustani"], BD: ["hindustani"], LK: ["hindustani"], NP: ["hindustani"], MV: ["hindustani"],
-  JP: ["eastasia"], CN: ["eastasia"], KR: ["eastasia"], TW: ["eastasia"], HK: ["eastasia"], MN: ["eastasia", "centralasia"], VN: ["eastasia", "gamelan"],
+  JP: ["eastasia", "pop"], CN: ["eastasia"], KR: ["pop", "eastasia"], TW: ["eastasia"], HK: ["eastasia"], MN: ["eastasia", "centralasia"], VN: ["eastasia", "gamelan"],
   ID: ["gamelan"], TH: ["gamelan"], MY: ["gamelan"], SG: ["gamelan", "eastasia"], PH: ["gamelan", "mariachi"], KH: ["gamelan"], LA: ["gamelan"], MM: ["gamelan"],
   NG: ["westafrica"], GH: ["westafrica"], SN: ["westafrica"], CI: ["westafrica"], ML: ["westafrica"], GM: ["westafrica"], GN: ["westafrica"], SL: ["westafrica"], LR: ["westafrica"], BF: ["westafrica"], BJ: ["westafrica"], TG: ["westafrica"], CM: ["westafrica"], GA: ["westafrica"], CG: ["westafrica"], CD: ["westafrica", "eastafrica"],
   KE: ["eastafrica"], TZ: ["eastafrica"], UG: ["eastafrica"], RW: ["eastafrica"], ET: ["eastafrica"], ZA: ["eastafrica"], ZW: ["eastafrica"], ZM: ["eastafrica"], MZ: ["eastafrica"], AO: ["eastafrica", "bossa"], MG: ["eastafrica"], MU: ["eastafrica"], SO: ["eastafrica"], DJ: ["eastafrica"], NA: ["eastafrica"], BW: ["eastafrica"],
   CU: ["salsa", "mariachi"], CO: ["salsa"], PR: ["salsa"], DO: ["salsa"], VE: ["salsa"], PA: ["salsa"], CR: ["salsa"], EC: ["salsa"], PE: ["salsa", "mariachi"], JM: ["mariachi", "salsa"], TT: ["mariachi"], MX: ["mariachi"], GT: ["mariachi"], HN: ["mariachi"], SV: ["mariachi"], NI: ["mariachi"], CW: ["mariachi", "salsa"], AW: ["mariachi"], BS: ["mariachi"],
-  BR: ["bossa"], PT: ["bossa", "romantic"], AR: ["tango"], UY: ["tango"], CL: ["tango", "bossa"], PY: ["tango"], BO: ["tango", "mariachi"],
-  ES: ["flamenco"], IE: ["celtic"], GB: ["celtic", "romantic", "cinematic"], IS: ["nordic"], NO: ["nordic"], SE: ["nordic"], FI: ["nordic"], DK: ["nordic"], EE: ["nordic"], LV: ["nordic"], LT: ["nordic"],
+  BR: ["bossa", "funk"], PT: ["bossa", "romantic"], AR: ["tango"], UY: ["tango"], CL: ["tango", "bossa"], PY: ["tango"], BO: ["tango", "mariachi"],
+  ES: ["flamenco"], IE: ["celtic"], GB: ["celtic", "pop", "romantic", "cinematic"], IS: ["nordic"], NO: ["nordic"], SE: ["nordic", "pop"], FI: ["nordic"], DK: ["nordic"], EE: ["nordic"], LV: ["nordic"], LT: ["nordic"],
   RU: ["slavic"], UA: ["slavic"], BY: ["slavic"], PL: ["slavic", "romantic"], CZ: ["baroque", "slavic"], SK: ["slavic"], HU: ["slavic", "romantic"], RO: ["slavic", "karsilama"], MD: ["slavic"], HR: ["slavic"], SI: ["baroque"], ME: ["slavic"],
-  DE: ["baroque", "romantic"], AT: ["baroque", "romantic"], IT: ["baroque", "romantic"], FR: ["romantic", "baroque"], CH: ["baroque"], NL: ["baroque"], BE: ["baroque", "romantic"], LU: ["romantic"], MT: ["baroque"], CY: ["anatolian", "karsilama"],
-  US: ["cinematic", "dance"], CA: ["cinematic", "nordic"], AU: ["cinematic", "dance"], NZ: ["cinematic", "nordic"],
+  DE: ["baroque", "romantic", "pop"], AT: ["baroque", "romantic"], IT: ["baroque", "romantic"], FR: ["romantic", "jazz", "baroque"], CH: ["baroque"], NL: ["baroque", "pop"], BE: ["baroque", "romantic"], LU: ["romantic"], MT: ["baroque"], CY: ["anatolian", "karsilama"],
+  US: ["cinematic", "jazz", "funk", "pop"], CA: ["cinematic", "nordic", "jazz"], AU: ["cinematic", "pop"], NZ: ["cinematic", "nordic"],
 };
 const BY_REGION: Record<string, string[]> = {
   DOM: ["anatolian", "karsilama"], EUR: ["romantic", "baroque", "cinematic"], MEA: ["arabic", "persian"], AFR: ["westafrica", "eastafrica"], ASI: ["eastasia", "gamelan", "hindustani", "centralasia"], AME: ["cinematic", "salsa", "bossa", "mariachi"], UNK: ["cinematic"],
@@ -108,7 +120,7 @@ export function cardsOfAirport(iata: string, region: string): GenreCard[] {
 
 /** a calm piece for few routes, a lively one for many */
 function generic(n: number): GenreCard[] {
-  return (n <= 2 ? ["calm", "nordic", "romantic"] : n <= 5 ? ["cinematic", "romantic", "calm"] : n <= 9 ? ["cinematic", "baroque", "dance"] : ["dance", "epic", "cinematic"]).map(byId);
+  return (n <= 2 ? ["calm", "nordic", "romantic"] : n <= 5 ? ["cinematic", "romantic", "calm"] : n <= 9 ? ["cinematic", "baroque", "dance", "jazz"] : ["dance", "pop", "epic", "cinematic"]).map(byId);
 }
 
 export interface CardPlan {
