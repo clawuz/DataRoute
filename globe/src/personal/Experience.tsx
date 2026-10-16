@@ -223,7 +223,7 @@ export function Experience({ selection, onBack }: Props) {
 
   const url = () => `${window.location.origin}${window.location.pathname}${searchFromSelection(selection)}`;
   const share = async () => {
-    const data = { title: "A World of Music", text: `${stats.title} — my piece of A World of Music`, url: url() };
+    const data = { title: "A World of Music", text: `${stats.title} · I turned my journey into music. A World of Music, by Turkish Airlines`, url: url() };
     try {
       if (navigator.share) {
         await navigator.share(data);
@@ -247,7 +247,7 @@ export function Experience({ selection, onBack }: Props) {
     const touch = typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
     if (chooseDelivery(touch, !!navigator.canShare?.({ files: [file] })) === "share") {
       try {
-        await navigator.share({ files: [file], title, text: `${stats.title} — ${url()}` });
+        await navigator.share({ files: [file], title, text: `${stats.title} · I turned my journey into music. A World of Music, by Turkish Airlines — ${url()}` });
         return;
       } catch (e) {
         if ((e as { name?: string }).name === "AbortError") return; // the sheet was dismissed

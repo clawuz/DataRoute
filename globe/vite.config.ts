@@ -12,12 +12,18 @@ export default defineConfig({
       name: "personal-meta",
       transformIndexHtml(html) {
         if (process.env.VITE_PERSONAL !== "1") return html;
+        const DESC = "Every journey has a sound. Turn the places you have been, or dream of, into music and share it. Turkish Airlines: 355 destinations · 133 countries.";
+        const URL = "https://worldofmusic-tk.web.app";
         return html
           .replace(/<title>.*<\/title>/, "<title>A World of Music · Turkish Airlines</title>")
-          .replace(/(<meta name="description" content=")[^"]*/, "$1Turn the places you have been, or dream of, into music. Turkish Airlines, flying to more countries than any other airline in the world.")
+          .replace(/(<meta name="description" content=")[^"]*/, "$1" + DESC)
           .replace(/(<meta property="og:title" content=")[^"]*/, "$1A World of Music · Turkish Airlines")
-          .replace(/(<meta property="og:description" content=")[^"]*/, "$1Every journey has a sound. Choose yours.")
-          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, "https://worldofmusic-tk.web.app/og-world.jpg"); // a new file name: chat apps keep the old image of a link in their cache
+          .replace(/(<meta property="og:description" content=")[^"]*/, "$1" + DESC)
+          .replace(/https:\/\/dataroute-tk\.web\.app\/og\.jpg/g, URL + "/og-world.jpg") // a new file name: chat apps keep the old image of a link in their cache
+          .replace(
+            '<meta name="twitter:card"',
+            `<meta property="og:site_name" content="Turkish Airlines" />\n    <meta property="og:url" content="${URL}/" />\n    <meta property="og:locale" content="en" />\n    <meta property="og:image:alt" content="Turkish Airlines — A World of Music: every journey has a sound. Choose yours." />\n    <meta name="twitter:title" content="A World of Music · Turkish Airlines" />\n    <meta name="twitter:description" content="${DESC}" />\n    <meta name="twitter:card"`,
+          );
       },
     },
   ],
