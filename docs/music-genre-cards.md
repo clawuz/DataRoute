@@ -96,3 +96,21 @@ Bulgular ve kartlara yansıması:
 - **Nota aralıkları (PDMX):** gerçek müzikte iki nota arası genelde 0,25–1 vuruş. Soundtrack, pop, elektronik ve barokta 16'lıklar yaygın (yaklaşık %30), halkta sekizlik baskın (%61). Bu yüzden hareketli kartlarda en kısa rotalar 16'lık (`fast`) çalıyor.
 - **Bar figürleri (PDMX):** caz `x.x.x.x.` (zayıf vuruşlara yaslanan çeyreklikler) baskın, funk/soul `x..x..xx` (3+3+1+1), elektronik/pop düz sekizlik `xxxxxxxx`. Üç yeni kart: **Jazz swing**, **Funk & soul**, **Electro pop**.
 - **Güvenilmeyen alan:** PDMX tempo bilgisi MuseScore'un varsayılan 120 bpm'ine yığıldığı için kullanılmadı. Tür başına enstrüman dağılımı da MIDI programlarının kabaca bir yansıması, yalnızca not düşüldü.
+
+## 7. Pop düzenlemesi (2026-10-16)
+
+Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyulsun. Her rota hâlâ tek bir ses, ama roller artık bir şarkının rolleri:
+
+| Rota (uzundan kısaya) | Rol | Ne çalıyor |
+|---|---|---|
+| en uzun | pad | akor, 1. ve 3. vuruşta yeniden vurulur |
+| 2. | bass | karttaki figürün güçlü yerlerinde kök notalar |
+| 3. | hook | iki ölçülük bir cümle (A B A B′), nakarat bölümünde oktav yukarıda ve hep çalar |
+| 4. | pluck | sekizliklerle akor arpeji (piyano / arp) |
+| sonrakiler | kick, backbeat, hat | 1-3, 2-4 ve sekizlikler (perküsyon) |
+
+- Çok rotada roller ikişer kez çalınır; ikinci ses yalnızca "build" ve nakaratta katılır.
+- Ana kartın ritim figürü bir ölçüye (4 vuruş) sığdırılır: bass ve hook bu zemine oturur (aksak, clave, maqsum feel).
+- Akor ilerlemesi 4 akor, her biri 1 ölçü (i–VI–III–VII, I–V–vi–IV gibi); kartta özel ilerleme varsa o.
+- Form: intro (pad, bass, arpej, hat) → verse (hook yarım) → build (kick her vuruş) → chorus (hepsi) → break (pad, hook, hat) → outro.
+- Nota süresi sırası: pad > bass ≈ hook > arpej > perküsyon; yani uzun rota uzun nota.

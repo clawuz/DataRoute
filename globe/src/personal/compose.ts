@@ -230,28 +230,30 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const prog: Chord[] = plan.main.prog ? plan.main.prog.map(([off, third]) => ({ root: KEY_ROOT + off, third })) : PROGS[mode][st.progression];
   const notes: PersonalNote[] = [];
 
-  // roles by the length of the route
-  const sorted = routes.map((r, i) => ({ i, d: r.distKm })).sort((a, b) => a.d - b.d || a.i - b.i);
-  const rank = new Map<number, number>();
-  sorted.forEach((x, k) => rank.set(x.i, n < 2 ? 0.5 : k / (n - 1)));
-  const roles: Role[] = routes.map((_, i) => {
-    const rk = rank.get(i) ?? 0.5;
-    if (n === 1) return "melody";
-    if (n === 2) return rk < 0.5 ? "pluck" : "melody";
-    if (rk >= 0.67) return "held";
-    if (rk < 0.25 && n >= 4) return "perc";
-    return rk < 0.5 ? "pluck" : "melody";
-  });
-  let heldIdx = 0;
-  const heldSlot = roles.map((r) => (r === "held" ? heldIdx++ : -1));
-  // routes come in one after another over the first 4 to 12 bars (the more routes, the faster) (the AI pieces start already at a quarter to a half of their
-  // loudest) and play to the end, which stays at about 60 %
-  // a busy selection comes in faster: the routes are all in within the first four bars; a few routes take twelve
-  const entry = routes.map((_, i) => Math.floor((i * (n > 6 ? 4 : n > 3 ? 8 : 12)) / n));
-  const exit = routes.map(() => BARS + 1);
-  // a route's phrase is one flight: take-off, climb, cruise, descent, landing — longer for a longer route
+  // ---- the arrangement of a popular song, made of the routes ----
+  // The longest route holds the chords, the next one plays the bass, the middle ones carry the hook and the arpeggio,
+  // the shortest ones are the drums: kick, backbeat, hat. A bar of the main genre card is the groove the bass and the hook
+  // ride on, the progression is four chords of one bar each, the hook is a short phrase that comes back, and the form
+  // brings the voices in and takes them out (intro, verse, build, chorus, break, outro).
+  type PopRole = "pad" | "bass" | "hook" | "pluck" | "backbeat" | "kick" | "hat";
+  const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i); // longest first
+  const rank = new Map<number, number>(); // 1 = the longest
+  order.forEach((x, k) => rank.set(x.i, n < 2 ? 0.5 : 1 - k / (n - 1)));
+  const BASE: PopRole[] = ["pad", "bass", "hook", "pluck", "kick", "backbeat", "hat"];
+  const SMALL: Record<number, PopRole[]> = {
+    2: ["bass", "hook"],
+    3: ["bass", "hook", "pluck"],
+    4: ["pad", "bass", "hook", "pluck"],
+    5: ["pad", "bass", "hook", "pluck", "kick"],
+    6: ["pad", "bass", "hook", "pluck", "kick", "backbeat"],
+  };
+  const seq: PopRole[] = n <= 6 ? SMALL[n] : order.map((_, k) => BASE[Math.floor((k * 7) / n)]);
+  const role: PopRole[] = new Array(n);
+  order.forEach((x, k) => (role[x.i] = seq[k]));
+  // the second, third … route with the same role: a second voice that joins in the chorus and the build
+  const occ: number[] = routes.map((_, i) => role.slice(0, i).filter((q) => q === role[i]).length);
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
-  const phaseAt = (i: number, b: number, frac: number): number => ((((b - entry[i]) % phraseBars[i]) + phraseBars[i]) % phraseBars[i] + frac) / phraseBars[i];
+  const phaseAt = (i: number, b: number, frac: number): number => ((((b % phraseBars[i]) + phraseBars[i]) % phraseBars[i]) + frac) / phraseBars[i];
 
   const fit = (f: number, inst: Instrument): number => {
     const cap = CEILING[inst];
@@ -265,13 +267,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm) });
   };
 
-  // every route gets its own instrument where its region has enough of them
+  // every route gets its own instrument where its card has enough of them
   const taken = new Set<string>();
   let pianos = 0;
-  const choose = (list: Instrument[], h: number, i: number, role: string): Instrument => {
-    // the piano is a prominent voice: two routes may take it (a singing one and a plucking one); the other instruments
-    // are not repeated
-    if (list.includes("PNO") && pianos < 2 && (role === "melody" || role === "pluck") && (pianos === 0 || role === "pluck")) {
+  const choose = (list: Instrument[], h: number, i: number, kind: "melody" | "pluck" | "other"): Instrument => {
+    // the piano is a prominent voice: a hook and an arpeggio may take it; the other instruments are not repeated
+    if (list.includes("PNO") && pianos < 2 && kind !== "other" && (pianos === 0 || kind === "pluck")) {
       pianos++;
       return "PNO";
     }
@@ -284,132 +285,158 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     }
     return list[(h + st.ensemble + i) % list.length];
   };
-  const voiceOf = routes.map((r, i) => {
+  const voiceOf: Instrument[] = routes.map((r, i) => {
     const h = routeHash(r.key + i);
-    const role = roles[i];
     const card = plan.perRoute[i];
-    if (role === "held") return choose(card.held, h, i, role);
-    if (role === "melody") return choose(card.melody, h, i, role);
-    if (role === "pluck") return choose(card.pluck, h, i, role);
-    return card.perc;
+    const folkish = card.family === "folk" || card.family === "pulse";
+    switch (role[i]) {
+      case "pad": return choose(card.held, h, i, "other");
+      case "bass": return choose(card.held.filter((x) => x !== "PNO"), h, i + 1, "other");
+      case "hook": return choose(card.melody, h, i, "melody");
+      case "pluck": return choose(card.pluck, h, i, "pluck");
+      case "backbeat": return card.perc;
+      case "kick": return folkish ? card.perc : "TIMP";
+      default: return folkish && card.perc !== "DARBUKA" ? card.perc : "TRI";
+    }
   });
-
-  // with more than three routes the piano is always there, as a steady voice (a plucking route first, else a singing one)
+  // with more than three routes the piano is always there, as a steady voice (the arpeggio first, else the hook)
   if (n > 3 && !voiceOf.includes("PNO")) {
-    const pick = (role: Role): number => roles.reduce((best, r, i) => (r === role && (best < 0 || (rank.get(i) ?? 0) > (rank.get(best) ?? 0)) ? i : best), -1);
-    const at = pick("pluck") >= 0 ? pick("pluck") : pick("melody");
+    const at = role.indexOf("pluck") >= 0 ? role.indexOf("pluck") : role.indexOf("hook");
     if (at >= 0) voiceOf[at] = "PNO";
   }
 
-  let hook = 0;
-  // per-voice walk state
-  const deg = routes.map((r, i) => routeHash(r.key + i) % scale.length);
-
-  // the note-value ladder: a route plays ONE note value for the whole piece, and the value follows its length — the
-  // shortest route ticks in eighths, the longest holds three beats. Many routes are many layered pulses.
-  // lively cards start a step lower: the shortest routes tick in sixteenths
-  const VALUES = plan.main.fast ? [0.25, 0.5, 0.75, 1, 2, 3] : [0.5, 0.75, 1, 1.5, 2, 3]; // in beats
-  const spread = Math.min(1, (n - 1) / 4);
-  const valueOf = routes.map((_, i) => VALUES[clamp(Math.round(2.5 + ((rank.get(i) ?? 0.5) - 0.5) * 5 * spread), 0, 5)]);
-  // the first chorus bar is where the hook lies
+  // the groove of one bar: the figure of the main card, stretched to four beats
+  const fig = plan.main.cell;
+  const figTotal = fig.reduce((x, y) => x + Math.abs(y), 0);
+  const slots: { start: number; len: number; hit: boolean; accent: number }[] = [];
   {
     let at = 0;
-    for (const [name, m] of FORM) {
-      if (name === "chorus") {
-        hook = at * bar;
-        break;
+    fig.forEach((c, k) => {
+      const len = (Math.abs(c) / figTotal) * 4;
+      slots.push({ start: at, len, hit: c > 0, accent: plan.main.accent?.[k] || 1 });
+      at += len;
+    });
+  }
+  const hits = slots.filter((x) => x.hit);
+  const strong = hits.filter((x, k) => k === 0 || x.accent >= 1.1).slice(0, 4);
+  const swingAmt = plan.main.swing ?? st.swing;
+  const POP_PROGS: Record<PersonalMode, [number, 3 | 4][][]> = {
+    visited: [[[0, 3], [8, 4], [3, 4], [10, 4]], [[0, 3], [10, 4], [8, 4], [10, 4]], [[0, 3], [5, 3], [8, 4], [7, 4]], [[0, 3], [8, 4], [3, 4], [7, 4]]],
+    wish: [[[0, 4], [7, 4], [9, 3], [5, 4]], [[9, 3], [5, 4], [0, 4], [7, 4]], [[0, 4], [9, 3], [5, 4], [7, 4]], [[0, 4], [5, 4], [9, 3], [7, 4]]],
+  };
+  const popProg: Chord[] = (plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third }));
+
+  // the hook of each hook route: two bars of scale degrees (an arch that comes back to a chord tone), built from the route
+  const L = scale.length;
+  const motifs = routes.map((r, i) => {
+    if (role[i] !== "hook") return null;
+    const hh = routeHash(r.key + "hook" + i);
+    const rnd = rng(hh);
+    const dir = r.toLon >= r.fromLon ? 1 : -1;
+    const make = (end: number): number[] => {
+      const out: number[] = [];
+      let d = [0, 2, 4][Math.floor(rnd() * 3)] + (occ[i] % 2) * 2;
+      for (let k = 0; k < hits.length; k++) {
+        out.push(d);
+        const step = rnd() < 0.7 ? dir : -dir;
+        d += rnd() < 0.18 ? step * 2 : step * (rnd() < 0.8 ? 1 : 0);
+        if (d > 7) d -= 2;
+        if (d < -2) d += 2;
       }
+      out[out.length - 1] = end;
+      return out;
+    };
+    return [make(2), make(0), make(2), make(4)] as number[][]; // four bars: A B A B′
+  });
+
+  const ACTIVE: Record<Section, PopRole[]> = {
+    intro: ["pad", "bass", "pluck", "hat"],
+    verse: ["pad", "bass", "pluck", "backbeat", "kick", "hat", "hook"],
+    build: ["pad", "bass", "hook", "pluck", "backbeat", "kick", "hat"],
+    chorus: ["pad", "bass", "hook", "pluck", "backbeat", "kick", "hat"],
+    break: ["pad", "hook", "hat"],
+    outro: ["pad", "bass", "pluck"],
+  };
+  const hookStart = (() => {
+    let at = 0;
+    for (const [name, m] of FORM) {
+      if (name === "chorus") return at * bar;
       at += m;
     }
-  }
-  const END = BARS * bar;
-  for (let i = 0; i < n; i++) {
-    const r = routes[i];
-    const h = routeHash(r.key + i);
-    const role = roles[i];
-    const rk = rank.get(i) ?? 0.5;
-    const dir = r.toLon >= r.fromLon ? 1 : -1;
-    const stepSize = r.distKm < 1500 ? 1 : r.distKm < 4000 ? 2 : 3;
-    const inst = voiceOf[i];
-    const val = valueOf[i] * beat;
-    const orchestral = st.genre === "symphonic" || st.genre === "chamber";
-    // a percussion route hits on its value but only on the strong places, so the drums stay sparing
-    const hit = role === "perc" ? val * 2 : val;
-    let a = 0;
-    let k = 0;
-    // the figure of the route comes from its genre card (an aksak 9/8, a clave, a bell pattern); its unit is set so that
-    // the average note is the route's note value. A rest lets the note before it ring on. A chord-holding route has none.
-    const card = plan.perRoute[i];
-    const fig = role === "held" ? [1] : card.cell;
-    const acc = role === "held" ? [1] : card.accent ?? fig.map(() => 1);
-    const unit = hit / (fig.reduce((x, y) => x + Math.abs(y), 0) / fig.length);
-    const start0 = role === "held" ? 0 : (h >>> 9) % fig.length;
-    // which routes are heard in which section: the verse thins, the break nearly empties, the chorus has them all
-    const heard = (sec: Section): boolean => {
-      if (n <= 3 || role === "held") return sec !== "break" || heldSlot[i] === 0 || i % 4 === 0;
-      if (sec === "intro") return n > 6 ? i % 3 !== 2 : i % 3 === 0;
-      if (sec === "verse") return i % 3 !== 1;
-      if (sec === "break") return i % 4 === 0;
-      if (sec === "outro") return i % 2 === 0;
-      return true;
-    };
-    for (let tc = entry[i] * bar; tc < END - 1e-6; k++) {
-      const slot = (start0 + k) % fig.length;
-      const len = Math.abs(fig[slot]) * unit;
-      const t = tc;
-      tc += len;
-      const b = Math.min(BARS - 1, Math.floor(t / bar));
-      const { section } = sectionOf(b);
-      if (fig[slot] < 0 || !heard(section)) continue;
-      const firstOfBar = t - b * bar < len * 0.999;
-      const nx = fig[(slot + 1) % fig.length];
-      const level = LEVEL[section];
-      const fade = section === "outro" ? 1 - ((b - sectionOf(b).first) / sectionOf(b).len) * 0.25 : 1;
-      const v = (x: number): number => x * level * fade;
-      const chord = prog[Math.floor(b / 2) % prog.length];
-      const cr = chord.root + st.shift;
-      const tones = [0, chord.third, 7].map((x) => cr + x);
-      const p = phaseAt(i, b, (t - b * bar) / bar);
-      // take-off and landing are sparse and soft, the climb and the cruise are full
-      if (role !== "held" && role !== "perc" && (p < 0.12 || p > 0.9) && k % 2 === 1) continue;
-      const flight = 0.6 + 0.4 * Math.sin(Math.PI * p);
-      const accent = acc[slot] || 1;
-      const dur = Math.max(0.1, len * 0.95 + (nx < 0 ? Math.abs(nx) * unit * 0.95 : 0));
-      // the weak places of a short note lean back a little
-      const tAt = t + (k % 2 === 1 && valueOf[i] <= 1 ? (card.swing ?? st.swing) * len * 0.33 : 0);
-      if (role === "held") {
-        // the chord, one tone per long route
-        const slot = heldSlot[i];
-        const tone = tones[slot % 3] + (slot >= 3 ? 12 : 0);
-        push(i, tAt, dur, inst, hz(tone), v((0.4 + 0.12 * rk) * flight * accent), p);
-      } else if (role === "melody") {
-        deg[i] += dir * stepSize * (k % 3 === 0 ? 1 : 0) + (k % 2 === 0 ? 0 : dir);
-        // the line climbs with the aircraft: the altitude of this moment of the flight lifts the walk up to an octave
-        const lift = Math.round((altitudeFt(p, r.distKm) / 39000) * 5);
-        const w = ((deg[i] % scale.length) + scale.length) % scale.length;
-        // two flights at the same altitude are not the same note: each route sits at its own degree of the scale
-        const total = w + lift + ((i * 2) % 5);
-        let semis = KEY_ROOT + st.shift - 12 + scale[total % scale.length] + 12 * Math.floor(total / scale.length);
-        if (firstOfBar) {
-          // the first note of a bar rests on its own chord tone (root, third, fifth by route)
-          let best = semis;
-          let bd = Infinity;
-          for (const o of [-12, 0, 12, 24]) {
-            const c2 = tones[i % 3] + o;
-            const dd = Math.abs(c2 - semis);
-            if (dd < bd) { bd = dd; best = c2; }
+    return 0;
+  })();
+  const hook = hookStart;
+  const deg = routes.map(() => 0);
+
+  for (let b = 0; b < BARS; b++) {
+    const { section, first, len: slen } = sectionOf(b);
+    const t0 = b * bar;
+    const level = LEVEL[section];
+    const fade = section === "outro" ? 1 - ((b - first) / slen) * 0.3 : 1;
+    const v = (x: number): number => x * level * fade;
+    const chord = popProg[b % popProg.length];
+    const cr = chord.root + st.shift;
+    const tones = [0, chord.third, 7].map((x) => cr + x);
+    const full = section === "chorus" || section === "build";
+    for (let i = 0; i < n; i++) {
+      const rl = role[i];
+      if (!ACTIVE[section].includes(rl)) continue;
+      // a second voice of a role only joins in the chorus and the build
+      if (occ[i] > 0 && !full) continue;
+      const r = routes[i];
+      const inst = voiceOf[i];
+      const rk = rank.get(i) ?? 0.5;
+      const p0 = phaseAt(i, b, 0);
+      if (rl === "pad") {
+        // the chord, re-struck on beats one and three, one tone per pad route, rolled a little
+        [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9, inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), v(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
+      } else if (rl === "bass") {
+        const roots = strong.length ? strong : [slots[0]];
+        roots.forEach((sl, k) => {
+          const next = roots[k + 1]?.start ?? 4;
+          const tone = (b % 4 === 3 && k === roots.length - 1 ? tones[2] : tones[0]) - 12 + (occ[i] > 0 ? 12 : 0);
+          push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92, inst, hz(tone), v(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
+        });
+      } else if (rl === "hook") {
+        // in the verse the hook only answers (two bars of four); in the chorus it is there all the time
+        if (section === "verse" && b % 4 >= 2) continue;
+        const m = motifs[i]![b % 4];
+        let hi = 0;
+        slots.forEach((sl, k) => {
+          if (!sl.hit) return;
+          const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * 3);
+          const total = m[hi] + lift + (section === "chorus" ? L : 0) + (occ[i] > 0 ? 2 : 0);
+          hi++;
+          let semis = KEY_ROOT + st.shift + scale[((total % L) + L) % L] + 12 * Math.floor(total / L);
+          // the strong places of the groove rest on a chord tone
+          if (sl.accent >= 1.1 || hi === 1) {
+            let best = semis;
+            let bd = Infinity;
+            for (const tn of tones) for (const o of [-12, 0, 12]) {
+              const c2 = tn + o;
+              const dd = Math.abs(c2 - semis);
+              if (dd < bd) { bd = dd; best = c2; }
+            }
+            if (bd <= 1.5) semis = best;
           }
-          semis = best;
+          const nextRest = slots[k + 1] && !slots[k + 1].hit ? slots[k + 1].len : 0;
+          push(i, t0 + sl.start * beat + (k % 2 ? swingAmt * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95, inst, hz(semis), v((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
+        });
+      } else if (rl === "pluck") {
+        const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
+        for (let e = 0; e < 8; e++) {
+          const p = phaseAt(i, b, e / 8);
+          const tone = tones[seqTones[(e + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+          push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.48, inst, hz(tone), v(e % 4 === 0 ? 0.42 : 0.3), p);
         }
-        push(i, tAt, dur, inst, hz(semis), v((0.62 + 0.28 * (1 - rk)) * flight * accent), p);
-      } else if (role === "pluck") {
-        const order = (dir > 0 ? [0, 1, 2, 1] : [2, 1, 0, 1]).map((x) => (x + i) % 3);
-        const tone = tones[order[a++ % order.length]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-        push(i, tAt, dur, inst, hz(tone), v((0.34 + 0.12 * (firstOfBar ? 1 : 0)) * flight * accent), p);
+      } else if (rl === "backbeat") {
+        [1, 3].forEach((bt) => push(i, t0 + bt * beat, beat * 0.35, inst, 200, v(0.55), phaseAt(i, b, bt / 4)));
+        if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, v(0.4), phaseAt(i, b, 0.9));
+      } else if (rl === "kick") {
+        const beats = section === "build" ? [0, 1, 2, 3] : [0, 2];
+        beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
-        const strong = firstOfBar || k % 2 === 0;
-        const vel = inst === "DARBUKA" ? (k % 4 === 0 ? 0.88 : strong ? 0.6 : 0.3) : strong ? 0.55 : 0.32;
-        push(i, t, hit * 0.5, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(orchestral && k % 2 ? vel * 0.7 : vel), p);
+        for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, v(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
       }
     }
   }

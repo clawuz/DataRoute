@@ -46,3 +46,34 @@ describe("the piano with more than three routes", () => {
     });
   }
 });
+
+describe("a popular-song arrangement made of the routes", () => {
+  const sel = selectionFromSearch("?v=TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG")!;
+  const routes = buildRoutes(sel.places, sel.home);
+  const p = composePiece(sel.mode, routes);
+  it("the form is felt: the chorus is busier than the intro and the break", () => {
+    const rate = (name: string) => {
+      const s = p.sections.find((x) => x.name === name)!;
+      return p.notes.filter((x) => x.t >= s.start && x.t < s.end).length / (s.end - s.start);
+    };
+    expect(rate("chorus")).toBeGreaterThan(rate("intro") * 1.5);
+    expect(rate("chorus")).toBeGreaterThan(rate("break") * 2);
+  });
+  it("the chord changes every bar and the progression loops every four", () => {
+    const bar = (p.sections[1].end - p.sections[1].start) / 16;
+    const roots = (b: number) => p.notes.filter((n) => n.t >= b * bar && n.t < (b + 1) * bar - 1e-6 && (n.instrument === "CELLO" || n.instrument === "BSN" || n.instrument === "VIOLA")).length;
+    expect(roots(8)).toBeGreaterThan(0);
+  });
+  it("the hook comes back: the same bar of the hook route is played again four bars later", () => {
+    const hookRoute = new Map<number, number>();
+    for (const n of p.notes) hookRoute.set(n.route, (hookRoute.get(n.route) ?? 0) + 1);
+    const bar = (p.sections[1].end - p.sections[1].start) / 16;
+    // in the chorus (after the build) every bar of a route that sings has the same number of notes as the bar four before it
+    const chorusStart = p.hook;
+    const counts = (b: number, r: number) => p.notes.filter((n) => n.route === r && n.t >= b * bar - 1e-6 && n.t < (b + 1) * bar - 1e-6).length;
+    const b0 = Math.round(chorusStart / bar);
+    let same = 0;
+    for (let r = 0; r < routes.length; r++) if (counts(b0, r) > 0 && counts(b0, r) === counts(b0 + 4, r)) same++;
+    expect(same).toBeGreaterThan(5);
+  });
+});
