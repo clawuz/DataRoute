@@ -230,21 +230,5 @@
   "author": "tarane468",
   "licence": "CC0 1.0",
   "title": "#10 Oud Motif C#4.wav"
- },
- {
-  "instrument": "NEY",
-  "file": "ney/ney_328744.mp3",
-  "source": "https://freesound.org/people/yurci/sounds/328744/",
-  "author": "yurci",
-  "licence": "CC BY",
-  "title": "Ney Phrase Single Note.wav"
- },
- {
-  "instrument": "DARBUKA",
-  "file": "darbuka/darbuka_252806.mp3",
-  "source": "https://freesound.org/people/volkoaudio/sounds/252806/",
-  "author": "volkoaudio",
-  "licence": "CC BY",
-  "title": "darbuka-nut-dum-ortakenar-dortparmak014-000-L.wav"
  }
 ]

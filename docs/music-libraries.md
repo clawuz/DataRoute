@@ -16,7 +16,7 @@ Every file that goes into a pack must be listed here with its source and licence
 | Salamander Grand Piano | piano | CC-BY 3.0 (to verify) | Piano, 6–8 notes; credit needed |
 | FluidR3_GM / MuseScore General | GM soundfont | MIT | Fallback only |
 | Tone.js instrument packages | single instruments | CC-BY 3.0 | Fallback only |
-| Saz, kanun, ney, oud, darbuka | **no open library of quality found** | commercial packs (e.g. Soundiron Acoustic Saz) forbid redistribution of samples | Search Freesound for CC0 / CC-BY single notes; otherwise keep the synthesis |
+| Saz, kanun, ney, oud, darbuka | **no open library of quality found** (the pack now uses only CC0 Freesound sounds: baglama, oud; the CC BY ney and darbuka-dum were dropped so no credit line is needed) | commercial packs (e.g. Soundiron Acoustic Saz) forbid redistribution of samples | Search Freesound for CC0 / CC-BY single notes; otherwise keep the synthesis |
 
 ## Ledger of files in a published pack
 

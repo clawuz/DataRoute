@@ -136,7 +136,8 @@ def midi_of_hz(f):
 
 
 def build_freesound(man, ledger_fs):
-    led = json.load(open(os.path.join(FS, "freesound-ledger.json")))
+    # only CC0 sounds go into the pack: they need no credit line anywhere on the site
+    led = [r for r in json.load(open(os.path.join(FS, "freesound-ledger.json"))) if str(r["licence"]).startswith("CC0")]
     by = {}
     for r in led:
         by.setdefault(r["instrument"], []).append(r)

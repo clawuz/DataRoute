@@ -175,7 +175,7 @@ Built by `scripts/samples/fetch_vsco.py` + `scripts/samples/build_pack.py` (mono
 | TIMP | `timp/Timpani3_Hit_v3_rr1_Sum.mp3` | `sgossner/VSCO-2-CE/Percussion/Timpani/Timpani3_Hit_v3_rr1_Sum.wav` | CC0 1.0 |
 | TIMP | `timp/Timpani4_Hit_v3_rr1_Sum.mp3` | `sgossner/VSCO-2-CE/Percussion/Timpani/Timpani4_Hit_v3_rr1_Sum.wav` | CC0 1.0 |
 
-## Freesound files in the pack (via API, HQ previews)
+## Freesound files in the pack (via API, HQ previews) — CC0 only, no credit needed
 
 | Instrument | File | Title | Author | Licence | Page |
 |---|---|---|---|---|---|
@@ -208,5 +208,3 @@ Built by `scripts/samples/fetch_vsco.py` + `scripts/samples/build_pack.py` (mono
 | OUD | `oud/oud_motif_550878.mp3` | #6 Oud Motif A2.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550878/ |
 | OUD | `oud/oud_motif_550881.mp3` | #9 Oud Motif A3.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550881/ |
 | OUD | `oud/oud_motif_550875.mp3` | #10 Oud Motif C#4.wav | tarane468 | CC0 1.0 | https://freesound.org/people/tarane468/sounds/550875/ |
-| NEY | `ney/ney_328744.mp3` | Ney Phrase Single Note.wav | yurci | CC BY | https://freesound.org/people/yurci/sounds/328744/ |
-| DARBUKA | `darbuka/darbuka_252806.mp3` | darbuka-nut-dum-ortakenar-dortparmak014-000-L.wav | volkoaudio | CC BY | https://freesound.org/people/volkoaudio/sounds/252806/ |
