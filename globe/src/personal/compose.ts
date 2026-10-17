@@ -218,6 +218,16 @@ const rotate = <T,>(a: T[], k: number): T[] => (a.length === 0 ? a : a.map((_, i
  * (intro, verse, build, chorus, break, outro) shapes how much of each voice is heard. Nothing is played that is not
  * a route: with one route there is one voice; with twenty there are twenty.
  */
+/**
+ * Where the shared clip starts (s): the last three bars of the build, so that the lift into the chorus is in it, and then
+ * the first bars of the chorus — the best 15 s of the piece. Never before the build.
+ */
+export function clipStart(piece: PersonalPiece): number {
+  const bar = 240 / piece.bpm;
+  const build = piece.sections.find((x) => x.name === "build")?.start ?? 0;
+  return Math.max(build, piece.hook - 3 * bar, 0);
+}
+
 export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
   const st = styleFor(mode, routes);
   const bpm = st.bpm;

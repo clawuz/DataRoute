@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
 import { routeKey } from "../audio/theory";
-import { composePiece, type PersonalNote, type PersonalPiece } from "./compose";
+import { clipStart, composePiece, type PersonalNote, type PersonalPiece } from "./compose";
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
@@ -396,8 +396,8 @@ export function Experience({ selection, onBack }: Props) {
       document.body.classList.add("recording-reel");
       // the engine re-sizes itself to the new canvas: wait until its backbuffer is the story's size (at most ~4 s)
       for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
-      engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 15); // Istanbul starts in the middle, a little above the centre of the picture
-      engine.setIdleSpin(kind === "VIDEO", 5); // the video turns (a visible 45° over its 15 s); the card holds still
+      engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 0); // Istanbul is in the exact middle of the picture
+      engine.setIdleSpin(false); // and stays there: the globe does not turn during the clip
       engine.setPortraitFit(false); // the story picture keeps the framing it was drawn for
       engine.setPortraitShift(null);
       engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
@@ -480,12 +480,14 @@ export function Experience({ selection, onBack }: Props) {
       await withStory("VIDEO", async (frame, comp) => {
         const engine = engineRef.current!;
         engine.setAfterRender(frame);
-        // the clip's sound is the chorus (the best 15 s), restarted from its first note; afterwards the whole piece goes on
+        // the clip's sound is the best 15 s: the last bars of the build and the start of the chorus, from its first note;
+        // afterwards the whole piece goes on
+        const from = clipStart(piece);
         const hookPiece: PersonalPiece = {
           ...piece,
-          notes: piece.notes.filter((n) => n.t >= piece.hook).map((n) => ({ ...n, t: n.t - piece.hook })),
-          duration: piece.duration - piece.hook,
-          hook: 0,
+          notes: piece.notes.filter((n) => n.t >= from).map((n) => ({ ...n, t: n.t - from })),
+          duration: piece.duration - from,
+          hook: Math.max(0, piece.hook - from),
         };
         playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
         const aiEl = aiAudioRef.current;

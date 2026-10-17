@@ -180,3 +180,24 @@ describe("the now-playing list with more routes than rows", () => {
     expect(seen.size).toBe(12);
   });
 });
+
+import { clipStart } from "../src/personal/compose";
+
+describe("the shared clip", () => {
+  it("starts three bars before the chorus, inside the build, so the lift into the chorus is in it", () => {
+    for (const l of ["?v=TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG", "?v=JFK,LAX,MIA&h=IST", "?w=DPS,NRT&h=IST", "?v=LHR,CDG,FCO,MAD&h=IST"]) {
+      const sel = selectionFromSearch(l)!;
+      const p = composePiece(sel.mode, buildRoutes(sel.places, sel.home));
+      const bar = 240 / p.bpm;
+      const from = clipStart(p);
+      const build = p.sections.find((x) => x.name === "build")!;
+      expect(from).toBeGreaterThanOrEqual(build.start);
+      expect(from).toBeLessThan(p.hook);
+      expect(p.hook - from).toBeCloseTo(3 * bar, 6);
+      // 15 s from there still ends inside the chorus
+      const chorus = p.sections.find((x) => x.name === "chorus")!;
+      expect(from + 15).toBeLessThan(chorus.end);
+      expect(from + 15).toBeGreaterThan(chorus.start);
+    }
+  });
+});
