@@ -114,7 +114,7 @@ export function Landing({ onCompose, onLive }: Props) {
 
   if (step === "mode") {
     return (
-      <div className="landing v2 intro" role="main">
+      <div className={`landing v2 intro${new URLSearchParams(window.location.search).has("og") ? " og" : ""}`} role="main">
         <Backdrop />
         <div className="presents">
           <img className="presents-logo" src="/brand/tk-lockup-vertical-light.png" alt="Turkish Airlines" />
@@ -122,13 +122,17 @@ export function Landing({ onCompose, onLive }: Props) {
         </div>
         <p className="landing-eyebrow">A WORLD OF MUSIC</p>
         <h1 className="landing-title">We fly to the most countries.<br /><span className="title-music" style={tile ? { backgroundImage: `url(${tile}), linear-gradient(#f2f5fa, #f2f5fa)` } : undefined}>Now we make them play.</span></h1>
-        <p className="landing-sub">Every Turkish Airlines flight becomes part of a unique, ever-changing composition, powered by real-time flight data.</p>
-        <p className="landing-sub landing-sub-lead">Listen to the world. Or turn your destinations into music.</p>
+        <p className="landing-sub">
+          <span className="ph">Every Turkish Airlines flight becomes part of</span> <span className="ph">a unique, ever-changing composition,</span> <span className="ph">powered by real-time flight data.</span>
+        </p>
+        <p className="landing-sub landing-sub-lead">
+          <span className="ph">Listen to the world.</span> <span className="ph">Or turn your destinations into music.</span>
+        </p>
         <div className="mode-cards">
           <button type="button" className="mode-card" onClick={onLive}>
             <span className="mode-n">01</span>
             <span className="mode-name">The world, live</span>
-            <span className="mode-desc">Listen Turkish Airlines flights compose the world in real time.</span>
+            <span className="mode-desc">Listen as Turkish Airlines flights compose the world in real time.</span>
           </button>
           <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("pick"); }}>
             <span className="mode-n">02</span>

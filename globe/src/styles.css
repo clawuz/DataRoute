@@ -935,3 +935,23 @@ body.personal-build .music-scope-label {
   .landing.v2.intro .landing-eyebrow { margin-top: 12px; }
   .landing.v2.intro .landing-title { font-size: clamp(18px, 5.6vh, 26px); }
 }
+
+/* sentences break between phrases, never inside one */
+.landing.v2.intro .landing-sub .ph { display: inline-block; }
+.landing.v2.intro .landing-sub { max-width: 86ch; }
+@media (max-width: 340px) { .landing.v2.intro .landing-sub { font-size: 12px; } }
+.landing.v2.intro .landing-sub-lead { max-width: 60ch; }
+/* the share image is drawn with ?og: a little more room at the top so a chat app's crop does not touch the logo */
+.landing.v2.intro.og { padding-top: 6vh; }
+
+/* live screen: the vertical logo over A WORLD OF MUSIC, no logo at the left (24H OPERATIONS stays) */
+body.personal-build .live-logo { display: none; }
+body.personal-build .title .gt-h1::before { display: none; }
+body.personal-build .title.gt { top: 24px; }
+body.personal-build .lockup { top: 14px; }
+body.personal-build .lockup::before { content: ""; display: block; width: clamp(112px, 14vmin, 170px); aspect-ratio: 1000 / 333; margin: 0 auto 8px; background: url("/brand/tk-lockup-vertical-light.png") center / contain no-repeat; }
+@media (max-aspect-ratio: 1/1) {
+  body.personal-build .title.gt { top: 18px; left: 16px; }
+  body.personal-build .lockup { top: 12px; }
+  body.personal-build .lockup::before { width: 112px; margin-bottom: 6px; }
+}
