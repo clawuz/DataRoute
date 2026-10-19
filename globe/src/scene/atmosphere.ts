@@ -32,6 +32,8 @@ void main() {
 export interface Atmosphere {
   mesh: Mesh;
   setSun(dir: [number, number, number]): void;
+  /** multiplies the strength of the glow (1 = as is) */
+  setBoost(k: number): void;
   dispose(): void;
 }
 
@@ -59,6 +61,9 @@ export function createAtmosphere(): Atmosphere {
     mesh,
     setSun(dir) {
       uniforms.uSunDir.value.set(dir[0], dir[1], dir[2]).normalize();
+    },
+    setBoost(k) {
+      uniforms.uIntensity.value = 1.2 * k;
     },
     dispose() {
       geometry.dispose();

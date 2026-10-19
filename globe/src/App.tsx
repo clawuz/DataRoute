@@ -47,6 +47,8 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.35, false);
+      engine.setNight(true); // the night side faces the camera: the city lights glow, as the reference
+      engine.setAtmosphereBoost(1.8); // a stronger glow around the globe
       engine.setPortraitFit(true);
       engine.setBaseFov(48); // room around the globe for the side panels
       engine.setPortraitShift(-34); // no counters on a phone here: the globe sits higher

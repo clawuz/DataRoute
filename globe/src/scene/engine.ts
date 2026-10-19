@@ -72,6 +72,8 @@ export interface GlobeEngine {
   setPortraitShift(px: number | null): void;
   /** show the night side to the camera (the sun goes behind the globe), whatever the real time is */
   setNight(on: boolean): void;
+  /** the strength of the glow around the globe (1 = as is) */
+  setAtmosphereBoost(k: number): void;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
   /** `lift` (degrees) tips the globe so the point sits that much above its middle */
   centerOn(lat: number, lon: number, lift?: number): void;
@@ -503,6 +505,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     setNight(on) {
       night = on;
+    },
+    setAtmosphereBoost(k) {
+      atmosphere.setBoost(k);
     },
     centerOn(lat, lon, lift = 0) {
       const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, ((lat - lift) * Math.PI) / 180));
