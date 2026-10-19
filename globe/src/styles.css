@@ -466,11 +466,15 @@ body.recording-reel .music-scope { opacity: 0; }
 }
 @media (max-height: 720px) {
   .landing-eyebrow { margin-top: 1vh; }
-  .landing.v2 .landing-sub { display: none; }
-  .landing.v2 .mode-desc { display: none; }
   .landing.v2 .mode-cards { margin-top: 14px; gap: 8px; }
   .landing.v2 .mode-card { padding: 12px 16px; gap: 4px; }
   .landing.v2 .landing-fine { padding-top: 14px; }
+}
+
+/* a short wide window (a laptop, a phone on its side) hides the sub-line and the card descriptions; a phone held upright keeps them (it scrolls) */
+@media (max-height: 720px) and (min-width: 761px) {
+  .landing.v2 .landing-sub { display: none; }
+  .landing.v2 .mode-desc { display: none; }
 }
 
 /* result screen + share sheet in the same glass language */
