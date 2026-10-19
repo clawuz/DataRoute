@@ -845,7 +845,6 @@ body.personal-build .music-scope-label {
 .landing.v2 .field-change { animation: change-blink 0.9s ease-in-out 0.7s 2; }
 @media (prefers-reduced-motion: reduce) { .landing.v2 .field-change { animation: none; } }
 
-
 /* a phone: the entry screen fits one screen without scrolling */
 @media (max-width: 760px) and (max-height: 780px) {
   .landing.v2 { padding-top: 62px; padding-bottom: 10px; }
@@ -858,6 +857,16 @@ body.personal-build .music-scope-label {
   .landing.v2 .landing-hint { margin-top: 12px; padding: 6px 12px; }
   .landing.v2 .landing-fine { padding-top: 10px; font-size: 9.5px; line-height: 1.5; }
 }
+/* a phone with room to spare (about 650 to 780 px of visible height, e.g. an iPhone in Safari): the free height goes between the groups */
+@media (max-width: 760px) and (min-height: 650px) and (max-height: 780px) {
+  .landing.v2 { padding-top: calc(54px + 4.2vh); }
+  .landing.v2 .landing-title { font-size: clamp(24px, 4.3vh, 30px); }
+  .landing.v2 .mode-cards { margin-top: 2.6vh; gap: 1.4vh; }
+  .landing.v2 .mode-card { padding: calc(6px + 1.3vh) 16px; }
+  .landing.v2 .mode-name { font-size: clamp(17px, 2.6vh, 20px); }
+  .landing.v2 .mode-desc { font-size: 13px; }
+  .landing.v2 .landing-hint { margin-top: 2.6vh; }
+}
 @media (max-width: 760px) and (max-height: 600px) {
   .landing.v2 { padding-top: 54px; }
   .landing.v2 .landing-title { font-size: clamp(19px, 5.6vw, 24px); }
@@ -868,3 +877,10 @@ body.personal-build .music-scope-label {
   .landing.v2 .landing-hint { margin-top: 8px; padding: 4px 10px; font-size: 12px; }
   .landing.v2 .landing-fine { padding-top: 6px; font-size: 9px; line-height: 1.4; }
 }
+
+/* a phone turned on its side keeps the portrait picture (see personal/orientation.ts) */
+html.force-portrait, html.force-portrait body { overflow: hidden; }
+html.force-portrait body { position: fixed; left: 0; top: 0; width: var(--fp-w); height: var(--fp-h); transform-origin: 0 0; }
+html.force-portrait[data-rot="cw"] body { transform: translateX(var(--fp-h)) rotate(90deg); }
+html.force-portrait[data-rot="ccw"] body { transform: translateY(var(--fp-w)) rotate(-90deg); }
+html.force-portrait canvas.stage { pointer-events: none; }

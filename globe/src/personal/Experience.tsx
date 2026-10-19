@@ -397,9 +397,9 @@ export function Experience({ selection, onBack }: Props) {
       // the engine re-sizes itself to the new canvas: wait until its backbuffer is the story's size (at most ~4 s)
       for (let i = 0; i < 40 && Math.abs(canvas.width - REEL_W) > 2; i++) await new Promise((r) => setTimeout(r, 100));
       engine.centerOn(ISTANBUL.lat, ISTANBUL.lon, 0); // Istanbul is in the exact middle of the picture
-      engine.setIdleSpin(false); // and stays there: the globe does not turn during the clip
+      engine.setIdleSpin(false); // the clip turns the globe by a few degrees itself (see `frame`), Istanbul stays in the middle
       engine.setPortraitFit(false); // the story picture keeps the framing it was drawn for
-      engine.setPortraitShift(null);
+      engine.setPortraitShift(0); // no view offset: the middle of the globe is the middle of the picture
       engine.setLineScale(2.8 / dpr); // a 1080-wide picture needs lines a few pixels thick
       await new Promise((r) => setTimeout(r, 450));
       const comp = document.createElement("canvas");
@@ -410,7 +410,14 @@ export function Experience({ selection, onBack }: Props) {
       overlay.width = REEL_W;
       overlay.height = REEL_H;
       drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.places, url: url(), logo }, kind === "VIDEO");
+      let turnStart = 0;
       const frame = () => {
+        if (kind === "VIDEO") {
+          // a slow turn of 8° over the clip, from 4° one side of Istanbul to 4° the other: the globe moves, Istanbul stays in the middle
+          if (turnStart === 0) turnStart = performance.now();
+          const k = Math.min(1, (performance.now() - turnStart) / (REEL_SECONDS * 1000));
+          engine.centerOn(ISTANBUL.lat, ISTANBUL.lon - 4 + 8 * k, 0);
+        }
         cctx.drawImage(canvas, 0, 0, REEL_W, REEL_H);
         cctx.drawImage(overlay, 0, 0);
         if (kind === "CARD") return; // the card has no music box: a still ribbon says nothing
