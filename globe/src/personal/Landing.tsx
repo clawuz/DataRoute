@@ -157,6 +157,7 @@ export function Landing({ onCompose, onLive }: Props) {
             {NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries
           </span>
         </p>
+        <p className="landing-credit">Bir Platon.Ai projesi.</p>
       </div>
     );
   }

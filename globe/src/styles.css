@@ -960,3 +960,9 @@ body.personal-build .title .phase.gt-chip::before { content: "24H OPERATIONS"; g
   body.personal-build .lockup { top: 12px; }
   body.personal-build .lockup::before { width: 112px; margin-bottom: 6px; }
 }
+
+/* the maker's line at the very bottom of the entry screen */
+.landing.v2.intro .landing-credit { margin: 0; padding: 8px 0 2px; font-family: var(--label); font-size: 10px; letter-spacing: 0.2em; color: rgba(242, 245, 250, 0.42); text-align: center; }
+@media (max-width: 760px) and (max-height: 780px) { .landing.v2.intro .landing-credit { padding-top: 5px; font-size: 9.5px; } }
+@media (max-width: 760px) and (max-height: 600px) { .landing.v2.intro .landing-credit { padding-top: 3px; font-size: 9px; } .landing.v2.intro .landing-fine { padding-top: 4px; } }
+@media (orientation: landscape) and (max-height: 560px) and (max-width: 960px) { .landing.v2.intro .landing-credit { padding-top: 3px; font-size: 9px; } }
