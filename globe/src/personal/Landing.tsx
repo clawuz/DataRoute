@@ -114,27 +114,31 @@ export function Landing({ onCompose, onLive }: Props) {
 
   if (step === "mode") {
     return (
-      <div className="landing v2" role="main">
+      <div className="landing v2 intro" role="main">
         <Backdrop />
-        {bar()}
+        <div className="presents">
+          <img className="presents-logo" src="/brand/tk-lockup-vertical-light.png" alt="Turkish Airlines" />
+          <span className="presents-word">PRESENTS</span>
+        </div>
         <p className="landing-eyebrow">A WORLD OF MUSIC</p>
-        <h1 className="landing-title">Every journey has a sound.<br /><span className="title-music" style={tile ? { backgroundImage: `url(${tile}), linear-gradient(#f2f5fa, #f2f5fa)` } : undefined}>Choose yours.</span></h1>
-        <p className="landing-sub">Turn the places you have been, or the places you dream of, into a piece of music and share it.</p>
+        <h1 className="landing-title">We fly to the most countries.<br /><span className="title-music" style={tile ? { backgroundImage: `url(${tile}), linear-gradient(#f2f5fa, #f2f5fa)` } : undefined}>Now we make them play.</span></h1>
+        <p className="landing-sub">Every Turkish Airlines flight becomes part of a unique, ever-changing composition, powered by real-time flight data.</p>
+        <p className="landing-sub landing-sub-lead">Listen to the world. Or turn your destinations into music.</p>
         <div className="mode-cards">
-          <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("pick"); }}>
+          <button type="button" className="mode-card" onClick={onLive}>
             <span className="mode-n">01</span>
-            <span className="mode-name">Where I have been</span>
-            <span className="mode-desc">The places you flew to, composed into one piece.</span>
+            <span className="mode-name">The world, live</span>
+            <span className="mode-desc">Listen Turkish Airlines flights compose the world in real time.</span>
+          </button>
+          <button type="button" className="mode-card" onClick={() => { setMode("visited"); setStep("pick"); }}>
+            <span className="mode-n">02</span>
+            <span className="mode-name">Where I’ve been</span>
+            <span className="mode-desc">Turn the destinations you’ve visited into your own unique music.</span>
           </button>
           <button type="button" className="mode-card" onClick={() => { setMode("wish"); setStep("pick"); }}>
-            <span className="mode-n">02</span>
-            <span className="mode-name">Where I want to go</span>
-            <span className="mode-desc">Your wishlist, as the music of a trip yet to come.</span>
-          </button>
-          <button type="button" className="mode-card" onClick={onLive}>
             <span className="mode-n">03</span>
-            <span className="mode-name">The world, live</span>
-            <span className="mode-desc">Every Turkish Airlines flight of the last 24 hours, played as music.</span>
+            <span className="mode-name">Where I want to go</span>
+            <span className="mode-desc">Discover the sound of your dream destinations.</span>
           </button>
         </div>
         <p className="landing-hint">
