@@ -970,6 +970,7 @@ body.personal-build .title .phase.gt-chip::before { content: "24H OPERATIONS"; g
 /* live screen: the wide altitude music box takes the place of Departures; the old route list is gone */
 body.personal-build .dep.dep-globe { display: none; }
 body.personal-build .music-scope-now { display: none; }
-body.personal-build .music-scope { left: 3vmin; right: 3vmin; width: auto; bottom: 7vmin; }
+body.personal-build .music-scope { left: 3vmin; right: 3vmin; width: auto; bottom: 7vmin; background: rgba(2, 4, 12, 0.84); border-radius: 12px; }
 body.personal-build .music-scope-wave { height: clamp(128px, 21vmin, 230px); }
+@media (min-aspect-ratio: 1/1) { body.personal-build .regions { top: 210px; bottom: auto; } }
 @media (max-height: 640px) { body.personal-build .regions { display: none; } }
