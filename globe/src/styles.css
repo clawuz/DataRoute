@@ -950,7 +950,12 @@ body.personal-build .title .gt-h1::before { display: none; }
 body.personal-build .title.gt { top: 24px; }
 body.personal-build .lockup { top: 14px; }
 body.personal-build .lockup::before { content: ""; display: block; width: clamp(112px, 14vmin, 170px); aspect-ratio: 1000 / 333; margin: 0 auto 8px; background: url("/brand/tk-lockup-vertical-light.png") center / contain no-repeat; }
+/* 24H OPERATIONS lives inside the Replay / Live box, as its small first line */
+body.personal-build .title .gt-h1 { display: none; }
+body.personal-build .title .phase.gt-chip { flex-wrap: wrap; align-items: center; row-gap: 4px; column-gap: 8px; border-radius: 14px; padding: 8px 14px 9px; margin-top: 0; width: max-content; max-width: 100%; justify-self: start; align-self: flex-start; }
+body.personal-build .title .phase.gt-chip::before { content: "24H OPERATIONS"; flex: 0 0 100%; font-family: var(--label); font-size: 10px; letter-spacing: 0.26em; color: rgba(242, 245, 250, 0.62); }
 @media (max-aspect-ratio: 1/1) {
+  body.personal-build .phase.gt-chip { top: 84px; left: 16px; }
   body.personal-build .title.gt { top: 18px; left: 16px; }
   body.personal-build .lockup { top: 12px; }
   body.personal-build .lockup::before { width: 112px; margin-bottom: 6px; }
