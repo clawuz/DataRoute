@@ -4,7 +4,7 @@ import type { DayCurveHud, MusicHud } from "../app/hud-model";
 import type { NoteBus, NoteEvent } from "../audio/notes-bus";
 import {
   DECAY_SEC, INSTRUMENT_COLOR, LANE_ORDER, NOTE_BAR_H_PX, SECTION_COLOR, TRACK_MAX_POINTS, TRACK_MAX_TRAILS, TRACK_RIBBON_SEC, TRAIL_TTL_SEC, layerColor, laneSample, levelSegments,
-  dayLabel, noteBar, pickShown, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, windowAt, trailIdOf, type Lane, type Playing, type Trail,
+  dayLabel, altHeight, noteBar, pickShown, playingNow, playingPush, pruneTrails, pushTrail, routeColor, routeOfNote, scopeLabel, stepLane, windowAt, trailIdOf, type Lane, type Playing, type Trail,
 } from "../audio/scope";
 import type { Instrument } from "../audio/theory";
 
@@ -35,6 +35,20 @@ function planePath(g: CanvasRenderingContext2D, cx: number, top: number, s: numb
   [...pts.slice(0, -1), ...mirror].forEach(([x, y], i) => (i === 0 ? g.moveTo(cx + x * s, top + (1 - y) * s) : g.lineTo(cx + x * s, top + (1 - y) * s)));
   g.closePath();
 }
+
+const PLANE_PATH: Path2D | null = typeof Path2D !== "undefined" ? new Path2D("M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z") : null;
+/** a small aeroplane pictogram (the Material "flight" glyph) centred at (cx, cy), `deg` clockwise from nose-up */
+function planeIcon(g: CanvasRenderingContext2D, cx: number, cy: number, size: number, deg: number): void {
+  if (!PLANE_PATH) return;
+  g.save();
+  g.translate(cx, cy);
+  g.rotate((deg * Math.PI) / 180);
+  g.scale(size / 24, size / 24);
+  g.translate(-12, -12);
+  g.fill(PLANE_PATH);
+  g.restore();
+}
+const ROUTE_ID = /^[A-Z]{3}-[A-Z]{3}$/;
 
 /** art:track — bottom 30 % of the scope: the 24 h airborne curve with the 8 music windows and the playhead */
 function drawDay(g: CanvasRenderingContext2D, d: DayCurveHud, w: number, top: number, h: number, dpr: number, base: number): void {
@@ -189,10 +203,56 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
       const now = wallSec();
       const ribbonH = (m.day ? 0.8 : RIBBON_SHARE) * h; // the recorded track gets a taller ribbon over a slimmer day curve
       const wide = ribbonSec > RIBBON_SEC; // the recorded track: a reading line, notes flow through it
-      const pxPerSec = w / ribbonSec;
-      const px0 = wide ? 0.78 * w : w; // the reading line (generative: the right edge)
+      // the live screen of the new link: an altitude ladder at the left, the departure airport at the left end of the ribbon and
+      // the arrival airport at the right end, both lit at the altitude of the note that sounds
+      const ladder = wide && !!m.day && document.body.classList.contains("personal-build");
+      const narrow = canvas.clientWidth < 520;
+      const ladderW = ladder ? (narrow ? 30 : 56) * dpr : 0;
+      const chipW = ladder ? (narrow ? 30 : 38) * dpr : 0;
+      const chipH = (narrow ? 11 : 13) * dpr;
+      const xL = ladder ? ladderW + chipW + 8 * dpr : 0;
+      const xR = ladder ? w - chipW - 8 * dpr : w;
+      const top = ladder ? 24 * dpr : 0;
+      const innerH = ladder ? ribbonH - top - 4 * dpr : ribbonH;
+      const pxPerSec = ladder ? (xR - xL) / ribbonSec : w / ribbonSec;
+      const px0 = ladder ? xL + (xR - xL) * 0.72 : wide ? 0.78 * w : w; // the reading line (generative: the right edge)
       const xOf = (t: number) => px0 - (now - t) * pxPerSec;
-      const yOf = (y: number) => (1 - y) * ribbonH;
+      const yOf = ladder ? (y: number) => top + (1 - y) * innerH : (y: number) => (1 - y) * ribbonH;
+      const active: { id: string; y: number; color: string; t: number }[] = [];
+      if (ladder) {
+        g.globalCompositeOperation = "source-over";
+        g.globalAlpha = 1;
+        g.font = `${9 * dpr}px ui-monospace, Menlo, Consolas, monospace`;
+        g.textAlign = "right";
+        g.textBaseline = "middle";
+        for (let k = 0; k <= 4; k++) {
+          const y = yOf(k / 4);
+          g.fillStyle = "rgba(242, 245, 250, 0.78)";
+          g.fillText(narrow ? String(k * 100) : `FL${String(k * 100).padStart(3, "0")}`, ladderW - 8 * dpr, y);
+          g.fillStyle = "rgba(242, 245, 250, 0.07)";
+          g.fillRect(ladderW, y, w - ladderW - 6 * dpr, 1);
+        }
+        g.fillStyle = "rgba(242, 245, 250, 0.22)";
+        for (let k = 0; k <= 40; k++) g.fillRect(ladderW - (k % 5 === 0 ? 9 : 5) * dpr, yOf(k / 40), (k % 5 === 0 ? 9 : 5) * dpr, 1);
+        // the two ends of every flight, always on show
+        g.fillStyle = "rgba(233, 237, 245, 0.7)";
+        planeIcon(g, ladderW + chipW / 2 + 2 * dpr, 11 * dpr, 15 * dpr, 50);
+        planeIcon(g, w - chipW / 2 - 6 * dpr, 11 * dpr, 15 * dpr, 130);
+        g.fillRect(ladderW + chipW / 2 - 9 * dpr, 18 * dpr, 22 * dpr, 1.5 * dpr);
+        g.fillRect(w - chipW / 2 - 17 * dpr, 18 * dpr, 22 * dpr, 1.5 * dpr);
+        g.fillStyle = "rgba(242, 245, 250, 0.55)";
+        g.font = `${8.5 * dpr}px ui-monospace, Menlo, Consolas, monospace`;
+        g.textAlign = "left";
+        g.fillText("FROM", ladderW + chipW / 2 + 14 * dpr, 11 * dpr);
+        g.textAlign = "right";
+        g.fillText("TO", w - chipW / 2 - 16 * dpr, 11 * dpr);
+        g.globalCompositeOperation = "lighter";
+        g.save();
+        g.beginPath();
+        g.rect(xL, 0, xR - xL, ribbonH);
+        g.clip();
+      }
+      const yOfPoint = (p: { y: number; alt?: number }, id: string): number => (ladder ? yOf(altHeight(p.alt, id, p.y)) : yOf(p.y));
       for (const tr of trails.values()) {
         const age = Math.max(0, now - tr.lastHit);
         g.globalAlpha = base * (wide ? 1 : Math.max(0.15, 1 - age / ribbonSec));
@@ -218,10 +278,33 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             g.shadowColor = tr.color;
             g.shadowBlur = sounding ? 6 * dpr : 0; // a tight glow, not a blob (additive blending)
             const hh = sounding ? barH * 1.7 : barH;
-            g.fillRect(x, yOf(p.y) - hh / 2, bw, hh);
+            g.fillRect(x, yOfPoint(p, tr.lineId) - hh / 2, bw, hh);
+            if (ladder && age >= 0 && age < Math.max(p.dur, 0.4) && ROUTE_ID.test(tr.lineId)) active.push({ id: tr.lineId, y: yOfPoint(p, tr.lineId), color: tr.color, t: p.t });
           } else g.fillRect(x, yOf(p.y) - barH / 2, bw, barH);
         }
         g.shadowBlur = 0;
+      }
+      if (ladder) {
+        g.restore();
+        // the airports of the notes that sound now (the newest three), at their altitude
+        g.globalCompositeOperation = "source-over";
+        g.globalAlpha = 1;
+        active.sort((a, b) => b.t - a.t);
+        const act = active.slice(0, 3).sort((a, b) => a.y - b.y);
+        for (let i = 1; i < act.length; i++) if (act[i].y - act[i - 1].y < chipH + 2 * dpr) act[i].y = act[i - 1].y + chipH + 2 * dpr;
+        g.font = `bold ${(narrow ? 8 : 9) * dpr}px ui-monospace, Menlo, Consolas, monospace`;
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        for (const a of act) {
+          const [from, to] = a.id.split("-");
+          for (const [x, txt] of [[ladderW + 4 * dpr, from], [w - chipW - 4 * dpr, to]] as [number, string][]) {
+            g.fillStyle = a.color;
+            g.fillRect(x, a.y - chipH / 2, chipW, chipH);
+            g.fillStyle = "#05070f";
+            g.fillText(txt, x + chipW / 2, a.y + 0.5 * dpr);
+          }
+        }
+        g.globalCompositeOperation = "lighter";
       }
       if (wide) { // the reading line
         g.globalAlpha = 0.9;

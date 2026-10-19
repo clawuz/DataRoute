@@ -201,3 +201,19 @@ describe("the shared clip", () => {
     }
   });
 });
+
+import { ALT_MAX_FT, altHeight } from "../src/audio/scope";
+
+describe("the altitude ladder of the live music box", () => {
+  it("FL400 is the top: a note at 40 000 ft sits at the top, one at 20 000 ft in the middle (±600 ft of route shift)", () => {
+    expect(ALT_MAX_FT).toBe(40000);
+    expect(altHeight(20000, "IST-LHR", 0.3)).toBeGreaterThan(0.5 - 0.02);
+    expect(altHeight(20000, "IST-LHR", 0.3)).toBeLessThan(0.5 + 0.02);
+    expect(altHeight(40000, "IST-LHR", 0.3)).toBeGreaterThan(0.97);
+  });
+  it("flights at the same cruise level draw as different lines, and a note without altitude keeps its pitch height", () => {
+    const hs = new Set(["IST-LHR", "IST-JFK", "IST-NRT", "IST-DXB", "IST-GRU", "IST-SIN", "IST-CDG"].map((id) => altHeight(39000, id, 0)));
+    expect(hs.size).toBeGreaterThanOrEqual(4);
+    expect(altHeight(undefined, "IST-LHR", 0.42)).toBe(0.42);
+  });
+});

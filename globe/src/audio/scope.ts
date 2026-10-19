@@ -42,6 +42,8 @@ export interface TrailPoint {
   dur: number;
   /** note velocity 0..1 (art:track: strong notes get a route label on the ribbon) */
   v: number;
+  /** altitude (ft) of the flight at this note, when the track knows it */
+  alt?: number;
 }
 
 /** One trace of the pitch ribbon: the notes of a flight line (or of an Istanbul instrument), oldest first. */
@@ -80,7 +82,7 @@ export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: strin
     trails.set(id, t);
   }
   t.color = color;
-  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0), v: n.vel });
+  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0), v: n.vel, alt: n.alt });
   if (t.points.length > maxPoints) t.points.splice(0, t.points.length - maxPoints);
   t.lastHit = Math.max(t.lastHit, n.at);
 }
@@ -227,3 +229,16 @@ export const dayLabel = (d: { hour: number; airborne: number }): string =>
 
 /** The music window (0 … windows−1) a position 0..1 of the day lies in. */
 export const windowAt = (pos: number, windows: number): number => Math.min(windows - 1, Math.max(0, Math.floor(pos * windows)));
+
+/** The top of the altitude ladder of the live music box: FL400 = 40 000 ft. */
+export const ALT_MAX_FT = 40000;
+/**
+ * Height 0..1 of a note on the altitude ladder: its flight's altitude, plus a tiny fixed shift per route (about ±600 ft) so
+ * that flights cruising at the same level draw as separate lines. Notes without an altitude keep their pitch height.
+ */
+export function altHeight(alt: number | undefined, lineId: string, fallback: number): number {
+  if (alt === undefined || !Number.isFinite(alt)) return fallback;
+  let h = 0;
+  for (let i = 0; i < lineId.length; i++) h = (h * 31 + lineId.charCodeAt(i)) % 7;
+  return Math.min(0.99, Math.max(0.01, alt / ALT_MAX_FT + (h - 3) * 0.005));
+}
