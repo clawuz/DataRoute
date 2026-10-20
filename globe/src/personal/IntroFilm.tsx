@@ -1,49 +1,52 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, type GlobeEngine } from "../scene/engine";
 import { applyNewGlobeLook } from "../scene/look";
 import { setExtraColors } from "../scene/palette-ext";
 import { ROUTE_RGB, routeIndex } from "../scene/route-palette";
-import { buildPersonalModel } from "./model";
-import { notesBetween, type TrackData } from "../audio/day-track";
-import { FILM_SECONDS, filmRoutes, shotAt } from "./intro-film";
+import { createPersonalPlayer, type PersonalPlayer } from "./player";
+import { musicTileUrl } from "./music-tile";
+import { FILM_SECONDS, SETTLE_FROM, SETTLE_TO, filmModel, filmPiece, filmRoutes, modelClock, openTimes, shotAt } from "./intro-film";
 
-export const FILM_SEEN_KEY = "wom-film-seen";
-/** ?filmat=4.2 freezes the film at that second (to look at a single frame) */
+/** ?filmat=4.2 freezes the film at that second, silent (to look at a single frame) */
 const frozenAt = (): number | null => { const v = new URLSearchParams(window.location.search).get("filmat"); return v === null || Number.isNaN(+v) ? null : +v; };
+const LIVE_WAIT_MS = 20000; // the film never keeps the visitor out of a slow live screen for longer than this
 
 /**
- * "Every Destination Has a Sound." — the opening film, on a globe of its own over the live screen: the world turns and comes in to Istanbul,
- * eight routes open, each with its own voice, the camera pulls back and the globe settles where the live screen has it. It waits for
- * a tap (that is what lets the browser play sound); `ready` is what the live screen is still loading underneath.
+ * The opening film, on a globe of its own over the live screen (which keeps loading underneath): routes are made one by one, each by a
+ * note of the film's music; then the airline's mark and the two lines; then the globe moves back to where the live screen has it,
+ * the sound fades out, and the live screen starts. It waits for a tap (that is what lets the browser play sound).
  */
 export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; onDone: () => void }) {
   const [phase, setPhase] = useState<"splash" | "film" | "leave">("splash");
   const [canEnter, setCanEnter] = useState(false);
+  const tile = useMemo(() => musicTileUrl(), []);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLDivElement>(null);
-  const textRefs = useRef<Record<string, HTMLElement | null>>({});
+  const waitRef = useRef<HTMLSpanElement>(null);
+  const els = useRef<Record<string, HTMLElement | null>>({});
   const engineRef = useRef<GlobeEngine | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null); // the live screen's own music: the first seconds of its recorded track
-  const notesData = useRef<TrackData | null>(null);
-  const soundOn = useRef(false);
-  const prevNote = useRef(0);
-  const audioReady = useRef<Promise<unknown>>(Promise.resolve());
+  const playerRef = useRef<PersonalPlayer | null>(null);
+  const loadedRef = useRef<Promise<unknown>>(Promise.resolve());
+  const liveReady = useRef(false);
   const startRef = useRef(0);
-  const flyRef = useRef(0);
+  const clockRef = useRef(0); // the model's clock (follows the film's time)
+  const soundRef = useRef(false);
+  const fadedRef = useRef(false);
+  const prevNote = useRef(-1);
+  const lineRef = useRef(2.2);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
-  const loadedRef = useRef<Promise<unknown>>(Promise.resolve());
-  const filmKeys = useRef<string[]>([]);
-  const midRef = useRef<Map<string, { lat: number; lon: number }>>(new Map());
+  const routes = useMemo(() => filmRoutes(), []);
+  const piece = useMemo(() => filmPiece(routes), [routes]);
+  const mids = useRef<Map<string, { lat: number; lon: number }>>(new Map());
 
-  // the film's own globe, built while the splash shows; the tap enables once it and the live screen are complete
+  // the film's own globe, built while the splash shows
   useEffect(() => {
     const canvas = canvasRef.current!;
-    let alive = true;
     let engine: GlobeEngine;
     try {
-      engine = createGlobeEngine(canvas, { reducedMotion: false, noAirports: true });
+      engine = createGlobeEngine(canvas, { reducedMotion: false, noAirports: true, lowRes: true });
     } catch {
       setCanEnter(true);
       return;
@@ -59,76 +62,34 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     engine.setRigDistance(9);
     engine.centerOn(8, -50, 0);
     setExtraColors(ROUTE_RGB); // the live screen's colours: red, white, blue, grey
-    const routes = filmRoutes();
-    const model = buildPersonalModel(routes);
+    const model = filmModel(routes, openTimes(routes.length));
     model.flights.forEach((f, i) => { f.colorIdx = 7 + routeIndex(routes[i].from, routes[i].to); });
-    filmKeys.current = routes.map((r) => r.key);
-    routes.forEach((r) => midRef.current.set(r.key, { lat: (r.fromLat + r.toLat) / 2, lon: (r.fromLon + r.toLon) / 2 }));
+    routes.forEach((r) => mids.current.set(r.key, { lat: (r.fromLat + r.toLat) / 2, lon: (r.fromLon + r.toLon) / 2 }));
     const nowSec = () => Date.now() / 1000;
-    const span = model.span;
-    const startCur = Math.min(...model.flights.map((f) => f.dep)) - 30;
-    engine.setModel(model, span, nowSec());
-    engine.setFrameSource(() => ({ absTime: nowSec(), cur: startCur + flyRef.current * (span - startCur), highlight: -1, nowSec: nowSec() }));
-    // the live music's entrance: the recorded track (loaded now, so it starts the moment the tap comes) and its notes
-    const a = new Audio("/music/track.mp3");
-    a.preload = "auto";
-    audioRef.current = a;
-    audioReady.current = Promise.race([
-      new Promise((res) => { a.addEventListener("canplay", res, { once: true }); a.addEventListener("error", res, { once: true }); a.load(); }),
-      new Promise((res) => setTimeout(res, 8000)),
-    ]);
-    void fetch("/music/notes.json").then((r) => r.json()).then((j: TrackData) => { notesData.current = j; }).catch(() => undefined);
+    engine.setModel(model, 0, nowSec());
+    engine.setFrameSource(() => ({ absTime: nowSec(), cur: clockRef.current, highlight: -1, nowSec: nowSec() }));
+    // the tap is enabled as soon as the FILM is complete: the live screen goes on loading while the film plays
     loadedRef.current = engine.loadTextures(() => {}).catch(() => null).then(() => engine.whenAssetsReady());
+    void loadedRef.current.then(() => setCanEnter(true));
+    const cap = setTimeout(() => setCanEnter(true), 12000);
     return () => {
-      alive = false;
-      a.pause();
-      audioRef.current = null;
+      clearTimeout(cap);
       engine.dispose();
       engineRef.current = null;
     };
-  }, []);
+  }, [routes]);
 
-  // the tap enables when the film's globe and everything the live screen is loading are complete
+  // what the live screen is waiting for, kept track of
   useEffect(() => {
-    if (!ready) return;
     let alive = true;
-    void Promise.all([loadedRef.current, audioReady.current, ready]).catch(() => undefined).then(() => { if (alive) setCanEnter(true); if (alive && frozenAt() !== null) begin(false); });
-    const cap = setTimeout(() => { if (!alive) return; setCanEnter(true); if (frozenAt() !== null) begin(false); }, frozenAt() !== null ? 9000 : 25000); // a slow network never keeps the visitor out
-    return () => { alive = false; clearTimeout(cap); };
+    void (ready ? Promise.race([ready.catch(() => undefined), new Promise((r) => setTimeout(r, LIVE_WAIT_MS * 3))]) : Promise.resolve()).then(() => { if (alive) liveReady.current = true; });
+    return () => { alive = false; };
   }, [ready]);
 
-  const begin = (withSound: boolean) => {
-    try { sessionStorage.setItem(FILM_SEEN_KEY, "1"); } catch { /* private window */ }
-    soundOn.current = withSound;
-    const au = audioRef.current;
-    if (withSound && au) {
-      au.currentTime = 0;
-      au.volume = 0;
-      void au.play().catch(() => { soundOn.current = false; }); // blocked: the film goes on in silence
-    }
-    startRef.current = performance.now();
-    setPhase("film");
-  };
-
-  // the notes of the recorded track as they sound: the route flashes, a light rises from it (a route of the film, or any of them)
-  const publishNotes = (t: number) => {
-    const eng = engineRef.current;
-    const td = notesData.current;
-    if (!eng || !td) return;
-    const keys = filmKeys.current;
-    for (const n of notesBetween(td.notes, prevNote.current, t)) {
-      const key = midRef.current.has(n.k) ? n.k : keys[Math.floor(Math.random() * keys.length)];
-      eng.pulseRoute(key);
-      if (n.v > 0.35) spawnNote(key);
-    }
-    prevNote.current = Math.max(prevNote.current, t);
-  };
-
-  // one floating note over the middle of the route that sounds it
   const spawnNote = (key: string) => {
     const eng = engineRef.current;
     const box = notesRef.current;
-    const mid = midRef.current.get(key);
+    const mid = mids.current.get(key);
     if (!eng || !box || !mid) return;
     const p = eng.screenOf(mid.lat, mid.lon, 0.4);
     if (!p.visible) return;
@@ -140,38 +101,66 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     setTimeout(() => el.remove(), 1500);
   };
 
+  const begin = (withSound: boolean) => {
+    soundRef.current = false;
+    if (withSound) {
+      try {
+        const ctx = new AudioContext();
+        void ctx.resume();
+        const player = createPersonalPlayer(ctx);
+        player.setLevel(0, 0.01);
+        player.play(piece, () => {});
+        player.setLevel(0.9, 1);
+        playerRef.current = player;
+        soundRef.current = true;
+      } catch { /* no audio: the film goes on in silence */ }
+    }
+    startRef.current = performance.now();
+    setPhase("film");
+  };
+  useEffect(() => {
+    if (canEnter && frozenAt() !== null && phase === "splash") begin(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEnter]);
+
   const finish = () => {
     setPhase("leave");
-    const au = audioRef.current;
-    if (au) { au.volume = 0; setTimeout(() => au.pause(), 400); }
-    setTimeout(() => doneRef.current(), 1600);
+    const p = playerRef.current;
+    if (p) { p.setLevel(0, 0.2); setTimeout(() => { p.stop(); p.dispose(); }, 400); }
+    setTimeout(() => doneRef.current(), 1100);
   };
 
   useEffect(() => {
     if (phase !== "film") return;
     let raf = 0;
+    let liveSince = 0;
     const tick = () => {
-      const t = frozenAt() ?? Math.min(FILM_SECONDS, (performance.now() - startRef.current) / 1000);
+      const wall = (performance.now() - startRef.current) / 1000;
+      const pos = soundRef.current ? playerRef.current?.position() ?? 0 : 0;
+      const t = frozenAt() ?? Math.min(FILM_SECONDS, pos > 0 ? pos : wall); // with sound the audio clock is the film's clock
       const s = shotAt(t);
+      clockRef.current = modelClock(t);
       const eng = engineRef.current;
       if (eng) {
         eng.setRigDistance(s.dist);
         eng.centerOn(s.lat, s.lon, 0);
         eng.setAtmosphereBoost(s.glow);
+        const q = Math.round(s.lines * 5) / 5;
+        if (q !== lineRef.current) { lineRef.current = q; eng.setLineScale(q); }
       }
-      flyRef.current = s.fly;
-      const au = audioRef.current;
-      const mt = au && !au.paused ? au.currentTime : t;
-      publishNotes(Math.min(FILM_SECONDS, mt));
-      if (au && soundOn.current) au.volume = Math.max(0, Math.min(0.9, (t / 1.2) * 0.9 * (1 - Math.max(0, (t - 12.5) / 2.5))));
-      if (canvasRef.current) canvasRef.current.style.opacity = String(s.fade * (1 - s.hud));
-      if (rootRef.current) rootRef.current.style.background = `rgba(2, 3, 10, ${1 - s.hud})`;
-      for (const k of ["every", "sound"] as const) {
-        const el = textRefs.current[k];
-        if (el) el.style.opacity = String(s.text[k]);
-      }
-      for (const k of ["logo", "brand"] as const) { const el = textRefs.current[k]; if (el) el.style.opacity = String(s.text.every); } // the airline's mark comes in with the headline
-      if (t >= FILM_SECONDS && frozenAt() === null) { finish(); return; }
+      // the notes: each one lights its route and lets a light rise from it
+      if (eng) for (const n of piece.notes) if (n.show !== false && n.t > prevNote.current && n.t <= t) { eng.pulseRoute(n.key); spawnNote(n.key); }
+      prevNote.current = Math.max(prevNote.current, t);
+      // the sound fades out while the globe moves back
+      if (playerRef.current && !fadedRef.current && t >= SETTLE_FROM) { fadedRef.current = true; playerRef.current.setLevel(0, SETTLE_TO - SETTLE_FROM - 0.3); }
+      const holding = t >= FILM_SECONDS && !liveReady.current && frozenAt() === null; // the live screen is not complete yet: the last picture stays
+      const filmA = holding ? 1 : s.film;
+      if (canvasRef.current) canvasRef.current.style.opacity = String(s.fade * filmA);
+      if (rootRef.current) rootRef.current.style.background = `rgba(2, 3, 10, ${filmA})`;
+      for (const k of ["logo", "presents", "world", "l1", "l2"] as const) { const el = els.current[k]; if (el) el.style.opacity = String(s.text[k]); }
+      if (els.current.veil) els.current.veil.style.opacity = String(s.veil);
+      if (waitRef.current) { if (holding && !liveSince) liveSince = performance.now(); waitRef.current.style.opacity = holding && performance.now() - liveSince > 600 ? "1" : "0"; }
+      if (t >= FILM_SECONDS && frozenAt() === null && (liveReady.current || (liveSince > 0 && performance.now() - liveSince > LIVE_WAIT_MS))) { finish(); return; }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -179,14 +168,17 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  useEffect(() => () => { playerRef.current?.dispose(); }, []);
+
   const skip = () => {
-    const eng = engineRef.current;
-    if (eng) { eng.setRigDistance(3.2); eng.setAtmosphereBoost(1.9); }
+    const p = playerRef.current;
+    if (p) p.setLevel(0, 0.2);
     finish();
   };
+  const set = (k: string) => (e: HTMLElement | null) => { els.current[k] = e; };
 
   return (
-    <div ref={rootRef} className={`intro intro-film${phase === "leave" ? " leave" : ""}${phase === "film" ? " playing" : ""}`} role="status" aria-label="Opening film">
+    <div ref={rootRef} className={`intro intro-film${phase === "leave" ? " leave" : ""}`} role="status" aria-label="Opening film">
       <canvas ref={canvasRef} className="if-canvas" />
       {phase === "splash" && (
         <div className="intro-mark">
@@ -208,15 +200,20 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
           )}
         </div>
       )}
+      <div ref={set("veil")} className="if-veil" aria-hidden="true" />
       <div ref={notesRef} className="if-notes" aria-hidden="true" />
-      <div className="if-words">
-        <h2 className="if-head">
-          <img ref={(e) => { textRefs.current.logo = e; }} className="if-logo" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
-          <span ref={(e) => { textRefs.current.brand = e; }} className="if-brand">A WORLD OF MUSIC</span>
-          <span ref={(e) => { textRefs.current.every = e; }}>EVERY DESTINATION</span>
-          <span ref={(e) => { textRefs.current.sound = e; }}>HAS A SOUND.</span>
+      <div className="if-text">
+        <div className="if-presents">
+          <img ref={set("logo")} className="if-plogo" src="/brand/tk-lockup-vertical-light.png" alt="Turkish Airlines" />
+          <span ref={set("presents")} className="if-pword">PRESENTS</span>
+        </div>
+        <span ref={set("world")} className="if-world">A WORLD OF MUSIC</span>
+        <h2 className="if-title">
+          <span ref={set("l1")}>We fly to the most countries.</span>
+          <span ref={set("l2")} className="if-music" style={tile ? { backgroundImage: `url(${tile}), linear-gradient(#f2f5fa, #f2f5fa)` } : undefined}>Now we make them play.</span>
         </h2>
       </div>
+      <span ref={waitRef} className="if-wait">TUNING THE WORLD</span>
       {phase === "film" && <button type="button" className="if-skip" onClick={skip}>SKIP</button>}
     </div>
   );

@@ -25,6 +25,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
   const [introReady, setIntroReady] = useState<Promise<unknown> | null>(null);
   const [introOn, setIntroOn] = useState(personalLive); // the opening screen covers the live screen until it is complete
   const introRef = useRef(personalLive);
+  const liveEngine = useRef<ReturnType<typeof createGlobeEngine> | null>(null);
   introRef.current = introOn;
   const gate = useRef<{ p: Promise<void>; open: () => void } | null>(null);
   if (!gate.current) {
@@ -58,6 +59,8 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       setError(String(e));
       return;
     }
+    liveEngine.current = engine;
+    if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") engine.setIdleSpin(false); // the live globe waits at its first view while the opening film plays over it
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.8, false);
@@ -230,7 +233,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
-      {introOn && <Intro film ready={introReady} onDone={() => { setIntroOn(false); gate.current?.open(); }} />}
+      {introOn && <Intro film ready={introReady} onDone={() => { setIntroOn(false); liveEngine.current?.setIdleSpin(true, 1); gate.current?.open(); }} />}
       {onExit && (
         <>
           <button type="button" className="live-logo" onClick={onExit} aria-label="Turkish Airlines — back to the start" />
