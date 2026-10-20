@@ -34,6 +34,25 @@ function halo(ctx: CanvasRenderingContext2D, blur = 14): void {
   ctx.shadowOffsetY = 2;
 }
 
+/** a glass panel with the live screen's edge: red at the left fading to steel blue */
+export function glassPanel(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r = 22, lw = 2): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.fillStyle = "rgba(3, 6, 16, 0.36)";
+  ctx.fill();
+  const g = ctx.createLinearGradient(x, y, x + w, y + h * 0.4);
+  g.addColorStop(0, "rgba(255, 40, 58, 0.95)");
+  g.addColorStop(0.09, "rgba(255, 40, 58, 0.55)");
+  g.addColorStop(0.32, "rgba(140, 170, 225, 0.62)");
+  g.addColorStop(0.72, "rgba(140, 170, 225, 0.5)");
+  g.addColorStop(1, "rgba(150, 180, 235, 0.7)");
+  ctx.strokeStyle = g;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** The static lockup and numbers on a transparent canvas, drawn once and laid over every frame of the globe. */
 /** `withScope`: the video carries the music box; the card has none, so its numbers sit lower */
 export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, withScope = true): void {
@@ -74,6 +93,9 @@ export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, wit
   // numbers
   // flags, counts and the signature voice sit under the music box (the card has none: they keep the same place)
   const y0 = SCOPE_BOX.y + SCOPE_BOX.h + 64;
+  ctx.shadowBlur = 0;
+  glassPanel(ctx, SCOPE_BOX.x, y0 - 70, SCOPE_BOX.w, 190);
+  halo(ctx);
   ctx.font = '46px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
   ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);
@@ -106,31 +128,25 @@ export interface ScopeFrame {
 /** one frame of the music box over the globe (called every frame, after the globe and the overlay) */
 export function drawScopeFrame(ctx: CanvasRenderingContext2D, f: ScopeFrame): void {
   const b = SCOPE_BOX;
-  const ch = b.h;
-  let cw = 0;
-  if (f.canvas && f.canvas.width > 0 && f.canvas.height > 0) {
-    // the ribbon keeps its own proportions; the label and the routes sounding stand to its right
-    cw = Math.min(560, Math.round(ch * (f.canvas.width / f.canvas.height)));
-    ctx.drawImage(f.canvas, b.x, b.y, cw, ch);
-  }
-  const x0 = b.x + cw + 28;
+  // the box as on the live screen: a glass panel with the red → steel edge, an ear with its name, the neon ribbon filling it
+  glassPanel(ctx, b.x, b.y, b.w, b.h);
   ctx.save();
-  halo(ctx, 10);
+  ctx.font = '500 22px "TK Text Wide", system-ui, sans-serif';
   ctx.textAlign = "left";
-  ctx.textBaseline = "alphabetic";
-  ctx.font = '400 22px "TK Text Wide", system-ui, sans-serif';
-  ctx.fillStyle = DIM;
-  const head = wrap(ctx, f.label, b.x + b.w - x0);
-  head.slice(0, 2).forEach((l, i) => ctx.fillText(l, x0, b.y + 24 + i * 28));
-  const y0 = b.y + 24 + Math.min(2, head.length) * 28 + 12;
-  f.items.slice(0, 3).forEach((it, i) => {
-    const y = y0 + 24 + i * 36;
-    ctx.fillStyle = it.color;
-    ctx.fillRect(x0, y - 22, 6, 28);
-    ctx.fillStyle = INK;
-    ctx.font = '400 25px "TK Text Wide", system-ui, sans-serif';
-    ctx.fillText(it.text, x0 + 16, y);
-  });
+  ctx.textBaseline = "middle";
+  const label = (f.label || "ROUTES → MUSIC").toUpperCase();
+  const tw = Math.min(b.w - 80, Math.ceil(ctx.measureText(label).width) + 56);
+  glassPanel(ctx, b.x, b.y - 54, tw, 66, 18);
+  ctx.fillStyle = INK;
+  ctx.fillText(label, b.x + 28, b.y - 20, tw - 56);
   ctx.restore();
+  if (f.canvas && f.canvas.width > 0 && f.canvas.height > 0) {
+    // the ribbon keeps its own proportions, centred in the box
+    const k = Math.min(b.w / f.canvas.width, b.h / f.canvas.height);
+    const w = f.canvas.width * k;
+    const h = f.canvas.height * k;
+    ctx.drawImage(f.canvas, b.x + (b.w - w) / 2, b.y + (b.h - h) / 2, w, h);
+  }
   ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
 }

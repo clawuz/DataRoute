@@ -40,13 +40,13 @@ describe("Instagram Story safe area", () => {
     expect(SAFE_TOP).toBe(250);
     expect(SAFE_LAST_Y).toBe(1670);
   });
-  it("fits the routes sounding now inside the music box", () => {
+  it("puts the music box's ear (its name) just above the box, inside the band", () => {
     const r = recorder();
-    drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [1, 2, 3, 4, 5, 6].map((i) => ({ text: `IST → DPS ${i}`, color: "#fff" })) });
-    expect(r.texts.length).toBeGreaterThan(2);
+    drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [] });
+    expect(r.texts.length).toBeGreaterThan(0);
     for (const t of r.texts) {
-      expect(t.y, t.text).toBeLessThanOrEqual(SCOPE_BOX.y + SCOPE_BOX.h);
-      expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SCOPE_BOX.y);
+      expect(t.y, t.text).toBeLessThanOrEqual(SCOPE_BOX.y);
+      expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP);
     }
   });
   it("puts the card's numbers inside the band too (no music box)", () => {
