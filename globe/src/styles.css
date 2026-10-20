@@ -1333,8 +1333,8 @@ body.personal-build .music-scope.neon::before {
 .if-veil { position: absolute; inset: 0; z-index: 1; opacity: 0; pointer-events: none; background: linear-gradient(90deg, rgba(2, 3, 10, 0.92) 0%, rgba(2, 3, 10, 0.6) 42%, rgba(2, 3, 10, 0) 78%); }
 .if-text { position: absolute; left: 7vw; top: 50%; transform: translateY(-50%); z-index: 3; display: grid; gap: 0; text-align: left; pointer-events: none; text-transform: uppercase; }
 .if-brandblock { display: grid; justify-items: start; opacity: 0; }
-.if-logo { height: clamp(26px, 3.2vw, 46px); width: auto; margin-bottom: 0.5em; }
-.if-world { font-family: "TK Text Wide", system-ui, sans-serif; font-size: clamp(10px, 1vw, 14px); letter-spacing: 0.34em; font-weight: 600; color: #e30a17; margin-bottom: 1.2em; text-shadow: 0 0 10px rgba(0, 0, 0, 0.95), 0 2px 18px rgba(0, 0, 0, 0.9); }
+.if-logo { height: clamp(26px, 3.2vw, 46px); width: auto; margin-bottom: 1em; }
+.if-world { display: block; margin-top: 1.1em; opacity: 0; font-family: "TK Text Wide", system-ui, sans-serif; font-size: clamp(15px, 2.1vw, 32px); letter-spacing: 0.3em; font-weight: 600; color: #e30a17; text-shadow: 0 0 12px rgba(0, 0, 0, 0.95), 0 2px 20px rgba(0, 0, 0, 0.9); }
 .if-title { margin: 0; display: grid; gap: 0.08em; font-family: "TK Display", "TK Display Condensed", system-ui, sans-serif; font-weight: 700; font-size: clamp(28px, 4.1vw, 66px); line-height: 1.04; letter-spacing: 0.005em; color: #f2f5fa; text-shadow: 0 2px 26px rgba(0, 0, 0, 0.8); }
 .if-title span { opacity: 0; }
 .if-skip { position: absolute; right: 18px; bottom: 18px; z-index: 5; height: 34px; padding: 0 20px; border-radius: 99px; cursor: pointer; color: #fff; font-family: "TK Text Wide", system-ui, sans-serif; font-size: 11px; letter-spacing: 0.2em; border: 1.5px solid transparent; background: linear-gradient(rgba(8, 10, 22, 0.55), rgba(8, 10, 22, 0.55)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; }

@@ -88,7 +88,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
         l.engine.setRouteFocus(s.dim, 1.5);
       }
       if (rootRef.current) rootRef.current.style.background = `rgba(2, 3, 10, ${s.black})`;
-      for (const k of ["brand", "l1", "l2"] as const) { const el = els.current[k]; if (el) el.style.opacity = String(s.text[k]); }
+      for (const k of ["brand", "l1", "l2", "world"] as const) { const el = els.current[k]; if (el) el.style.opacity = String(s.text[k]); }
       if (els.current.veil) els.current.veil.style.opacity = String(s.veil);
       if (t >= FILM_SECONDS && frozenAt() === null) { finish(); return; }
       raf = requestAnimationFrame(tick);
@@ -149,12 +149,12 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       <div className="if-text">
         <div ref={set("brand")} className="if-brandblock">
           <img className="if-logo" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
-          <span className="if-world">A WORLD OF MUSIC</span>
         </div>
         <h2 className="if-title">
           <span ref={set("l1")}>We fly to the most countries.</span>
           <span ref={set("l2")}>Now we make them play.</span>
         </h2>
+        <span ref={set("world")} className="if-world">A WORLD OF MUSIC</span>
       </div>
       {phase === "film" && <button type="button" className="if-skip" onClick={skip}>SKIP</button>}
     </div>

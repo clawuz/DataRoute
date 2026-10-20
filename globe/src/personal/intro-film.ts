@@ -1,14 +1,14 @@
 /**
  * The opening film is the live screen itself, seen from far: the world turns in and the routes light as the live music plays them (the
  * same tour the site starts with: the day's replay, then the music); then the airline's mark and the two lines come in, one after
- * another, at the left; then the globe moves back to where the live screen has it, the music fades out, and the live screen starts
+ * another, at the left (the mark, the two lines, and A WORLD OF MUSIC under them); then the globe moves back to where the live screen has it, the music fades out, and the live screen starts
  * from the beginning. Everything here is a pure function of time.
  */
-export const FILM_SECONDS = 19.6;
+export const FILM_SECONDS = 20.2;
 /** the words are gone and the globe starts to move back */
-export const SETTLE_FROM = 16.2;
+export const SETTLE_FROM = 16.8;
 /** the globe stands where the live screen has it */
-export const SETTLE_TO = 19.2;
+export const SETTLE_TO = 19.8;
 
 const clamp = (x: number, a = 0, b = 1): number => Math.min(b, Math.max(a, x));
 const ease = (x: number): number => { const t = clamp(x); return t * t * (3 - 2 * t); };
@@ -32,7 +32,7 @@ export interface Shot {
   /** a dark veil at the left, behind the words, so that they read */
   veil: number;
   /** the words: opacity 0..1 */
-  text: { brand: number; l1: number; l2: number };
+  text: { brand: number; l1: number; l2: number; world: number };
   /** the music's level (it fades out while the globe moves back) */
   music: number;
   /** the routes' resting brightness: low while a note lights its own route, back to 1 as the globe settles */
@@ -60,7 +60,7 @@ export function shotAt(t0: number): Shot {
     glow: mix(0.3, 1.9, ramp(t, 0.5, 6)),
     black: 1 - ramp(t, 0, 1.2),
     veil: 0.7 * ramp(t, 6.3, 7.6) * out,
-    text: { brand: rise(7), l1: rise(9), l2: rise(10.8) },
+    text: { brand: rise(7), l1: rise(9), l2: rise(10.8), world: rise(11.9) },
     music: 1 - ramp(t, SETTLE_FROM, SETTLE_TO - 0.3),
     dim: mix(0.3, 1, ramp(t, SETTLE_FROM, SETTLE_TO)),
   };

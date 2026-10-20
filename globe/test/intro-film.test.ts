@@ -19,13 +19,14 @@ describe("the opening film", () => {
   });
   it("shows no words while the routes light, then the mark, then each line in turn, each held long enough to read", () => {
     for (const t of [1, 3, 5, 6.5]) expect(words(t).every((v) => v === 0)).toBe(true);
-    const start = (k: "brand" | "l1" | "l2") => { for (let t = 0; t < SETTLE_FROM; t += 0.05) if (shotAt(t).text[k] > 0.5) return t; return Infinity; };
+    const start = (k: "brand" | "l1" | "l2" | "world") => { for (let t = 0; t < SETTLE_FROM; t += 0.05) if (shotAt(t).text[k] > 0.5) return t; return Infinity; };
     expect(start("l1")).toBeGreaterThan(start("brand"));
     expect(start("l2")).toBeGreaterThan(start("l1"));
+    expect(start("world")).toBeGreaterThan(start("l2")); // A WORLD OF MUSIC comes last, under the two lines
     let all = 0;
     for (let t = 0; t < SETTLE_FROM; t += 0.05) if (words(t).every((v) => v > 0.95)) all += 0.05;
-    expect(all).toBeGreaterThan(3.5); // both lines and the mark together
-    expect(shotAt(SETTLE_FROM + 0.3).text.l2).toBe(0);
+    expect(all).toBeGreaterThan(3); // the mark, both lines and A WORLD OF MUSIC together
+    expect(shotAt(SETTLE_FROM + 0.3).text.world).toBe(0);
   });
   it("moves back to exactly the live screen's view after the words, and the music is out before it arrives", () => {
     expect(shotAt(SETTLE_FROM - 1).dist).toBeLessThan(2.3);
