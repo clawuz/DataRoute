@@ -7,7 +7,7 @@ import type { Store } from "@web/hud/store";
 import { diffEvents } from "../model/events";
 import { telemetryAt } from "../geo3d/telemetry";
 import { TOUR_END_HOLD_SEC, TOUR_LIVE_HOLD_SEC, initTour, stepTour } from "../model/tour";
-import { FOLLOW_SPEED, SCRUB_FOLLOW_SEC, atEnd, atLiveHead, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
+import { FOLLOW_SPEED, SCRUB_FOLLOW_SEC, atEnd, endOf, atLiveHead, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
 import { REWIND_SEC, blendCur } from "../camera/time-ease";
 import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
@@ -228,8 +228,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       return;
     }
     const from = currentCur(d.nowMs() / 1000);
-    follow = { id: f.id, idx, clock: { ...startClock(f), speed: FOLLOW_SPEED }, liveHeadSec: 0, endedSec: 0 };
-    blend = { from, t: 0, dir: "in" };
+    // the flight continues from where it is at the displayed time (not from take-off): the clock starts at the globe's time, kept inside the track
+    const here = Math.min(f.status === "AIRBORNE" ? f.lastT : endOf(f), Math.max(f.t[0], from));
+    follow = { id: f.id, idx, clock: { ...startClock(f), u: here, speed: FOLLOW_SPEED }, liveHeadSec: 0, endedSec: 0 };
+    blend = null;
   }
   /** leaves FOLLOW; the displayed time glides from where it is now back to the mode time */
   function endFollow(from?: number) {

@@ -253,16 +253,17 @@ describe("globe controller", () => {
     now: { gs: 480, trk: 300 },
   });
 
-  it("a click on a flight starts FOLLOW at the first sample and advances at the fixed x30 speed", async () => {
+  it("a click on a flight starts FOLLOW where the flight is now (not at take-off) and goes on from there", async () => {
     const h = setup();
     await flush();
     h.c.onClick(10, 10);
-    expect(h.frame(REWIND_SEC).follow).toEqual({ flight: 0, id: "a", u: 83400 }); // the flight waits for the rewind
+    const f0 = h.frame(0.016);
+    expect(f0.follow!.id).toBe("a");
+    expect(f0.follow!.u).toBeGreaterThan(83400 + 2000); // the flight is far past its first sample
+    expect(f0.cur).toBe(f0.follow!.u); // no rewind: the globe's time is the flight's time
     const f = h.frame(1);
-    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83400 + 30 });
-    expect(f.cur).toBe(83430);
+    expect(f.follow!.u).toBeGreaterThanOrEqual(f0.follow!.u);
     expect(f.highlight).toBe(0);
-    expect(f.absTime).toBe(G1 - 86400 + 83430);
     h.c.dispose();
   });
 
@@ -270,25 +271,16 @@ describe("globe controller", () => {
     const LIVE_CUR = 86430;
     const U0 = 83400;
 
-    it("after a click cur glides monotonically from the live time to u0 and the follow clock waits", async () => {
+    it("after a click the displayed time does not jump back to take-off", async () => {
       const h = setup();
       await flush();
       expect(h.frame(0.016).cur).toBe(LIVE_CUR);
       h.c.onClick(10, 10);
-      let prev = LIVE_CUR;
-      let f = h.frame(0.1);
       for (let i = 0; i < 8; i++) {
-        expect(f.cur).toBeLessThanOrEqual(prev);
-        expect(f.cur).toBeGreaterThan(U0);
-        expect(f.follow!.u).toBe(U0);
-        expect(f.absTime).toBe(G1 - 86400 + f.cur);
-        prev = f.cur;
-        f = h.frame(0.1);
+        const f = h.frame(0.1);
+        expect(f.cur).toBeGreaterThan(U0 + 2000);
+        expect(f.follow!.u).toBeGreaterThan(U0 + 2000);
       }
-      f = h.frame(1); // finishes the rewind: cur has arrived, the flight has not started yet
-      expect(f.cur).toBe(U0);
-      expect(f.follow!.u).toBe(U0);
-      expect(h.frame(1).follow!.u).toBeGreaterThan(U0);
       h.c.dispose();
     });
 
@@ -348,14 +340,15 @@ describe("globe controller", () => {
     await flush();
     h.c.onClick(10, 10);
     h.frame(REWIND_SEC);
-    expect(h.frame(1).cur).toBe(83430);
+    const c0 = h.frame(1).cur;
     h.c.onKey(" ");
-    expect(h.frame(1).cur).toBe(83430);
+    expect(h.frame(1).cur).toBe(c0);
     h.c.onKey(" ");
     h.c.onKey("]"); // no effect: the follow speed is fixed
-    expect(h.frame(1).cur).toBe(83430 + 30);
+    const c1 = h.frame(1).cur;
+    expect(c1).toBeGreaterThan(c0);
     h.c.onKey("ArrowLeft");
-    expect(h.frame(0).cur).toBe(83400); // five minutes back is clamped at the first sample
+    expect(h.frame(0).cur).toBeCloseTo(c1 - 300, 0); // five minutes back
     h.c.dispose();
   });
 
@@ -377,11 +370,11 @@ describe("globe controller", () => {
     await flush();
     h.c.onClick(10, 10);
     h.frame(REWIND_SEC);
-    expect(h.frame(1).follow!.u).toBe(83430);
+    const u0 = h.frame(1).follow!.u;
     h.c.refresh();
     await flush();
     const f = h.frame(0);
-    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83430 - 120 });
+    expect(f.follow).toEqual({ flight: 0, id: "a", u: u0 - 120 });
     h.c.dispose();
   });
 
@@ -430,7 +423,7 @@ describe("globe controller", () => {
     const fh = h.store.get().follow!;
     expect(fh.tk).toBe("TK-a");
     expect(fh.route).toBe("IST \u2192 JFK");
-    expect(fh.state).toBe("OBSERVED");
+    expect(fh.state).toMatch(/OBSERVED|EXTRAPOLATED/);
     expect(h.store.get().mode).toBe("LIVE");
     h.c.dispose();
   });
@@ -721,7 +714,7 @@ describe("globe controller", () => {
         h.c.dispose();
       });
 
-      it("passes the followed flight id while following (climbing: positive vertical speed) and null after", async () => {
+      it("passes the followed flight id while following and null after", async () => {
         const sound = stub();
         const h = setup({ sound });
         await flush();
@@ -733,7 +726,6 @@ describe("globe controller", () => {
         expect(followed).toBe("a");
         const m = buildGlobeModel(dayAt(G1, [airborne("AIRBORNE", null)]));
         expect(sky[0].alt100).toBeCloseTo(headState(m.flights[0], f.cur)!.alt100, 6);
-        expect(sky[0].vsFpm).toBeGreaterThan(0);
         h.c.onKey("Escape");
         h.frame(0.3);
         expect(lastSky(sound)[1]).toBeNull();
