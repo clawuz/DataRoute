@@ -100,6 +100,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
     }
     controller.setTextureState(0, "");
     controllerRef.current = controller;
+    if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") controller.setMusicOn(false); // silent until the tour starts it (the last visit may have left the music on: a first tap would have played it behind the waiting page)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") setLiveHandles({ engine, controller });
     let maxProgress = 0;
     // the new link: a first visitor sees the globe settle, then the day replays and the music comes in
@@ -135,7 +136,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         if (s.mode === "LIVE") controller?.onKey("r"); // the 24 h replay
         timers.push(
           setTimeout(() => {
-            if (!store.get().music.on) controller?.onKey("m"); // then the music
+            controller?.setMusicOn(true); // then the music
           }, 800),
         );
       };
@@ -163,7 +164,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         }, 250);
         timers.push(t as unknown as ReturnType<typeof setTimeout>);
       });
-      setIntroReady(Promise.all([texturesReady.then(() => engine.whenAssetsReady()), data]));
+      setIntroReady(Promise.all([texturesReady.then(() => engine.whenAssetsReady()), data, controller?.musicReady()]));
     }
 
     let press: { x: number; y: number; t: number } | null = null;
@@ -251,12 +252,12 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
               const c = controllerRef.current;
               if (c) {
                 c.setMusicFade(1);
-                if (store.get().music.on) c.onKey("m");
+                c.setMusicOn(false);
                 if (store.get().mode === "REPLAY") c.onKey("r");
                 setTimeout(() => {
                   c.onKey("r");
                   setTimeout(() => liveEngine.current?.centerOn(20, 30, 0), 200); // the day's first moment: the globe at the live screen's first view again
-                  setTimeout(() => c.onKey("m"), 800);
+                  setTimeout(() => c.setMusicOn(true), 800);
                 }, 400);
               }
             }

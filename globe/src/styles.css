@@ -1342,3 +1342,13 @@ body.personal-build .music-scope.neon::before {
 /* while the film plays the live screen's furniture waits; it comes in when the film ends */
 .hud { transition: opacity 0.9s ease; }
 body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0; pointer-events: none; }
+
+/* the waiting page: the entry screen's marks and lines */
+.intro-film .intro-mark { gap: 6px; }
+.if-presents-word { font-family: "TK Text Wide", system-ui, sans-serif; letter-spacing: 0.34em; font-size: 11px; color: rgba(242, 245, 250, 0.72); padding-left: 0.34em; }
+.if-splash-title { margin: 3.2vh 0 14px; }
+.if-foot { position: absolute; left: 0; right: 0; bottom: 3.5vh; z-index: 2; display: grid; justify-items: center; gap: 12px; padding: 0 5vw; text-align: center; }
+.if-hint { margin: 0; display: inline-flex; align-items: center; gap: 12px; padding: 10px 22px; border-radius: 99px; border: 1px solid rgba(242, 245, 250, 0.18); background: rgba(8, 12, 28, 0.55); font-family: "TK Text", system-ui, sans-serif; font-size: 14px; color: rgba(242, 245, 250, 0.82); }
+.if-fine { margin: 6px 0 0; display: grid; gap: 8px; font-family: "TK Text Wide", system-ui, sans-serif; font-size: 11px; letter-spacing: 0.16em; color: rgba(242, 245, 250, 0.5); text-transform: uppercase; line-height: 1.6; }
+.if-credit { margin: 0; font-family: "TK Text Wide", system-ui, sans-serif; font-size: 10px; letter-spacing: 0.14em; color: rgba(242, 245, 250, 0.42); }
+@media (max-width: 720px), (max-aspect-ratio: 1/1) { .if-hint { font-size: 12.5px; padding: 8px 16px; } .if-fine { font-size: 9.5px; letter-spacing: 0.1em; } }

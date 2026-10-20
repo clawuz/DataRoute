@@ -93,6 +93,10 @@ export interface GlobeController {
   setTextureState(progress: number, note: string): void;
   /** the level of the music, 0..1 (1 = as is): the opening film fades the live music out with it */
   setMusicFade(k: number): void;
+  /** the music on or off (the key `m` only toggles, and the last choice is kept between visits); a no-op when it already is */
+  setMusicOn(on: boolean): void;
+  /** loads the recorded music now, silently; resolves when it can play (or after a few seconds): the first note is then the recording, never the generative stand-in */
+  musicReady(): Promise<void>;
   dispose(): void;
 }
 
@@ -612,6 +616,22 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (disposed) return;
       perf = { fps, level };
       pushEffects(); // art:core
+    },
+    musicReady() {
+      track.setEnabled(true); // loads; it plays only when the music is on (the update below pauses it otherwise)
+      return new Promise<void>((res) => {
+        const t0 = Date.now();
+        const iv = setInterval(() => {
+          if (track.ready() || disposed || Date.now() - t0 > 8000) { clearInterval(iv); res(); }
+        }, 150);
+      });
+    },
+    setMusicOn(on) {
+      if (disposed || !art.enabled || art.sound === on) return;
+      art = toggleArt(art, "sound");
+      persistArt(art);
+      pushEffects();
+      pushHud();
     },
     setMusicFade(k) {
       musicFade = Math.min(1, Math.max(0, k));

@@ -91,6 +91,8 @@ export interface GlobeEngine {
   setLineScale(k: number): void;
   /** how far the camera stands from the globe's centre (3.2 by default); the opening film moves it */
   setRigDistance(d: number | null): void;
+  /** the opening film: every route rests at `dim` (1 = as is) and a note's route flashes `boost` times as strong, so the route being played is the one that stands out */
+  setRouteFocus(dim: number, boost?: number): void;
   /** the slow idle spin: on/off and a speed multiplier */
   setIdleSpin(on: boolean, speed?: number): void;
   dispose(): void;
@@ -147,6 +149,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const sunMode: "stage" | "real" | "night" = typeof location !== "undefined" ? ((new URLSearchParams(location.search).get("sun") as "real" | "night" | null) ?? "stage") : "stage";
   let idleSpin = true;
   let rigDist = RIG_DISTANCE;
+  let focusDim = 1;
+  let focusBoost = 1;
   let shownAbsNow = Date.now() / 1000; // the time the Earth is shown at (a replay shows a time that is not now)
   let idleSpeed = 1;
   let lineScale = 1;
@@ -398,9 +402,11 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     if (arcs) {
       arcs.uniforms.uCur.value = f.cur;
       arcs.uniforms.uHighlight.value = f.highlight;
+      arcs.uniforms.uGain.value = focusDim;
     }
     if (corridors) { // art:corridors
       corridors.uniforms.uTime.value = rel(f.nowSec); // art:corridors
+      corridors.uniforms.uBase.value = focusDim;
       corridors.update(dt); // art:sound
       const fl = f.follow ? model?.flights[f.follow.flight] : undefined; // art:corridors
       corridors.uniforms.uHighlight.value = fl ? corridors.indexOf(fl.from, fl.to) : -1; // art:corridors
@@ -522,6 +528,21 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     async loadTextures(onProgress) {
       // ux: progressive — the 4k set first (a few MB: the Earth and the data appear quickly), then the preferred tier in the background
       const preferred = chooseTier(detectTierInputs(renderer));
+      // the illustrated pair starts loading at once, beside the classic 4k set (it used to wait for it)
+      const flatWanted = newGlobeLook() && new URLSearchParams(location.search).get("map") !== "classic";
+      const loadFlat = async (kind: "night" | "day", tier: string): Promise<Texture | null> => {
+        try {
+          const t = await new TextureLoader().loadAsync(`/textures/earth-${kind}-${tier}.jpg`);
+          t.colorSpace = NoColorSpace;
+          t.flipY = true;
+          t.wrapS = RepeatWrapping;
+          t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+          return t;
+        } catch {
+          return null;
+        }
+      };
+      const flatPair = flatWanted ? track(Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")])) : null;
       const first = await loadEarthTextures(renderer, "4k", onProgress);
       if (disposed) {
         if (first) for (const tex of [first.day, first.night, first.clouds]) tex.dispose();
@@ -533,18 +554,6 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       if (flat) {
         // the personal build shows two illustrated pictures of the world (night: NASA city lights; day) and blends them along the
         // terminator: the 4k pair first, then the preferred tier (8k / 16k, by the same rules as before) in the background
-        const loadFlat = async (kind: "night" | "day", tier: string): Promise<Texture | null> => {
-          try {
-            const t = await new TextureLoader().loadAsync(`/textures/earth-${kind}-${tier}.jpg`);
-            t.colorSpace = NoColorSpace;
-            t.flipY = true;
-            t.wrapS = RepeatWrapping;
-            t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
-            return t;
-          } catch {
-            return null;
-          }
-        };
         const shown: { night: Texture | null; day: Texture | null } = { night: null, day: null };
         const show = (kind: "night" | "day", t: Texture | null) => {
           if (!t) return;
@@ -554,7 +563,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
           shown[kind]?.dispose();
           shown[kind] = t;
         };
-        void track(Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")])).then(async ([n, d]) => {
+        void (flatPair ?? Promise.resolve([null, null] as (Texture | null)[])).then(async ([n, d]) => {
           show("night", n);
           show("day", d);
           if (preferred !== "4k") { // a failed load keeps the 4k picture
@@ -639,8 +648,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setPlaneModel(url) {
       if (!url) { planeLoaded = false; planeGroup.clear(); return; }
       if (planeLoaded) return;
-      track(new Promise<void>((done) => new GLTFLoader().load(url, (gltf) => {
-        done();
+      new GLTFLoader().load(url, (gltf) => {
         if (disposed) return;
         // the model is used as it comes (its own textures); it is centred, scaled to a length of 1 and its nose already points along +Z
         const box = new Box3().setFromObject(gltf.scene);
@@ -660,7 +668,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         planeGroup.clear();
         planeGroup.add(gltf.scene);
         planeLoaded = true;
-      }, undefined, () => { done(); /* without the model the dot stays */ })));
+      }, undefined, () => { /* without the model the dot stays */ });
     },
     async whenAssetsReady() {
       for (let n = -1; n !== tracked.length; ) { // assets requested while waiting are waited for too
@@ -726,8 +734,12 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     pulseAirport(iata, nowSec) {
       airports?.pulse(iata, rel(nowSec));
     },
+    setRouteFocus(dim, boost = 1) {
+      focusDim = dim;
+      focusBoost = boost;
+    },
     pulseRoute(key) { // art:sound
-      if (corridors) corridors.pulse(corridors.indexOfKey(key));
+      if (corridors) corridors.pulse(corridors.indexOfKey(key), focusBoost);
     },
     headsInfo() {
       return headInfo;

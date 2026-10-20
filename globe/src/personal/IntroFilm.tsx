@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { GlobeController } from "../app/controller";
 import type { GlobeEngine } from "../scene/engine";
+import { NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS } from "./destinations";
 import { FILM_SECONDS, LIVE_VIEW, shotAt } from "./intro-film";
 
 /** ?filmat=10.6 freezes the film at that second, silent (to look at a single frame) */
 const frozenAt = (): number | null => { const v = new URLSearchParams(window.location.search).get("filmat"); return v === null || Number.isNaN(+v) ? null : +v; };
-const WAIT_CAP_MS = 25000; // a slow network never keeps the visitor out
+const WAIT_CAP_MS = 12000; // a slow network never keeps the visitor out
 
 export interface LiveHandles {
   engine: GlobeEngine;
@@ -45,8 +46,9 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       l.engine.setRigDistance(9);
       l.engine.centerOn(8, -50, 0);
       l.controller.setMusicFade(1);
+      l.engine.setRouteFocus(0.3, 1.5); // an intro: the route a note lights stands out from the rest
       l.controller.onKey("r"); // the tour the site starts with: the day's replay …
-      if (withSound) setTimeout(() => l.controller.onKey("m"), 300); // … and its music
+      l.controller.setMusicOn(withSound); // … and its music (set, not toggled: the last visit's choice is kept in the browser)
     }
     startRef.current = performance.now();
     setPhase("film");
@@ -62,6 +64,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       l.engine.setRigDistance(null);
       l.engine.centerOn(LIVE_VIEW.lat, LIVE_VIEW.lon, 0);
       l.engine.setAtmosphereBoost(1.9);
+      l.engine.setRouteFocus(1, 1);
       l.engine.setIdleSpin(true, 1);
     }
     document.body.classList.remove("film-on"); // the live furniture comes in
@@ -82,6 +85,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
         const g = Math.round(s.glow * 20) / 20;
         if (g !== lineRef.current) { lineRef.current = g; l.engine.setAtmosphereBoost(g); }
         l.controller.setMusicFade(s.music);
+        l.engine.setRouteFocus(s.dim, 1.5);
       }
       if (rootRef.current) rootRef.current.style.background = `rgba(2, 3, 10, ${s.black})`;
       for (const k of ["brand", "l1", "l2"] as const) { const el = els.current[k]; if (el) el.style.opacity = String(s.text[k]); }
@@ -108,7 +112,8 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       {phase === "splash" && (
         <div className="intro-mark">
           <img className="intro-logo" src="/brand/tk-lockup-vertical-light.png" alt="Turkish Airlines" />
-          <span className="intro-title">A WORLD OF MUSIC</span>
+          <span className="if-presents-word">PRESENTS</span>
+          <span className="intro-title if-splash-title">A WORLD OF MUSIC</span>
           {canEnter ? (
             <>
               <button type="button" className="if-enter" onClick={() => begin(true)}>
@@ -123,6 +128,21 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
               <span className="intro-label">TUNING THE WORLD</span>
             </>
           )}
+        </div>
+      )}
+      {phase === "splash" && (
+        <div className="if-foot">
+          <p className="if-hint">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path d="M4 15v-3a8 8 0 0 1 16 0v3M4 15h3a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2v-3zm16 0h-3a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2v-3z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            For the best experience, use headphones.
+          </p>
+          <p className="if-fine">
+            <span>{NETWORK_CLAIM}</span>
+            <span>{NETWORK_DESTINATIONS} destinations · {NETWORK_COUNTRIES} countries</span>
+          </p>
+          <p className="if-credit">A Platon.Ai project.</p>
         </div>
       )}
       <div ref={set("veil")} className="if-veil" aria-hidden="true" />

@@ -35,6 +35,8 @@ export interface Shot {
   text: { brand: number; l1: number; l2: number };
   /** the music's level (it fades out while the globe moves back) */
   music: number;
+  /** the routes' resting brightness: low while a note lights its own route, back to 1 as the globe settles */
+  dim: number;
 }
 
 /** the camera and the words at second `t` of the film */
@@ -60,5 +62,6 @@ export function shotAt(t0: number): Shot {
     veil: 0.7 * ramp(t, 6.3, 7.6) * out,
     text: { brand: rise(7), l1: rise(9), l2: rise(10.8) },
     music: 1 - ramp(t, SETTLE_FROM, SETTLE_TO - 0.3),
+    dim: mix(0.3, 1, ramp(t, SETTLE_FROM, SETTLE_TO)),
   };
 }

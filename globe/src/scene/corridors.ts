@@ -138,6 +138,7 @@ const VERT = /* glsl */ `
 uniform vec2 uRes;
 uniform float uWidth;
 uniform float uHighlight;
+uniform float uBase;
 attribute vec2 aCorner;
 attribute vec3 aA;
 attribute vec3 aB;
@@ -167,7 +168,7 @@ void main() {
   c.xy += n * aCorner.x * w / uRes * c.w;
   gl_Position = c;
   vColor = mix(aColor, vec3(1.0), min(1.0, aPulse)); // art:sound — and whitens
-  vAlpha = aMisc.y * (hi ? 2.2 : 1.0) * (1.0 + 3.0 * aPulse);
+  vAlpha = aMisc.y * (hi ? 2.2 : 1.0) * (uBase + 3.0 * aPulse); // uBase < 1 dims every corridor but the ones a note is lighting
   vEdge = aCorner.x;
   vS = mix(aS.x, aS.y, aCorner.y);
   vW = aMisc.z;
@@ -194,6 +195,8 @@ export type CorridorUniforms = {
   uWidth: { value: number };
   uTime: { value: number };
   uHighlight: { value: number };
+  /** the corridors' resting brightness (1 = as is) */
+  uBase: { value: number };
 };
 
 export interface Corridors {
@@ -233,6 +236,7 @@ export function createCorridors(m: GlobeModel, opts: { refMax?: number } = {}): 
     uWidth: { value: 1 },
     uTime: { value: 0 },
     uHighlight: { value: -1 },
+    uBase: { value: 1 },
   };
   const material = new ShaderMaterial({
     uniforms, vertexShader: VERT, fragmentShader: FRAG, transparent: true, blending: AdditiveBlending,
