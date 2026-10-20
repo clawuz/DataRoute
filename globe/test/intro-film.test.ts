@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FILM_DESTINATIONS, FILM_SECONDS, filmPiece, filmRoutes, shotAt } from "../src/personal/intro-film";
+import { FILM_DESTINATIONS, FILM_SECONDS, filmRoutes, shotAt } from "../src/personal/intro-film";
 
 describe("the opening film", () => {
   it("starts far and dark, and ends at the live screen's distance with the furniture shown", () => {
@@ -25,18 +25,10 @@ describe("the opening film", () => {
     expect(shotAt(4.6).text.sound).toBe(1);
     expect(shotAt(6).text.every).toBe(0);
   });
-  it("scores 15 seconds on the film's routes, one voice per route at first", () => {
+  it("opens the network's hundreds of routes from the hub, the voiced cities first", () => {
     const routes = filmRoutes();
-    expect(routes.length).toBeGreaterThan(150); // the live screen's hundreds of routes
+    expect(routes.length).toBeGreaterThan(150);
     expect(routes.slice(0, FILM_DESTINATIONS.length).map((r) => r.to)).toEqual(FILM_DESTINATIONS);
-    const p = filmPiece(routes);
-    expect(p.duration).toBe(FILM_SECONDS);
-    for (const n of p.notes) {
-      expect(n.t).toBeGreaterThanOrEqual(0);
-      expect(n.t + n.d).toBeLessThanOrEqual(FILM_SECONDS + 1);
-      expect(routes[n.route]).toBeTruthy();
-    }
-    const voices = new Set(p.notes.filter((n) => n.t >= 3.5 && n.t < 5.2 && n.show).map((n) => n.instrument));
-    expect(voices.size).toBeGreaterThanOrEqual(6);
+    expect(routes.every((r) => r.from === "IST")).toBe(true);
   });
 });

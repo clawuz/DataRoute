@@ -4,8 +4,8 @@ import { applyNewGlobeLook } from "../scene/look";
 import { setExtraColors } from "../scene/palette-ext";
 import { ROUTE_RGB, routeIndex } from "../scene/route-palette";
 import { buildPersonalModel } from "./model";
-import { createPersonalPlayer, type PersonalPlayer } from "./player";
-import { FILM_SECONDS, filmPiece, filmRoutes, shotAt } from "./intro-film";
+import { notesBetween, type TrackData } from "../audio/day-track";
+import { FILM_SECONDS, filmRoutes, shotAt } from "./intro-film";
 
 export const FILM_SEEN_KEY = "wom-film-seen";
 /** ?filmat=4.2 freezes the film at that second (to look at a single frame) */
@@ -24,7 +24,11 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
   const notesRef = useRef<HTMLDivElement>(null);
   const textRefs = useRef<Record<string, HTMLElement | null>>({});
   const engineRef = useRef<GlobeEngine | null>(null);
-  const playerRef = useRef<PersonalPlayer | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null); // the live screen's own music: the first seconds of its recorded track
+  const notesData = useRef<TrackData | null>(null);
+  const soundOn = useRef(false);
+  const prevNote = useRef(0);
+  const audioReady = useRef<Promise<unknown>>(Promise.resolve());
   const startRef = useRef(0);
   const flyRef = useRef(0);
   const doneRef = useRef(onDone);
@@ -65,9 +69,20 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     const startCur = Math.min(...model.flights.map((f) => f.dep)) - 30;
     engine.setModel(model, span, nowSec());
     engine.setFrameSource(() => ({ absTime: nowSec(), cur: startCur + flyRef.current * (span - startCur), highlight: -1, nowSec: nowSec() }));
+    // the live music's entrance: the recorded track (loaded now, so it starts the moment the tap comes) and its notes
+    const a = new Audio("/music/track.mp3");
+    a.preload = "auto";
+    audioRef.current = a;
+    audioReady.current = Promise.race([
+      new Promise((res) => { a.addEventListener("canplay", res, { once: true }); a.addEventListener("error", res, { once: true }); a.load(); }),
+      new Promise((res) => setTimeout(res, 8000)),
+    ]);
+    void fetch("/music/notes.json").then((r) => r.json()).then((j: TrackData) => { notesData.current = j; }).catch(() => undefined);
     loadedRef.current = engine.loadTextures(() => {}).catch(() => null).then(() => engine.whenAssetsReady());
     return () => {
       alive = false;
+      a.pause();
+      audioRef.current = null;
       engine.dispose();
       engineRef.current = null;
     };
@@ -77,32 +92,36 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
   useEffect(() => {
     if (!ready) return;
     let alive = true;
-    void Promise.all([loadedRef.current, ready]).catch(() => undefined).then(() => { if (alive) setCanEnter(true); if (alive && frozenAt() !== null) begin(false); });
+    void Promise.all([loadedRef.current, audioReady.current, ready]).catch(() => undefined).then(() => { if (alive) setCanEnter(true); if (alive && frozenAt() !== null) begin(false); });
     const cap = setTimeout(() => { if (!alive) return; setCanEnter(true); if (frozenAt() !== null) begin(false); }, frozenAt() !== null ? 9000 : 25000); // a slow network never keeps the visitor out
     return () => { alive = false; clearTimeout(cap); };
   }, [ready]);
 
   const begin = (withSound: boolean) => {
     try { sessionStorage.setItem(FILM_SEEN_KEY, "1"); } catch { /* private window */ }
-    if (withSound) {
-      try {
-        const ctx = new AudioContext();
-        void ctx.resume();
-        const player = createPersonalPlayer(ctx);
-        playerRef.current = player;
-        player.play(filmPiece(filmRoutes()), (n) => {
-          const eng = engineRef.current;
-          if (eng && n.key) {
-            eng.pulseRoute(n.key);
-            const all = filmKeys.current; // a burst: the other routes of the network flash with it
-            for (let i = 0; i < 3; i++) eng.pulseRoute(all[Math.floor(Math.random() * all.length)]);
-          }
-          if (n.show !== false) spawnNote(n.key);
-        });
-      } catch { /* no audio: the film goes on in silence */ }
+    soundOn.current = withSound;
+    const au = audioRef.current;
+    if (withSound && au) {
+      au.currentTime = 0;
+      au.volume = 0;
+      void au.play().catch(() => { soundOn.current = false; }); // blocked: the film goes on in silence
     }
     startRef.current = performance.now();
     setPhase("film");
+  };
+
+  // the notes of the recorded track as they sound: the route flashes, a light rises from it (a route of the film, or any of them)
+  const publishNotes = (t: number) => {
+    const eng = engineRef.current;
+    const td = notesData.current;
+    if (!eng || !td) return;
+    const keys = filmKeys.current;
+    for (const n of notesBetween(td.notes, prevNote.current, t)) {
+      const key = midRef.current.has(n.k) ? n.k : keys[Math.floor(Math.random() * keys.length)];
+      eng.pulseRoute(key);
+      if (n.v > 0.35) spawnNote(key);
+    }
+    prevNote.current = Math.max(prevNote.current, t);
   };
 
   // one floating note over the middle of the route that sounds it
@@ -123,8 +142,8 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
 
   const finish = () => {
     setPhase("leave");
-    playerRef.current?.setMuted(true);
-    setTimeout(() => { playerRef.current?.dispose(); playerRef.current = null; }, 600);
+    const au = audioRef.current;
+    if (au) { au.volume = 0; setTimeout(() => au.pause(), 400); }
     setTimeout(() => doneRef.current(), 1600);
   };
 
@@ -141,6 +160,10 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
         eng.setAtmosphereBoost(s.glow);
       }
       flyRef.current = s.fly;
+      const au = audioRef.current;
+      const mt = au && !au.paused ? au.currentTime : t;
+      publishNotes(Math.min(FILM_SECONDS, mt));
+      if (au && soundOn.current) au.volume = Math.max(0, Math.min(0.9, (t / 1.2) * 0.9 * (1 - Math.max(0, (t - 12.5) / 2.5))));
       if (canvasRef.current) canvasRef.current.style.opacity = String(s.fade * (1 - s.hud));
       if (rootRef.current) rootRef.current.style.background = `rgba(2, 3, 10, ${1 - s.hud})`;
       for (const k of ["every", "sound"] as const) {
@@ -155,8 +178,6 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
-
-  useEffect(() => () => { playerRef.current?.dispose(); }, []);
 
   const skip = () => {
     const eng = engineRef.current;
