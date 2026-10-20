@@ -9,8 +9,6 @@ export interface PersonalPlayer {
   /** browsers start a context suspended until a gesture */
   resume(): void;
   setMuted(m: boolean): void;
-  /** the master level 0..0.9, reached in about `sec` seconds (a fade) */
-  setLevel(v: number, sec?: number): void;
   /** the audio of the piece as a stream (for a recorded clip) */
   audioStream(): MediaStream | null;
   /** routes an <audio> element (the AI version) through the same graph, so a recorded clip carries it; false when the browser refuses */
@@ -134,9 +132,6 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
         comp.connect(tap); // post-compressor, so the clip is not affected by the mute button
       }
       return tap ? tap.stream : null;
-    },
-    setLevel(v, sec = 0.05) {
-      master.gain.setTargetAtTime(Math.max(0, Math.min(0.9, v)), ctx.currentTime, Math.max(0.01, sec / 3));
     },
     setMuted(m) {
       master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.05);

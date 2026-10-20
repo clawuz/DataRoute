@@ -91,6 +91,8 @@ export interface GlobeController {
   refresh(): void;
   setPerf(fps: number, level: number): void;
   setTextureState(progress: number, note: string): void;
+  /** the level of the music, 0..1 (1 = as is): the opening film fades the live music out with it */
+  setMusicFade(k: number): void;
   dispose(): void;
 }
 
@@ -111,6 +113,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let art: ArtState = initArt(d.search ?? "", undefined, d.artDefaults); // art:core
   const sound: RouteSound = d.sound ?? createRouteSound(); // art:sound
   let soundOn = false; // art:sound
+  let musicFade = 1;
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
   let trackRanks: { data: object; ranks: Ranks } | null = null; // art:track — length/duration ranks of the loaded track
@@ -405,7 +408,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         prevSoundCur = null;
       }
       sound.setGenerative(!track.data());
-      track.setGain(0.4 + 0.6 * intensityNow()); // the recorded audio rises and falls with the traffic of the hour
+      track.setGain((0.4 + 0.6 * intensityNow()) * musicFade); // the recorded audio rises and falls with the traffic of the hour
       const live = mode !== "REPLAY";
       const remap = live
         ? (n: TrackNote): TrackNote | null => {
@@ -609,6 +612,9 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       if (disposed) return;
       perf = { fps, level };
       pushEffects(); // art:core
+    },
+    setMusicFade(k) {
+      musicFade = Math.min(1, Math.max(0, k));
     },
     setTextureState(progress, note) {
       if (disposed) return;

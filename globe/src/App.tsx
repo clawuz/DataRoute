@@ -1,4 +1,5 @@
 import { Intro } from "./personal/Intro";
+import type { LiveHandles } from "./personal/IntroFilm";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dataUrl, isFixture } from "@web/data/source";
 import { ErrorScreen } from "@web/hud/Hud";
@@ -23,6 +24,9 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
   const [error, setError] = useState<string | null>(null);
   const personalLive = import.meta.env.VITE_PERSONAL === "1" || new URLSearchParams(window.location.search).get("personal") === "1";
   const [introReady, setIntroReady] = useState<Promise<unknown> | null>(null);
+  const [liveHandles, setLiveHandles] = useState<LiveHandles | null>(null);
+  const filmRan = useRef(false);
+  const controllerRef = useRef<GlobeController | null>(null);
   const [introOn, setIntroOn] = useState(personalLive); // the opening screen covers the live screen until it is complete
   const introRef = useRef(personalLive);
   const liveEngine = useRef<ReturnType<typeof createGlobeEngine> | null>(null);
@@ -95,6 +99,8 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       return;
     }
     controller.setTextureState(0, "");
+    controllerRef.current = controller;
+    if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") setLiveHandles({ engine, controller });
     let maxProgress = 0;
     // the new link: a first visitor sees the globe settle, then the day replays and the music comes in
     const personalBuild = import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1";
@@ -117,7 +123,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       timers.push(iv as unknown as ReturnType<typeof setTimeout>);
     }
     const startTour = () => {
-      if (!personalBuild) return;
+      if (!personalBuild || filmRan.current) return; // after the opening film the tour is started by its end (below), not here
       let tries = 0;
       const attempt = () => {
         const s = store.get();
@@ -233,7 +239,30 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
-      {introOn && <Intro film ready={introReady} onDone={() => { setIntroOn(false); liveEngine.current?.setIdleSpin(true, 1); gate.current?.open(); }} />}
+      {introOn && <Intro
+          film
+          ready={introReady}
+          live={liveHandles}
+          onDone={(film) => {
+            setIntroOn(false);
+            liveEngine.current?.setIdleSpin(true, 1);
+            if (film) { // the live screen starts: the film's music off, the tour from its beginning, the music again
+              filmRan.current = true;
+              const c = controllerRef.current;
+              if (c) {
+                c.setMusicFade(1);
+                if (store.get().music.on) c.onKey("m");
+                if (store.get().mode === "REPLAY") c.onKey("r");
+                setTimeout(() => {
+                  c.onKey("r");
+                  setTimeout(() => liveEngine.current?.centerOn(20, 30, 0), 200); // the day's first moment: the globe at the live screen's first view again
+                  setTimeout(() => c.onKey("m"), 800);
+                }, 400);
+              }
+            }
+            gate.current?.open();
+          }}
+        />}
       {onExit && (
         <>
           <button type="button" className="live-logo" onClick={onExit} aria-label="Turkish Airlines — back to the start" />

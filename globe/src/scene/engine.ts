@@ -47,8 +47,6 @@ export interface GlobeEngineOptions {
   alwaysPlanned?: boolean;
   /** the personal globe: no airport markers (the routes meet at the hub on their own); lines are drawn exactly like the live globe */
   noAirports?: boolean;
-  /** keep to the 4k pictures (a second, short-lived globe such as the opening film's): no 8k / 16k downloads, little memory */
-  lowRes?: boolean;
 }
 
 export interface GlobeEngine {
@@ -149,6 +147,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const sunMode: "stage" | "real" | "night" = typeof location !== "undefined" ? ((new URLSearchParams(location.search).get("sun") as "real" | "night" | null) ?? "stage") : "stage";
   let idleSpin = true;
   let rigDist = RIG_DISTANCE;
+  let shownAbsNow = Date.now() / 1000; // the time the Earth is shown at (a replay shows a time that is not now)
   let idleSpeed = 1;
   let lineScale = 1;
   let portraitFit = false;
@@ -327,6 +326,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     wasFollowing = !!fol;
     timeEase = easeAbsTime(timeEase, f.absTime, dt);
     const shownAbs = timeEase.shown;
+    shownAbsNow = shownAbs;
     earthGroup.rotation.y = earthRotationRad(shownAbs);
     earthGroup.updateMatrixWorld();
 
@@ -521,7 +521,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     async loadTextures(onProgress) {
       // ux: progressive — the 4k set first (a few MB: the Earth and the data appear quickly), then the preferred tier in the background
-      const preferred = opts.lowRes ? "4k" : chooseTier(detectTierInputs(renderer));
+      const preferred = chooseTier(detectTierInputs(renderer));
       const first = await loadEarthTextures(renderer, "4k", onProgress);
       if (disposed) {
         if (first) for (const tex of [first.day, first.night, first.clouds]) tex.dispose();
@@ -676,7 +676,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       const inputs = detectTierInputs(renderer);
       const capped = (t: TextureTier): TextureTier => (inputs.cap && ORDER_TIERS.indexOf(t) > ORDER_TIERS.indexOf(inputs.cap) ? inputs.cap : t);
       const best: TextureTier = inputs.coarsePointer ? "4k" : inputs.maxTextureSize >= 16384 ? "16k" : inputs.maxTextureSize >= 8192 ? "8k" : "4k";
-      const target = opts.lowRes ? "4k" : capped(best);
+      const target = capped(best);
       const apply = (t: Texture) => {
         starTex?.dispose();
         starTex = t;
@@ -697,7 +697,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     centerOn(lat, lon, lift = 0) {
       const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, ((lat - lift) * Math.PI) / 180));
-      rig = { yaw: initialYaw(earthRotationRad(Date.now() / 1000), lon), pitch, yawVel: 0, pitchVel: 0, dragging: false };
+      rig = { yaw: initialYaw(earthRotationRad(shownAbsNow), lon), pitch, yawVel: 0, pitchVel: 0, dragging: false };
     },
     setRigDistance(d) {
       rigDist = d ?? RIG_DISTANCE;
