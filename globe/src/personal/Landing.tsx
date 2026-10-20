@@ -294,7 +294,11 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
           {fromOpen ? "CHOOSE WHERE YOU FLY FROM" : `${picked.length} / ${MAX_DESTINATIONS}${ready ? (via > 0 ? ` · ${via} CHANGE${via === 1 ? "" : "S"} AT ISTANBUL` : " · DIRECT") : " · ADD A PLACE"}`}
         </span>
         <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, places: picked, home })}>
-          {c.cta}
+          <span className="ms-eq" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ animationDelay: `${-((i * 37) % 17) / 10}s`, animationDuration: `${0.7 + ((i * 53) % 9) / 10}s` }} />)}</span>
+          <span className="ms-make-txt">
+            {c.cta}
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
         </button>
       </div>
     </div>

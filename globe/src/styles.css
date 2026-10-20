@@ -1284,3 +1284,22 @@ body.personal-build .music-scope.neon::before {
 .topbar .landing-back { display: inline-flex; align-items: center; height: 34px; padding: 0 20px; border-radius: 99px; font-family: var(--label); font-size: 11px; letter-spacing: 0.2em; color: #fff; cursor: pointer;
   border: 1.5px solid transparent; background: linear-gradient(rgba(8, 10, 22, 0.72), rgba(8, 10, 22, 0.72)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; box-shadow: 0 0 12px rgba(255, 36, 56, 0.28); }
 .topbar .landing-back:hover { color: #fff; box-shadow: 0 0 18px rgba(255, 36, 56, 0.5); }
+
+/* "compose my wishlist" is the same pill as "make your own music": neon edge, a light running round it and a faint equaliser behind on hover */
+.landing.v2.picker .compose-btn { position: relative; overflow: hidden; isolation: isolate; border: 0 !important; background: rgba(8, 10, 22, 0.72) !important; height: 38px; padding: 0 24px 0 22px; }
+.landing.v2.picker .compose-btn::before, .landing.v2.picker .compose-btn::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.landing.v2.picker .compose-btn::before { background: linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)); }
+.landing.v2.picker .compose-btn::after {
+  opacity: 0; transition: opacity 0.2s;
+  background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #ffffff 346deg, rgba(255, 255, 255, 0) 360deg);
+  filter: drop-shadow(0 0 4px #ff3b4d);
+}
+.landing.v2.picker .compose-btn:hover:not(:disabled)::after, .landing.v2.picker .compose-btn:focus-visible::after { opacity: 1; animation: ms-run 1.5s linear infinite; }
+.landing.v2.picker .compose-btn:hover:not(:disabled) .ms-eq, .landing.v2.picker .compose-btn:focus-visible .ms-eq { opacity: 0.2; }
+.landing.v2.picker .compose-btn:hover:not(:disabled) .ms-eq i, .landing.v2.picker .compose-btn:focus-visible .ms-eq i { animation-play-state: running; }
+.landing.v2.picker .compose-btn:hover:not(:disabled) { background: rgba(24, 12, 24, 0.82) !important; }
+.landing.v2.picker .compose-btn:disabled { opacity: 0.4; }
