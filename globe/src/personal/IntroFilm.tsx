@@ -30,6 +30,7 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
   const loadedRef = useRef<Promise<unknown>>(Promise.resolve());
+  const filmKeys = useRef<string[]>([]);
   const midRef = useRef<Map<string, { lat: number; lon: number }>>(new Map());
 
   // the film's own globe, built while the splash shows; the tap enables once it and the live screen are complete
@@ -57,6 +58,7 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
     const routes = filmRoutes();
     const model = buildPersonalModel(routes);
     model.flights.forEach((f, i) => { f.colorIdx = 7 + routeIndex(routes[i].from, routes[i].to); });
+    filmKeys.current = routes.map((r) => r.key);
     routes.forEach((r) => midRef.current.set(r.key, { lat: (r.fromLat + r.toLat) / 2, lon: (r.fromLon + r.toLon) / 2 }));
     const nowSec = () => Date.now() / 1000;
     const span = model.span;
@@ -90,7 +92,11 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
         playerRef.current = player;
         player.play(filmPiece(filmRoutes()), (n) => {
           const eng = engineRef.current;
-          if (eng && n.key) eng.pulseRoute(n.key);
+          if (eng && n.key) {
+            eng.pulseRoute(n.key);
+            const all = filmKeys.current; // a burst: the other routes of the network flash with it
+            for (let i = 0; i < 3; i++) eng.pulseRoute(all[Math.floor(Math.random() * all.length)]);
+          }
           if (n.show !== false) spawnNote(n.key);
         });
       } catch { /* no audio: the film goes on in silence */ }
@@ -141,6 +147,7 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
         const el = textRefs.current[k];
         if (el) el.style.opacity = String(s.text[k]);
       }
+      for (const k of ["logo", "brand"] as const) { const el = textRefs.current[k]; if (el) el.style.opacity = String(s.text.every); } // the airline's mark comes in with the headline
       if (t >= FILM_SECONDS && frozenAt() === null) { finish(); return; }
       raf = requestAnimationFrame(tick);
     };
@@ -183,6 +190,8 @@ export function IntroFilm({ ready, onDone }: { ready: Promise<unknown> | null; o
       <div ref={notesRef} className="if-notes" aria-hidden="true" />
       <div className="if-words">
         <h2 className="if-head">
+          <img ref={(e) => { textRefs.current.logo = e; }} className="if-logo" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
+          <span ref={(e) => { textRefs.current.brand = e; }} className="if-brand">A WORLD OF MUSIC</span>
           <span ref={(e) => { textRefs.current.every = e; }}>EVERY DESTINATION</span>
           <span ref={(e) => { textRefs.current.sound = e; }}>HAS A SOUND.</span>
         </h2>

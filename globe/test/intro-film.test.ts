@@ -13,7 +13,7 @@ describe("the opening film", () => {
     expect(z.text.every + z.text.sound).toBe(0); // only the headline: the film says almost nothing
   });
   it("closes in on Istanbul in the first three seconds, opens the routes one by one, then pulls back", () => {
-    expect(shotAt(3).dist).toBeLessThan(1.9); // the globe fills the screen
+    expect(shotAt(3).dist).toBeLessThan(1.6); // the globe fills the screen
     expect(shotAt(3.5).open).toBe(0);
     expect(shotAt(3.5 + 0.18 * 4).open).toBeCloseTo(4, 5);
     expect(shotAt(5).open).toBe(FILM_DESTINATIONS.length);
@@ -27,7 +27,8 @@ describe("the opening film", () => {
   });
   it("scores 15 seconds on the film's routes, one voice per route at first", () => {
     const routes = filmRoutes();
-    expect(routes.length).toBeGreaterThanOrEqual(FILM_DESTINATIONS.length);
+    expect(routes.length).toBeGreaterThan(150); // the live screen's hundreds of routes
+    expect(routes.slice(0, FILM_DESTINATIONS.length).map((r) => r.to)).toEqual(FILM_DESTINATIONS);
     const p = filmPiece(routes);
     expect(p.duration).toBe(FILM_SECONDS);
     for (const n of p.notes) {

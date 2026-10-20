@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { hasWebGL2 } from "../scene/engine";
-import { FILM_SEEN_KEY, IntroFilm } from "./IntroFilm";
+import { IntroFilm } from "./IntroFilm";
 
 const MIN_MS = 2200; // the animation always gets to play, even when everything is cached
 const MAX_MS = 14000; // a slow network never keeps the visitor out
@@ -12,12 +12,12 @@ const FADE_MS = 1000;
  * screen waits for (null: not known yet); `onDone` fires when the cover has gone.
  */
 export function Intro({ ready, onDone, label = "TUNING THE WORLD", film = false }: { ready: Promise<unknown> | null; onDone: () => void; label?: string; film?: boolean }) {
-  // the film plays once per session (and not where there is no WebGL or the visitor asks for less motion); otherwise the short cover
+  // the film plays at every opening for now (and not where there is no WebGL or the visitor asks for less motion); otherwise the short cover
   const [playFilm] = useState(() => {
     if (!film || !hasWebGL2()) return false;
     try {
       if (new URLSearchParams(window.location.search).has("filmat")) return true;
-      if (sessionStorage.getItem(FILM_SEEN_KEY) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
     } catch { /* storage blocked: show the film */ }
     return true;
   });

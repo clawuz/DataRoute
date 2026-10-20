@@ -1,4 +1,4 @@
-import { ISTANBUL } from "./destinations";
+import { DESTINATIONS, ISTANBUL } from "./destinations";
 import { buildRoutes, type PersonalRoute } from "./routes";
 import type { PersonalNote, PersonalPiece } from "./compose";
 import type { Instrument } from "../audio/theory";
@@ -43,9 +43,9 @@ export function shotAt(t0: number): Shot {
   // 0.6–3.0 the world turns and comes in; 3.0–3.5 holds over Istanbul; 3.5–5 the routes open and it eases out;
   // 5–7 it drifts with them; 7–10 it pulls back to the live screen's distance; then it settles
   const dist =
-    t < 3 ? mix(9, 1.8, ramp(t, 0.2, 3)) :
-    t < 3.5 ? mix(1.8, 1.7, ramp(t, 3, 3.5)) :
-    t < 5 ? mix(1.7, 2.0, ramp(t, 3.5, 5)) :
+    t < 3 ? mix(9, 1.57, ramp(t, 0.2, 3)) :
+    t < 3.5 ? mix(1.57, 1.48, ramp(t, 3, 3.5)) :
+    t < 5 ? mix(1.48, 2.0, ramp(t, 3.5, 5)) :
     t < 7 ? mix(2.0, 2.4, ramp(t, 5, 7)) :
     mix(2.4, 3.2, ramp(t, 7, 10));
   // the globe turns from the Atlantic to Eurasia, then Istanbul stays in the middle, drifting a little with the routes
@@ -56,7 +56,7 @@ export function shotAt(t0: number): Shot {
     lat,
     lon,
     open: clamp((t - 3.5) / 0.18, 0, FILM_DESTINATIONS.length),
-    fly: ramp(t, 3.6, 10.5),
+    fly: ramp(t, 3.5, 7.5),
     glow: mix(1.2, 1.9, ramp(t, 0.6, 3)) + 0.5 * ramp(t, 7, 9) - 0.5 * ramp(t, 10, 12.5),
     fade: ramp(t, 0, 0.9),
     text: {
@@ -117,5 +117,10 @@ export function filmPiece(routes: PersonalRoute[]): PersonalPiece {
   };
 }
 
-/** the routes of the film: the hub to eight cities on every continent */
-export const filmRoutes = (): PersonalRoute[] => buildRoutes(FILM_DESTINATIONS, "IST");
+/** how many routes the film opens: the live screen's hundreds, as one burst from the hub */
+const FILM_ROUTES = 210;
+/** the routes of the film: the hub to the network (the eight voiced cities first, then the rest of the scheduled network) */
+export const filmRoutes = (): PersonalRoute[] => {
+  const rest = DESTINATIONS.filter((d) => d.status === "active" && d.iata !== "IST" && !FILM_DESTINATIONS.includes(d.iata)).map((d) => d.iata);
+  return buildRoutes([...FILM_DESTINATIONS, ...rest.slice(0, FILM_ROUTES - FILM_DESTINATIONS.length)], "IST");
+};
