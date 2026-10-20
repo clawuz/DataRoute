@@ -10,7 +10,7 @@ import { easeAbsTime, type TimeEase } from "../camera/time-ease";
 import { newGlobeLook } from "./look";
 import { chaseFor, headingFor } from "../camera/follow-pose";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { IDLE_YAW_RATE, PITCH_LIMIT, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
+import { IDLE_YAW_RATE, PITCH_LIMIT, RIG_DISTANCE, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
 import { altitudeRadius, latLonToVec3, type Vec3 } from "../geo3d/vec";
 import type { GlobeModel } from "../model/globe-model";
 import { EXTRAPOLATE_MAX_SEC, headState } from "../model/dead-reckon";
@@ -89,6 +89,8 @@ export interface GlobeEngine {
   centerOn(lat: number, lon: number, lift?: number): void;
   /** multiplies the width of route lines and corridors (the 1080×1920 story is drawn at a pixel ratio of 1–2: its lines need more) */
   setLineScale(k: number): void;
+  /** how far the camera stands from the globe's centre (3.2 by default); the opening film moves it */
+  setRigDistance(d: number | null): void;
   /** the slow idle spin: on/off and a speed multiplier */
   setIdleSpin(on: boolean, speed?: number): void;
   dispose(): void;
@@ -144,6 +146,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let night = false;
   const sunMode: "stage" | "real" | "night" = typeof location !== "undefined" ? ((new URLSearchParams(location.search).get("sun") as "real" | "night" | null) ?? "stage") : "stage";
   let idleSpin = true;
+  let rigDist = RIG_DISTANCE;
   let idleSpeed = 1;
   let lineScale = 1;
   let portraitFit = false;
@@ -343,7 +346,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       followKey = -2;
     }
 
-    const rp = rigPosition(rig);
+    const rp = rigPosition(rig, rigDist);
     if (cam.mode !== "GLOBE" && lastChase) {
       const m = earthGroup.matrixWorld;
       cA.set(lastChase.pos[0], lastChase.pos[1], lastChase.pos[2]).applyMatrix4(m);
@@ -693,6 +696,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     centerOn(lat, lon, lift = 0) {
       const pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, ((lat - lift) * Math.PI) / 180));
       rig = { yaw: initialYaw(earthRotationRad(Date.now() / 1000), lon), pitch, yawVel: 0, pitchVel: 0, dragging: false };
+    },
+    setRigDistance(d) {
+      rigDist = d ?? RIG_DISTANCE;
     },
     setIdleSpin(on, speed = 1) {
       idleSpin = on;

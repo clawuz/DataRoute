@@ -34,6 +34,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     setModel: vi.fn(),
     loadTextures: vi.fn(async () => null),
     whenAssetsReady: vi.fn(async () => {}),
+    setRigDistance: vi.fn(),
     setFrameSource: (fn) => {
       frameFn = fn;
     },
