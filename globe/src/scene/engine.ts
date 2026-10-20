@@ -82,6 +82,8 @@ export interface GlobeEngine {
   setSkyBlue(on: boolean): void;
   /** an aeroplane model (glb) that stands in for the dot of the flight being followed; null removes it */
   setPlaneModel(url: string | null): void;
+  /** resolves when the pictures and models the look needs first (the 4k Earth pair, the 4k sky, the aircraft) are loaded or have failed */
+  whenAssetsReady(): Promise<void>;
   /** turn the camera so that (lat, lon) is at the middle of the globe, and optionally stop the slow idle spin */
   /** `lift` (degrees) tips the globe so the point sits that much above its middle */
   centerOn(lat: number, lon: number, lift?: number): void;
@@ -188,6 +190,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const planeGroup = new Group(); // the followed flight's aeroplane (Earth-fixed, child of the Earth group)
   planeGroup.visible = false;
   let planeLoaded = false;
+  const tracked: Promise<unknown>[] = []; // first-look assets in flight (see whenAssetsReady)
+  const track = <T,>(p: Promise<T>): Promise<T> => { tracked.push(p.catch(() => undefined)); return p; };
   const planeTest = typeof location !== "undefined" && new URLSearchParams(location.search).has("planetest");
   const PLANE_LEN = 0.05; // in Earth radii: far bigger than a real aeroplane, so it can be seen from the chase camera
   const planeSun = new DirectionalLight(0xffffff, 2.2);
@@ -545,7 +549,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
           shown[kind]?.dispose();
           shown[kind] = t;
         };
-        void Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")]).then(async ([n, d]) => {
+        void track(Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")])).then(async ([n, d]) => {
           show("night", n);
           show("day", d);
           if (preferred !== "4k") { // a failed load keeps the 4k picture
@@ -630,7 +634,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setPlaneModel(url) {
       if (!url) { planeLoaded = false; planeGroup.clear(); return; }
       if (planeLoaded) return;
-      new GLTFLoader().load(url, (gltf) => {
+      track(new Promise<void>((done) => new GLTFLoader().load(url, (gltf) => {
+        done();
         if (disposed) return;
         // the model is used as it comes (its own textures); it is centred, scaled to a length of 1 and its nose already points along +Z
         const box = new Box3().setFromObject(gltf.scene);
@@ -650,7 +655,13 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         planeGroup.clear();
         planeGroup.add(gltf.scene);
         planeLoaded = true;
-      }, undefined, () => { /* without the model the dot stays */ });
+      }, undefined, () => { done(); /* without the model the dot stays */ })));
+    },
+    async whenAssetsReady() {
+      for (let n = -1; n !== tracked.length; ) { // assets requested while waiting are waited for too
+        n = tracked.length;
+        await Promise.all(tracked);
+      }
     },
     setSkyBlue(on) {
       if (!on || blueSky) return;
@@ -668,7 +679,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         space.setStarMap(effects?.starMap === false ? null : t);
       };
       void fetch("/textures/sky-stars.json").then((r) => r.json()).then((j: { uv: number[] }) => { if (!disposed) space.setGlintStars(j.uv); }).catch(() => { /* without the list nothing glints */ });
-      void loadStarMap(undefined, "/textures/sky-4k.jpg").then(async (t) => {
+      void track(loadStarMap(undefined, "/textures/sky-4k.jpg")).then(async (t) => {
         if (disposed || !t) { t?.dispose(); return; }
         apply(t);
         for (const tier of ORDER_TIERS) {

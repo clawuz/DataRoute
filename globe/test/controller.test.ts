@@ -33,6 +33,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
   const engine: GlobeEngine = {
     setModel: vi.fn(),
     loadTextures: vi.fn(async () => null),
+    whenAssetsReady: vi.fn(async () => {}),
     setFrameSource: (fn) => {
       frameFn = fn;
     },

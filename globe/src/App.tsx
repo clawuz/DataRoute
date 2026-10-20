@@ -1,3 +1,4 @@
+import { Intro } from "./personal/Intro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dataUrl, isFixture } from "@web/data/source";
 import { ErrorScreen } from "@web/hud/Hud";
@@ -20,6 +21,17 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
   const labelBus = useMemo(() => createLabelBus(), []);
   const noteBus = useMemo(createNoteBus, []); // art:sound
   const [error, setError] = useState<string | null>(null);
+  const personalLive = import.meta.env.VITE_PERSONAL === "1" || new URLSearchParams(window.location.search).get("personal") === "1";
+  const [introReady, setIntroReady] = useState<Promise<unknown> | null>(null);
+  const [introOn, setIntroOn] = useState(personalLive); // the opening screen covers the live screen until it is complete
+  const introRef = useRef(personalLive);
+  introRef.current = introOn;
+  const gate = useRef<{ p: Promise<void>; open: () => void } | null>(null);
+  if (!gate.current) {
+    let open = () => {};
+    const p = new Promise<void>((r) => { open = r; });
+    gate.current = { p: personalLive ? p : Promise.resolve(), open };
+  }
 
   useEffect(() => {
     if (!hasWebGL2()) {
@@ -120,19 +132,30 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       };
       timers.push(setTimeout(attempt, 3500));
     };
-    engine
+    const texturesReady = engine
       .loadTextures((p) => {
         maxProgress = Math.max(maxProgress, p);
         controller?.setTextureState(maxProgress, "");
       })
-      .then((tier) => {
+      .then(async (tier) => {
         controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
+        await gate.current!.p; // no replay, no music before the opening screen has lifted
         startTour();
       })
       .catch((e) => {
         console.error("[textures]", e);
         controller?.setTextureState(1, "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
       });
+    if (personalBuild) { // what the opening screen waits for: the pictures, the aircraft, and the first data of the day
+      const data = new Promise<void>((res) => {
+        let n = 0;
+        const t = setInterval(() => {
+          if (store.get().depHist.some((v) => v > 0) || ++n > 40) { clearInterval(t); res(); }
+        }, 250);
+        timers.push(t as unknown as ReturnType<typeof setTimeout>);
+      });
+      setIntroReady(Promise.all([texturesReady.then(() => engine.whenAssetsReady()), data]));
+    }
 
     let press: { x: number; y: number; t: number } | null = null;
     let drag: { x: number; y: number; t: number } | null = null;
@@ -163,6 +186,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       if (p && isClick(e.clientX - p.x, e.clientY - p.y, performance.now() - p.t)) controller?.onClick(e.clientX, e.clientY);
     };
     const key = (e: KeyboardEvent) => {
+      if (introRef.current) return; // nothing is played or changed behind the opening screen
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === " " || e.key === "ArrowLeft" || e.key === "ArrowRight") e.preventDefault();
       if (e.repeat && !e.key.startsWith("Arrow")) return;
@@ -206,6 +230,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="Interactive 3D globe: every Turkish Airlines flight of the last 24 hours, drawn as a route line and played as music" />
       {error ? <ErrorScreen message={error} /> : <GlobeHud store={store} labelBus={labelBus} noteBus={noteBus} />}
+      {introOn && <Intro ready={introReady} onDone={() => { setIntroOn(false); gate.current?.open(); }} />}
       {onExit && (
         <>
           <button type="button" className="live-logo" onClick={onExit} aria-label="Turkish Airlines — back to the start" />

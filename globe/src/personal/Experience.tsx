@@ -1,3 +1,4 @@
+import { Intro } from "./Intro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
 import { routeKey } from "../audio/theory";
@@ -53,6 +54,8 @@ export function Experience({ selection, onBack }: Props) {
   const engineRef = useRef<GlobeEngine | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [introReady, setIntroReady] = useState<Promise<unknown> | null>(null); // the opening screen covers the piece until the globe is complete
+  const [introOn, setIntroOn] = useState(true);
   /** the AI version: idle → composing → on (and back to "my version") */
   const [ai, setAi] = useState<"idle" | "composing" | "on">("idle");
   const aiAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -110,7 +113,7 @@ export function Experience({ selection, onBack }: Props) {
     const model = buildPersonalModel(routes);
     engine.setModel(model, model.span, nowSec());
     engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: -1, nowSec: nowSec() }));
-    void engine.loadTextures(() => {}).catch(() => {});
+    setIntroReady(engine.loadTextures(() => {}).catch(() => null).then(() => engine.whenAssetsReady()));
 
     // drag to turn the globe (the card and the video take whatever angle is on screen)
     let drag: { x: number; y: number; t: number } | null = null;
@@ -524,6 +527,7 @@ export function Experience({ selection, onBack }: Props) {
   return (
     <>
       <canvas ref={canvasRef} className="stage" role="img" aria-label="A 3D globe with your routes drawn on it, played as music" />
+      {introOn && <Intro ready={introReady} label="COMPOSING YOUR PIECE" onDone={() => setIntroOn(false)} />}
       <header className="topbar">
         <button type="button" className="logo-link" onClick={onBack} aria-label="Turkish Airlines — back to the start">
           <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
