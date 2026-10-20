@@ -16,6 +16,8 @@ export interface ReelInput {
   stats: PieceStats;
   dests: string[];
   url: string;
+  /** how the piece was made: "visited" places or "wish" destinations (the sentence under the title) */
+  mode?: "visited" | "wish";
   logo: HTMLImageElement | null;
 }
 
@@ -51,6 +53,16 @@ export function glassPanel(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.lineWidth = lw;
   ctx.stroke();
   ctx.restore();
+}
+
+/** the site's address as printed on the share picture: no protocol, no query */
+export function siteLink(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.host}${u.pathname === "/" ? "" : u.pathname}`.toLowerCase();
+  } catch {
+    return url;
+  }
 }
 
 /** The static lockup and numbers on a transparent canvas, drawn once and laid over every frame of the globe. */
@@ -89,13 +101,17 @@ export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, wit
     if (titleLines.length <= 2) break;
   }
   titleLines.slice(0, 2).forEach((l, i) => ctx.fillText(l, W / 2, top + 138 + i * (size + 8)));
+  const shown = Math.min(2, titleLines.length);
+  ctx.fillStyle = INK;
+  halo(ctx, 22);
+  ctx.font = '500 32px "TK Text", system-ui, sans-serif';
+  const how = c.mode === "wish" ? "I made this music from the places I want to go." : "I made this music from the places I have been.";
+  wrap(ctx, how, W - 200).forEach((l, i) => ctx.fillText(l, W / 2, top + 138 + (shown - 1) * (size + 8) + 62 + i * 40));
+  ctx.fillStyle = INK;
 
   // numbers
   // flags, counts and the signature voice sit under the music box (the card has none: they keep the same place)
   const y0 = SCOPE_BOX.y + SCOPE_BOX.h + 64;
-  ctx.shadowBlur = 0;
-  glassPanel(ctx, SCOPE_BOX.x, y0 - 70, SCOPE_BOX.w, 190);
-  halo(ctx);
   ctx.font = '46px system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
   ctx.fillStyle = INK;
   ctx.fillText(flagsOf(c.dests, 12).map(flagOf).join(" "), W / 2, y0);
@@ -109,10 +125,13 @@ export function drawReelOverlay(ctx: CanvasRenderingContext2D, c: ReelInput, wit
   ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
   const foot = [NETWORK_CLAIM.toUpperCase(), `${NETWORK_DESTINATIONS} DESTINATIONS · ${NETWORK_COUNTRIES} COUNTRIES`];
   const lines = foot.flatMap((t) => wrap(ctx, t, W - 70));
-  const first = SAFE_LAST_Y - (lines.length - 1) * 30;
+  const first = SAFE_LAST_Y - 48 - (lines.length - 1) * 30;
   ctx.font = '400 20px "TK Text Wide", system-ui, sans-serif';
   ctx.fillStyle = DIM;
   lines.forEach((l, i) => ctx.fillText(l, W / 2, first + i * 30));
+  ctx.fillStyle = INK;
+  ctx.font = '600 30px "TK Text Wide", system-ui, sans-serif';
+  ctx.fillText(siteLink(c.url), W / 2, SAFE_LAST_Y);
   ctx.shadowBlur = 0;
 }
 
@@ -130,16 +149,6 @@ export function drawScopeFrame(ctx: CanvasRenderingContext2D, f: ScopeFrame): vo
   const b = SCOPE_BOX;
   // the box as on the live screen: a glass panel with the red → steel edge, an ear with its name, the neon ribbon filling it
   glassPanel(ctx, b.x, b.y, b.w, b.h);
-  ctx.save();
-  ctx.font = '500 22px "TK Text Wide", system-ui, sans-serif';
-  ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
-  const label = (f.label || "ROUTES → MUSIC").toUpperCase();
-  const tw = Math.min(b.w - 80, Math.ceil(ctx.measureText(label).width) + 56);
-  glassPanel(ctx, b.x, b.y - 54, tw, 66, 18);
-  ctx.fillStyle = INK;
-  ctx.fillText(label, b.x + 28, b.y - 20, tw - 56);
-  ctx.restore();
   if (f.canvas && f.canvas.width > 0 && f.canvas.height > 0) {
     // the ribbon keeps its own proportions, centred in the box
     const k = Math.min(b.w / f.canvas.width, b.h / f.canvas.height);

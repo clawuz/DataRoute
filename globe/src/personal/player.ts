@@ -21,6 +21,8 @@ export interface PersonalPlayer {
 }
 
 const AHEAD = 3; // how far ahead notes are handed to the audio clock (s) — the note ribbon shows them coming
+/** how long before a note sounds it appears at the right end of the music box (the ribbon shows seven seconds ahead of the line) */
+const VISUAL_AHEAD = 7;
 const TICK_MS = 60;
 const GAP = 2.2; // silence between loops (s)
 
@@ -64,6 +66,7 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   let onNote: ((n: PersonalNote) => void) | null = null;
   let onPlan: ((n: PersonalNote, wallAt: number) => void) | null = null;
   let next = 0; // index of the next note to schedule in this loop
+  let planNext = 0; // index of the next note to show on the music box (it appears VISUAL_AHEAD seconds before it sounds)
   let sorted: PersonalNote[] = [];
   let disposed = false;
 
@@ -76,12 +79,16 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       playNote(ctx, bus, { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d }, { gainScale: 1, cutoffScale: 1, pan: 0 });
       const cb = onNote;
       const inSec = Math.max(0, when - ctx.currentTime);
-      onPlan?.(n, performance.now() / 1000 + inSec);
       setTimeout(() => cb(n), inSec * 1000);
+    }
+    while (planNext < sorted.length && loopStart + sorted[planNext].t <= ctx.currentTime + VISUAL_AHEAD) {
+      const n = sorted[planNext++];
+      onPlan?.(n, performance.now() / 1000 + Math.max(0, loopStart + n.t - ctx.currentTime));
     }
     if (next >= sorted.length && ctx.currentTime >= loopStart + piece.duration + GAP) {
       loopStart += piece.duration + GAP;
       next = 0;
+      planNext = 0;
     }
   };
 
@@ -93,6 +100,7 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       onPlan = plan ?? null;
       sorted = [...p.notes].sort((a, b) => a.t - b.t);
       next = 0;
+      planNext = 0;
       void ctx.resume();
       loopStart = ctx.currentTime + 0.15;
       if (timer) clearInterval(timer);

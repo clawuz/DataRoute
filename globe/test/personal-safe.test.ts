@@ -40,14 +40,18 @@ describe("Instagram Story safe area", () => {
     expect(SAFE_TOP).toBe(250);
     expect(SAFE_LAST_Y).toBe(1670);
   });
-  it("puts the music box's ear (its name) just above the box, inside the band", () => {
+  it("draws the music box without any text of its own", () => {
     const r = recorder();
     drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [] });
-    expect(r.texts.length).toBeGreaterThan(0);
-    for (const t of r.texts) {
-      expect(t.y, t.text).toBeLessThanOrEqual(SCOPE_BOX.y);
-      expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP);
-    }
+    expect(r.texts).toHaveLength(0);
+  });
+  it("says how the piece was made under the title and ends on the site's address, inside the band", () => {
+    const r = recorder();
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic.web.app/?w=DPS&h=LHR", logo: img(1000, 333), mode: "wish" });
+    expect(r.texts.some((t) => /places I want to go/.test(t.text))).toBe(true);
+    const last = r.texts[r.texts.length - 1];
+    expect(last.text).toBe("worldofmusic.web.app");
+    expect(last.y).toBeLessThanOrEqual(SAFE_LAST_Y);
   });
   it("puts the card's numbers inside the band too (no music box)", () => {
     const r = recorder();

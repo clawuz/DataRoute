@@ -415,7 +415,7 @@ export function Experience({ selection, onBack }: Props) {
       const overlay = document.createElement("canvas");
       overlay.width = REEL_W;
       overlay.height = REEL_H;
-      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.places, url: url(), logo }, kind === "VIDEO");
+      drawReelOverlay(overlay.getContext("2d")!, { stats, dests: selection.places, url: url(), logo, mode: selection.mode }, kind === "VIDEO");
       let turnStart = 0;
       const frame = () => {
         if (kind === "VIDEO") {

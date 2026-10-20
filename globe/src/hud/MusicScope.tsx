@@ -293,7 +293,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             // ahead of the line: dim · under the line (sounding): bright and glowing · behind: fading
             const age = now - p.t;
             const sounding = age >= 0 && age < Math.max(p.dur, 0.25);
-            g.globalAlpha = base * (age < 0 ? (neon ? 0.55 * Math.max(0, Math.min(1, 1 - -age / (ribbonSec * 0.42))) ** 1.5 : 0.4) : sounding ? 1 : Math.max(neon ? 0.3 : 0.15, 1 - age / (ribbonSec * 0.78)));
+            g.globalAlpha = base * (age < 0 ? (neon ? 0.7 * Math.max(0, Math.min(1, (xR - x) / (0.22 * (xR - xL)))) : 0.4) : sounding ? 1 : Math.max(neon ? 0.3 : 0.15, 1 - age / (ribbonSec * 0.78)));
             g.shadowColor = tr.color;
             g.shadowBlur = sounding ? (neon ? 1.2 : 6) * dpr : 0; // a tight glow, not a blob (additive blending)
             const hh = sounding ? barH * (neon ? 1.2 : 1.7) : barH;
