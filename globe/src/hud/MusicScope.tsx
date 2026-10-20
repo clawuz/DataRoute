@@ -167,6 +167,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
     const trails = new Map<string, Trail>();
     const beats: NoteEvent[] = []; // sounded groove notes not yet sampled into their lane
     let head = 0; // next ring write position
+    const chipFade = new Map<string, { a: number; y: number; color: string }>(); // the airport chips fade in and out instead of popping
     let simT = wallSec(); // time of the last simulated sample
     let raf = 0;
     let ribbonSec = RIBBON_SEC; // art:track — the window widens while the recorded track plays
@@ -292,7 +293,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             // ahead of the line: dim · under the line (sounding): bright and glowing · behind: fading
             const age = now - p.t;
             const sounding = age >= 0 && age < Math.max(p.dur, 0.25);
-            g.globalAlpha = base * (age < 0 ? (neon ? 0.55 : 0.4) : sounding ? 1 : Math.max(neon ? 0.3 : 0.15, 1 - age / (ribbonSec * 0.78)));
+            g.globalAlpha = base * (age < 0 ? (neon ? 0.55 * Math.max(0, Math.min(1, 1 - -age / (ribbonSec * 0.42))) ** 1.5 : 0.4) : sounding ? 1 : Math.max(neon ? 0.3 : 0.15, 1 - age / (ribbonSec * 0.78)));
             g.shadowColor = tr.color;
             g.shadowBlur = sounding ? (neon ? 1.2 : 6) * dpr : 0; // a tight glow, not a blob (additive blending)
             const hh = sounding ? barH * (neon ? 1.2 : 1.7) : barH;
@@ -334,15 +335,21 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
         g.font = `bold ${(narrow ? 8 : 9) * dpr}px ui-monospace, Menlo, Consolas, monospace`;
         g.textAlign = "center";
         g.textBaseline = "middle";
-        for (const a of act) {
-          const [from, to] = a.id.split("-");
+        const seen = new Set(act.map((a) => a.id));
+        for (const a of act) chipFade.set(a.id, { a: chipFade.get(a.id)?.a ?? 0, y: a.y, color: a.color });
+        for (const [id, c] of chipFade) {
+          c.a = seen.has(id) ? Math.min(1, c.a + 0.09) : c.a - 0.05;
+          if (c.a <= 0.01) { chipFade.delete(id); continue; }
+          g.globalAlpha = c.a;
+          const [from, to] = id.split("-");
           for (const [x, txt] of [[ladderW + 4 * dpr, from], [w - chipW - 4 * dpr, to]] as [number, string][]) {
-            g.fillStyle = a.color;
-            g.fillRect(x, a.y - chipH / 2, chipW, chipH);
-            g.fillStyle = DARK_INK.has(a.color) ? "#05070f" : "#fff";
-            g.fillText(txt, x + chipW / 2, a.y + 0.5 * dpr);
+            g.fillStyle = c.color;
+            g.fillRect(x, c.y - chipH / 2, chipW, chipH);
+            g.fillStyle = DARK_INK.has(c.color) ? "#05070f" : "#fff";
+            g.fillText(txt, x + chipW / 2, c.y + 0.5 * dpr);
           }
         }
+        g.globalAlpha = 1;
         g.globalCompositeOperation = "lighter";
       }
       if (wide) { // the reading line

@@ -1279,3 +1279,8 @@ body.personal-build .music-scope.neon::before {
 .sheet-link { display: inline-flex; align-items: center; justify-content: center; align-self: center; height: 34px; padding: 0 22px; border-radius: 99px; font-family: var(--label); font-size: 11px; letter-spacing: 0.2em; color: #fff; border: 1.5px solid transparent;
   background: linear-gradient(rgba(8, 10, 22, 0.72), rgba(8, 10, 22, 0.72)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; box-shadow: 0 0 12px rgba(255, 36, 56, 0.28); }
 .sheet-link:hover { box-shadow: 0 0 18px rgba(255, 36, 56, 0.5); }
+
+/* "← NEW PIECE" is a pill like the live screen's */
+.topbar .landing-back { display: inline-flex; align-items: center; height: 34px; padding: 0 20px; border-radius: 99px; font-family: var(--label); font-size: 11px; letter-spacing: 0.2em; color: #fff; cursor: pointer;
+  border: 1.5px solid transparent; background: linear-gradient(rgba(8, 10, 22, 0.72), rgba(8, 10, 22, 0.72)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; box-shadow: 0 0 12px rgba(255, 36, 56, 0.28); }
+.topbar .landing-back:hover { color: #fff; box-shadow: 0 0 18px rgba(255, 36, 56, 0.5); }
