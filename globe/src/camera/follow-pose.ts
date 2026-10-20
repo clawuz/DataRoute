@@ -23,3 +23,17 @@ export function chaseFor(posAt: (u: number) => Vec3 | null, u: number): Pose | n
     up,
   };
 }
+
+/** Where a flight is and which way it flies (Earth-fixed): its position, the unit tangent along the ground and the local up. */
+export function headingFor(posAt: (u: number) => Vec3 | null, u: number): { pos: Vec3; tan: Vec3; up: Vec3 } | null {
+  const p = posAt(u);
+  if (!p) return null;
+  const a0 = posAt(u - TANGENT_DT);
+  const b0 = posAt(u + TANGENT_DT);
+  if (!a0 && !b0) return null;
+  const up = norm(p);
+  let tan = sub(b0 ?? p, a0 ?? p);
+  tan = sub(tan, scale(up, dot(tan, up)));
+  if (len(tan) < 1e-9) return null;
+  return { pos: p, tan: norm(tan), up };
+}

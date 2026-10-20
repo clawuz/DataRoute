@@ -7,7 +7,7 @@ import type { Store } from "@web/hud/store";
 import { diffEvents } from "../model/events";
 import { telemetryAt } from "../geo3d/telemetry";
 import { TOUR_END_HOLD_SEC, TOUR_LIVE_HOLD_SEC, initTour, stepTour } from "../model/tour";
-import { SCRUB_FOLLOW_SEC, atEnd, atLiveHead, cycleSpeed, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
+import { FOLLOW_SPEED, SCRUB_FOLLOW_SEC, atEnd, atLiveHead, scrubFollow, startClock, stepFollow, type FollowClock } from "../model/follow-clock";
 import { REWIND_SEC, blendCur } from "../camera/time-ease";
 import { formatFollow } from "./follow-hud";
 import { buildGlobeModel, type GlobeModel } from "../model/globe-model";
@@ -228,13 +228,14 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       return;
     }
     const from = currentCur(d.nowMs() / 1000);
-    follow = { id: f.id, idx, clock: startClock(f), liveHeadSec: 0, endedSec: 0 };
+    follow = { id: f.id, idx, clock: { ...startClock(f), speed: FOLLOW_SPEED }, liveHeadSec: 0, endedSec: 0 };
     blend = { from, t: 0, dir: "in" };
   }
   /** leaves FOLLOW; the displayed time glides from where it is now back to the mode time */
   function endFollow(from?: number) {
     if (!follow) return;
-    blend = { from: from ?? currentCur(d.nowMs() / 1000), t: 0, dir: "out" };
+    void from; // leaving a flight does not glide the time back any more: the globe is at the current time at once
+    blend = null;
     follow = null;
   }
 
@@ -533,7 +534,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         if (cmd === "togglePause") follow.clock = { ...follow.clock, paused: !follow.clock.paused };
         else if (cmd === "scrubBack" || cmd === "scrubForward")
           follow.clock = scrubFollow(follow.clock, f, cmd === "scrubBack" ? -SCRUB_FOLLOW_SEC : SCRUB_FOLLOW_SEC);
-        else if (cmd === "slower" || cmd === "faster") follow.clock = cycleSpeed(follow.clock, f, cmd === "faster" ? 1 : -1);
+        else if (cmd === "slower" || cmd === "faster") return; // the follow speed is fixed (x30)
         else if (cmd === "toggleReplay") {
           endFollow(); // falls through to the normal REPLAY toggle below
           handled = false;

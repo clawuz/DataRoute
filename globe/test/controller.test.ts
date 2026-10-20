@@ -53,6 +53,9 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     setPortraitShift: vi.fn(),
     setNight: vi.fn(),
     setAtmosphereBoost: vi.fn(),
+    setSkyBlue: vi.fn(),
+    setPlaneModel: vi.fn(),
+    setLandscapeLower: vi.fn(),
     centerOn: vi.fn(),
     setIdleSpin: vi.fn(),
     setLineScale: vi.fn(),
@@ -250,16 +253,16 @@ describe("globe controller", () => {
     now: { gs: 480, trk: 300 },
   });
 
-  it("a click on a flight starts FOLLOW at the first sample and advances at the derived speed", async () => {
+  it("a click on a flight starts FOLLOW at the first sample and advances at the fixed x30 speed", async () => {
     const h = setup();
     await flush();
     h.c.onClick(10, 10);
     expect(h.frame(REWIND_SEC).follow).toEqual({ flight: 0, id: "a", u: 83400 }); // the flight waits for the rewind
     const f = h.frame(1);
-    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83400 + 116 });
-    expect(f.cur).toBe(83516);
+    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83400 + 30 });
+    expect(f.cur).toBe(83430);
     expect(f.highlight).toBe(0);
-    expect(f.absTime).toBe(G1 - 86400 + 83516);
+    expect(f.absTime).toBe(G1 - 86400 + 83430);
     h.c.dispose();
   });
 
@@ -289,37 +292,26 @@ describe("globe controller", () => {
       h.c.dispose();
     });
 
-    it("leaving glides cur from the last u back to the live time without a jump", async () => {
+    it("leaving goes straight to the live time: no glide back", async () => {
       const h = setup();
       await flush();
       h.c.onClick(10, 10);
       h.frame(REWIND_SEC);
-      const last = h.frame(1).cur;
+      h.frame(1);
       h.c.onKey("Escape");
-      let prev = last;
-      let max = 0;
-      for (let i = 0; i < Math.ceil(60 * REWIND_SEC) + 30; i++) {
-        const f = h.frame(1 / 60);
-        expect(f.follow).toBeNull();
-        expect(f.cur).toBeGreaterThanOrEqual(prev);
-        max = Math.max(max, f.cur - prev);
-        prev = f.cur;
-      }
-      // easeInOut peaks at slope 3: the largest per-frame step is bounded by the distance covered over REWIND_SEC
-      expect(max).toBeLessThan(((LIVE_CUR - last) * 3 * 1.1) / (60 * REWIND_SEC));
-      expect(h.frame(0.1).cur).toBe(LIVE_CUR);
+      const f = h.frame(1 / 60);
+      expect(f.follow).toBeNull();
+      expect(f.cur).toBe(LIVE_CUR);
       h.c.dispose();
     });
 
-    it("leaving mid-rewind blends out from the currently displayed cur", async () => {
+    it("leaving mid-rewind goes straight to the live time as well", async () => {
       const h = setup();
       await flush();
       h.c.onClick(10, 10);
-      const mid = h.frame(REWIND_SEC / 2).cur;
-      expect(mid).toBeLessThan(LIVE_CUR);
-      expect(mid).toBeGreaterThan(U0);
+      h.frame(REWIND_SEC / 2);
       h.c.onKey("Escape");
-      expect(Math.abs(h.frame(0.001).cur - mid)).toBeLessThan(5);
+      expect(h.frame(1 / 60).cur).toBe(LIVE_CUR);
       h.c.dispose();
     });
 
@@ -351,19 +343,19 @@ describe("globe controller", () => {
     h.c.dispose();
   });
 
-  it("Space pauses the follow clock; ] picks the next ladder speed; arrows scrub five minutes", async () => {
+  it("Space pauses the follow clock; the speed keys do nothing (x30 is fixed); arrows scrub five minutes", async () => {
     const h = setup();
     await flush();
     h.c.onClick(10, 10);
     h.frame(REWIND_SEC);
-    expect(h.frame(1).cur).toBe(83516);
+    expect(h.frame(1).cur).toBe(83430);
     h.c.onKey(" ");
-    expect(h.frame(1).cur).toBe(83516);
+    expect(h.frame(1).cur).toBe(83430);
     h.c.onKey(" ");
-    h.c.onKey("]"); // 116 -> nearest rung 120 -> 240
-    expect(h.frame(1).cur).toBe(83516 + 240);
+    h.c.onKey("]"); // no effect: the follow speed is fixed
+    expect(h.frame(1).cur).toBe(83430 + 30);
     h.c.onKey("ArrowLeft");
-    expect(h.frame(0).cur).toBe(83516 + 240 - 300);
+    expect(h.frame(0).cur).toBe(83400); // five minutes back is clamped at the first sample
     h.c.dispose();
   });
 
@@ -385,11 +377,11 @@ describe("globe controller", () => {
     await flush();
     h.c.onClick(10, 10);
     h.frame(REWIND_SEC);
-    expect(h.frame(1).follow!.u).toBe(83516);
+    expect(h.frame(1).follow!.u).toBe(83430);
     h.c.refresh();
     await flush();
     const f = h.frame(0);
-    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83516 - 120 });
+    expect(f.follow).toEqual({ flight: 0, id: "a", u: 83430 - 120 });
     h.c.dispose();
   });
 

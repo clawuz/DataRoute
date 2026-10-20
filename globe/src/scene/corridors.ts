@@ -1,3 +1,4 @@
+import { ROUTE_RGB, neonRoutesOn, routeIndex } from "./route-palette";
 import {
   AdditiveBlending, DoubleSide, Float32BufferAttribute, InstancedBufferAttribute, InstancedBufferGeometry,
   DynamicDrawUsage, Mesh, ShaderMaterial, Vector2,
@@ -123,7 +124,7 @@ export function buildCorridorBuffers(cs: Corridor[], refMax = 0): CorridorBuffer
       out.u[i * 2 + 1] = q.u;
       out.s[i * 2] = (p.u * c.distKm) / R_KM;
       out.s[i * 2 + 1] = (q.u * c.distKm) / R_KM;
-      out.color.set(st.rgb, i * 3);
+      out.color.set(neonRoutesOn() ? ROUTE_RGB[routeIndex(c.a, c.b)] : st.rgb, i * 3);
       out.misc[i * 4] = st.widthPx;
       out.misc[i * 4 + 1] = st.alpha;
       out.misc[i * 4 + 2] = w;

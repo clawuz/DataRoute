@@ -1,4 +1,8 @@
-import { REGION_RGB } from "@web/data/palette";
+import { REGION_RGB as NASA_REGION_RGB, hexToRgb } from "@web/data/palette";
+
+/** the personal build's routes are red, white, orange and blue (domestic, Europe, Middle East, Africa, Asia-Pacific, Americas, other) in red, white, blue and grey */
+const NEON_REGION_RGB: [number, number, number][] = ["#f4f8ff", "#4f8dff", "#9aa4b8", "#8fb6ff", "#ff2438", "#ff4a5c", "#6b7488"].map(hexToRgb);
+const regionRgb = (): [number, number, number][] => (typeof document !== "undefined" && document.body.classList.contains("personal-build") ? NEON_REGION_RGB : NASA_REGION_RGB);
 
 export type Rgb = [number, number, number];
 
@@ -14,11 +18,13 @@ export function setExtraColors(colors: Rgb[]): void {
 
 /** the full palette array the arc shader reads (regions, then the extras, padded with the last region colour) */
 export function paletteColors(): Rgb[] {
-  const out: Rgb[] = [...REGION_RGB, ...extra];
-  while (out.length < PALETTE_SIZE) out.push(REGION_RGB[REGION_RGB.length - 1]);
+  const reg = regionRgb();
+  const out: Rgb[] = [...reg, ...extra];
+  while (out.length < PALETTE_SIZE) out.push(reg[reg.length - 1]);
   return out;
 }
 
 export function colorOfIndex(idx: number): Rgb {
-  return idx < 7 ? (REGION_RGB[idx] ?? REGION_RGB[6]) : (extra[idx - 7] ?? REGION_RGB[6]);
+  const reg = regionRgb();
+  return idx < 7 ? (reg[idx] ?? reg[6]) : (extra[idx - 7] ?? reg[6]);
 }

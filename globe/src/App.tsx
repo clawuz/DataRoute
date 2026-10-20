@@ -6,13 +6,15 @@ import { isClick } from "./app/click";
 import { createController, type GlobeController } from "./app/controller";
 import { EMPTY_GLOBE_SNAPSHOT, createLabelBus, type GlobeHudSnapshot } from "./app/hud-model";
 import { GlobeHud } from "./hud/GlobeHud";
+import { ROUTE_RGB } from "./scene/route-palette";
+import { setExtraColors } from "./scene/palette-ext";
 import { createNoteBus } from "./audio/notes-bus"; // art:sound
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
 import { Experience } from "./personal/Experience";
 import { Landing } from "./personal/Landing";
 import { selectionFromSearch, searchFromSelection, type PersonalSelection } from "./personal/codec";
 
-function LiveApp({ onExit }: { onExit?: () => void }) {
+function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
   const labelBus = useMemo(() => createLabelBus(), []);
@@ -46,9 +48,13 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
     }
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
-      engine.setSpaceDim(0.35, false);
-      engine.setNight(true); // the night side faces the camera: the city lights glow, as the reference
-      engine.setAtmosphereBoost(1.8); // a stronger glow around the globe
+      engine.setSpaceDim(0.8, false);
+      engine.setLandscapeLower(-0.07); // the title is at the left now: the globe sits higher
+      engine.setPlaneModel("/models/a350.glb"); // the followed flight is an aeroplane, not a dot
+      setExtraColors(ROUTE_RGB); // the arcs: a route is red, white, blue or grey, like its line in the music box
+      engine.setSkyBlue(true); // the sky: a blue picture of the Milky Way
+      engine.setNight(params.get("sun") !== "real"); // the sun glare sits behind the globe at the upper left, as before; the day / night blend has its own (staged) sun
+      engine.setAtmosphereBoost(1.9); // a stronger glow around the globe
       engine.setPortraitFit(true);
       engine.setBaseFov(48); // room around the globe for the side panels
       engine.setPortraitShift(-34); // no counters on a phone here: the globe sits higher
@@ -80,7 +86,7 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
     const timers: ReturnType<typeof setTimeout>[] = [];
     // airport names that would be printed over a panel or a figure are dropped (checked a few times a second)
     if (personalBuild) {
-      const SEL = ".counters, .flight-panel, .music-scope, .regions, .dep-globe, .title, .lockup, .events, .keys-btn, .live-back";
+      const SEL = ".counters, .live-stats, .flight-panel, .music-scope, .regions, .dep-globe, .title, .lockup, .events, .keys-btn, .live-back";
       const sweep = () => {
         const boxes = [...document.querySelectorAll<HTMLElement>(SEL)]
           .map((e) => e.getBoundingClientRect())
@@ -185,8 +191,16 @@ function LiveApp({ onExit }: { onExit?: () => void }) {
       controller?.dispose();
       controller = null;
       engine.dispose();
+      document.body.classList.remove("personal-build"); // the live screen's look must not stay on the other screens (the result of a piece, the entry screen)
     };
   }, [store, labelBus, noteBus]);
+
+  useEffect(() => { // the music box's "make your own music" button: straight to "Where do you want to go?"
+    if (!onMake) return;
+    const go = () => onMake();
+    window.addEventListener("worldofmusic:make", go);
+    return () => window.removeEventListener("worldofmusic:make", go);
+  }, [onMake]);
 
   return (
     <>
@@ -213,17 +227,22 @@ export function App() {
   const params = new URLSearchParams(search);
   const personalDefault = import.meta.env.VITE_PERSONAL === "1";
   const wantsLive = params.has("live") || params.has("data") || params.has("debug") || params.has("art");
-  const [view, setView] = useState<"landing" | "personal" | "live">(() => {
-    if (selectionFromSearch(search)) return "personal";
-    if (params.get("personal") === "1" || (personalDefault && !wantsLive)) return "landing";
-    return "live";
-  });
+  // the live screen is the home page: there is no entry screen. A shared piece (?w= / ?v=) opens its result; "make your own music" opens the wish list
+  const [view, setView] = useState<"landing" | "personal" | "live">(() => (selectionFromSearch(search) ? "personal" : "live"));
   const [selection, setSelection] = useState<PersonalSelection | null>(() => selectionFromSearch(search));
   const [cameFromLanding, setCameFromLanding] = useState(false);
+  const [landingStart, setLandingStart] = useState<"wish" | null>(null); // the entry screen opens on the wish list after the live screen's button
 
   // the personal site can always step back to the three choices; the legacy live page (old link) has no entry screen
   const canLeave = personalDefault || params.get("personal") === "1" || selectionFromSearch(search) !== null || cameFromLanding;
-  if (view === "live") return <LiveApp onExit={canLeave ? () => setView("landing") : undefined} />;
+  if (view === "live") {
+    return (
+      <LiveApp
+        onExit={canLeave ? () => { setLandingStart(null); setView("landing"); } : undefined}
+        onMake={canLeave ? () => { setLandingStart("wish"); setView("landing"); } : undefined}
+      />
+    );
+  }
   if (view === "personal" && selection) {
     return (
       <Experience
@@ -232,6 +251,7 @@ export function App() {
         onBack={() => {
           window.history.replaceState(null, "", window.location.pathname);
           setSelection(null);
+          setLandingStart("wish");
           setView("landing");
         }}
       />
@@ -239,6 +259,8 @@ export function App() {
   }
   return (
     <Landing
+      key={landingStart ?? "start"}
+      startAt={landingStart ?? undefined}
       onCompose={(sel) => {
         window.history.replaceState(null, "", window.location.pathname + searchFromSelection(sel));
         setSelection(sel);

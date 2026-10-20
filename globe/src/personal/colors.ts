@@ -1,5 +1,6 @@
 import type { PersonalRoute } from "./routes";
 import type { Rgb } from "../scene/palette-ext";
+import { ROUTE_HEX, ROUTE_RGB, routeIndex } from "../scene/route-palette";
 
 const GOLDEN = 137.508;
 
@@ -20,17 +21,14 @@ export interface RoutePalette {
   rgb: Rgb[];
 }
 
-/**
- * Every route its own colour: hues walk round the wheel by the golden angle, so any number of routes stay apart and the
- * same piece always gets the same colours. The globe and the music box read the same table, so a line and its notes match.
- */
+/** Routes wear the live screen's red / white / blue / grey; both directions of a route share a colour, and the globe and the music box read the same table. */
 export function routePalette(routes: PersonalRoute[]): RoutePalette {
   const css = new Map<string, string>();
   const rgb: Rgb[] = [];
-  routes.forEach((r, i) => {
-    const h = (i * GOLDEN + 12) % 360;
-    css.set(r.key, `hsl(${Math.round(h)}, 82%, 62%)`);
-    rgb.push(hslToRgb(h, 0.82, 0.62));
+  routes.forEach((r) => {
+    const i = routeIndex(r.from, r.to);
+    css.set(r.key, ROUTE_HEX[i]);
+    rgb.push(ROUTE_RGB[i]);
   });
   return { css, rgb };
 }

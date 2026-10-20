@@ -1,3 +1,4 @@
+import { neonRoutesOn, routeIndex } from "../scene/route-palette";
 import type { DayAirport, DayFile, Flight, FlightEnd } from "@collector/day-schema";
 import { haversineKm } from "@collector/geo";
 import { buildModel, type FlightRec, type Model } from "@web/data/model";
@@ -57,6 +58,7 @@ export function buildGlobeModel(day: DayFile): GlobeModel {
     return {
       ...fr,
       status: statusOf(f),
+      ...(neonRoutesOn() && f.from && f.to ? { colorIdx: 7 + routeIndex(f.from, f.to) } : {}), // the personal live screen: a route has one colour everywhere
       gaps: (f.gaps ?? []).map(([s, e]) => [fr.dep + s, fr.dep + e] as [number, number]),
       lastT: fr.t[fr.t.length - 1],
       // collector writes trk 0 when unknown; a report with gs <= 0 is treated as no report

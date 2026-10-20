@@ -143,10 +143,10 @@ const fh = (o: Partial<FollowHud> = {}): FollowHud => ({
 });
 
 describe("FlightPanel", () => {
-  it("shows every telemetry value, the state badge and the averages note", () => {
+  it("shows every telemetry value and the state badge", () => {
     const { container } = render(<FlightPanel f={fh()} />);
     const t = text(container);
-    for (const s of ["TK1", "IST → JFK", "OBSERVED", "FL370 · 37,000 FT", "480 KT", "290°", "+1,000 FT/MIN", "CLIMB", "56 / 334 KM", "00:05", "00:25 EST", "08:15 UTC", "×240", "2-MIN AVERAGES"])
+    for (const s of ["TK1", "IST → JFK", "OBSERVED", "FL370 · 37,000 FT", "480 KT", "290°", "+1,000 FT/MIN", "CLIMB", "56 / 334 KM", "00:05", "00:25 EST", "08:15 UTC"])
       expect(t).toContain(s);
     expect(container.querySelector(".fp-state")!.className).toContain("observed");
   });
@@ -315,7 +315,7 @@ describe("KeysHelp", () => {
 });
 
 describe("follow controls", () => {
-  it("buttons press the same keys as the keyboard (− slower, + faster, leave = Escape)", async () => {
+  it("the card has one button, leave = Escape (the speed buttons are gone: x30 is fixed)", async () => {
     const { FlightPanel } = await import("../src/hud/GlobeHud");
     const { fireEvent } = await import("@testing-library/react");
     const pressed: string[] = [];
@@ -324,11 +324,11 @@ describe("follow controls", () => {
     const f = { tk: "TK1", state: "OBSERVED", aircraft: "A", route: "IST → GRU", progress: 0.5, speed: "×240", profile: [], cursor: 0, notes: [] } as unknown as Parameters<typeof FlightPanel>[0]["f"];
     const { container } = render(<FlightPanel f={f} />);
     const btn = (label: string) => container.querySelector(`button[aria-label="${label}"]`) as HTMLElement;
-    fireEvent.click(btn("Slower"));
-    fireEvent.click(btn("Faster"));
+    expect(btn("Slower")).toBeNull();
+    expect(btn("Faster")).toBeNull();
     fireEvent.click(btn("Leave follow"));
     window.removeEventListener("keydown", on);
-    expect(pressed).toEqual(["-", "+", "Escape"]);
+    expect(pressed).toEqual(["Escape"]);
   });
 });
 
@@ -391,12 +391,12 @@ describe("airport label overlaps", () => {
 });
 
 describe("follow card footnotes", () => {
-  it("live behind an info button, not on the card", async () => {
+  it("are not on the card, and there is no info button", async () => {
     const { FlightPanel } = await import("../src/hud/GlobeHud");
-    const f = { tk: "TK1", state: "OBSERVED", aircraft: "A", route: "IST → GRU", progress: 0.5, speed: "×240", profile: [], cursor: 0, notes: ["GS / HDG / VS ARE 2-MIN AVERAGES", "EST = ESTIMATED (GAP / PLANNED / EXTRAPOLATED)"] } as unknown as Parameters<typeof FlightPanel>[0]["f"];
+    const f = { tk: "TK1", state: "OBSERVED", aircraft: "A", route: "IST → GRU", progress: 0.5, speed: "×30", profile: [], cursor: 0, notes: ["GS / HDG / VS ARE 2-MIN AVERAGES"] } as unknown as Parameters<typeof FlightPanel>[0]["f"];
     const { container } = render(<FlightPanel f={f} />);
     expect(container.querySelector(".fp-notes")).toBeNull();
-    expect(container.querySelector("button[aria-label='How to read these numbers']")).not.toBeNull();
-    expect(Array.from(container.querySelectorAll(".fp-info-line")).map((x) => x.textContent)).toEqual(f.notes);
+    expect(container.querySelector("button[aria-label='How to read these numbers']")).toBeNull();
+    expect(container.querySelector(".fp-speed")).toBeNull();
   });
 });

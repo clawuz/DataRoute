@@ -10,6 +10,8 @@ import { musicTileUrl } from "./music-tile";
 interface Props {
   onCompose(sel: PersonalSelection): void;
   onLive(): void;
+  /** open straight on the list of places of this mode (the live screen's "make your own music" button) */
+  startAt?: PersonalMode;
 }
 
 type Step = "mode" | "pick";
@@ -71,9 +73,9 @@ function groupByCountry(rows: Row[]): { iso: string; country: string; region: Re
     .sort((a, b) => a.country.localeCompare(b.country));
 }
 
-export function Landing({ onCompose, onLive }: Props) {
-  const [step, setStep] = useState<Step>("mode");
-  const [mode, setMode] = useState<PersonalMode>("visited");
+export function Landing({ onCompose, onLive, startAt }: Props) {
+  const [step, setStep] = useState<Step>(startAt ? "pick" : "mode");
+  const [mode, setMode] = useState<PersonalMode>(startAt ?? "visited");
   const [home, setHome] = useState<string | undefined>("IST");
   const [editFrom, setEditFrom] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
@@ -91,6 +93,7 @@ export function Landing({ onCompose, onLive }: Props) {
   const groups = useMemo(() => groupByCountry(filtered), [filtered]);
 
   const reset = () => {
+    if (startAt) { onLive(); return; } // opened from the live screen: back goes straight to it, there is no home page
     setStep("mode");
     setPicked([]);
     setHome("IST");

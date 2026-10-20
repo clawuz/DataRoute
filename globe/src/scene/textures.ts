@@ -133,9 +133,9 @@ export async function loadEarthTextures(
 }
 
 /** NASA Deep Star Maps 2020 (celestial coordinates). Returns null on failure, never throws. */
-export async function loadStarMap(load: (url: string) => Promise<Texture> = defaultLoad): Promise<Texture | null> {
+export async function loadStarMap(load: (url: string) => Promise<Texture> = defaultLoad, url = "/textures/stars-4k.jpg"): Promise<Texture | null> {
   try {
-    const t = await load("/textures/stars-4k.jpg");
+    const t = await load(url);
     t.colorSpace = NoColorSpace;
     t.wrapS = RepeatWrapping;
     return t;

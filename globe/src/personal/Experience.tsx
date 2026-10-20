@@ -20,6 +20,7 @@ import type { MusicHud } from "../app/hud-model";
 import { loadLogo } from "./brand";
 import { routePalette } from "./colors";
 import { setExtraColors } from "../scene/palette-ext";
+import { applyNewGlobeLook } from "../scene/look";
 import { ISTANBUL } from "./destinations";
 import { REEL_H, REEL_SECONDS, REEL_W, drawReelOverlay, drawScopeFrame } from "./reel";
 import { chooseDelivery, extOf, pickMime, recordClip } from "./clip";
@@ -80,6 +81,11 @@ export function Experience({ selection, onBack }: Props) {
   const palette = useMemo(() => routePalette(routes), [routes]);
   const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
 
+  useEffect(() => { // the live screen's look (the neon music box) while a piece is shown
+    document.body.classList.add("personal-build");
+    return () => document.body.classList.remove("personal-build");
+  }, []);
+
   useEffect(() => {
     if (!hasWebGL2()) {
       setError("WEBGL2 IS NOT AVAILABLE ON THIS DEVICE");
@@ -95,7 +101,7 @@ export function Experience({ selection, onBack }: Props) {
     }
     engineRef.current = engine;
     engine.setNight(true); // always the night side: the lights and the routes read best on it
-    engine.setSpaceDim(0.35, false); // a still, quiet sky behind the globe: no drifting clouds
+    applyNewGlobeLook(engine); // the live screen's globe: night / day Earth, the blue sky, the glow
     engine.setPortraitFit(true);
     engine.setPortraitShift(-20); // a phone: the globe sits higher, the music box lower
     engine.setEffects({ cloudShadow: true, glare: true, aurora: false, corridors: true, sound: false, starMap: true });
@@ -531,7 +537,13 @@ export function Experience({ selection, onBack }: Props) {
         </p>
         <p className="personal-sub">SIGNATURE VOICE · {stats.signature.toUpperCase()}</p>
       </div>
-      <MusicScope bus={noteBus} music={musicHud} routeColors={palette.css} label={`ROUTES → MUSIC · ${scope.section.toUpperCase()} · ${piece.bpm} BPM`} />
+      <MusicScope
+        bus={noteBus}
+        music={musicHud}
+        routeColors={palette.css}
+        label={`ROUTES → MUSIC · ${scope.section.toUpperCase()} · ${piece.bpm} BPM`}
+        action={{ label: busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : busy === "CARD" ? "MAKING THE CARD…" : "SHARE MY PIECE", onClick: () => setSheet(true), busy: !!busy }}
+      />
       {!running && (
         <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
       )}
@@ -541,9 +553,6 @@ export function Experience({ selection, onBack }: Props) {
             {ai === "composing" ? (aiSyncing ? "SYNCING THE ROUTE LINES TO THE MUSIC…" : studio ? "OPENING THE ORCHESTRA VERSION…" : "COMPOSING WITH AI · ABOUT A MINUTE…") : ai === "on" ? "ORCHESTRA VERSION · ON — BACK TO MINE" : "ORCHESTRA VERSION"}
           </button>
         )}
-        <button type="button" className="compose-btn" disabled={!!busy} onClick={() => setSheet(true)}>
-          {busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : busy === "CARD" ? "MAKING THE CARD…" : "SHARE MY PIECE"}
-        </button>
       </div>
       {sheet && (
         <div className="sheet-back" onClick={() => setSheet(false)} role="dialog" aria-label="Share my piece">

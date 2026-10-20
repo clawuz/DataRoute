@@ -162,6 +162,56 @@
           ]
         }
       ]
+    },
+    {
+      "target": "wom",
+      "public": "globe/dist-personal",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "predeploy": [
+        "npm --prefix globe run build:personal"
+      ],
+      "headers": [
+        {
+          "source": "/assets/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "/fonts/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "/textures/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "/fixture/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=300"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

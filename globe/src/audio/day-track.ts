@@ -81,7 +81,7 @@ export interface DayTrackDeps {
 }
 
 /** Seconds ahead of the sound at which a note is published (the ribbon shows the notes about to be read). */
-export const LOOKAHEAD_SEC = 3;
+export const LOOKAHEAD_SEC = 7; // half of the ribbon (14 s): the right half is full of notes about to be read
 
 /** The recorded track of the day (public/music/track.mp3 + notes.json); fails silently — the generative music stays. */
 export function createDayTrack(d: DayTrackDeps): DayTrack {

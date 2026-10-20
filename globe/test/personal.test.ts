@@ -200,13 +200,14 @@ describe("personal model and stats", () => {
 });
 
 import { routePalette, hslToRgb } from "../src/personal/colors";
+import { ROUTE_HEX } from "../src/scene/route-palette";
 describe("route colours", () => {
-  it("gives every route its own colour, the same each time, and the globe and the list agree", () => {
+  it("colours routes from the live palette, the same each time, and the globe and the list agree", () => {
     const routes = buildRoutes(["GZP", "DNZ", "DIY", "EDO", "EZS", "ISE", "ASR", "NAV", "OGU", "RZV", "KYA", "IST", "ERC", "BJV", "BAL", "KCM"], "WAW");
     const a = routePalette(routes);
     const b = routePalette(routes);
     expect(a.css.size).toBe(routes.length);
-    expect(new Set(a.css.values()).size).toBe(routes.length);
+    expect([...a.css.values()].every((c) => ROUTE_HEX.includes(c as never))).toBe(true);
     expect(a).toEqual(b);
     expect(a.rgb).toHaveLength(routes.length);
     const m = buildPersonalModel(routes);

@@ -25,6 +25,12 @@ precision highp float;
 uniform sampler2D uDay;
 uniform sampler2D uNight;
 uniform sampler2D uClouds;
+uniform sampler2D uFlatMap; // the night picture (lights, clouds and ocean already in it)
+uniform sampler2D uFlatDay; // the day picture
+uniform float uHasDay;
+uniform vec3 uFlatSun;       // the sun direction for the day / night blend (the globe's own frame)
+uniform float uFlat;
+uniform float uRimFade; // the blue rim of the picture, turned down when the camera is close to the surface
 uniform float uHasTex;
 uniform vec3 uSunDir;
 uniform float uCloudDrift;
@@ -60,6 +66,22 @@ void main() {
   bool useB = max(abs(dxA.x), abs(dyA.x)) > max(abs(dxB.x), abs(dyB.x));
   vec2 gx = useB ? dxB : dxA;
   vec2 gy = useB ? dyB : dyA;
+  if (uFlat > 0.5) {
+    vec3 nightPic = textureGrad(uFlatMap, uv, gx, gy).rgb;
+    float facing = max(dot(N, V), 0.0);
+    vec3 c = nightPic;
+    if (uHasDay > 0.5) {
+      vec3 dayPic = textureGrad(uFlatDay, uv, gx, gy).rgb;
+      float sunN = dot(N, normalize(uFlatSun));
+      float dayK = smoothstep(-0.10, 0.14, sunN + 0.55);                // the day reaches a little past the geometric line, so a good part of the globe is lit
+      c = mix(nightPic, dayPic * (0.62 + 0.38 * smoothstep(0.0, 0.7, sunN + 0.55)), dayK);
+    }
+    c *= 0.55 + 0.45 * pow(facing, 0.55);                                // a little darker towards the rim: depth
+    // (no light inside the disc: the glow lives outside the globe, in the atmosphere shell)
+    c += vec3(0.22, 0.50, 1.0) * pow(1.0 - facing, 3.4) * 0.55 * uRimFade; // a soft blue-white rim light inside the edge (gentle slope, low strength)
+    gl_FragColor = vec4(c, 1.0);
+    return;
+  }
   float ndl = dot(N, uSunDir);
   float dayAmt = smoothstep(-0.10, 0.22, ndl);
 
@@ -98,6 +120,12 @@ export type EarthUniforms = {
   uDay: { value: Texture | null };
   uNight: { value: Texture | null };
   uClouds: { value: Texture | null };
+  uFlatMap: { value: Texture | null };
+  uFlatDay: { value: Texture | null };
+  uHasDay: { value: number };
+  uFlatSun: { value: Vector3 };
+  uFlat: { value: number };
+  uRimFade: { value: number };
   uHasTex: { value: number };
   uSunDir: { value: Vector3 };
   uCloudDrift: { value: number };
@@ -111,6 +139,13 @@ export interface Earth {
   mesh: Mesh;
   uniforms: EarthUniforms;
   setTextures(t: EarthTextures | null): void;
+  /** a pre-lit world picture shown as it is (null: the usual day / night look) */
+  setFlatMap(t: Texture | null): void;
+  /** the day picture of the day / night blend (null: the night picture alone) */
+  setFlatDay(t: Texture | null): void;
+  /** the sun direction (the globe's own frame) the day / night blend follows */
+  setFlatSun(dir: [number, number, number]): void;
+  setRimFade(f: number): void;
   setSun(dir: [number, number, number]): void;
   setCloudDrift(x: number): void;
   setLight(e: { cloudShadow: boolean }): void; // art:light
@@ -126,6 +161,12 @@ export function createEarth(): Earth {
     uDay: { value: null },
     uNight: { value: null },
     uClouds: { value: null },
+    uFlatMap: { value: null },
+    uFlatDay: { value: null },
+    uHasDay: { value: 0 },
+    uFlatSun: { value: new Vector3(1, 0, 0) },
+    uFlat: { value: 0 },
+    uRimFade: { value: 1 },
     uHasTex: { value: 0 },
     uSunDir: { value: new Vector3(1, 0, 0) },
     uCloudDrift: { value: 0 },
@@ -147,6 +188,20 @@ export function createEarth(): Earth {
       uniforms.uClouds.value = t?.clouds ?? null;
       uniforms.uHasTex.value = t ? 1 : 0;
       uniforms.uNightPow.value = t?.tier === "16k" ? NIGHT_POW_16K : NIGHT_POW_DEFAULT;
+    },
+    setFlatDay(t) {
+      uniforms.uFlatDay.value = t;
+      uniforms.uHasDay.value = t ? 1 : 0;
+    },
+    setFlatSun(dir) {
+      uniforms.uFlatSun.value.set(dir[0], dir[1], dir[2]).normalize();
+    },
+    setRimFade(f) {
+      uniforms.uRimFade.value = f;
+    },
+    setFlatMap(t) {
+      uniforms.uFlatMap.value = t;
+      uniforms.uFlat.value = t ? 1 : 0;
     },
     setSun(dir) {
       uniforms.uSunDir.value.set(dir[0], dir[1], dir[2]).normalize();

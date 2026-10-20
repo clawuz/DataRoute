@@ -44,6 +44,8 @@ export interface TrailPoint {
   v: number;
   /** altitude (ft) of the flight at this note, when the track knows it */
   alt?: number;
+  /** a percussion hit (drums, cymbals, shakers, bells) */
+  perc?: boolean;
 }
 
 /** One trace of the pitch ribbon: the notes of a flight line (or of an Istanbul instrument), oldest first. */
@@ -66,6 +68,9 @@ export const TRACK_MAX_POINTS = 60;
 export const trailIdOf = (n: NoteEvent): string | null =>
   n.lineId ?? (n.kind === "dep" || n.kind === "arr" ? n.instrument : null);
 
+/** instruments that are struck: their hits make some of the neon bars tremble */
+export const PERCUSSION: ReadonlySet<string> = new Set(["KICK", "SNARE", "HAT", "OHAT", "TOM", "CRASH", "SHAKER", "DARBUKA", "CONGA", "TAIKO", "TIMP", "TRI", "TAMB", "GONG"]);
+
 /** Appends the note to its trail (trimmed to `maxPoints`); a new trail beyond 12 drops the one hit longest ago. */
 export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: string, maxPoints = 90, maxTrails = MAX_TRAILS): void {
   const id = trailIdOf(n);
@@ -82,7 +87,7 @@ export function pushTrail(trails: Map<string, Trail>, n: NoteEvent, color: strin
     trails.set(id, t);
   }
   t.color = color;
-  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0), v: n.vel, alt: n.alt });
+  t.points.push({ t: n.at, y: pitchY(n.pitch), dur: Math.max(0, n.durSec ?? 0), v: n.vel, alt: n.alt, perc: PERCUSSION.has(n.instrument) });
   if (t.points.length > maxPoints) t.points.splice(0, t.points.length - maxPoints);
   t.lastHit = Math.max(t.lastHit, n.at);
 }

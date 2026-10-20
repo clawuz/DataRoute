@@ -2,6 +2,8 @@ import { EXTRAPOLATE_MAX_SEC } from "./dead-reckon";
 import type { GlobeFlight } from "./globe-model";
 
 export const LADDER = [60, 120, 240, 480, 960];
+/** the speed a followed flight plays at: fixed, the speed buttons and keys are gone */
+export const FOLLOW_SPEED = 30;
 export const MIN_PLAYBACK_SEC = 25;
 export const MAX_PLAYBACK_SEC = 240;
 export const SCRUB_FOLLOW_SEC = 300;

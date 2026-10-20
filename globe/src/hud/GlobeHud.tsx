@@ -5,6 +5,7 @@ import { useStore, type Store } from "@web/hud/store";
 import type { FollowHud } from "../app/follow-hud";
 import { createNoteBus, type NoteBus } from "../audio/notes-bus"; // art:sound
 import { MusicScope } from "./MusicScope"; // art:sound
+import { LiveStats } from "./LiveStats";
 import { resolveLabelOverlaps, type AirportLabel, type EventLine, type GlobeHudSnapshot, type LabelBus } from "../app/hud-model";
 
 /** The globe's title block (option A): the name, the descriptor under it on the same left edge, a hairline, then one status chip. The tunnel site keeps its one-line title. */
@@ -227,15 +228,6 @@ export function FlightPanel({ f }: { f: FollowHud }) {
       </dl>
       <Profile profile={f.profile} cursor={f.cursor} />
       <div className="fp-controls" role="group" aria-label="Follow controls"> {/* art:track — reachable buttons instead of [ ] */}
-        <button type="button" className="fp-btn" aria-label="Slower" title="Slower (−)" onClick={() => pressKey("-")}>−</button>
-        <span className="fp-speed label">{f.speed}</span>
-        <button type="button" className="fp-btn" aria-label="Faster" title="Faster (+)" onClick={() => pressKey("+")}>+</button>
-        <span className="fp-info">
-          <button type="button" className="fp-btn fp-info-btn" aria-label="How to read these numbers" aria-describedby="fp-info-pop">ⓘ</button>
-          <span className="fp-info-pop label" id="fp-info-pop" role="tooltip">
-            {f.notes.map((n) => <span key={n} className="fp-info-line">{n}</span>)}
-          </span>
-        </span>
         <button type="button" className="fp-btn fp-leave label" aria-label="Leave follow" title="Leave follow (G / Esc)" onClick={() => pressKey("Escape")}>✕ LEAVE</button>
       </div>
     </div>
@@ -336,10 +328,10 @@ export function GlobeHud({ store, labelBus, noteBus }: { store: Store<GlobeHudSn
       <MusicLockup />
       {s.ready && (
         <>
-          <Counters c={s.counters} animate={animate} />
+          {typeof document !== "undefined" && document.body.classList.contains("personal-build") ? <LiveStats s={s} animate={animate} /> : <Counters c={s.counters} animate={animate} />}
           <GlobeDepartures bins={s.depHist} playhead={s.playhead} from={s.depFrom} live={s.mode === "LIVE"} />
           {!s.follow && <GlobeRegions counts={s.regionAirborne} />}
-          <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} footer={<QuickControls s={s} />} /> {/* art:sound */}
+          <MusicScope bus={noteBus ?? ownBus} music={s.music} compact={!!s.follow} controls={{ paused: s.paused, replay: s.mode === "REPLAY" }} footer={<QuickControls s={s} />} /> {/* art:sound */}
           {s.follow && <FlightPanel f={s.follow} />}
           <EventFeed events={s.events} />
           <AirportLabels labels={s.labels} bus={labelBus} />

@@ -67,6 +67,7 @@ const HEAD_VERT = /* glsl */ `
 uniform float uSize;
 uniform float uTime;
 uniform float uHighlight;
+uniform float uHidden; // a flight whose dot is not drawn (an aeroplane stands in for it)
 attribute vec3 aColor;
 attribute float aFlight;
 attribute float aFlag;
@@ -79,7 +80,7 @@ void main() {
   vHi = abs(aFlight - uHighlight) < 0.5 ? 1.0 : 0.0;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   float pulse = 1.0 + 0.2 * sin(uTime * 3.0 + aFlight * 1.7);
-  gl_PointSize = uSize * pulse * (vHi > 0.5 ? 2.0 : 1.0);
+  gl_PointSize = abs(aFlight - uHidden) < 0.5 ? 0.0 : uSize * pulse * (vHi > 0.5 ? 2.0 : 1.0);
 }
 `;
 
@@ -103,6 +104,8 @@ export interface Heads {
   data: HeadBuffers & { count: number };
   update(m: GlobeModel, cur: number, nowSec: number, highlight: number, smoother: HeadSmoother | null): { count: number; extrapolated: number };
   setPixelRatio(pr: number): void;
+  /** the flight whose dot is not drawn (-1: none) */
+  setHidden(flight: number): void;
   dispose(): void;
 }
 
@@ -123,7 +126,7 @@ export function createHeads(): Heads {
   };
   for (const [k, v] of Object.entries(attrs)) geometry.setAttribute(k, v);
   geometry.setDrawRange(0, 0);
-  const uniforms = { uSize: { value: HEAD_SIZE_PX }, uTime: { value: 0 }, uHighlight: { value: -1 } };
+  const uniforms = { uSize: { value: HEAD_SIZE_PX }, uTime: { value: 0 }, uHighlight: { value: -1 }, uHidden: { value: -1 } };
   const material = new ShaderMaterial({
     uniforms,
     vertexShader: HEAD_VERT,
@@ -150,6 +153,9 @@ export function createHeads(): Heads {
     },
     setPixelRatio(pr) {
       uniforms.uSize.value = HEAD_SIZE_PX * pr;
+    },
+    setHidden(flight) {
+      uniforms.uHidden.value = flight;
     },
     dispose() {
       geometry.dispose();
