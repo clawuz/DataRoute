@@ -1241,3 +1241,24 @@ body.personal-build .music-scope.neon::before {
 .ms-ring-arc.paused { animation-play-state: paused; opacity: 0.35; }
 @keyframes ms-ring-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ms-ring-arc { animation: none; } }
+
+/* "Where do you want to go?" in the live screen's components: glass cards with the red → steel edge, pills like LIVE / make-your-own-music */
+.landing.v2.picker .field, .landing.v2.picker .chip, .landing.v2.picker .tray-item, .landing.v2.picker .search-hits {
+  position: relative; border: 0 !important; border-radius: 12px; background: rgba(3, 6, 16, 0.4) !important;
+  -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); box-shadow: none !important;
+}
+.landing.v2.picker .field::before, .landing.v2.picker .chip::before, .landing.v2.picker .tray-item::before, .landing.v2.picker .search-hits::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(112deg, rgba(255, 40, 58, 0.95) 0%, rgba(255, 40, 58, 0.55) 9%, rgba(140, 170, 225, 0.62) 32%, rgba(140, 170, 225, 0.5) 72%, rgba(150, 180, 235, 0.7) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.landing.v2.picker .chip.on { background: rgba(255, 36, 56, 0.22) !important; box-shadow: 0 0 12px rgba(255, 36, 56, 0.35) !important; }
+.landing.v2.picker .field.live:focus-within { box-shadow: 0 0 14px rgba(255, 36, 56, 0.4) !important; }
+.landing.v2.picker .tab { position: relative; border: 1.5px solid transparent; background: linear-gradient(rgba(8, 10, 22, 0.7), rgba(8, 10, 22, 0.7)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; color: #fff; }
+.landing.v2.picker .tab.on { background: linear-gradient(rgba(255, 36, 56, 0.28), rgba(255, 36, 56, 0.28)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; color: #fff; box-shadow: 0 0 12px rgba(255, 36, 56, 0.35); }
+.landing.v2.picker .landing-back, .landing.v2.picker .compose-btn {
+  display: inline-flex; align-items: center; height: 34px; padding: 0 20px; border-radius: 99px; font-family: var(--label); font-size: 11px; letter-spacing: 0.2em; color: #fff; cursor: pointer;
+  border: 1.5px solid transparent; background: linear-gradient(rgba(8, 10, 22, 0.72), rgba(8, 10, 22, 0.72)) padding-box, linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)) border-box; box-shadow: 0 0 12px rgba(255, 36, 56, 0.28);
+}
+.landing.v2.picker .landing-back:hover, .landing.v2.picker .compose-btn:hover:not(:disabled) { box-shadow: 0 0 18px rgba(255, 36, 56, 0.5); color: #fff; }
