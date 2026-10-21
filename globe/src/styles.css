@@ -1352,3 +1352,14 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 .if-fine { margin: 6px 0 0; display: grid; gap: 8px; font-family: "TK Text Wide", system-ui, sans-serif; font-size: 11px; letter-spacing: 0.16em; color: rgba(242, 245, 250, 0.5); text-transform: uppercase; line-height: 1.6; }
 .if-credit { margin: 0; font-family: "TK Text Wide", system-ui, sans-serif; font-size: 10px; letter-spacing: 0.14em; color: rgba(242, 245, 250, 0.42); }
 @media (max-width: 720px), (max-aspect-ratio: 1/1) { .if-hint { font-size: 12.5px; padding: 8px 16px; } .if-fine { font-size: 9.5px; letter-spacing: 0.1em; } }
+
+/* the live screen on a phone: only the mark and the words at the top (no status box), a smaller ear, the "make your own music" pill level with it */
+@media (max-aspect-ratio: 1/1), (max-width: 720px) {
+  body.personal-build .title .phase.gt-chip, body.personal-build .title .gt-rule { display: none !important; }
+  .ms-tab { gap: 8px; padding: 6px 10px 6px 8px; }
+  .ms-tab .ms-ring { width: 32px; height: 32px; }
+  .ms-tab .ms-title b { font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; }
+  .ms-fold { width: 24px; height: 24px; }
+  .ms-make { height: 28px; padding: 0 12px; font-size: 9px; letter-spacing: 0.1em; bottom: calc(100% + 8px); }
+  .ms-make .ms-make-txt svg { width: 11px; height: 11px; }
+}

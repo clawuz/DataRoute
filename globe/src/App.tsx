@@ -16,6 +16,9 @@ import { Experience } from "./personal/Experience";
 import { Landing } from "./personal/Landing";
 import { selectionFromSearch, searchFromSelection, type PersonalSelection } from "./personal/codec";
 
+/** the opening film has played once in this page: the way back from the wish list does not show it again */
+let introSeen = false;
+
 function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const store = useMemo(() => createStore<GlobeHudSnapshot>(EMPTY_GLOBE_SNAPSHOT), []);
@@ -27,15 +30,16 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
   const [liveHandles, setLiveHandles] = useState<LiveHandles | null>(null);
   const filmRan = useRef(false);
   const controllerRef = useRef<GlobeController | null>(null);
-  const [introOn, setIntroOn] = useState(personalLive); // the opening screen covers the live screen until it is complete
-  const introRef = useRef(personalLive);
+  const showIntro = personalLive && !introSeen; // the opening film is for the first arrival only: coming back from the wish list drops straight onto the live screen
+  const [introOn, setIntroOn] = useState(showIntro); // the opening screen covers the live screen until it is complete
+  const introRef = useRef(showIntro);
   const liveEngine = useRef<ReturnType<typeof createGlobeEngine> | null>(null);
   introRef.current = introOn;
   const gate = useRef<{ p: Promise<void>; open: () => void } | null>(null);
   if (!gate.current) {
     let open = () => {};
     const p = new Promise<void>((r) => { open = r; });
-    gate.current = { p: personalLive ? p : Promise.resolve(), open };
+    gate.current = { p: showIntro ? p : Promise.resolve(), open };
   }
 
   useEffect(() => {
@@ -64,7 +68,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       return;
     }
     liveEngine.current = engine;
-    if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") engine.setIdleSpin(false); // the live globe waits at its first view while the opening film plays over it
+    if (introRef.current) engine.setIdleSpin(false); // the live globe waits at its first view while the opening film plays over it
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.8, false);
@@ -245,6 +249,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
           ready={introReady}
           live={liveHandles}
           onDone={(film) => {
+            introSeen = true;
             setIntroOn(false);
             liveEngine.current?.setIdleSpin(true, 1);
             if (film) { // the live screen starts: the film's music off, the tour from its beginning, the music again

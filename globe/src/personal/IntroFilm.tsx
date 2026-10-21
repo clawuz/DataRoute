@@ -46,6 +46,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       l.engine.setRigDistance(9);
       l.engine.centerOn(8, -50, 0);
       l.controller.setMusicFade(1);
+      if (withSound) l.controller.unlockMusic(); // inside the tap: a phone will play the recording from the code after this
       l.engine.setRouteFocus(0.3, 1.5); // an intro: the route a note lights stands out from the rest
       l.controller.onKey("r"); // the tour the site starts with: the day's replay …
       l.controller.setMusicOn(withSound); // … and its music (set, not toggled: the last visit's choice is kept in the browser)

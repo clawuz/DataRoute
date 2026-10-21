@@ -97,6 +97,8 @@ export interface GlobeController {
   setMusicOn(on: boolean): void;
   /** loads the recorded music now, silently; resolves when it can play (or after a few seconds): the first note is then the recording, never the generative stand-in */
   musicReady(): Promise<void>;
+  /** call inside a tap (the ENTER button): lets a phone play the recording from the code afterwards */
+  unlockMusic(): void;
   dispose(): void;
 }
 
@@ -523,6 +525,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         if (!art.enabled) return; // ?art=0: art keys are inert
         art = toggleArt(art, cmd === "toggleCorridors" ? "corridors" : cmd === "toggleAurora" ? "aurora" : "sound");
         persistArt(art);
+        if (cmd === "toggleSound" && art.sound) track.unlock(); // inside a tap on a phone: the recording may be played from the code afterwards
         pushEffects();
         pushHud();
         return;
@@ -622,9 +625,12 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       return new Promise<void>((res) => {
         const t0 = Date.now();
         const iv = setInterval(() => {
-          if (track.ready() || disposed || Date.now() - t0 > 8000) { clearInterval(iv); res(); }
+          if (track.loaded() || disposed || Date.now() - t0 > 8000) { clearInterval(iv); res(); }
         }, 150);
       });
+    },
+    unlockMusic() {
+      track.unlock();
     },
     setMusicOn(on) {
       if (disposed || !art.enabled || art.sound === on) return;

@@ -61,6 +61,10 @@ export interface DayTrack {
   setEnabled(on: boolean): void;
   /** true once the audio and the notes are loaded and the track can take over from the generative music */
   ready(): boolean;
+  /** the audio element and the notes exist (a phone starts loading the audio only when it is played) */
+  loaded(): boolean;
+  /** call inside a tap: plays and pauses the audio once, which lets a phone play it later without another tap (and starts it loading) */
+  unlock(): void;
   /** `frac` = replay position 0..1; `playing` = the replay runs; `free` = do not chase `frac` (while a flight is followed the recording keeps its own clock) */
   update(frac: number, playing: boolean, free?: boolean, remap?: (n: TrackNote) => TrackNote | null): void;
   /** the recording has played to its end */
@@ -90,7 +94,9 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
   let data: TrackData | null = null;
   let loading = false;
   let enabled = false;
+  let enabledPlaying = false; // update() has taken over the element: the unlocking tap must not pause it
   let disposed = false;
+  let unlocked = false; // a tap has played the element once: a phone lets it play from the code now, and it is loading
   let prevT: number | null = null; // media time up to which notes have been published
   let lastNow: number | null = null; // media time at the previous update (jump detection)
 
@@ -128,7 +134,16 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
         lastNow = null;
       }
     },
-    ready: () => !!(audio && data && audio.readyState >= 2),
+    // a phone does not load audio before it is played: after the unlocking tap the track counts as ready (it starts when it has data)
+    ready: () => !!(audio && data && (audio.readyState >= 2 || (unlocked && !audio.error))),
+    loaded: () => !!(audio && data),
+    unlock() {
+      const a = audio;
+      if (!a || unlocked) return;
+      unlocked = true;
+      const p = a.play();
+      if (p) void p.then(() => { if (!enabledPlaying) { a.pause(); a.currentTime = 0; } }).catch(() => { unlocked = false; });
+    },
     data: () => data,
     setGain(g) {
       if (audio) audio.volume = Math.min(1, Math.max(0, g));
@@ -138,6 +153,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
       const a = audio;
       if (!a || !data || !enabled) return;
       if (!playing) {
+        enabledPlaying = false;
         if (!a.paused) a.pause();
         prevT = null;
         lastNow = null;
@@ -153,6 +169,7 @@ export function createDayTrack(d: DayTrackDeps): DayTrack {
         a.currentTime = t;
         prevT = t;
       }
+      enabledPlaying = true;
       if (a.paused) void a.play().catch(() => undefined); // blocked until a user gesture: the next tick retries
       const now = a.currentTime;
       // the notes are published LOOKAHEAD seconds before they sound: the scope draws them ahead of its reading line
