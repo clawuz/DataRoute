@@ -121,7 +121,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
             <>
               <button type="button" className="if-enter" onClick={() => begin(true)}>
                 <span className="ms-eq" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ animationDelay: `${-((i * 37) % 17) / 10}s`, animationDuration: `${0.7 + ((i * 53) % 9) / 10}s` }} />)}</span>
-                <span className="ms-make-txt">ENTER WITH SOUND</span>
+                <span className="ms-make-txt">LISTEN TO THE WORLD</span>
               </button>
             </>
           ) : (
