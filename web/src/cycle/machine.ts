@@ -4,6 +4,8 @@ export interface CycleConfig {
   replaySec: number;
   liveSec: number;
   holdSec: number;
+  /** a pause stays until the viewer ends it (by default the cycle resumes by itself holdSec after the last input) */
+  keepPause?: boolean;
 }
 
 export const CYCLE: CycleConfig = { replaySec: 90, liveSec: 30, holdSec: 20 };
@@ -34,7 +36,7 @@ export function stepCycle(s: CycleState, dt: number, b: Bounds, cfg: CycleConfig
     idle += dt;
     if (idle >= cfg.holdSec) {
       manual = false;
-      paused = false;
+      if (!cfg.keepPause) paused = false;
       idle = 0;
     }
   }

@@ -70,4 +70,17 @@ describe("cycle machine", () => {
     const s = stepCycle(initCycle(empty), 1, empty);
     expect(s.tRel).toBe(0);
   });
+
+  it("resumes by itself 20 s after a pause, unless the pause is kept (the personal screen: the music must not restart on its own)", () => {
+    let s = applyAction(run(initCycle(B), 5), { type: "togglePause" }, B);
+    expect(s.paused).toBe(true);
+    const auto = run(s, 25);
+    expect(auto.paused).toBe(false); // the default: a kiosk goes on by itself
+    const cfg = { replaySec: 90, liveSec: 30, holdSec: 20, keepPause: true };
+    let k = s;
+    for (let t = 0; t < 60; t += 0.5) k = stepCycle(k, 0.5, B, cfg);
+    expect(k.paused).toBe(true);
+    expect(k.manual).toBe(false);
+    expect(applyAction(k, { type: "togglePause" }, B, cfg).paused).toBe(false); // the viewer ends it
+  });
 });

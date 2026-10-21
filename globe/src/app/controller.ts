@@ -106,6 +106,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let model: GlobeModel | null = null;
   let tl: Timeline | null = null;
   let mode: "LIVE" | "REPLAY" = "LIVE";
+  // the personal build: a pause is the viewer's, it does not end by itself after 20 s (the music would start again on its own)
+  const cycleCfg: CycleConfig = d.artDefaults ? { ...GLOBE_CYCLE, keepPause: true } : GLOBE_CYCLE;
   let cycle: CycleState = { ...initCycle({ start: 0, end: 0 }), phase: "LIVE" };
   let liveFrozen: number | null = null;
   let events: EventLine[] = [];
@@ -252,7 +254,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
 
   const bounds = (): Bounds => (model ? { start: model.replayStart, end: model.span } : { start: 0, end: 0 });
   const act = (a: Parameters<typeof applyAction>[1]) => {
-    cycle = applyAction(cycle, a, bounds(), GLOBE_CYCLE);
+    cycle = applyAction(cycle, a, bounds(), cycleCfg);
   };
 
   /** unfrozen LIVE time: the wall clock, or the looped stale-snapshot clock in fixture mode */
@@ -348,7 +350,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
 
   const frame = (dt: number): GlobeFrameInput => {
     const nowSec = d.nowMs() / 1000;
-    const stepped = stepCycle(cycle, dt, bounds(), GLOBE_CYCLE);
+    const stepped = stepCycle(cycle, dt, bounds(), cycleCfg);
     // while following in REPLAY the displayed instant belongs to the follow clock: freeze the replay position
     cycle = follow && mode === "REPLAY" ? { ...stepped, phase: cycle.phase, elapsed: cycle.elapsed, tRel: cycle.tRel } : stepped;
     if (mode === "REPLAY" && cycle.phase === "LIVE") {
@@ -379,7 +381,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       const r = stepTour(tour, dt, {
         following: !!follow,
         followDone: !!follow && (follow.liveHeadSec >= TOUR_LIVE_HOLD_SEC || follow.endedSec >= TOUR_END_HOLD_SEC),
-        manual: cycle.manual,
+        manual: cycle.manual || (!!cycleCfg.keepPause && cycle.paused), // a paused screen is not toured
         model,
         cur: currentCur(nowSec),
         rand: Math.random,
