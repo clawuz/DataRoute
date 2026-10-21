@@ -7,7 +7,7 @@ import { FILM_SECONDS, LIVE_VIEW, shotAt } from "./intro-film";
 
 /** ?filmat=10.6 freezes the film at that second, silent (to look at a single frame) */
 const frozenAt = (): number | null => { const v = new URLSearchParams(window.location.search).get("filmat"); return v === null || Number.isNaN(+v) ? null : +v; };
-const WAIT_CAP_MS = 60000; // the film starts only on a complete globe (map and sky): only a network that has stalled for a minute lets it start without
+const WAIT_CAP_MS = 40000; // the film starts on a complete globe (map and sky); only a network that has stalled for this long lets it start without
 
 export interface LiveHandles {
   engine: GlobeEngine;

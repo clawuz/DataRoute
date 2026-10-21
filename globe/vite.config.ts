@@ -16,8 +16,6 @@ export default defineConfig({
         const URL = "https://worldofmusic-tk.web.app";
         return html
           .replace(/<title>.*<\/title>/, "<title>A World of Music · Turkish Airlines</title>")
-          // the first pictures are asked for while the page is still being read, not when its script has run
-          .replace("</head>", `  <link rel="preload" as="image" href="/textures/earth-night-4k.jpg" />\n    <link rel="preload" as="image" href="/textures/earth-day-4k.jpg" />\n    <link rel="preload" as="image" href="/textures/sky-4k.jpg" />\n  </head>`)
           .replace(/(<meta name="description" content=")[^"]*/, "$1" + DESC)
           .replace(/(<meta property="og:title" content=")[^"]*/, "$1A World of Music · Turkish Airlines")
           .replace(/(<meta property="og:description" content=")[^"]*/, "$1" + DESC)

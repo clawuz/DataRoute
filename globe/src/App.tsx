@@ -147,20 +147,23 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       };
       timers.push(setTimeout(attempt, 3500));
     };
+    // the Earth's pictures: loaded, never waiting for the tour (the opening screen waits for these, the tour waits for the opening screen)
     const texturesReady = engine
       .loadTextures((p) => {
         maxProgress = Math.max(maxProgress, p);
         controller?.setTextureState(maxProgress, "");
       })
-      .then(async (tier) => {
+      .then((tier) => {
         controller?.setTextureState(1, tier ? "" : "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
-        await gate.current!.p; // no replay, no music before the opening screen has lifted
-        startTour();
       })
       .catch((e) => {
         console.error("[textures]", e);
         controller?.setTextureState(1, "FLAT-COLOUR EARTH (IMAGERY UNAVAILABLE)");
       });
+    void texturesReady.then(async () => {
+      await gate.current!.p; // no replay, no music before the opening screen has lifted
+      startTour();
+    });
     if (personalBuild) { // what the opening screen waits for: the pictures, the aircraft, and the first data of the day
       const data = new Promise<void>((res) => {
         let n = 0;
