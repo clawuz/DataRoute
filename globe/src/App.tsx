@@ -69,7 +69,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       return;
     }
     liveEngine.current = engine;
-    if (introRef.current) { engine.setIdleSpin(false); engine.setRenderPaused(true); } // nothing is drawn behind the waiting page (the film starts the drawing) // the live globe waits at its first view while the opening film plays over it
+    if (introRef.current) { engine.setIdleSpin(false); engine.setRenderPaused(true); engine.holdHiRes(gate.current!.p); } // nothing is drawn behind the waiting page (the film starts the drawing) // the live globe waits at its first view while the opening film plays over it
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.8, false);
@@ -173,7 +173,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         timers.push(t as unknown as ReturnType<typeof setTimeout>);
       });
       const mark = (what: string) => () => console.info(`[ready] ${what} ${Math.round(performance.now())} ms`);
-      setIntroReady(Promise.all([texturesReady.then(mark("textures")).then(() => engine.whenAssetsReady()).then(mark("assets")), data.then(mark("data")), controller?.musicReady().then(mark("music"))]));
+      setIntroReady(Promise.all([texturesReady.then(mark("textures")).then(() => engine.whenAssetsReady()).then(() => { engine.warmUp(); }).then(mark("assets")), data.then(mark("data")), controller?.musicReady().then(mark("music"))]));
     }
 
     let press: { x: number; y: number; t: number } | null = null;

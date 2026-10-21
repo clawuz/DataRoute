@@ -37,6 +37,8 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     setRigDistance: vi.fn(),
     setRouteFocus: vi.fn(),
     setRenderPaused: vi.fn(),
+    warmUp: vi.fn(),
+    holdHiRes: vi.fn(),
     setFrameSource: (fn) => {
       frameFn = fn;
     },

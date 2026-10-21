@@ -25,6 +25,8 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
   const rootRef = useRef<HTMLDivElement>(null);
   const els = useRef<Record<string, HTMLElement | null>>({});
   const startRef = useRef(0);
+  const filmT = useRef(0); // the film's own clock: it advances by the frame time, a stall slows it down instead of skipping a part of it
+  const lastAt = useRef(0);
   const lineRef = useRef(-1);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
@@ -54,6 +56,8 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
       l.controller.setMusicOn(withSound); // … and its music (set, not toggled: the last visit's choice is kept in the browser)
     }
     startRef.current = performance.now();
+    filmT.current = 0;
+    lastAt.current = 0;
     setPhase("film");
   };
   useEffect(() => {
@@ -79,7 +83,10 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
     if (phase !== "film") return;
     let raf = 0;
     const tick = () => {
-      const t = frozenAt() ?? Math.min(FILM_SECONDS, (performance.now() - startRef.current) / 1000);
+      const nowMs = performance.now();
+      if (lastAt.current) filmT.current += Math.min(0.1, (nowMs - lastAt.current) / 1000); // at most 0.1 s a frame
+      lastAt.current = nowMs;
+      const t = frozenAt() ?? Math.min(FILM_SECONDS, filmT.current);
       const s = shotAt(t);
       const l = liveRef.current;
       if (l) {

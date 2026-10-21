@@ -95,6 +95,10 @@ export interface GlobeEngine {
   setRouteFocus(dim: number, boost?: number): void;
   /** stops drawing (the opening screen covers the globe: the pictures load faster and a phone does not heat up for nothing) */
   setRenderPaused(on: boolean): void;
+  /** while paused: draws two frames, so that the pictures are on the graphics card and the shaders are built before the first visible frame */
+  warmUp(): void;
+  /** the big pictures (8k / 16k Earth, the sky) are fetched and shown only after `p` has settled (the opening film runs on the small ones) */
+  holdHiRes(p: Promise<unknown>): void;
   /** the slow idle spin: on/off and a speed multiplier */
   setIdleSpin(on: boolean, speed?: number): void;
   dispose(): void;
@@ -153,6 +157,8 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let rigDist = RIG_DISTANCE;
   let classicDone: Promise<void> = Promise.resolve(); // the small classic 4k set is in (or has failed): the big pictures wait for it
   let renderPaused = false;
+  let warmFrames = 0;
+  let hiResGate: Promise<unknown> = Promise.resolve();
   let focusDim = 1;
   let focusBoost = 1;
   let shownAbsNow = Date.now() / 1000; // the time the Earth is shown at (a replay shows a time that is not now)
@@ -321,7 +327,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   }
 
   function frameBody(now: number) {
-    if (renderPaused) return;
+    if (renderPaused) {
+      if (warmFrames <= 0) return;
+      warmFrames--;
+    }
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     const wall = Date.now() / 1000;
@@ -578,6 +587,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
           show("day", d);
           void (async () => {
             await classicDone;
+            await hiResGate;
             if (preferred !== "4k") { // a failed load keeps the 4k picture
               show("night", await loadFlat("night", preferred));
               show("day", await loadFlat("day", preferred));
@@ -671,7 +681,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     setPlaneModel(url) {
       if (!url) { planeLoaded = false; planeGroup.clear(); return; }
       if (planeLoaded) return;
-      new GLTFLoader().load(url, (gltf) => {
+      planeLoaded = true; // asked for: not twice
+      // the model is fetched and built after the opening film (its pictures go to the graphics card at once: a stall in the film otherwise)
+      void Promise.resolve().then(() => hiResGate).then(() => new GLTFLoader().load(url, (gltf) => {
         if (disposed) return;
         // the model is used as it comes (its own textures); it is centred, scaled to a length of 1 and its nose already points along +Z
         const box = new Box3().setFromObject(gltf.scene);
@@ -691,7 +703,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         planeGroup.clear();
         planeGroup.add(gltf.scene);
         planeLoaded = true;
-      }, undefined, () => { /* without the model the dot stays */ });
+      }, undefined, () => { planeLoaded = false; /* without the model the dot stays */ }));
     },
     async whenAssetsReady() {
       for (let n = -1; n !== tracked.length; ) { // assets requested while waiting are waited for too
@@ -719,6 +731,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         if (disposed || !t) { t?.dispose(); return; }
         apply(t);
         await classicDone; // the small pictures first
+        await hiResGate; // and the big ones after the opening film
         for (const tier of ORDER_TIERS) {
           if (tier === "4k" || ORDER_TIERS.indexOf(tier) > ORDER_TIERS.indexOf(target)) continue;
           const hi = await loadStarMap(undefined, `/textures/sky-${tier}.jpg`);
@@ -760,6 +773,12 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     setRenderPaused(on) {
       renderPaused = on;
+    },
+    warmUp() {
+      warmFrames = 2;
+    },
+    holdHiRes(p) {
+      hiResGate = p.then(() => undefined, () => undefined);
     },
     setRouteFocus(dim, boost = 1) {
       focusDim = dim;
