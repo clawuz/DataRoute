@@ -531,16 +531,19 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       // the illustrated pair starts loading at once, beside the classic 4k set (it used to wait for it)
       const flatWanted = newGlobeLook() && new URLSearchParams(location.search).get("map") !== "classic";
       const loadFlat = async (kind: "night" | "day", tier: string): Promise<Texture | null> => {
-        try {
-          const t = await new TextureLoader().loadAsync(`/textures/earth-${kind}-${tier}.jpg`);
-          t.colorSpace = NoColorSpace;
-          t.flipY = true;
-          t.wrapS = RepeatWrapping;
-          t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
-          return t;
-        } catch {
-          return null;
+        for (let attempt = 0; attempt < 3; attempt++) { // a dropped connection is tried again: a globe without its map is worse than a late one
+          try {
+            const t = await new TextureLoader().loadAsync(`/textures/earth-${kind}-${tier}.jpg`);
+            t.colorSpace = NoColorSpace;
+            t.flipY = true;
+            t.wrapS = RepeatWrapping;
+            t.anisotropy = Math.min(16, renderer.capabilities.getMaxAnisotropy());
+            return t;
+          } catch {
+            await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
+          }
         }
+        return null;
       };
       const flatPair = flatWanted ? track(Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")])) : null;
       const first = await loadEarthTextures(renderer, "4k", onProgress);
