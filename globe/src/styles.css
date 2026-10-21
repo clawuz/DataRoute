@@ -1383,10 +1383,13 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 .landing-back .ms-make-txt, .sheet-link .ms-make-txt, .if-skip .ms-make-txt, .if-quiet .ms-make-txt, .tap-play .ms-make-txt, .live-back .ms-make-txt { position: relative; z-index: 1; }
 .landing-back .ms-eq, .sheet-link .ms-eq, .if-skip .ms-eq, .tap-play .ms-eq { border-radius: inherit; overflow: hidden; }
 
-/* the music box: now and then (every 5-6 s) one light runs once round the outline of the ear and the box together, from the ear's top line */
-.ms-sweep { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 3; }
-.ms-sweep path { fill: none; stroke-linecap: round; stroke-dasharray: 11 220; stroke-dashoffset: 11; opacity: 0; animation: ms-sweep-run 5.6s linear infinite; }
-.ms-sweep-glow { stroke: #ff2438; stroke-width: 2.6; filter: drop-shadow(0 0 5px #ff3b4d); }
-.ms-sweep-core { stroke: #ffffff; stroke-width: 1.4; }
-@keyframes ms-sweep-run { 0% { stroke-dashoffset: 11; opacity: 0; } 2% { opacity: 1; } 27% { stroke-dashoffset: -100; opacity: 1; } 30% { stroke-dashoffset: -100; opacity: 0; } 100% { stroke-dashoffset: -100; opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .ms-sweep path, .landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .tap-play:hover::after { animation: none; } }
+/* the music box: now and then (every 5-6 s) one light runs once round the ear and the box as one outline - the very light of "make your own music" on hover (a conic arc with its tail, red to white) */
+.ms-sweep {
+  position: absolute; left: 0; pointer-events: none; z-index: 3; opacity: 0;
+  background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #ffffff 346deg, rgba(255, 255, 255, 0) 360deg);
+  filter: drop-shadow(0 0 4px #ff3b4d);
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  animation: ms-sweep 5.6s linear infinite;
+}
+@keyframes ms-sweep { 0% { --ms-a: 0deg; opacity: 0; } 2% { opacity: 1; } 27% { --ms-a: 360deg; opacity: 1; } 30% { --ms-a: 360deg; opacity: 0; } 100% { --ms-a: 360deg; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ms-sweep, .landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .tap-play:hover::after { animation: none; } }

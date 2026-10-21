@@ -140,7 +140,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
   const [nowList, setNowList] = useState<Playing[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
   const earRef = useRef<HTMLDivElement>(null);
-  const [outline, setOutline] = useState(""); // the outline of the ear and the box as one path, for the light that runs round it now and then
+  const [sweep, setSweep] = useState<{ top: number; w: number; h: number; mask: string } | null>(null); // the outline of the ear and the box as one shape, for the light that runs round it now and then
   const [collapsed, setCollapsed] = useState(false); // the live screen's music box can be folded down to its tab
 
   useEffect(
@@ -449,10 +449,14 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
     if (!root || !ear || typeof ResizeObserver === "undefined") return;
     const measure = () => {
       const W = root.offsetWidth, H = root.offsetHeight, ew = ear.offsetWidth, eh = ear.offsetHeight;
-      if (!W || !H || !ew || !eh) { setOutline(""); return; }
-      const r1 = 14, r2 = 12, y0 = -eh + 1;
-      // from the ear's top-left, along the ear's top line, down its right side, on along the top of the box, round the box and up its left side to the start
-      setOutline(`M ${r1} ${y0} H ${ew - r1} Q ${ew} ${y0} ${ew} ${y0 + r1} V 0 H ${W - r2} Q ${W} 0 ${W} ${r2} V ${H - r2} Q ${W} ${H} ${W - r2} ${H} H ${r2} Q 0 ${H} 0 ${H - r2} V ${y0 + r1} Q 0 ${y0} ${r1} ${y0} Z`);
+      if (!W || !H || !ew || !eh) { setSweep(null); return; }
+      const r1 = 14, r2 = 12, bw = W, bh = H + eh - 1;
+      const yt = 1, yb = eh - 1, yB = bh - 1, xr = bw - 1;
+      // the ear's top line, down its right side, along the top of the box, round the box and up its left side: one outline (a mask for the light)
+      const d = `M ${r1} ${yt} H ${ew - r1} Q ${ew} ${yt} ${ew} ${yt + r1} V ${yb} H ${xr - r2} Q ${xr} ${yb} ${xr} ${yb + r2} V ${yB - r2} Q ${xr} ${yB} ${xr - r2} ${yB} H ${1 + r2} Q 1 ${yB} 1 ${yB - r2} V ${yt + r1} Q 1 ${yt} ${1 + r1} ${yt} Z`;
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${bw}' height='${bh}'><path d='${d}' fill='none' stroke='white' stroke-width='2.4'/></svg>`;
+      const mask = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+      setSweep((prev) => (prev && prev.mask === mask ? prev : { top: -eh + 1, w: bw, h: bh, mask }));
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -482,12 +486,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
-          {outline && !collapsed && (
-            <svg className="ms-sweep" aria-hidden="true" focusable="false">
-              <path className="ms-sweep-glow" d={outline} pathLength="100" />
-              <path className="ms-sweep-core" d={outline} pathLength="100" />
-            </svg>
-          )}
+          {sweep && !collapsed && <div className="ms-sweep" aria-hidden="true" style={{ top: sweep.top, width: sweep.w, height: sweep.h, WebkitMaskImage: sweep.mask, maskImage: sweep.mask }} />}
           <button type="button" className="ms-make" title={action ? action.label : "Make your own music"} disabled={!!action?.busy} onClick={() => (action ? action.onClick() : window.dispatchEvent(new CustomEvent("worldofmusic:make")))}>
             <span className="ms-eq" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ animationDelay: `${-((i * 37) % 17) / 10}s`, animationDuration: `${0.7 + ((i * 53) % 9) / 10}s` }} />)}</span>
             <span className="ms-make-txt">
