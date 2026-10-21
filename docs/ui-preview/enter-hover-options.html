@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENTER WITH SOUND — hover önerileri</title>
+<style>
+@property --a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(ellipse at 50% 0%, #0b1330, #02030a 70%); color: #f2f5fa; font-family: "TK Text", system-ui, -apple-system, "Segoe UI", sans-serif; padding: 40px 24px 80px; min-height: 100vh; }
+h1 { font-size: 22px; font-weight: 600; margin: 0 0 6px; letter-spacing: 0.02em; }
+p.lead { margin: 0 0 32px; color: rgba(242,245,250,.65); max-width: 70ch; line-height: 1.6; font-size: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; max-width: 1200px; }
+.card { border: 1px solid rgba(140,170,225,.28); border-radius: 14px; padding: 22px 22px 20px; background: rgba(5,9,22,.55); display: grid; gap: 16px; }
+.card.rec { border-color: rgba(255,60,78,.7); box-shadow: 0 0 24px rgba(227,10,23,.18); }
+.card h2 { margin: 0; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: #f2f5fa; display: flex; gap: 10px; align-items: center; }
+.card h2 b { color: #e30a17; }
+.tag { font-size: 10px; letter-spacing: .14em; padding: 3px 9px; border-radius: 99px; background: #e30a17; color: #fff; }
+.card p { margin: 0; font-size: 13px; line-height: 1.55; color: rgba(242,245,250,.7); }
+.stage { height: 120px; display: grid; place-items: center; border-radius: 10px; background: rgba(2,3,10,.6); }
+.hint { font-size: 11px; letter-spacing: .12em; color: rgba(242,245,250,.45); text-transform: uppercase; }
+
+/* the button (as on the waiting page) */
+.btn { position: relative; isolation: isolate; height: 40px; padding: 0 26px; border: 0; border-radius: 99px; cursor: pointer; color: #fff; font: 500 11px/1 "TK Text Wide", system-ui, sans-serif; letter-spacing: .22em; background: rgba(8,10,22,.72); box-shadow: 0 0 14px rgba(255,36,56,.35); display: inline-flex; align-items: center; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, background .25s, letter-spacing .25s; }
+.btn::before, .btn::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+.btn::before { background: linear-gradient(100deg, #ff2438, rgba(120,150,255,.5)); }
+.btn::after { opacity: 0; background: conic-gradient(from var(--a), transparent 0deg 250deg, rgba(255,60,78,0) 262deg, #ff2438 316deg, #fff 346deg, rgba(255,255,255,0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d); animation: idle 5.6s linear infinite; }
+@keyframes idle { 0% { --a: 0deg; opacity: 0 } 2% { opacity: 1 } 27% { --a: 360deg; opacity: 1 } 30% { --a: 360deg; opacity: 0 } 100% { --a: 360deg; opacity: 0 } }
+@keyframes run { to { --a: 360deg } }
+.btn:hover::after { opacity: 1; animation: run 1.5s linear infinite; }
+.txt { position: relative; z-index: 1; }
+.eq { position: absolute; inset: 0; z-index: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 8px; opacity: .2; pointer-events: none; transition: opacity .25s; }
+.eq i { display: block; width: 2px; height: 78%; border-radius: 2px; background: linear-gradient(180deg, #ff3b4d, #e8f0ff 55%, #5b8dff); box-shadow: 0 0 6px rgba(255,70,85,.6); transform: scaleY(.18); transform-origin: 50% 50%; animation: bounce 1s ease-in-out infinite; animation-play-state: paused; }
+@keyframes bounce { 0%,100% { transform: scaleY(var(--lo,.16)) } 35% { transform: scaleY(var(--hi,.95)) } 60% { transform: scaleY(calc(var(--hi,.95) * .42)) } 80% { transform: scaleY(calc(var(--hi,.95) * .78)) } }
+.btn:hover .eq i { animation-play-state: running; }
+
+/* 1 — a little larger, more glow, the light faster */
+.o1:hover { transform: scale(1.07); box-shadow: 0 0 26px rgba(255,36,56,.65), 0 0 60px rgba(255,36,56,.22); }
+.o1:hover::after { animation-duration: .9s; }
+/* 2 — the equaliser wakes up */
+.o2:hover .eq { opacity: .55; }
+.o2:hover .eq i { --hi: 1; animation-duration: .55s !important; }
+/* 3 — a red fill from inside, the letters open */
+.o3:hover { background: rgba(120,10,24,.62); letter-spacing: .3em; box-shadow: 0 0 22px rgba(255,36,56,.5), inset 0 0 22px rgba(255,36,56,.28); }
+/* 4 — press: the button gives, a ring leaves it */
+.o4:active, .o5:active { transform: scale(.97); }
+.ring { position: absolute; inset: 0; border-radius: inherit; border: 1.5px solid rgba(255,255,255,.9); pointer-events: none; opacity: 0; z-index: 3; }
+.ring.go { animation: ripple .7s ease-out forwards; }
+@keyframes ripple { from { opacity: .9; transform: scale(1) } to { opacity: 0; transform: scale(1.5, 2.2) } }
+/* 5 — the suggestion: 1 + 2 + 4 */
+.o5:hover { transform: scale(1.06); box-shadow: 0 0 24px rgba(255,36,56,.6), 0 0 56px rgba(255,36,56,.2); }
+.o5:hover::after { animation-duration: .95s; }
+.o5:hover .eq { opacity: .5; }
+.o5:hover .eq i { --hi: 1; animation-duration: .6s !important; }
+.o5:active { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) { .btn::after, .eq i { animation: none !important } }
+</style>
+</head>
+<body>
+<h1>ENTER WITH SOUND — hover önerileri</h1>
+<p class="lead">Her kartta aynı buton, farklı hover. Üstüne gelip tıklayarak dene. Beklerken ışık her 5–6 saniyede bir tek tur atar (müzik kutusundaki gibi); hover'da sürekli döner. Önerim en üstte: 1 + 2 + 4.</p>
+<div class="grid">
+  <section class="card rec">
+    <h2><b>★</b> Öneri: 1 + 2 + 4 <span class="tag">ÖNERİLEN</span></h2>
+    <div class="stage"><button class="btn o5" data-ripple><span class="eq"></span><span class="txt">ENTER WITH SOUND</span><span class="ring"></span></button></div>
+    <p>Hafif büyür (%6), parıltı artar, ışık hızlanır, ekolayzır uyanır. Tıklayınca buton %3 içeri basar ve kenardan bir halka çıkıp solar. Sade ve sese bağlı.</p>
+    <span class="hint">hover + tıkla</span>
+  </section>
+  <section class="card">
+    <h2><b>1</b> Hafif büyüme</h2>
+    <div class="stage"><button class="btn o1"><span class="eq"></span><span class="txt">ENTER WITH SOUND</span></button></div>
+    <p>%7 büyür, dış parıltı güçlenir, ışık yayı hızlanır. "Make your own music" hover'ının bir üst seviyesi.</p>
+    <span class="hint">hover</span>
+  </section>
+  <section class="card">
+    <h2><b>2</b> Ekolayzır uyanır</h2>
+    <div class="stage"><button class="btn o2"><span class="eq"></span><span class="txt">ENTER WITH SOUND</span></button></div>
+    <p>Boyut değişmez; çubuklar %20'den %55'e çıkar, yükselir ve hızlanır. "Ses geliyor" hissi.</p>
+    <span class="hint">hover</span>
+  </section>
+  <section class="card">
+    <h2><b>3</b> Dolgu + harf aralığı</h2>
+    <div class="stage"><button class="btn o3"><span class="eq"></span><span class="txt">ENTER WITH SOUND</span></button></div>
+    <p>İçeriden kırmızı bir ışık dolar, yazının harf aralığı açılır; buton "nefes alır". Büyüme yok.</p>
+    <span class="hint">hover</span>
+  </section>
+  <section class="card">
+    <h2><b>4</b> Basınca ripple</h2>
+    <div class="stage"><button class="btn o4" data-ripple><span class="eq"></span><span class="txt">ENTER WITH SOUND</span><span class="ring"></span></button></div>
+    <p>Hover'da değişmez; tıklayınca buton içeri basar ve bir halka dışarı yayılıp solar. Film geçişine bağlanabilir.</p>
+    <span class="hint">tıkla</span>
+  </section>
+  <section class="card">
+    <h2><b>·</b> Şu anki hâli</h2>
+    <div class="stage"><button class="btn"><span class="eq"></span><span class="txt">ENTER WITH SOUND</span></button></div>
+    <p>Karşılaştırma için: ışık hover'da döner, ekolayzır %20'de çalar; başka bir değişiklik yok.</p>
+    <span class="hint">hover</span>
+  </section>
+</div>
+<script>
+document.querySelectorAll('.eq').forEach(function (e) {
+  var h = '';
+  for (var i = 0; i < 28; i++) h += '<i style="animation-delay:' + (-((i * 37) % 17) / 10) + 's;animation-duration:' + (0.7 + ((i * 53) % 9) / 10) + 's"></i>';
+  e.innerHTML = h;
+});
+document.querySelectorAll('[data-ripple]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var r = b.querySelector('.ring'); r.classList.remove('go'); void r.offsetWidth; r.classList.add('go');
+  });
+});
+</script>
+</body>
+</html>

@@ -1324,9 +1324,12 @@ body.personal-build .music-scope.neon::before {
 .if-enter { position: relative; overflow: hidden; isolation: isolate; height: 40px; padding: 0 26px; border: 0; border-radius: 99px; cursor: pointer; color: #fff; font-family: var(--label, "TK Text Wide", system-ui, sans-serif); font-size: 11px; letter-spacing: 0.22em; background: rgba(8, 10, 22, 0.72); box-shadow: 0 0 14px rgba(255, 36, 56, 0.35); margin-top: 6px; display: inline-flex; align-items: center; }
 .if-enter::before, .if-enter::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 .if-enter::before { background: linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)); }
-.if-enter::after { background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #fff 346deg, rgba(255, 255, 255, 0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d); animation: ms-run 1.8s linear infinite; }
-.if-enter .ms-eq { opacity: 0.2; }
-.if-enter .ms-eq i { animation-play-state: running; }
+.if-enter::after { opacity: 0; background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #fff 346deg, rgba(255, 255, 255, 0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d); animation: ms-sweep 5.6s linear infinite; } /* waiting: one light round it every 5-6 s, as on the music box */
+.if-enter:hover::after, .if-enter:focus-visible::after { opacity: 1; animation: ms-run 1.5s linear infinite; }
+.if-enter .ms-eq { opacity: 0.2; transition: opacity 0.25s; }
+/* hover: the equaliser wakes up (stronger, faster) */
+.if-enter:hover .ms-eq, .if-enter:focus-visible .ms-eq, .if-enter:active .ms-eq { opacity: 0.55; }
+.if-enter:hover .ms-eq i, .if-enter:focus-visible .ms-eq i, .if-enter:active .ms-eq i { animation-play-state: running; animation-duration: 0.55s !important; }
 .if-quiet { background: none; border: 0; cursor: pointer; color: rgba(242, 245, 250, 0.55); font-family: var(--label, "TK Text Wide", system-ui, sans-serif); font-size: 10px; letter-spacing: 0.26em; padding: 8px; }
 .if-quiet:hover { color: #fff; }
 .intro-film .intro-mark { position: relative; z-index: 2; }
