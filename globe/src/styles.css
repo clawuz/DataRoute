@@ -1325,15 +1325,13 @@ body.personal-build .music-scope.neon::before {
 .if-enter::before, .if-enter::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
 .if-enter::before { background: linear-gradient(100deg, #ff2438, rgba(120, 150, 255, 0.5)); }
 .if-enter::after { opacity: 0; background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #fff 346deg, rgba(255, 255, 255, 0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d); animation: ms-sweep 5.6s linear infinite; } /* waiting: one light round it every 5-6 s, as on the music box */
-.if-enter:hover::after, .if-enter:focus-visible::after { opacity: 1; animation: ms-run 1.5s linear infinite; }
-.if-enter .ms-eq { opacity: 0.2; transition: opacity 0.25s; }
+.if-enter:hover::after, .if-enter:focus-visible::after { opacity: 1; animation: ms-run 0.9s linear infinite; } /* hover: the light runs faster */
+.if-enter .ms-eq { opacity: 0.2; }
+.if-enter:hover .ms-eq i, .if-enter:focus-visible .ms-eq i { animation-play-state: running; }
 .if-enter { transition: box-shadow 0.3s ease, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
-/* hover: a red glow round the button, and it grows by 6 % */
-.if-enter:hover, .if-enter:focus-visible { transform: scale(1.06); box-shadow: 0 0 26px rgba(255, 36, 56, 0.7), 0 0 64px rgba(255, 36, 56, 0.28); }
+/* hover: it grows a little (7 %) and glows red round it */
+.if-enter:hover, .if-enter:focus-visible { transform: scale(1.07); box-shadow: 0 0 26px rgba(255, 36, 56, 0.65), 0 0 60px rgba(255, 36, 56, 0.22); }
 .if-enter:active { transform: scale(0.97); }
-/* hover: the equaliser wakes up (stronger, faster) */
-.if-enter:hover .ms-eq, .if-enter:focus-visible .ms-eq, .if-enter:active .ms-eq { opacity: 0.55; }
-.if-enter:hover .ms-eq i, .if-enter:focus-visible .ms-eq i, .if-enter:active .ms-eq i { animation-play-state: running; animation-duration: 0.55s !important; }
 .if-quiet { background: none; border: 0; cursor: pointer; color: rgba(242, 245, 250, 0.55); font-family: var(--label, "TK Text Wide", system-ui, sans-serif); font-size: 10px; letter-spacing: 0.26em; padding: 8px; }
 .if-quiet:hover { color: #fff; }
 .intro-film .intro-mark { position: relative; z-index: 2; }
