@@ -172,7 +172,8 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         }, 250);
         timers.push(t as unknown as ReturnType<typeof setTimeout>);
       });
-      setIntroReady(Promise.all([texturesReady.then(() => engine.whenAssetsReady()), data, controller?.musicReady()]));
+      const mark = (what: string) => () => console.info(`[ready] ${what} ${Math.round(performance.now())} ms`);
+      setIntroReady(Promise.all([texturesReady.then(mark("textures")).then(() => engine.whenAssetsReady()).then(mark("assets")), data.then(mark("data")), controller?.musicReady().then(mark("music"))]));
     }
 
     let press: { x: number; y: number; t: number } | null = null;

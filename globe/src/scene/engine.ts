@@ -149,6 +149,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const sunMode: "stage" | "real" | "night" = typeof location !== "undefined" ? ((new URLSearchParams(location.search).get("sun") as "real" | "night" | null) ?? "stage") : "stage";
   let idleSpin = true;
   let rigDist = RIG_DISTANCE;
+  let classicDone: Promise<void> = Promise.resolve(); // the small classic 4k set is in (or has failed): the big pictures wait for it
   let focusDim = 1;
   let focusBoost = 1;
   let shownAbsNow = Date.now() / 1000; // the time the Earth is shown at (a replay shows a time that is not now)
@@ -545,18 +546,20 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         }
         return null;
       };
-      const flatPair = flatWanted ? track(Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")])) : null;
-      const first = await loadEarthTextures(renderer, "4k", onProgress);
-      if (disposed) {
-        if (first) for (const tex of [first.day, first.night, first.clouds]) tex.dispose();
-        return null;
-      }
-      texs = first;
-      earth.setTextures(first);
-      const flat = !!first && newGlobeLook() && new URLSearchParams(location.search).get("map") !== "classic";
-      if (flat) {
+      const classicP = loadEarthTextures(renderer, "4k", onProgress);
+      classicDone = classicP.then(() => undefined, () => undefined);
+      const applyClassic = (first: EarthTextures | null): void => {
+        if (disposed) {
+          if (first) for (const tex of [first.day, first.night, first.clouds]) tex.dispose();
+          return;
+        }
+        texs = first;
+        earth.setTextures(first);
+      };
+      if (flatWanted) {
         // the personal build shows two illustrated pictures of the world (night: NASA city lights; day) and blends them along the
-        // terminator: the 4k pair first, then the preferred tier (8k / 16k, by the same rules as before) in the background
+        // terminator: the 4k pair first (the film and the live screen wait for exactly this), then the preferred tier (8k / 16k) once the
+        // small classic set (the clouds) is in, so that the big files never starve the small ones
         const shown: { night: Texture | null; day: Texture | null } = { night: null, day: null };
         const show = (kind: "night" | "day", t: Texture | null) => {
           if (!t) return;
@@ -566,16 +569,29 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
           shown[kind]?.dispose();
           shown[kind] = t;
         };
-        void (flatPair ?? Promise.resolve([null, null] as (Texture | null)[])).then(async ([n, d]) => {
+        const applied = Promise.all([loadFlat("night", "4k"), loadFlat("day", "4k")]).then(([n, d]) => {
           show("night", n);
           show("day", d);
-          if (preferred !== "4k") { // a failed load keeps the 4k picture
-            show("night", await loadFlat("night", preferred));
-            show("day", await loadFlat("day", preferred));
-          }
+          void (async () => {
+            await classicDone;
+            if (preferred !== "4k") { // a failed load keeps the 4k picture
+              show("night", await loadFlat("night", preferred));
+              show("day", await loadFlat("day", preferred));
+            }
+          })();
+          return !!(n && d);
         });
+        track(applied);
+        void classicP.then(applyClassic, () => undefined);
+        return (await applied) ? "4k" : (await classicP)?.tier ?? null;
       }
-      if (first && preferred !== "4k" && !flat) {
+      const first = await classicP;
+      if (disposed) {
+        applyClassic(first);
+        return null;
+      }
+      applyClassic(first);
+      if (first && preferred !== "4k") {
         void loadEarthTextures(renderer, preferred, () => {}).then((hi) => {
           if (!hi) return;
           if (disposed || hi.tier === "4k") {
@@ -698,6 +714,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       void track(loadStarMap(undefined, "/textures/sky-4k.jpg")).then(async (t) => {
         if (disposed || !t) { t?.dispose(); return; }
         apply(t);
+        await classicDone; // the small pictures first
         for (const tier of ORDER_TIERS) {
           if (tier === "4k" || ORDER_TIERS.indexOf(tier) > ORDER_TIERS.indexOf(target)) continue;
           const hi = await loadStarMap(undefined, `/textures/sky-${tier}.jpg`);
