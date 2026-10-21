@@ -1405,3 +1405,17 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 .ms-make:hover::after, .ms-make:focus-visible::after { animation-duration: 0.9s; }
 .ms-make:active { transform: scale(0.97); }
 @media (prefers-reduced-motion: reduce) { .ms-make, .if-enter { transition: none; } .ms-make:hover, .if-enter:hover { transform: none; } }
+
+/* the same hover on every pill button: it grows 7 %, glows red round it, the light runs faster */
+.landing-back, .sheet-link, .if-skip, .live-back, .landing.v2.picker .compose-btn { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, background 0.2s, letter-spacing 0.25s; }
+.tap-play { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, background 0.2s; }
+.landing-back:hover, .landing-back:focus-visible, .sheet-link:hover, .sheet-link:focus-visible, .if-skip:hover, .if-skip:focus-visible, .live-back:hover, .landing.v2.picker .compose-btn:hover:not(:disabled), .landing.v2.picker .compose-btn:focus-visible {
+  transform: scale(1.07); box-shadow: 0 0 26px rgba(255, 36, 56, 0.65), 0 0 60px rgba(255, 36, 56, 0.22);
+}
+.tap-play:hover, .tap-play:focus-visible { transform: translate(-50%, -50%) scale(1.07); box-shadow: 0 0 26px rgba(255, 36, 56, 0.65), 0 0 60px rgba(255, 36, 56, 0.22); }
+.landing-back:active, .sheet-link:active, .if-skip:active, .landing.v2.picker .compose-btn:active:not(:disabled) { transform: scale(0.97); }
+.tap-play:active { transform: translate(-50%, -50%) scale(0.97); }
+.landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .tap-play:hover::after, .live-back:hover::after,
+.landing-back:focus-visible::after, .sheet-link:focus-visible::after, .if-skip:focus-visible::after, .tap-play:focus-visible::after,
+.landing.v2.picker .compose-btn:hover:not(:disabled)::after { animation-duration: 0.9s; }
+@media (prefers-reduced-motion: reduce) { .landing-back:hover, .sheet-link:hover, .if-skip:hover, .live-back:hover, .landing.v2.picker .compose-btn:hover { transform: none; } .tap-play:hover { transform: translate(-50%, -50%); } }
