@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Eq } from "../hud/Eq";
 import type { GlobeController } from "../app/controller";
 import type { GlobeEngine } from "../scene/engine";
 import { NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS } from "./destinations";
@@ -121,7 +122,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
                 <span className="ms-eq" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ animationDelay: `${-((i * 37) % 17) / 10}s`, animationDuration: `${0.7 + ((i * 53) % 9) / 10}s` }} />)}</span>
                 <span className="ms-make-txt">ENTER WITH SOUND</span>
               </button>
-              <button type="button" className="if-quiet" onClick={() => begin(false)}>CONTINUE WITHOUT SOUND</button>
+              <button type="button" className="if-quiet" onClick={() => begin(false)}><Eq bars={26} /><span className="ms-make-txt">CONTINUE WITHOUT SOUND</span></button>
             </>
           ) : (
             <>
@@ -157,7 +158,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
         </h2>
         <span ref={set("world")} className="if-world">A WORLD OF MUSIC</span>
       </div>
-      {phase === "film" && <button type="button" className="if-skip" onClick={skip}>SKIP</button>}
+      {phase === "film" && <button type="button" className="if-skip" onClick={skip}><Eq bars={14} /><span className="ms-make-txt">SKIP</span></button>}
     </div>
   );
 }

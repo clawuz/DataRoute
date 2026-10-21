@@ -1,4 +1,5 @@
 import { Intro } from "./Intro";
+import { Eq } from "../hud/Eq";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
 import { routeKey } from "../audio/theory";
@@ -532,7 +533,7 @@ export function Experience({ selection, onBack }: Props) {
         <button type="button" className="logo-link" onClick={onBack} aria-label="Turkish Airlines — back to the start">
           <img className="tk-lockup" src="/brand/tk-lockup-light.png" alt="Turkish Airlines" />
         </button>
-        <button type="button" className="landing-back" onClick={onBack}>← NEW PIECE</button>
+        <button type="button" className="landing-back" onClick={onBack}><Eq /><span className="ms-make-txt">← NEW PIECE</span></button>
       </header>
       <div className="personal-hud">
         <h1 className="personal-title">{stats.title}</h1>
@@ -549,7 +550,7 @@ export function Experience({ selection, onBack }: Props) {
         action={{ label: busy === "VIDEO" ? `RECORDING ${REEL_SECONDS} S…` : busy === "CARD" ? "MAKING THE CARD…" : "SHARE MY PIECE", onClick: () => setSheet(true), busy: !!busy }}
       />
       {!running && (
-        <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}>TAP TO PLAY</button>
+        <button type="button" className="tap-play" onClick={() => playerRef.current?.resume()}><Eq bars={30} /><span className="ms-make-txt">TAP TO PLAY</span></button>
       )}
       <div className="personal-actions">
         {STUDIO_ON && (AI_ENDPOINT || studio) && (
@@ -574,8 +575,8 @@ export function Experience({ selection, onBack }: Props) {
                 <span className="sheet-opt-desc">An image of your globe and numbers · 9:16 · made for Instagram Stories</span>
               </button>
             </div>
-            <button type="button" className="sheet-link" onClick={() => { setSheet(false); void share(); }}>COPY LINK</button>
-            <button type="button" className="sheet-link" onClick={() => setSheet(false)}>CLOSE</button>
+            <button type="button" className="sheet-link" onClick={() => { setSheet(false); void share(); }}><Eq /><span className="ms-make-txt">COPY LINK</span></button>
+            <button type="button" className="sheet-link" onClick={() => setSheet(false)}><Eq /><span className="ms-make-txt">CLOSE</span></button>
           </div>
         </div>
       )}

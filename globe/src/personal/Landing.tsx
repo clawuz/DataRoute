@@ -6,6 +6,7 @@ import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, c
 import { buildRoutes } from "./routes";
 import { Backdrop } from "./Backdrop";
 import { musicTileUrl } from "./music-tile";
+import { Eq } from "../hud/Eq";
 
 interface Props {
   onCompose(sel: PersonalSelection): void;
@@ -109,7 +110,8 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
       </button>
       {back && (
         <button type="button" className="landing-back" onClick={back}>
-          ← BACK
+          <Eq />
+          <span className="ms-make-txt">← BACK</span>
         </button>
       )}
     </header>

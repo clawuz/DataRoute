@@ -1,4 +1,5 @@
 import { Intro } from "./personal/Intro";
+import { Eq } from "./hud/Eq";
 import type { LiveHandles } from "./personal/IntroFilm";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dataUrl, isFixture } from "@web/data/source";
@@ -273,7 +274,8 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         <>
           <button type="button" className="live-logo" onClick={onExit} aria-label="Turkish Airlines — back to the start" />
           <button type="button" className="live-back" onClick={onExit}>
-            ← BACK
+            <Eq />
+            <span className="ms-make-txt">← BACK</span>
           </button>
         </>
       )}

@@ -1363,3 +1363,34 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
   .ms-make { height: 28px; padding: 0 12px; font-size: 9px; letter-spacing: 0.1em; bottom: calc(100% + 8px); }
   .ms-make .ms-make-txt svg { width: 11px; height: 11px; }
 }
+
+/* every action button behaves like "make your own music": on hover a light runs round its edge and a faint equaliser plays behind its text */
+.landing-back, .sheet-link, .if-skip, .if-quiet, .tap-play, .live-back, .compose-btn { isolation: isolate; }
+.landing.v2 .landing-back, .topbar .landing-back, .sheet-link, .compose-btn, .if-quiet { position: relative; } /* the others are placed already (fixed / absolute) */
+.landing-back::after, .sheet-link::after, .if-skip::after, .if-quiet::after, .tap-play::after, .live-back::after {
+  content: ""; position: absolute; inset: -1.5px; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.2s;
+  background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #ffffff 346deg, rgba(255, 255, 255, 0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+.landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .if-quiet:hover::after, .tap-play:hover::after, .live-back:hover::after,
+.landing-back:focus-visible::after, .sheet-link:focus-visible::after, .if-skip:focus-visible::after, .tap-play:focus-visible::after { opacity: 1; animation: ms-run 1.5s linear infinite; }
+.landing-back .ms-eq, .sheet-link .ms-eq, .if-skip .ms-eq, .if-quiet .ms-eq, .tap-play .ms-eq, .live-back .ms-eq { z-index: 0; }
+.landing-back:hover .ms-eq, .sheet-link:hover .ms-eq, .if-skip:hover .ms-eq, .if-quiet:hover .ms-eq, .tap-play:hover .ms-eq, .live-back:hover .ms-eq,
+.compose-btn:hover .ms-eq { opacity: 0.2; }
+.landing-back:hover .ms-eq i, .sheet-link:hover .ms-eq i, .if-skip:hover .ms-eq i, .if-quiet:hover .ms-eq i, .tap-play:hover .ms-eq i, .live-back:hover .ms-eq i,
+.compose-btn:hover .ms-eq i { animation-play-state: running; }
+.landing-back .ms-make-txt, .sheet-link .ms-make-txt, .if-skip .ms-make-txt, .if-quiet .ms-make-txt, .tap-play .ms-make-txt, .live-back .ms-make-txt { position: relative; z-index: 1; }
+.landing-back .ms-eq, .sheet-link .ms-eq, .if-skip .ms-eq, .tap-play .ms-eq { border-radius: inherit; overflow: hidden; }
+
+/* the music box: now and then (every 5-6 s) one light runs once round its edge, as on a hovered button */
+body.personal-build .music-scope.neon::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; z-index: 2; opacity: 0;
+  background: conic-gradient(from var(--ms-a), transparent 0deg 250deg, rgba(255, 60, 78, 0) 262deg, #ff2438 316deg, #ffffff 346deg, rgba(255, 255, 255, 0) 360deg); filter: drop-shadow(0 0 4px #ff3b4d);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: ms-sweep 5.6s linear infinite;
+}
+body.personal-build .music-scope.neon.collapsed::after { display: none; }
+@keyframes ms-sweep { 0% { --ms-a: 0deg; opacity: 0; } 2% { opacity: 1; } 27% { --ms-a: 360deg; opacity: 1; } 30% { --ms-a: 360deg; opacity: 0; } 100% { --ms-a: 360deg; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { body.personal-build .music-scope.neon::after, .landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .tap-play:hover::after { animation: none; } }
