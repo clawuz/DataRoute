@@ -22,7 +22,7 @@ export interface ReelInput {
 }
 
 /** the music box (note ribbon, label, routes sounding) over the lower part of the globe — no panel behind it */
-export const SCOPE_BOX = { x: 60, y: 1170, w: 960, h: 200 };
+export const SCOPE_BOX = { x: 60, y: 1080, w: 960, h: 290 };
 
 const RED = "#FF3B47";
 const INK = "#F2F5FA";
@@ -147,14 +147,24 @@ export interface ScopeFrame {
 /** one frame of the music box over the globe (called every frame, after the globe and the overlay) */
 export function drawScopeFrame(ctx: CanvasRenderingContext2D, f: ScopeFrame): void {
   const b = SCOPE_BOX;
-  // the box as on the live screen: a glass panel with the red → steel edge, an ear with its name, the neon ribbon filling it
+  // the box as on the live screen: a glass panel with the red → steel edge and the middle of the neon ribbon in it
   glassPanel(ctx, b.x, b.y, b.w, b.h);
-  if (f.canvas && f.canvas.width > 0 && f.canvas.height > 0) {
-    // the ribbon keeps its own proportions, centred in the box
-    const k = Math.min(b.w / f.canvas.width, b.h / f.canvas.height);
-    const w = f.canvas.width * k;
-    const h = f.canvas.height * k;
-    ctx.drawImage(f.canvas, b.x + (b.w - w) / 2, b.y + (b.h - h) / 2, w, h);
+  const c = f.canvas;
+  if (c && c.width > 0 && c.height > 0) {
+    // only the middle of the box, round the reading line, so that the notes are large (the whole box in this width would make them tiny):
+    // the crop has the proportions of the room it is drawn into, and the ladder and the airport tags at the ends are left out
+    const pad = 14;
+    const dw = b.w - 2 * pad;
+    const dh = b.h - 2 * pad;
+    const cw = Math.min(c.width, (dw / dh) * c.height); // crop width in source pixels
+    const centre = c.width * 0.51; // the reading line (a little right of the middle: the ladder is wider than the tags)
+    const sx = Math.max(0, Math.min(c.width - cw, centre - cw / 2));
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(b.x + pad / 2, b.y + pad / 2, b.w - pad, b.h - pad, 16);
+    ctx.clip();
+    ctx.drawImage(c, sx, 0, cw, c.height, b.x + pad, b.y + pad, dw, dh);
+    ctx.restore();
   }
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
