@@ -22,7 +22,7 @@ export interface ReelInput {
 }
 
 /** the music box (note ribbon, label, routes sounding) over the lower part of the globe — no panel behind it */
-export const SCOPE_BOX = { x: 60, y: 1080, w: 960, h: 290 };
+export const SCOPE_BOX = { x: 60, y: 910, w: 960, h: 460 };
 
 const RED = "#FF3B47";
 const INK = "#F2F5FA";
