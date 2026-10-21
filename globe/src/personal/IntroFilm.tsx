@@ -43,6 +43,7 @@ export function IntroFilm({ ready, live, onDone }: { ready: Promise<unknown> | n
     const l = liveRef.current;
     if (l) {
       document.body.classList.add("film-on"); // the live furniture waits
+      l.engine.setRenderPaused(false);
       l.engine.setIdleSpin(false);
       l.engine.setRigDistance(9);
       l.engine.centerOn(8, -50, 0);

@@ -93,6 +93,8 @@ export interface GlobeEngine {
   setRigDistance(d: number | null): void;
   /** the opening film: every route rests at `dim` (1 = as is) and a note's route flashes `boost` times as strong, so the route being played is the one that stands out */
   setRouteFocus(dim: number, boost?: number): void;
+  /** stops drawing (the opening screen covers the globe: the pictures load faster and a phone does not heat up for nothing) */
+  setRenderPaused(on: boolean): void;
   /** the slow idle spin: on/off and a speed multiplier */
   setIdleSpin(on: boolean, speed?: number): void;
   dispose(): void;
@@ -150,6 +152,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let idleSpin = true;
   let rigDist = RIG_DISTANCE;
   let classicDone: Promise<void> = Promise.resolve(); // the small classic 4k set is in (or has failed): the big pictures wait for it
+  let renderPaused = false;
   let focusDim = 1;
   let focusBoost = 1;
   let shownAbsNow = Date.now() / 1000; // the time the Earth is shown at (a replay shows a time that is not now)
@@ -318,6 +321,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   }
 
   function frameBody(now: number) {
+    if (renderPaused) return;
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
     const wall = Date.now() / 1000;
@@ -753,6 +757,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     },
     pulseAirport(iata, nowSec) {
       airports?.pulse(iata, rel(nowSec));
+    },
+    setRenderPaused(on) {
+      renderPaused = on;
     },
     setRouteFocus(dim, boost = 1) {
       focusDim = dim;

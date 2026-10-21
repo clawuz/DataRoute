@@ -69,7 +69,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
       return;
     }
     liveEngine.current = engine;
-    if (introRef.current) engine.setIdleSpin(false); // the live globe waits at its first view while the opening film plays over it
+    if (introRef.current) { engine.setIdleSpin(false); engine.setRenderPaused(true); } // nothing is drawn behind the waiting page (the film starts the drawing) // the live globe waits at its first view while the opening film plays over it
     // the new link keeps the sky behind the globe quiet on the live screen too (the old deploy is left as it was)
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.8, false);
@@ -256,6 +256,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
           onDone={(film) => {
             introSeen = true;
             setIntroOn(false);
+            liveEngine.current?.setRenderPaused(false); // (the film unpaused it at ENTER; the plain cover did not)
             liveEngine.current?.setIdleSpin(true, 1);
             if (film) { // the live screen starts: the film's music off, the tour from its beginning, the music again
               filmRan.current = true;
