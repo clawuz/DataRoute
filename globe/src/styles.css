@@ -1398,3 +1398,10 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 }
 @keyframes ms-sweep { 0% { --ms-a: 0deg; opacity: 0; } 2% { opacity: 1; } 27% { --ms-a: 360deg; opacity: 1; } 30% { --ms-a: 360deg; opacity: 0; } 100% { --ms-a: 360deg; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .ms-sweep, .landing-back:hover::after, .sheet-link:hover::after, .if-skip:hover::after, .tap-play:hover::after { animation: none; } }
+
+/* "make your own music" (and "share my piece", the same pill): the hover of the entry button - it grows 7 %, glows red round it, the light runs faster */
+.ms-make { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, background 0.2s; }
+.ms-make:hover, .ms-make:focus-visible { transform: scale(1.07); box-shadow: 0 0 26px rgba(255, 36, 56, 0.65), 0 0 60px rgba(255, 36, 56, 0.22); }
+.ms-make:hover::after, .ms-make:focus-visible::after { animation-duration: 0.9s; }
+.ms-make:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { .ms-make, .if-enter { transition: none; } .ms-make:hover, .if-enter:hover { transform: none; } }
