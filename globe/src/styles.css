@@ -1140,7 +1140,7 @@ body.personal-build .music-scope.neon .music-scope-wave { height: clamp(120px, 2
 body.personal-build .music-scope.neon.collapsed { background: transparent; border: 0; padding: 0; min-height: 0; height: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
 body.personal-build .music-scope.neon.collapsed::before, body.personal-build .music-scope.neon.collapsed .music-scope-wave, body.personal-build .music-scope.neon.collapsed .ms-make { display: none; }
 .music-scope.neon.collapsed .ms-tab { bottom: 0; border-radius: 14px; border: 1px solid rgba(255, 60, 78, 0.7); }
-.music-scope.neon.collapsed .ms-fold svg { transform: rotate(180deg); }
+.music-scope.neon.collapsed .ms-fold svg { transform: none; } /* the arrow is drawn pointing up in the markup */
 @media (max-aspect-ratio: 1/1), (max-width: 720px) { .ms-title span { display: none; } .ms-make { font-size: 10px; padding: 0 11px; letter-spacing: 0.1em; } }
 
 /* the ear is flush with the box's left edge (no step), the "make your own music" button is a separate pill above the box */
@@ -1417,3 +1417,7 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 .landing-back:focus-visible::after, .sheet-link:focus-visible::after, .if-skip:focus-visible::after, .tap-play:focus-visible::after,
 .landing.v2.picker .compose-btn:hover:not(:disabled)::after { animation-duration: 0.9s; }
 @media (prefers-reduced-motion: reduce) { .landing-back:hover, .sheet-link:hover, .if-skip:hover, .live-back:hover, .landing.v2.picker .compose-btn:hover { transform: none; } .tap-play:hover { transform: translate(-50%, -50%); } }
+
+/* folded: nothing of the box is left (a zero-height box still drew its shadow as a line on an iPhone); only the ear stays */
+body.personal-build .music-scope.neon.collapsed { box-shadow: none !important; outline: 0; visibility: hidden; }
+body.personal-build .music-scope.neon.collapsed .ms-tab { visibility: visible; }

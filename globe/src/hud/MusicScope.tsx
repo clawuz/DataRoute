@@ -487,7 +487,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             )}
             <div className="ms-title"><b>LIVE ROUTES</b><span>FLIGHTS GENERATE MUSIC</span></div>
             <button type="button" className="ms-fold" aria-label={collapsed ? "Show the music box" : "Make the music box smaller"} aria-expanded={!collapsed} title={collapsed ? "Show" : "Smaller"} onClick={() => setCollapsed((c) => !c)}>
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d={collapsed ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
           </div>
           {sweep && !collapsed && <div className="ms-sweep" aria-hidden="true" style={{ top: sweep.top, width: sweep.w, height: sweep.h, WebkitMaskImage: sweep.mask, maskImage: sweep.mask }} />}
