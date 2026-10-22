@@ -1421,3 +1421,9 @@ body.film-on .hud, body.film-on .live-logo, body.film-on .live-back { opacity: 0
 /* folded: nothing of the box is left (a zero-height box still drew its shadow as a line on an iPhone); only the ear stays */
 body.personal-build .music-scope.neon.collapsed { box-shadow: none !important; outline: 0; visibility: hidden; }
 body.personal-build .music-scope.neon.collapsed .ms-tab { visibility: visible; }
+
+/* the fold arrow sits exactly in the middle of its button (a block SVG in a flex button: an iPhone left it a little off with the inline one) */
+.ms-fold { display: flex; align-items: center; justify-content: center; padding: 0; line-height: 0; -webkit-appearance: none; appearance: none; }
+.ms-fold svg { display: block; flex: none; margin: 0; }
+/* on a phone the ring of the play / pause button has no turning light */
+@media (max-aspect-ratio: 1/1), (max-width: 720px) { .ms-ring-arc { display: none; } }
