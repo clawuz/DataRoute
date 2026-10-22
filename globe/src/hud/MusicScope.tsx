@@ -138,6 +138,8 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
   const fresh = useRef<NoteEvent[]>([]); // art:track — recorded-track notes enter the ribbon when published (ahead of their sound)
   const playing = useRef<Playing[]>([]); // art:track — the routes sounding right now
   const [nowList, setNowList] = useState<Playing[]>([]);
+  // the light round the play / pause ring turns inside the SVG (a CSS animation on the whole SVG does not run on an iPhone)
+  const calm = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const rootRef = useRef<HTMLDivElement>(null);
   const earRef = useRef<HTMLDivElement>(null);
   const [sweep, setSweep] = useState<{ top: number; w: number; h: number; mask: string } | null>(null); // the outline of the ear and the box as one shape, for the light that runs round it now and then
@@ -476,7 +478,9 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             {controls && (
               <button type="button" className="ms-ring" aria-label={controls.paused ? "Play" : "Pause"} title="Pause / resume (Space)" onClick={() => key(" ")}>
                 <svg className={`ms-ring-arc${controls.paused ? " paused" : ""}`} viewBox="0 0 46 46" width="46" height="46" aria-hidden="true">
-                  <circle cx="23" cy="23" r="22" fill="none" stroke="#ffe3e6" strokeWidth="2.2" strokeLinecap="round" pathLength="100" strokeDasharray="9 91" transform="rotate(-90 23 23)" />
+                  <circle cx="23" cy="23" r="22" fill="none" stroke="#ffe3e6" strokeWidth="2.2" strokeLinecap="round" pathLength="100" strokeDasharray="9 91" transform="rotate(-90 23 23)">
+                    {!controls.paused && !calm && <animateTransform attributeName="transform" type="rotate" from="-90 23 23" to="270 23 23" dur="3.4s" repeatCount="indefinite" />}
+                  </circle>
                 </svg>
                 {controls.paused ? <svg viewBox="0 0 24 24" width="18" height="18"><path d="M8 5v14l11-7z" fill="currentColor" /></svg> : <svg viewBox="0 0 24 24" width="18" height="18"><rect x="6" y="5" width="4" height="14" rx="1.6" fill="currentColor" /><rect x="14" y="5" width="4" height="14" rx="1.6" fill="currentColor" /></svg>}
               </button>

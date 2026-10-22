@@ -1237,10 +1237,8 @@ body.personal-build .music-scope.neon::before {
 @media (max-aspect-ratio: 1/1), (max-width: 720px) { .ms-make { height: 30px; padding: 0 14px; font-size: 10px; letter-spacing: 0.12em; } }
 
 /* the ring around play / pause: no progress arc (nothing "completes"); a short light runs round it for ever, like a live signal */
-.ms-ring-arc { animation: ms-ring-spin 3.4s linear infinite; filter: drop-shadow(0 0 4px rgba(255, 190, 200, 0.85)); }
-.ms-ring-arc.paused { animation-play-state: paused; opacity: 0.35; }
-@keyframes ms-ring-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ms-ring-arc { animation: none; } }
+.ms-ring-arc { filter: drop-shadow(0 0 4px rgba(255, 190, 200, 0.85)); } /* it turns inside the SVG (animateTransform) */
+.ms-ring-arc.paused { opacity: 0.35; }
 
 /* "Where do you want to go?" in the live screen's components: glass cards with the red → steel edge, pills like LIVE / make-your-own-music */
 .landing.v2.picker .field, .landing.v2.picker .chip, .landing.v2.picker .tray-item, .landing.v2.picker .search-hits {

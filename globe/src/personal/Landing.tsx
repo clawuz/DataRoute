@@ -74,6 +74,9 @@ function groupByCountry(rows: Row[]): { iso: string; country: string; region: Re
     .sort((a, b) => a.country.localeCompare(b.country));
 }
 
+/** a phone does not get the keyboard on arrival: iOS scrolls the fixed page when it opens and leaves the caret above the field */
+const TOUCH = typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
+
 export function Landing({ onCompose, onLive, startAt }: Props) {
   const [step, setStep] = useState<Step>(startAt ? "pick" : "mode");
   const [mode, setMode] = useState<PersonalMode>(startAt ?? "visited");
@@ -213,7 +216,7 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
         ) : (
           <label className="field from live">
             <span className="field-label">FROM</span>
-            <input autoFocus type="search" name="wom-from" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type your city or airport" aria-label="Search where you fly from" />
+            <input autoFocus={!TOUCH} type="search" name="wom-from" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type your city or airport" aria-label="Search where you fly from" />
             <span className="field-edit" aria-hidden="true">⌕</span>
           </label>
         )}
