@@ -13,7 +13,7 @@ export default defineConfig({
       transformIndexHtml(html) {
         if (process.env.VITE_PERSONAL !== "1") return html;
         const DESC = "We fly to the most countries. Now we make them play. Listen to the world, or turn your destinations into music.";
-        const URL = "https://worldofmusic-tk.web.app";
+        const URL = "https://worldofmusic.web.app"; // the main site (worldofmusic-tk.web.app is the test address)
         return html
           .replace(/<title>.*<\/title>/, "<title>A World of Music · Turkish Airlines</title>")
           .replace(/(<meta name="description" content=")[^"]*/, "$1" + DESC)

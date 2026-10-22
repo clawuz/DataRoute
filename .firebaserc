@@ -11,10 +11,10 @@
         "globe": [
           "dataroute-tk"
         ],
-        "personal": [
+        "test": [
           "worldofmusic-tk"
         ],
-        "wom": [
+        "main": [
           "worldofmusic"
         ]
       }

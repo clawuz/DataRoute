@@ -1,6 +1,6 @@
 # AI version of a personal piece
 
-The personal site (`worldofmusic-tk.web.app`) composes every piece in the browser. The **AI VERSION** button asks a Cloud
+The personal site (`worldofmusic.web.app`; `worldofmusic-tk.web.app` is the test address) composes every piece in the browser. The **AI VERSION** button asks a Cloud
 Function (`composePersonal`) for an ElevenLabs-composed track of the same character. It is **dormant** until the endpoint is
 set for the site build and the function is deployed.
 
@@ -29,7 +29,7 @@ size bucket (S ≤ 3 destinations, M ≤ 8, L more). At most 2 × 63 × 3 differ
 3. Build the site with the endpoint (the URL the deploy prints for `composePersonal`) and deploy hosting:
    ```bash
    VITE_PERSONAL_AI_URL=https://europe-west1-omerkilavuz-9ad41.cloudfunctions.net/composePersonal npm --prefix globe run build:personal
-   firebase deploy --only hosting:personal --project omerkilavuz-9ad41
+   firebase deploy --only hosting:main --project omerkilavuz-9ad41   # the main site (hosting:test = worldofmusic-tk, the test address)
    ```
    (`npm run build:personal` reads `VITE_PERSONAL_AI_URL` from the environment.)
 

@@ -71,8 +71,8 @@ export const composePersonal = onRequest(
     timeoutSeconds: 300,
     memory: "512MiB",
     maxInstances: 3,
-    // the site, and this project's own hosting preview channels (worldofmusic-tk--<channel>-<id>.web.app)
-    cors: ["https://worldofmusic-tk.web.app", "https://worldofmusic-tk.firebaseapp.com", "http://localhost:5174", /^https:\/\/worldofmusic-tk--[a-z0-9-]+\.web\.app$/],
+    // the main site (worldofmusic.web.app), the test site (worldofmusic-tk.web.app) and its hosting preview channels (worldofmusic-tk--<channel>-<id>.web.app)
+    cors: ["https://worldofmusic.web.app", "https://worldofmusic.firebaseapp.com", "https://worldofmusic-tk.web.app", "https://worldofmusic-tk.firebaseapp.com", "http://localhost:5174", /^https:\/\/worldofmusic-tk--[a-z0-9-]+\.web\.app$/],
   },
   async (req, res) => {
     if (req.method !== "POST") {

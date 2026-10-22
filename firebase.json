@@ -114,7 +114,7 @@
       ]
     },
     {
-      "target": "personal",
+      "target": "test",
       "public": "globe/dist-personal",
       "ignore": [
         "firebase.json",
@@ -182,7 +182,7 @@
       ]
     },
     {
-      "target": "wom",
+      "target": "main",
       "public": "globe/dist-personal",
       "ignore": [
         "firebase.json",

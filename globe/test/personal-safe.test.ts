@@ -55,7 +55,7 @@ describe("Instagram Story safe area", () => {
   });
   it("puts the card's numbers inside the band too (no music box)", () => {
     const r = recorder();
-    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(1000, 333) }, false);
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic.web.app", logo: img(1000, 333) }, false);
     for (const t of r.texts) {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);
       expect(t.y, t.text).toBeLessThanOrEqual(SAFE_LAST_Y);
@@ -63,7 +63,7 @@ describe("Instagram Story safe area", () => {
   });
   it("keeps the story overlay (card and video) text and music box inside the band", () => {
     const r = recorder();
-    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic-tk.web.app", logo: img(1000, 333) });
+    drawReelOverlay(r.ctx, { stats, dests, url: "https://worldofmusic.web.app", logo: img(1000, 333) });
     drawScopeFrame(r.ctx, { canvas: { width: 340, height: 170 } as HTMLCanvasElement, label: "ROUTES → MUSIC · CHORUS · 84 BPM", items: [1, 2, 3, 4, 5, 6].map((i) => ({ text: `IST → DPS ${i}`, color: "#fff" })) });
     for (const t of r.texts) {
       expect(t.y - t.size, t.text).toBeGreaterThanOrEqual(SAFE_TOP - 4);
