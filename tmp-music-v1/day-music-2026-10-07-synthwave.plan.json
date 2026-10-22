@@ -1,0 +1,149 @@
+{
+  "chunks": [
+    {
+      "text": "[Evening]",
+      "duration_ms": 45000,
+      "positive_styles": [
+        "synthwave",
+        "analog arpeggios",
+        "gated reverb drums",
+        "retro neon",
+        "driving bassline",
+        "116 BPM",
+        "powerful",
+        "full band at peak intensity",
+        "climactic",
+        "piano and woodwind lines",
+        "pentatonic colours",
+        "instrumental"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "singing",
+        "spoken words"
+      ],
+      "context_adherence": "high"
+    },
+    {
+      "text": "[Night]",
+      "duration_ms": 45000,
+      "positive_styles": [
+        "synthwave",
+        "analog arpeggios",
+        "gated reverb drums",
+        "80 BPM",
+        "very soft",
+        "sparse",
+        "intimate",
+        "pentatonic colours",
+        "warm string colours",
+        "instrumental"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "singing",
+        "spoken words"
+      ],
+      "context_adherence": "high"
+    },
+    {
+      "text": "[Morning]",
+      "duration_ms": 45000,
+      "positive_styles": [
+        "synthwave",
+        "analog arpeggios",
+        "gated reverb drums",
+        "118 BPM",
+        "powerful",
+        "full band at peak intensity",
+        "climactic",
+        "piano and woodwind lines",
+        "pentatonic colours",
+        "instrumental"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "singing",
+        "spoken words"
+      ],
+      "context_adherence": "high"
+    },
+    {
+      "text": "[Afternoon]",
+      "duration_ms": 45000,
+      "positive_styles": [
+        "synthwave",
+        "analog arpeggios",
+        "gated reverb drums",
+        "102 BPM",
+        "energetic",
+        "full arrangement",
+        "driving",
+        "piano and woodwind lines",
+        "warm string colours",
+        "instrumental"
+      ],
+      "negative_styles": [
+        "vocals",
+        "lyrics",
+        "singing",
+        "spoken words"
+      ],
+      "context_adherence": "high"
+    }
+  ],
+  "meta": {
+    "date": "2026-10-07",
+    "genre": "synthwave",
+    "family": "electronic",
+    "sections": [
+      {
+        "label": "evening",
+        "energy": 0.93,
+        "bpm": 116,
+        "avgAirborne": 155,
+        "topDestinations": [
+          "IST",
+          "VKO",
+          "SAW"
+        ]
+      },
+      {
+        "label": "night",
+        "energy": 0,
+        "bpm": 80,
+        "avgAirborne": 119,
+        "topDestinations": [
+          "IST",
+          "AYT",
+          "SAW"
+        ]
+      },
+      {
+        "label": "morning",
+        "energy": 1,
+        "bpm": 118,
+        "avgAirborne": 158,
+        "topDestinations": [
+          "IST",
+          "AYT",
+          "VKO"
+        ]
+      },
+      {
+        "label": "afternoon",
+        "energy": 0.58,
+        "bpm": 102,
+        "avgAirborne": 142,
+        "topDestinations": [
+          "IST",
+          "AYT",
+          "CDG"
+        ]
+      }
+    ]
+  }
+}
