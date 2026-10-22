@@ -1427,3 +1427,7 @@ body.personal-build .music-scope.neon.collapsed .ms-tab { visibility: visible; }
 .ms-fold svg { display: block; flex: none; margin: 0; }
 /* on a phone the ring of the play / pause button has no turning light */
 @media (max-aspect-ratio: 1/1), (max-width: 720px) { .ms-ring-arc { display: none; } }
+
+/* the search fields on an iPhone: a field with a blurred glass behind it drew its caret where the field was before the keyboard moved the page (right after the first tap); the glass is a plain tint now, and the input has a layer of its own */
+.landing.v2.picker .field { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background: rgba(6, 10, 26, 0.82) !important; }
+.landing.v2.picker .field input { transform: translateZ(0); -webkit-transform: translateZ(0); }
