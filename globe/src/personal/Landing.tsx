@@ -213,7 +213,7 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
         ) : (
           <label className="field from live">
             <span className="field-label">FROM</span>
-            <input autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type your city or airport" aria-label="Search where you fly from" />
+            <input autoFocus type="search" name="wom-from" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Type your city or airport" aria-label="Search where you fly from" />
             <span className="field-edit" aria-hidden="true">⌕</span>
           </label>
         )}
@@ -221,6 +221,12 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
           <span className="field-label">TO</span>
           <input
             type="search"
+            name="wom-to"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            enterKeyHint="search"
             value={fromOpen ? "" : q}
             disabled={fromOpen}
             onChange={(e) => setQ(e.target.value)}
