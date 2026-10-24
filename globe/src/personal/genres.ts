@@ -130,10 +130,48 @@ export interface CardPlan {
   perRoute: GenreCard[];
 }
 
+/** the share of the routes (rounded) that play the card of their own destination; the rest play the main card */
+export const COLOUR_SHARE = 0.6;
+
+/**
+ * Which routes play the card of their own destination. Each colour (card) present gets at least one route; the rest of the
+ * budget is shared in proportion to how many routes go to each colour (the remainder goes to the larger colours first);
+ * inside a colour the longest routes go first. Returns the indices, ascending.
+ */
+export function allocateColour(ids: string[], eligible: boolean[], dist: number[], keys: string[], budget: number): number[] {
+  const groups = new Map<string, number[]>();
+  ids.forEach((id, i) => {
+    if (eligible[i]) groups.set(id, [...(groups.get(id) ?? []), i]);
+  });
+  const total = [...groups.values()].reduce((s, g) => s + g.length, 0);
+  if (total === 0 || budget <= 0) return [];
+  const cap = Math.min(budget, total);
+  const ordered = [...groups.entries()].sort((a, b) => b[1].length - a[1].length || routeHash(a[0]) - routeHash(b[0]));
+  const alloc = new Map<string, number>(ordered.map(([id, g]) => [id, Math.min(g.length, Math.max(1, Math.floor((g.length / total) * cap)))]));
+  let left = cap - [...alloc.values()].reduce((s, x) => s + x, 0);
+  while (left > 0) {
+    let grew = false;
+    for (const [id, g] of ordered) {
+      if (left > 0 && (alloc.get(id) ?? 0) < g.length) {
+        alloc.set(id, (alloc.get(id) ?? 0) + 1);
+        left--;
+        grew = true;
+      }
+    }
+    if (!grew) break;
+  }
+  const out: number[] = [];
+  for (const [id, g] of ordered) {
+    const byLength = [...g].sort((a, b) => dist[b] - dist[a] || routeHash(keys[a]) - routeHash(keys[b]));
+    out.push(...byLength.slice(0, alloc.get(id) ?? 0));
+  }
+  return out.sort((a, b) => a - b);
+}
+
 /**
  * Chooses the cards of a piece. The main card is the music of where the trip starts from (most of the time; with many
- * routes a lively generic card takes a share); every third route takes the figure and instruments of its own
- * destination, so the music changes colour as the trip crosses regions. The choice is a function of the routes only.
+ * routes a lively generic card takes a share); the routes that take the card of their own destination are chosen by the share of each destination colour (see `allocateColour`),
+ * so the music changes colour as the trip crosses regions. The choice is a function of the routes only.
  */
 export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan {
   const n = routes.length;
@@ -146,11 +184,15 @@ export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan
   // the further from a calm start, the more a lively generic card is in play for the main voice
   const takeGeneric = n >= 10 ? seed % 10 < 4 : n >= 6 ? seed % 10 < 2 : seed % 10 < 1;
   const main = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
-  const perRoute = routes.map((r, i) => {
-    if (i % 3 !== 2) return main;
-    const far = r.to === "IST" ? r.from : r.to;
-    const list = cardsOfAirport(far, r.region);
+  const far = (r: PersonalRoute): string => (r.to === "IST" ? r.from : r.to);
+  const colourOf = routes.map((r, i) => {
+    const list = cardsOfAirport(far(r), r.region);
     return list[(routeHash(r.key + i) >>> 3) % list.length];
   });
+  const budget = n >= 2 ? Math.max(1, Math.round(COLOUR_SHARE * n)) : 0;
+  const chosen = new Set(
+    allocateColour(colourOf.map((c) => c.id), colourOf.map((c) => c.id !== main.id), routes.map((r) => r.distKm), routes.map((r) => r.key), budget),
+  );
+  const perRoute = routes.map((_, i) => (chosen.has(i) ? colourOf[i] : main));
   return { main, perRoute };
 }

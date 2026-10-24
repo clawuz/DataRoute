@@ -341,7 +341,15 @@ describe("the genre cards: the music of where the trip starts from", () => {
   it("a piece whose cards are all orchestral is played by the orchestra", () => {
     const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "slavic", "epic", "calm", "bossa", "tango", "eastasia", "jazz"]);
     const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB", "GONG"]);
-    const mine = pieces.filter((x) => (x.style.cards ?? []).every((c) => orchCards.has(c)));
+    // destination cards now colour 60% of the routes, so mixed selections rarely stay orchestral: a second sample of
+    // trips between airports whose cards are all orchestral (checked against cardsOfAirport) can still produce such pieces
+    const calm = ["VIE", "FCO", "MXP", "ZRH", "BRU", "WAW", "PRG", "BUD", "OSL", "HEL", "CPH"];
+    const orchestralPieces = Array.from({ length: 24 }, (_, i) => {
+      const home = calm[(i * 5) % calm.length];
+      const set = Array.from({ length: 3 + (i % 5) }, (_, j) => calm[(i * 7 + j * 11 + 1) % calm.length]).filter((x, k, a) => x !== home && a.indexOf(x) === k);
+      return composePiece(i % 2 ? "wish" : "visited", buildRoutes(set, home));
+    });
+    const mine = [...pieces, ...orchestralPieces].filter((x) => (x.style.cards ?? []).every((c) => orchCards.has(c)));
     expect(mine.length).toBeGreaterThan(3);
     for (const p of mine) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
