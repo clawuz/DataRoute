@@ -27,7 +27,7 @@ const TICK_MS = 60;
 const GAP = 2.2; // silence between loops (s)
 
 /** WebAudio graph: master → compressor → out, with a dry bus and a short synthetic room. */
-export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
+export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: boolean) => void): PersonalPlayer {
   const master = ctx.createGain();
   master.gain.value = 0.9;
   const comp = ctx.createDynamicsCompressor();
@@ -57,7 +57,8 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   // recorded instruments, when a pack is published; until it has arrived (or without one) the synthesis plays
   const sampler = createSampler(ctx);
   setActiveSampler(sampler);
-  void sampler.load("/samples/lite/manifest.json");
+  // the manifests are small: they are read now, the recordings of an instrument only when a piece plays it
+  void sampler.use(["/samples/lite/manifest.json", "/samples/world/manifest.json"]);
 
   let tap: MediaStreamAudioDestinationNode | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
@@ -69,6 +70,13 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
   let planNext = 0; // index of the next note to show on the music box (it appears VISUAL_AHEAD seconds before it sounds)
   let sorted: PersonalNote[] = [];
   let disposed = false;
+  let startToken = 0; // a newer play() or stop() cancels a start that is still waiting for samples
+  let waiting = false; // onLoading(true) has been reported and not yet answered by onLoading(false)
+  const endWait = (): void => {
+    if (!waiting) return;
+    waiting = false;
+    onLoading?.(false);
+  };
 
   const tick = () => {
     if (!piece || !onNote) return;
@@ -102,14 +110,33 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
       next = 0;
       planNext = 0;
       void ctx.resume();
-      loopStart = ctx.currentTime + 0.15;
       if (timer) clearInterval(timer);
-      timer = setInterval(tick, TICK_MS);
+      timer = null;
+      endWait(); // an earlier start still waiting is cancelled below
+      const token = ++startToken;
+      const start = (): void => {
+        if (disposed || token !== startToken || piece !== p) return;
+        loopStart = ctx.currentTime + 0.15;
+        timer = setInterval(tick, TICK_MS);
+      };
+      const names = [...new Set(p.notes.map((n) => n.instrument))];
+      if (names.every((n) => sampler.has(n))) {
+        start();
+        return;
+      }
+      waiting = true;
+      onLoading?.(true);
+      void sampler.ensure(names, 4000).then(() => {
+        if (token === startToken) endWait();
+        start();
+      });
     },
     resume() {
       void ctx.resume();
     },
     stop() {
+      startToken++;
+      endWait();
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;
@@ -141,6 +168,8 @@ export function createPersonalPlayer(ctx: AudioContext): PersonalPlayer {
     },
     dispose() {
       disposed = true;
+      startToken++;
+      endWait();
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;

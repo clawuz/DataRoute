@@ -143,7 +143,7 @@ export function Experience({ selection, onBack }: Props) {
     try {
       const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AC();
-      player = createPersonalPlayer(ctx);
+      player = createPersonalPlayer(ctx, (loading) => setToast(loading ? "LOADING INSTRUMENTS…" : ""));
       playerRef.current = player;
       pieceRef.current = piece;
       noteCbRef.current = (n) => {
