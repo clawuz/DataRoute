@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Put the 67-instrument "world" sample pack on the personal site, let the music use it by the share of each destination region, load only the instruments a piece plays, and credit every source on a credits page.
+**Goal:** Put the 67-instrument "world" sample pack on the personal site, let the music use it by the share of each destination region, load only the instruments a piece plays, and write a credits page for every source (generated and kept in `docs/`; it is NOT published on the site).
 
-**Architecture:** An export script turns the staged pack (`tmp-music-v1/pack-full/`) into `globe/public/samples/world/` plus a generated TypeScript module (`world-pack.ts`: names, synth stand-ins, playable ranges, NSynth families). The sampler gets a catalogue of manifests and an `ensure(names)` call that decodes only the files of the named instruments; the player calls it before a piece starts. `planCards` stops using "every third route" and allocates a colour budget by the share of each destination card; cards get new voices through an overlay table. A generator script builds `public/credits.html` from the ledgers.
+**Architecture:** An export script turns the staged pack (`tmp-music-v1/pack-full/`) into `globe/public/samples/world/` plus a generated TypeScript module (`world-pack.ts`: names, synth stand-ins, playable ranges, NSynth families). The sampler gets a catalogue of manifests and an `ensure(names)` call that decodes only the files of the named instruments; the player calls it before a piece starts. `planCards` stops using "every third route" and allocates a colour budget by the share of each destination card; cards get new voices through an overlay table. A generator script builds `docs/credits.html` from the ledgers; it is deliberately outside `globe/public`, so no build or deploy contains it, and nothing on the site links to it.
 
 **Tech Stack:** TypeScript, React 19, Vite, Vitest, Web Audio, Python 3 (export and credits scripts).
 
@@ -17,6 +17,7 @@
 - Colour budget: `round(0.6 × n)` routes (at least 1 when n ≥ 2), never more routes than there are candidates; each colour present gets at least one route; the longest routes of a colour are taken first.
 - Chords/progression stay in the main card's scale; only a hook route's melody uses its own card's scale.
 - The synthesised ORGAN of the site must not be shadowed: the world pack's Renaissance organ is exported as `RENORGAN`.
+- The credits page is NOT published: it lives in `docs/credits.html`, never in `globe/public/`, and no page or code links to it. (Publishing later is a one-line change: generate it into `globe/public/` and add a link.)
 - No deploy. Deploying is only ever `firebase deploy --only hosting:main --project omerkilavuz-9ad41` and only when the user says "canlıya al". Do not touch the `test` target or create preview channels.
 - Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 - Work on branch `feat/ui-v2` (already checked out). Run commands from the repository root `/Users/okilavuz/Desktop/omer_works/DataRoute`.
@@ -38,9 +39,8 @@
 | `globe/src/personal/compose.ts` (modify) | `PlayInstrument` notes, voice resolution, world ranges, per-route hook scale, `card.bass` |
 | `globe/src/personal/player.ts` (modify) | `use` at start, `ensure` before the loop starts, loading callback |
 | `globe/src/personal/Experience.tsx` (modify) | passes the loading callback (toast) |
-| `scripts/samples/make_credits.py` (create) | ledgers → `globe/public/credits.html` |
-| `globe/public/credits.html` (create, generated) | the credits page |
-| `globe/src/personal/Landing.tsx`, `globe/src/styles.css` (modify) | "Credits" link |
+| `scripts/samples/make_credits.py` (create) | ledgers → `docs/credits.html` |
+| `docs/credits.html` (create, generated) | the credits page (not published) |
 | `docs/music-genre-cards.md`, `docs/music-libraries.md` (modify) | document voices and the pack |
 | `globe/test/world-pack.test.ts`, `sampler.test.ts`, `personal-world.test.ts`, `credits.test.ts` | tests |
 
@@ -983,28 +983,27 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 7: Credits page
+### Task 7: Credits page (generated into docs/, not published)
 
 **Files:**
 - Create: `scripts/samples/make_credits.py`
-- Create (generated, committed): `globe/public/credits.html`
-- Modify: `globe/src/personal/Landing.tsx:168`, `globe/src/styles.css` (after the `.landing-credit` rule)
+- Create (generated, committed): `docs/credits.html`
 - Modify: `docs/music-libraries.md` (ledger table row for the world pack)
 - Test: `globe/test/credits.test.ts` (create)
 
 **Interfaces:**
 - Consumes: `docs/music-pack-lite-ledger.json` (list of `{instrument,file,source,licence}`), `docs/music-pack-freesound-ledger.json` and `docs/music-pack-world-ledger.json` (lists of `{instrument,file,source,author,licence,title}`).
-- Produces: `globe/public/credits.html` (served at `/credits.html`).
+- Produces: `docs/credits.html`. It is not served by any build (it is outside `globe/public`) and nothing links to it.
 
 - [ ] **Step 1: Write the failing test** — `globe/test/credits.test.ts`
 
 ```ts
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const read = (p: string): string => readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8");
-const html = read("../public/credits.html");
+const html = read("../../docs/credits.html");
 const world = JSON.parse(read("../../docs/music-pack-world-ledger.json")) as { author: string; licence: string; source: string }[];
 
 describe("credits page", () => {
@@ -1019,10 +1018,13 @@ describe("credits page", () => {
   it("credits the sources that need it", () => {
     for (const s of ["VSCO 2 Community Edition", "VCSL", "NSynth", "CC BY 4.0", "adsb.fi", "NASA", "Julien Sulpis", "Freesound"]) expect(html, s).toContain(s);
   });
-  it("is a complete page that links back to the site", () => {
+  it("is a complete page", () => {
     expect(html.startsWith("<!doctype html>")).toBe(true);
-    expect(html).toContain('href="/"');
     expect(html).toContain('<meta name="viewport"');
+  });
+  it("is not published: it is not in public/ and no source links to it", () => {
+    expect(existsSync(fileURLToPath(new URL("../public/credits.html", import.meta.url)))).toBe(false);
+    expect(read("../src/personal/Landing.tsx")).not.toContain("credits");
   });
 });
 ```
@@ -1037,7 +1039,7 @@ Expected: FAIL (`credits.html` does not exist).
 ```python
 #!/usr/bin/env python3
 """
-Build globe/public/credits.html from the ledgers. Never edit the page by hand: change a ledger or this script and re-run.
+Build docs/credits.html from the ledgers (not published: it is outside globe/public). Never edit the page by hand: change a ledger or this script and re-run.
   python3 scripts/samples/make_credits.py
 """
 import html, json, os
@@ -1091,12 +1093,10 @@ PAGE = f"""<!doctype html>
   details {{ border-top: 1px solid var(--line); padding: 6px 0; }} summary {{ cursor: pointer; }}
   summary .n {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
   ul {{ margin: 6px 0 10px; padding-left: 20px; }} li .i {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
-  .back {{ display: inline-block; margin-bottom: 8px; }}
 </style>
 </head>
 <body>
 <main>
-<a class="back" href="/">← Back to the music</a>
 <h1>Credits</h1>
 <p class="mute">The music on this site is made by rules from the routes you choose and played by recordings of real instruments. Thank you to everyone who recorded and shared them.</p>
 
@@ -1127,7 +1127,7 @@ PAGE = f"""<!doctype html>
 </body>
 </html>
 """
-open(os.path.join(ROOT, "globe", "public", "credits.html"), "w").write(PAGE)
+open(os.path.join(ROOT, "docs", "credits.html"), "w").write(PAGE)
 print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by}), "CC BY authors,", len({r['author'] for r in cc0_fs}), "CC0 authors")
 ```
 
@@ -1136,30 +1136,13 @@ print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by
 Run: `python3 scripts/samples/make_credits.py && npm --prefix globe test -- credits`
 Expected: a line like `credits.html: 5x KB; 14 CC BY authors, 30 CC0 authors`; test PASS. If the test says an author or link is missing, fix the generator (HTML-escape differences), not the test.
 
-- [ ] **Step 5: Link from the landing page**
+- [ ] **Step 5: Document and commit**
 
-In `Landing.tsx` replace `<p className="landing-credit">A Platon.Ai project.</p>` with:
-
-```tsx
-        <p className="landing-credit">
-          A Platon.Ai project. · <a href="/credits.html">Credits</a>
-        </p>
-```
-In `globe/src/styles.css`, directly after the existing `.landing-credit` rule add:
-
-```css
-.landing-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-.landing-credit a:hover, .landing-credit a:focus-visible { color: #fff; }
-```
-(run `grep -n "landing-credit" globe/src/styles.css` to find the rule; the link must be tappable: the paragraph already receives pointer events, check in the browser step).
-
-- [ ] **Step 6: Document and commit**
-
-In `docs/music-libraries.md`, in the "Ledger of files in a published pack" table add the row: `| world | 67 instruments (guitars, basses, keyboards, regional instruments, NSynth) | see [music-pack-world-ledger.json](music-pack-world-ledger.json) | VSCO/VCSL (CC0), Freesound (CC0 and CC BY), Google NSynth (CC BY 4.0) | CC BY credits on /credits.html |`.
+In `docs/music-libraries.md`, in the "Ledger of files in a published pack" table add the row: `| world | 67 instruments (guitars, basses, keyboards, regional instruments, NSynth) | see [music-pack-world-ledger.json](music-pack-world-ledger.json) | VSCO/VCSL (CC0), Freesound (CC0 and CC BY), Google NSynth (CC BY 4.0) | CC BY credits in docs/credits.html (not published) |`.
 
 ```bash
-git add scripts/samples/make_credits.py globe/public/credits.html globe/src/personal/Landing.tsx globe/src/styles.css globe/test/credits.test.ts docs/music-libraries.md
-git commit -m "feat(personal): credits page for every sample source, linked from the start page
+git add scripts/samples/make_credits.py docs/credits.html globe/test/credits.test.ts docs/music-libraries.md
+git commit -m "docs: credits page for every sample source, generated from the ledgers (not published)
 
 Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 ```
@@ -1173,7 +1156,7 @@ Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>"
 - [ ] **Step 1: Full test run and build**
 
 Run: `npm --prefix globe test && npm --prefix globe run build:personal`
-Expected: tests PASS (re-run `groove.test.ts` alone if it is the only failure); build finishes; `ls globe/dist-personal/samples/world | head -3` lists instrument folders; `ls globe/dist-personal/credits.html` exists.
+Expected: tests PASS (re-run `groove.test.ts` alone if it is the only failure); build finishes; `ls globe/dist-personal/samples/world | head -3` lists instrument folders; `ls globe/dist-personal/credits.html` must FAIL (the credits page is not part of the build).
 
 - [ ] **Step 2: Start the personal dev server**
 
@@ -1195,7 +1178,7 @@ Then `preview_start` `personal-dev`.
   - Three regions: `/?v=NRT,LOS,GRU&h=IST` — notes of more than one card (the toast "LOADING INSTRUMENTS…" shows and clears; `read_console_messages` has no errors).
   - A long list: `/?w=NRT,DPS,JFK,LOS,GRU,LHR,DEL,NBO,SYD,CAI&h=IST` — piece starts within about 4 s; sound plays (the play ring is moving).
   - Offline fallback: block `/samples/world/` (DevTools offline or `form` not needed — simplest: temporarily rename `globe/public/samples/world` and reload) → the piece still plays with synthesised voices and no error; rename it back.
-  - `/credits.html` renders (screenshot), the "Credits" link on the start page opens it and "← Back to the music" returns.
+  - `/credits.html` is not served (the dev server returns the app, not a credits page) and the start page has no credits link. Open `docs/credits.html` as a file once to check it reads well (screenshot) and report it to the user.
 
 - [ ] **Step 4: Report**
 

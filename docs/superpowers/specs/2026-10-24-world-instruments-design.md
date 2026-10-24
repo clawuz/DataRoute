@@ -67,13 +67,14 @@ Replaced: the rule "every third route takes its destination's card" in `planCard
   Cards keep their current synth/lite voices as the fallback entries of each list; the choice from a list stays the existing hash rule.
 - A region with no world instrument keeps today's voices.
 
-## 4. Credits page
+## 4. Credits page (written, not published)
 
-- `scripts/samples/make_credits.py` builds `globe/public/credits.html` from the ledgers (`docs/music-pack-lite-ledger.json`,
-  `docs/music-pack-freesound-ledger.json`, the world pack's `ledger.json`). Regenerable, never hand-edited.
+- `scripts/samples/make_credits.py` builds `docs/credits.html` from the ledgers (`docs/music-pack-lite-ledger.json`,
+  `docs/music-pack-freesound-ledger.json`, `docs/music-pack-world-ledger.json`). Regenerable, never hand-edited.
 - Lists: VSCO 2 CE and VCSL (CC0, Versilian Studios), Freesound sounds (CC0 as a thank-you, CC BY with author, title, link, licence),
-  Google NSynth (CC BY 4.0), ajaysm's makam scales, adsb.fi (live flights, linked), NASA textures, Turkish Airlines fonts note.
-- Styled like the site (same fonts and colours); a "Credits" link in the footer/landing that opens it. Included in both builds.
+  Google NSynth (CC BY 4.0), adsb.fi (live flights, linked), NASA textures, the Earth shader credit, fonts note.
+- **Not published (user's decision):** the page lives in `docs/`, outside `globe/public`, so no build or deploy contains it; no link on
+  the site. Publishing later = generate it into `globe/public/` and add a link.
 
 ## Testing and verification
 
@@ -81,7 +82,7 @@ Replaced: the rule "every third route takes its destination's card" in `planCard
   function of the hash, manifest ↔ files exist, every world instrument has a stand-in.
 - `npm --prefix globe run build:personal` (tsc + vite) passes.
 - Browser check on the dev server with three selections (one region, three regions, a long list): the network log shows only the
-  instruments of that piece being fetched; the credits page renders.
+  instruments of that piece being fetched; the credits page is not part of the build.
 - No deploy. The user says "canlıya al" for `hosting:main`.
 
 ## Risks
