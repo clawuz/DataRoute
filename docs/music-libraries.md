@@ -23,3 +23,4 @@ Every file that goes into a pack must be listed here with its source and licence
 | Pack | Instrument | File | Source | Licence | Credit needed |
 |---|---|---|---|---|---|
 | lite | strings, woodwinds, brass, harp, mallets, percussion (30 instruments) | see [music-pack-lite-ledger.md](music-pack-lite-ledger.md) | VSCO 2 Community Edition | CC0 1.0 | no |
+| world | 67 instruments (guitars, basses, keyboards, regional instruments, NSynth) | see [music-pack-world-ledger.json](music-pack-world-ledger.json) | VSCO/VCSL (CC0), Freesound (CC0 and CC BY), Google NSynth (CC BY 4.0) | CC0 and CC BY | yes, CC BY credits in docs/credits.html (not published) |
