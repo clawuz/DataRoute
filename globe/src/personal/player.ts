@@ -1,5 +1,6 @@
 import { playNote } from "../audio/instruments";
 import { createSampler, setActiveSampler } from "../audio/sampler";
+import { sendOf } from "./space";
 import type { PersonalNote, PersonalPiece } from "./compose";
 
 export interface PersonalPlayer {
@@ -50,9 +51,21 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
   conv.buffer = ir;
   const wet = ctx.createGain();
   wet.gain.value = 0.45;
-  bus.connect(conv);
   conv.connect(wet);
   wet.connect(master);
+  // three reverb sends: a note goes to the one that matches its wetness (space.ts); the dry path is the same for all
+  const SEND_LEVEL = [0.35, 1, 1.8]; // relative to the single send of before (the middle one is today's sound)
+  const busWet = ctx.createGain();
+  busWet.connect(conv);
+  const noteBus = SEND_LEVEL.map((level) => {
+    const nb = ctx.createGain();
+    nb.connect(bus);
+    const send = ctx.createGain();
+    send.gain.value = level;
+    nb.connect(send);
+    send.connect(busWet);
+    return nb;
+  });
 
   // recorded instruments, when a pack is published; until it has arrived (or without one) the synthesis plays
   const sampler = createSampler(ctx);
@@ -84,7 +97,7 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
     while (next < sorted.length && loopStart + sorted[next].t <= horizon) {
       const n = sorted[next++];
       const when = Math.max(ctx.currentTime, loopStart + n.t);
-      playNote(ctx, bus, { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d }, { gainScale: 1, cutoffScale: 1, pan: 0 });
+      playNote(ctx, noteBus[sendOf(n.wet ?? 0.3)], { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d }, { gainScale: 1, cutoffScale: 1, pan: n.pan ?? 0 });
       const cb = onNote;
       const inSec = Math.max(0, when - ctx.currentTime);
       setTimeout(() => cb(n), inSec * 1000);
@@ -152,6 +165,7 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
     },
     setSynthMuted(m) {
       bus.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.05);
+      busWet.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.05);
     },
     audioStream() {
       if (!tap && typeof ctx.createMediaStreamDestination === "function") {

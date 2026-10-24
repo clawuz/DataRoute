@@ -7,6 +7,7 @@ import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
 import { WORLD_VOICES, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
+import { panOf, wetOf } from "./space";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -28,6 +29,10 @@ export interface PersonalNote {
   drawDur?: number;
   /** altitude (ft) of the flight at this point of its phrase: climb, cruise, descent — the pitch follows it */
   alt: number;
+  /** stereo position −1…1 from where the route lies east or west of home (space.ts); absent: the middle */
+  pan?: number;
+  /** how much reverb the note gets 0…0.5, from the length of the route (space.ts); absent: the middle send */
+  wet?: number;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -271,6 +276,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const seq: PopRole[] = n <= 6 ? SMALL[n] : order.map((_, k) => BASE[Math.floor((k * 7) / n)]);
   const role: PopRole[] = new Array(n);
   order.forEach((x, k) => (role[x.i] = seq[k]));
+  // space from the map: where each route lies east or west of home, and how far it goes
+  const homeLon = routes[0].fromLon;
+  const panFor = routes.map((r, i) => panOf(r, homeLon, role[i]));
+  const wetFor = routes.map((r, i) => wetOf(r, role[i]));
   // the second, third … route with the same role: a second voice that joins in the chorus and the build
   const occ: number[] = routes.map((_, i) => role.slice(0, i).filter((q) => q === role[i]).length);
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
@@ -284,7 +293,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     return x;
   };
   const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5): void => {
-    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm) });
+    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm), pan: panFor[i], wet: wetFor[i] });
   };
 
   // every route gets its own instrument where its card has enough of them
