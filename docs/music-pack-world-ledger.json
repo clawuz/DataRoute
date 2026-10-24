@@ -1,0 +1,4226 @@
+[
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10666.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10666/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-D4.aif"
+ },
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10676.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10676/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-A#3.aif"
+ },
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10670.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10670/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-D#4.aif"
+ },
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10671.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10671/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-G5.aif"
+ },
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10677.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10677/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-A#5.aif"
+ },
+ {
+  "instrument": "SANTUR",
+  "file": "santur/santur_10665.mp3",
+  "source": "https://freesound.org/people/batchku/sounds/10665/",
+  "author": "batchku",
+  "licence": "CC0 1.0",
+  "title": "sant-roll-C5.aif"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_569838.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/569838/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "#4 Erhu E4.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_569840.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/569840/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "#2 Erhu G#3.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_467481.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/467481/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "007-Erhu-G#5.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_467478.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/467478/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "002-Erhu-F4.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_467482.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/467482/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "006-Erhu-F5.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_569839.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/569839/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "#3 Erhu C4.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_467479.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/467479/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "001-Erhu D4.wav"
+ },
+ {
+  "instrument": "ERHU",
+  "file": "erhu/erhu_467476.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/467476/",
+  "author": "tarane468",
+  "licence": "CC0 1.0",
+  "title": "004-Erhu-B4.wav"
+ },
+ {
+  "instrument": "KOTO",
+  "file": "koto/koto_223956.mp3",
+  "source": "https://freesound.org/people/--DeletedUser--/sounds/223956/",
+  "author": "--DeletedUser--",
+  "licence": "CC0 1.0",
+  "title": "Koto G4.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24561.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24561/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_D2.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24565.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24565/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_E2.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24566.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24566/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_E3.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24568.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24568/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_F2.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24569.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24569/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_F3.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24567.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24567/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_E4.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24551.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24551/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_A2.wav"
+ },
+ {
+  "instrument": "KAYAGEUM",
+  "file": "kayageum/kayageum_24553.mp3",
+  "source": "https://freesound.org/people/spt3125/sounds/24553/",
+  "author": "spt3125",
+  "licence": "CC0 1.0",
+  "title": "kayageum1_A4.wav"
+ },
+ {
+  "instrument": "SHAKUHACHI",
+  "file": "shakuhachi/shakuhachi_473843.mp3",
+  "source": "https://freesound.org/people/tarane468/sounds/473843/",
+  "author": "tarane468",
+  "licence": "CC BY",
+  "title": "Shakuhachi D5.wav"
+ },
+ {
+  "instrument": "TANPURA",
+  "file": "tanpura/tanpura_535131.mp3",
+  "source": "https://freesound.org/people/MieliTietty/sounds/535131/",
+  "author": "MieliTietty",
+  "licence": "CC0 1.0",
+  "title": "Tanpura D4-2.aif"
+ },
+ {
+  "instrument": "TANPURA",
+  "file": "tanpura/tanpura_535129.mp3",
+  "source": "https://freesound.org/people/MieliTietty/sounds/535129/",
+  "author": "MieliTietty",
+  "licence": "CC0 1.0",
+  "title": "Tanpura D2-3.aif"
+ },
+ {
+  "instrument": "TANPURA",
+  "file": "tanpura/tanpura_416606.mp3",
+  "source": "https://freesound.org/people/luckylittleraven/sounds/416606/",
+  "author": "luckylittleraven",
+  "licence": "CC0 1.0",
+  "title": "Tanpura note A sharp.wav"
+ },
+ {
+  "instrument": "TANPURA",
+  "file": "tanpura/tanpura_416605.mp3",
+  "source": "https://freesound.org/people/luckylittleraven/sounds/416605/",
+  "author": "luckylittleraven",
+  "licence": "CC0 1.0",
+  "title": "Tanpura note C sharp.wav"
+ },
+ {
+  "instrument": "TANPURA",
+  "file": "tanpura/tanpura_562771.mp3",
+  "source": "https://freesound.org/people/adheesh7/sounds/562771/",
+  "author": "adheesh7",
+  "licence": "CC0 1.0",
+  "title": "TanB.mp3"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_536551.mp3",
+  "source": "https://freesound.org/people/dvdfu/sounds/536551/",
+  "author": "dvdfu",
+  "licence": "CC0 1.0",
+  "title": "Kalimba C1"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_536549.mp3",
+  "source": "https://freesound.org/people/dvdfu/sounds/536549/",
+  "author": "dvdfu",
+  "licence": "CC0 1.0",
+  "title": "Kalimba C3"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_441137.mp3",
+  "source": "https://freesound.org/people/nemaavla/sounds/441137/",
+  "author": "nemaavla",
+  "licence": "CC0 1.0",
+  "title": "Kalimba E5.wav"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_70675.mp3",
+  "source": "https://freesound.org/people/beskhu/sounds/70675/",
+  "author": "beskhu",
+  "licence": "CC BY",
+  "title": "SanzAnais 79 G4 mezzopiano.aif"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_441139.mp3",
+  "source": "https://freesound.org/people/nemaavla/sounds/441139/",
+  "author": "nemaavla",
+  "licence": "CC0 1.0",
+  "title": "Kalimba D5.wav"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_441133.mp3",
+  "source": "https://freesound.org/people/nemaavla/sounds/441133/",
+  "author": "nemaavla",
+  "licence": "CC0 1.0",
+  "title": "Kalimba B4.wav"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_691773.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/691773/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "A3 soft - kalimba"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_536550.mp3",
+  "source": "https://freesound.org/people/dvdfu/sounds/536550/",
+  "author": "dvdfu",
+  "licence": "CC0 1.0",
+  "title": "Kalimba C2"
+ },
+ {
+  "instrument": "KALIMBA",
+  "file": "kalimba/kalimba_691787.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/691787/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "D3 soft - kalimba"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692829.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692829/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "F3 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692571.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692571/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "E3 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692567.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692567/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "F4 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692561.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692561/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "A3 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692569.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692569/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "C3 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692564.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692564/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "D4 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_692562.mp3",
+  "source": "https://freesound.org/people/hollandm/sounds/692562/",
+  "author": "hollandm",
+  "licence": "CC0 1.0",
+  "title": "Bb3 - steel tongue drum"
+ },
+ {
+  "instrument": "STEELDRUM",
+  "file": "steeldrum/steeldrum_344330.mp3",
+  "source": "https://freesound.org/people/nemaavla/sounds/344330/",
+  "author": "nemaavla",
+  "licence": "CC0 1.0",
+  "title": "TD_E4_hand.wav"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_41683.mp3",
+  "source": "https://freesound.org/people/digifishmusic/sounds/41683/",
+  "author": "digifishmusic",
+  "licence": "CC BY",
+  "title": "Guitar Nylon Open - G4.wav"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_41679.mp3",
+  "source": "https://freesound.org/people/digifishmusic/sounds/41679/",
+  "author": "digifishmusic",
+  "licence": "CC BY",
+  "title": "Guitar Nylon Open - A4.wav"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_413073.mp3",
+  "source": "https://freesound.org/people/Streetpoptunez/sounds/413073/",
+  "author": "Streetpoptunez",
+  "licence": "CC0 1.0",
+  "title": "Electric Amp Bass"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_117675.mp3",
+  "source": "https://freesound.org/people/Kyster/sounds/117675/",
+  "author": "Kyster",
+  "licence": "CC BY",
+  "title": "D low open string.wav"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_117717.mp3",
+  "source": "https://freesound.org/people/Kyster/sounds/117717/",
+  "author": "Kyster",
+  "licence": "CC BY",
+  "title": "G#.wav"
+ },
+ {
+  "instrument": "NYLONGUITAR",
+  "file": "nylonguitar/nylon_guitar_117716.mp3",
+  "source": "https://freesound.org/people/Kyster/sounds/117716/",
+  "author": "Kyster",
+  "licence": "CC BY",
+  "title": "F.wav"
+ },
+ {
+  "instrument": "TINWHISTLE",
+  "file": "tinwhistle/tinwhistle_394739.mp3",
+  "source": "https://freesound.org/people/cernoel/sounds/394739/",
+  "author": "cernoel",
+  "licence": "CC0 1.0",
+  "title": "D2.wav"
+ },
+ {
+  "instrument": "TINWHISTLE",
+  "file": "tinwhistle/tinwhistle_135696.mp3",
+  "source": "https://freesound.org/people/univ_lyon3/sounds/135696/",
+  "author": "univ_lyon3",
+  "licence": "CC0 1.0",
+  "title": "celia_ramain02.wav"
+ },
+ {
+  "instrument": "TINWHISTLE",
+  "file": "tinwhistle/tinwhistle_394734.mp3",
+  "source": "https://freesound.org/people/cernoel/sounds/394734/",
+  "author": "cernoel",
+  "licence": "CC0 1.0",
+  "title": "C#.wav"
+ },
+ {
+  "instrument": "TINWHISTLE",
+  "file": "tinwhistle/tinwhistle_394737.mp3",
+  "source": "https://freesound.org/people/cernoel/sounds/394737/",
+  "author": "cernoel",
+  "licence": "CC0 1.0",
+  "title": "F.wav"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560851.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560851/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave G5.m4a"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560859.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560859/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave D5b.m4a"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560861.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560861/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave E3b.m4a"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560848.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560848/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave E4b.m4a"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560847.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560847/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave E5.m4a"
+ },
+ {
+  "instrument": "ACCORDION",
+  "file": "accordion/accordion_560844.mp3",
+  "source": "https://freesound.org/people/Miles_Thompson/sounds/560844/",
+  "author": "Miles_Thompson",
+  "licence": "CC0 1.0",
+  "title": "Accordion Keyboard Octave A5.m4a"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64926.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64926/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_A1.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64930.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64930/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_C2.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64927.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64927/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_A2.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64929.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64929/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_B2.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64932.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64932/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_D2.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64934.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64934/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_E2.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64936.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64936/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_G1.WAV"
+ },
+ {
+  "instrument": "PANPIPE",
+  "file": "panpipe/panpipe_64931.mp3",
+  "source": "https://freesound.org/people/timohanes/sounds/64931/",
+  "author": "timohanes",
+  "licence": "CC0 1.0",
+  "title": "Pan pipe_C3.WAV"
+ },
+ {
+  "instrument": "KAVAL",
+  "file": "kaval/kaval_159140.mp3",
+  "source": "https://freesound.org/people/cms4f/sounds/159140/",
+  "author": "cms4f",
+  "licence": "CC0 1.0",
+  "title": "Kaval Play 02.wav"
+ },
+ {
+  "instrument": "KAVAL",
+  "file": "kaval/kaval_159142.mp3",
+  "source": "https://freesound.org/people/cms4f/sounds/159142/",
+  "author": "cms4f",
+  "licence": "CC0 1.0",
+  "title": "Kaval Play 08.wav"
+ },
+ {
+  "instrument": "KAVAL",
+  "file": "kaval/kaval_159151.mp3",
+  "source": "https://freesound.org/people/cms4f/sounds/159151/",
+  "author": "cms4f",
+  "licence": "CC0 1.0",
+  "title": "Kaval Play 13.wav"
+ },
+ {
+  "instrument": "KAVAL",
+  "file": "kaval/kaval_159144.mp3",
+  "source": "https://freesound.org/people/cms4f/sounds/159144/",
+  "author": "cms4f",
+  "licence": "CC0 1.0",
+  "title": "Kaval Play 06.wav"
+ },
+ {
+  "instrument": "DUDUK",
+  "file": "duduk/duduk_479213.mp3",
+  "source": "https://freesound.org/people/blood_of_a_pomegranate/sounds/479213/",
+  "author": "blood_of_a_pomegranate",
+  "licence": "CC0 1.0",
+  "title": "duduk C3"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_130408.mp3",
+  "source": "https://freesound.org/people/mmiron/sounds/130408/",
+  "author": "mmiron",
+  "licence": "CC0 1.0",
+  "title": "ghe_7.wav"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_130422.mp3",
+  "source": "https://freesound.org/people/mmiron/sounds/130422/",
+  "author": "mmiron",
+  "licence": "CC0 1.0",
+  "title": "na-open.wav"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_130428.mp3",
+  "source": "https://freesound.org/people/mmiron/sounds/130428/",
+  "author": "mmiron",
+  "licence": "CC0 1.0",
+  "title": "na_sharp.wav"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_420858.mp3",
+  "source": "https://freesound.org/people/subodh3012/sounds/420858/",
+  "author": "subodh3012",
+  "licence": "CC0 1.0",
+  "title": "Da_Test11.wav"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_171911.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/171911/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "tin stroke"
+ },
+ {
+  "instrument": "TABLA",
+  "file": "tabla/tabla_171905.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/171905/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "na stroke"
+ },
+ {
+  "instrument": "DJEMBE",
+  "file": "djembe/djembe_505396.mp3",
+  "source": "https://freesound.org/people/SpaceJoe/sounds/505396/",
+  "author": "SpaceJoe",
+  "licence": "CC0 1.0",
+  "title": "African Djembe Drum - 1.wav"
+ },
+ {
+  "instrument": "DJEMBE",
+  "file": "djembe/djembe_413777.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/413777/",
+  "author": "pjcohen",
+  "licence": "CC BY",
+  "title": "Doumbek_Tek1.wav"
+ },
+ {
+  "instrument": "DJEMBE",
+  "file": "djembe/djembe_550945.mp3",
+  "source": "https://freesound.org/people/TA-AT/sounds/550945/",
+  "author": "TA-AT",
+  "licence": "CC BY",
+  "title": "Djembe 120 A.wav"
+ },
+ {
+  "instrument": "DJEMBE",
+  "file": "djembe/djembe_507878.mp3",
+  "source": "https://freesound.org/people/Ramon_Qfwfq/sounds/507878/",
+  "author": "Ramon_Qfwfq",
+  "licence": "CC BY",
+  "title": "Djembe\u0301"
+ },
+ {
+  "instrument": "DJEMBE",
+  "file": "djembe/djembe_460986.mp3",
+  "source": "https://freesound.org/people/Infinita08/sounds/460986/",
+  "author": "Infinita08",
+  "licence": "CC0 1.0",
+  "title": "djembe_longrim_mute2.wav"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_69732.mp3",
+  "source": "https://freesound.org/people/FaireDesVagues/sounds/69732/",
+  "author": "FaireDesVagues",
+  "licence": "CC BY",
+  "title": "fdv_basse1_A1.wav"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_396119.mp3",
+  "source": "https://freesound.org/people/cabled_mess/sounds/396119/",
+  "author": "cabled_mess",
+  "licence": "CC0 1.0",
+  "title": "Bass Guitar_E2 [RAW]"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_43950.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/43950/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S P-Bass A#2a.aif"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_396120.mp3",
+  "source": "https://freesound.org/people/cabled_mess/sounds/396120/",
+  "author": "cabled_mess",
+  "licence": "CC0 1.0",
+  "title": "Bass Guitar_G2 [RAW]"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_43958.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/43958/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S P-Bass C2a.aif"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_43962.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/43962/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S P-Bass D2a.aif"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_69745.mp3",
+  "source": "https://freesound.org/people/FaireDesVagues/sounds/69745/",
+  "author": "FaireDesVagues",
+  "licence": "CC BY",
+  "title": "fdv_basse1_G1.wav"
+ },
+ {
+  "instrument": "BASSGUITAR",
+  "file": "bassguitar/bass_guitar_43939.mp3",
+  "source": "https://freesound.org/people/mat_the_glad/sounds/43939/",
+  "author": "mat_the_glad",
+  "licence": "CC0 1.0",
+  "title": "bass B1.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_83122.mp3",
+  "source": "https://freesound.org/people/Meg/sounds/83122/",
+  "author": "Meg",
+  "licence": "CC0 1.0",
+  "title": "Manthey-C3.WAV"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383702.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383702/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Stop_Bartok_A#3.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_83134.mp3",
+  "source": "https://freesound.org/people/Meg/sounds/83134/",
+  "author": "Meg",
+  "licence": "CC0 1.0",
+  "title": "Manthey-F4.WAV"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383569.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383569/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Normal_C2.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383710.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383710/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Normal_G#1.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383551.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383551/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Normal_A1.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383680.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383680/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Stop_Finger_E1.wav"
+ },
+ {
+  "instrument": "UPRIGHTBASS",
+  "file": "uprightbass/upright_bass_383666.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/383666/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "Standup_Bass_Stop_Finger_E4.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_705863.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/705863/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 005 string A 22 tone G4+7.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_705914.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/705914/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 005 string G 22 tone F5+7.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_713256.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/713256/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 006 string A 20 tone F4+8"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_705857.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/705857/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 005 string A 17 tone D4+7.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_493993.mp3",
+  "source": "https://freesound.org/people/PhonosUPF/sounds/493993/",
+  "author": "PhonosUPF",
+  "licence": "CC0 1.0",
+  "title": "elrectric guitar pluck 8"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_688268.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/688268/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 004 string A 18 tone DIS4+5.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_705858.mp3",
+  "source": "https://freesound.org/people/josefpres/sounds/705858/",
+  "author": "josefpres",
+  "licence": "CC0 1.0",
+  "title": "guitar tones 005 string A 18 tone DIS4+7.wav"
+ },
+ {
+  "instrument": "EGUITAR",
+  "file": "eguitar/electric_clean_557714.mp3",
+  "source": "https://freesound.org/people/skylarjulian/sounds/557714/",
+  "author": "skylarjulian",
+  "licence": "CC0 1.0",
+  "title": "Pretty F# Dorian guitar chord w/ chorus"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_12760.mp3",
+  "source": "https://freesound.org/people/Jovica/sounds/12760/",
+  "author": "Jovica",
+  "licence": "CC BY",
+  "title": "EP 2 C1.wav"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_65663.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/65663/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S Rhodes Mark II G#5.aif"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_65661.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/65661/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S Rhodes Mark II F#5.aif"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_4192.mp3",
+  "source": "https://freesound.org/people/RealRhodesSounds/sounds/4192/",
+  "author": "RealRhodesSounds",
+  "licence": "CC BY",
+  "title": "D4.wav"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_4194.mp3",
+  "source": "https://freesound.org/people/RealRhodesSounds/sounds/4194/",
+  "author": "RealRhodesSounds",
+  "licence": "CC BY",
+  "title": "D6.wav"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_65720.mp3",
+  "source": "https://freesound.org/people/tim.kahn/sounds/65720/",
+  "author": "tim.kahn",
+  "licence": "CC BY",
+  "title": "C_S Rhodes Mark II C3.aif"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_4190.mp3",
+  "source": "https://freesound.org/people/RealRhodesSounds/sounds/4190/",
+  "author": "RealRhodesSounds",
+  "licence": "CC BY",
+  "title": "D2.wav"
+ },
+ {
+  "instrument": "RHODES",
+  "file": "rhodes/rhodes_4191.mp3",
+  "source": "https://freesound.org/people/RealRhodesSounds/sounds/4191/",
+  "author": "RealRhodesSounds",
+  "licence": "CC BY",
+  "title": "D3.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_321454.mp3",
+  "source": "https://freesound.org/people/vacuumfan7072/sounds/321454/",
+  "author": "vacuumfan7072",
+  "licence": "CC0 1.0",
+  "title": "14CHH.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_147043.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/147043/",
+  "author": "pjcohen",
+  "licence": "CC BY",
+  "title": "YamahaAbsoluteMapleCustomKick22x18BassDrum.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_488466.mp3",
+  "source": "https://freesound.org/people/Trvth/sounds/488466/",
+  "author": "Trvth",
+  "licence": "CC0 1.0",
+  "title": "Snare1Drum.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_459217.mp3",
+  "source": "https://freesound.org/people/soneproject/sounds/459217/",
+  "author": "soneproject",
+  "licence": "CC0 1.0",
+  "title": "kick80.flac"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_93909.mp3",
+  "source": "https://freesound.org/people/pjcohen/sounds/93909/",
+  "author": "pjcohen",
+  "licence": "CC0 1.0",
+  "title": "SkibaCustomHiHats1145Top1215BottomClosedEdgeShank.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_104239.mp3",
+  "source": "https://freesound.org/people/minorr/sounds/104239/",
+  "author": "minorr",
+  "licence": "CC0 1.0",
+  "title": "RIDE Zildian K Custom Session PF.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_531787.mp3",
+  "source": "https://freesound.org/people/Sassaby/sounds/531787/",
+  "author": "Sassaby",
+  "licence": "CC0 1.0",
+  "title": "Caixa Vazada Hit"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_696257.mp3",
+  "source": "https://freesound.org/people/ankealtd/sounds/696257/",
+  "author": "ankealtd",
+  "licence": "CC0 1.0",
+  "title": "Meinl_MB20_14__Heavy_Soundwave_Hi-Hat_E_Foot_OpenClose.wav"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_425449.mp3",
+  "source": "https://freesound.org/people/trivialAccapella/sounds/425449/",
+  "author": "trivialAccapella",
+  "licence": "CC0 1.0",
+  "title": "22'' ride hit.aif"
+ },
+ {
+  "instrument": "DRUMKIT",
+  "file": "drumkit/drumkit_8844.mp3",
+  "source": "https://freesound.org/people/Churd-Tzu/sounds/8844/",
+  "author": "Churd-Tzu",
+  "licence": "CC0 1.0",
+  "title": "water bottle snare 5 (splash).wav"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_797457.mp3",
+  "source": "https://freesound.org/people/noel.liv/sounds/797457/",
+  "author": "noel.liv",
+  "licence": "CC0 1.0",
+  "title": "bass_rebana_rim_palm"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_797455.mp3",
+  "source": "https://freesound.org/people/noel.liv/sounds/797455/",
+  "author": "noel.liv",
+  "licence": "CC0 1.0",
+  "title": "bass_rebana_rim"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_797458.mp3",
+  "source": "https://freesound.org/people/noel.liv/sounds/797458/",
+  "author": "noel.liv",
+  "licence": "CC0 1.0",
+  "title": "bass_rebana_rim_soft"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_797456.mp3",
+  "source": "https://freesound.org/people/noel.liv/sounds/797456/",
+  "author": "noel.liv",
+  "licence": "CC0 1.0",
+  "title": "bass_rebana_rim_fingers"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_797454.mp3",
+  "source": "https://freesound.org/people/noel.liv/sounds/797454/",
+  "author": "noel.liv",
+  "licence": "CC0 1.0",
+  "title": "bass_rebana_direct"
+ },
+ {
+  "instrument": "BENDIR",
+  "file": "bendir/bendir_218920.mp3",
+  "source": "https://freesound.org/people/xserra/sounds/218920/",
+  "author": "xserra",
+  "licence": "CC BY",
+  "title": "bendir.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM_FS",
+  "file": "framedrum_fs/bodhran_257181.mp3",
+  "source": "https://freesound.org/people/Jagadamba/sounds/257181/",
+  "author": "Jagadamba",
+  "licence": "CC BY",
+  "title": "Shaman Hand Frame Drum 19_02"
+ },
+ {
+  "instrument": "FRAMEDRUM_FS",
+  "file": "framedrum_fs/bodhran_257160.mp3",
+  "source": "https://freesound.org/people/Jagadamba/sounds/257160/",
+  "author": "Jagadamba",
+  "licence": "CC BY",
+  "title": "Shaman Hand Frame Drum 04_02"
+ },
+ {
+  "instrument": "FRAMEDRUM_FS",
+  "file": "framedrum_fs/bodhran_257156.mp3",
+  "source": "https://freesound.org/people/Jagadamba/sounds/257156/",
+  "author": "Jagadamba",
+  "licence": "CC BY",
+  "title": "Shaman Hand Frame Drum 03_03"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/B1_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/B1_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "B1_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/B3_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/B3_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "B3_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Cs2_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/C%232_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "C#2_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Cs4_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/C%234_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "C#4_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Ds3_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/D%233_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "D#3_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Ds4_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/D%234_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "D#4_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Fs3_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/F%233_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "F#3_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Gs2_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/G%232_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "G#2_f_1.wav"
+ },
+ {
+  "instrument": "DANTRANH",
+  "file": "dantranh/Gs4_f_1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Dan%20Tranh/Normal/G%234_f_1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "G#4_f_1.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_As3_Main_Pluck_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_A%233_Main_Pluck_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_A#3_Main_Pluck_rr1.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_As4_Main_Pluck_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_A%234_Main_Pluck_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_A#4_Main_Pluck_rr1.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_C5_Main_Pluck_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_C5_Main_Pluck_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_C5_Main_Pluck_rr1.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_E4_Main_Pluck_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_E4_Main_Pluck_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_E4_Main_Pluck_rr2.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_E5_Main_Pluck_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_E5_Main_Pluck_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_E5_Main_Pluck_rr1.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_Fs5_Main_Pluck_rr3.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_F%235_Main_Pluck_rr3.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_F#5_Main_Pluck_rr3.wav"
+ },
+ {
+  "instrument": "PSALTERY",
+  "file": "psaltery/BowedPsaltery_Gs4_Main_Pluck_rr3.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Psaltery%2C%20Bowed%20and%20Plucked/Pluck/BowedPsaltery_G%234_Main_Pluck_rr3.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BowedPsaltery_G#4_Main_Pluck_rr3.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_As1_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_A%231_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_A#1_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_C1_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_C1_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_C1_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_C5_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_C5_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_C5_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_D4_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_D4_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_D4_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_E3_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_E3_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_E3_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_Fs2_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_F%232_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_F#2_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_Gs1_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_G%231_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_G#1_v2_RR1.wav"
+ },
+ {
+  "instrument": "FOLKHARP",
+  "file": "folkharp/EWHarp_Normal_Gs5_v2_RR1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Composite%20Chordophones/Folk%20Harp/EWHarp_Normal_G%235_v2_RR1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "EWHarp_Normal_G#5_v2_RR1.wav"
+ },
+ {
+  "instrument": "MBIRA",
+  "file": "mbira/Mbira6_Normal_MainSpirit_B2_k8_vl3_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_B2_k8_vl3_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Mbira6_Normal_MainSpirit_B2_k8_vl3_rr2.wav"
+ },
+ {
+  "instrument": "MBIRA",
+  "file": "mbira/Mbira6_Normal_MainSpirit_Cs3_k7_vl3_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_C%233_k7_vl3_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Mbira6_Normal_MainSpirit_C#3_k7_vl3_rr2.wav"
+ },
+ {
+  "instrument": "MBIRA",
+  "file": "mbira/Mbira6_Normal_MainSpirit_Ds3_k6_vl3_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_D%233_k6_vl3_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Mbira6_Normal_MainSpirit_D#3_k6_vl3_rr2.wav"
+ },
+ {
+  "instrument": "MBIRA",
+  "file": "mbira/Mbira6_Normal_MainSpirit_Fs4_k14_vl3_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_F%234_k14_vl3_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Mbira6_Normal_MainSpirit_F#4_k14_vl3_rr2.wav"
+ },
+ {
+  "instrument": "MBIRA",
+  "file": "mbira/Mbira6_Normal_MainSpirit_Gs3_k11_vl3_rr2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Plucked%20Idiophones/Kalimba%2C%20Kenya/Mbira6_Normal_MainSpirit_G%233_k11_vl3_rr2.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Mbira6_Normal_MainSpirit_G#3_k11_vl3_rr2.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_A2_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_A2_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_A2_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_A4_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_A4_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_A4_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_C3_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_C3_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_C3_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_C5_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_C5_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_C5_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_E3_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_E3_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_E3_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_E5_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_E5_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_E5_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_F4_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_F4_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_F4_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "VIBES",
+  "file": "vibes/Vibes_hard_G3_v2_rr1_Main.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Idiophones/Struck%20Idiophones/Vibraphone/Hard%20Mallets/Vibes_hard_G3_v2_rr1_Main.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Vibes_hard_G3_v2_rr1_Main.wav"
+ },
+ {
+  "instrument": "DARBUKA_VCSL",
+  "file": "darbuka_vcsl/Darbuka_1_hit_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Darbuka/Darbuka_1_hit_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Darbuka_1_hit_vl2_rr1.wav"
+ },
+ {
+  "instrument": "DARBUKA_VCSL",
+  "file": "darbuka_vcsl/Darbuka_2_hit_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Darbuka/Darbuka_2_hit_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Darbuka_2_hit_vl2_rr1.wav"
+ },
+ {
+  "instrument": "DARBUKA_VCSL",
+  "file": "darbuka_vcsl/Darbuka_3_hit_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Darbuka/Darbuka_3_hit_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Darbuka_3_hit_vl2_rr1.wav"
+ },
+ {
+  "instrument": "DARBUKA_VCSL",
+  "file": "darbuka_vcsl/Darbuka_4_hit_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Darbuka/Darbuka_4_hit_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Darbuka_4_hit_vl2_rr1.wav"
+ },
+ {
+  "instrument": "DARBUKA_VCSL",
+  "file": "darbuka_vcsl/Darbuka_5_hit_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Darbuka/Darbuka_5_hit_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Darbuka_5_hit_vl2_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_As5_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_A%235_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_A#5_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_C3_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_C3_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_C3_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_D1_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_D1_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_D1_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_D5_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_D5_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_D5_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_E3_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_E3_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_E3_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_E7_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_E7_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_E7_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_Fs5_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_F%235_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_F#5_vl3_rr1.wav"
+ },
+ {
+  "instrument": "STEINWAY",
+  "file": "steinway/JHPiano_NoSus_Close_Gs2_vl3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Steinway%20B/NoSus/JHPiano_NoSus_Close_G%232_vl3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "JHPiano_NoSus_Close_G#2_vl3_rr1.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_As2_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_A%232_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_A#2_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_A5_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_A5_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_A5_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_C2_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_C2_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_C2_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_D2_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_D2_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_D2_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_E4_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_E4_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_E4_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_Fs4_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_F%234_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_F#4_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "KAWAI",
+  "file": "kawai/GPiano_sus_Gs4_v3_rr1_Player.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Grand%20Piano%2C%20Kawai/Sustains/GPiano_sus_G%234_v3_rr1_Player.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "GPiano_sus_G#4_v3_rr1_Player.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_C2_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_C2_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_C2_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_C3_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_C3_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_C3_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_C5_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_C5_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_C5_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_G0_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G0_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_G0_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_G2_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G2_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_G2_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_G3_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G3_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_G3_vl2_rr1.wav"
+ },
+ {
+  "instrument": "UPRIGHTPNO",
+  "file": "uprightpno/Upright1_Sus_G5_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G5_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Upright1_Sus_G5_vl2_rr1.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_A0.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_A0.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_A0.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_B5.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_B5.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_B5.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_Cs4.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_C%234.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_C#4.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_Ds2.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_D%232.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_D#2.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_F1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_F1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_F1.wav"
+ },
+ {
+  "instrument": "KNIGHTPNO",
+  "file": "knightpno/Player_vl2_rr1_G0.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Upright%20Piano%2C%20Knight/Sustains/Player_vl2_rr1_G0.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Player_vl2_rr1_G0.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_As0_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_A%230_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_A#0_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_As4_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_A%234_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_A#4_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_C5_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_C5_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_C5_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_D4_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_D4_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_D4_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_E2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_E2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_E2_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_Fs1_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_F%231_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_F#1_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_Gs1_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Lute/ZuckermannKitHarpsi_Lute_Sus_G%231_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Lute_Sus_G#1_rr1.wav"
+ },
+ {
+  "instrument": "HARPSICHORD",
+  "file": "harpsichord/ZuckermannKitHarpsi_Normal_Sus_C2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Chordophones/Zithers/Harpsichord%2C%20English/Sustains/Normal/ZuckermannKitHarpsi_Normal_Sus_C2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "ZuckermannKitHarpsi_Normal_Sus_C2_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_As1_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_A%231_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_A#1_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_C1_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_C1_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_C1_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_C4_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_C4_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_C4_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_D3_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_D3_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_D3_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_E2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_E2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_E2_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_Fs1_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_F%231_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_F#1_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_Fs4_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_F%234_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_F#4_rr1.wav"
+ },
+ {
+  "instrument": "RENORGAN",
+  "file": "organ/RenOrgan_8foot_Room_Gs4_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Edge-blown%20Aerophones/Renaissance%20Organ/8%27/RenOrgan_8foot_Room_G%234_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "RenOrgan_8foot_Room_G#4_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_As1_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_A%231_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_A#1_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_As4_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_A%234_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_A#4_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_C4_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_C4_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_C4_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_D3_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_D3_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_D3_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_E3_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_E3_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_E3_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_Fs2_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_F%232_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_F#2_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_Gs1_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_G%231_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_G#1_vl2_rr1.wav"
+ },
+ {
+  "instrument": "TENORSAX",
+  "file": "tenorsax/BrettTenor_NV_Main_Gs4_vl2_rr1.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Reed%20Aerophones/Tenor%20Saxophone/Non-Vibrato/BrettTenor_NV_Main_G%234_vl2_rr1.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "BrettTenor_NV_Main_G#4_vl2_rr1.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_C3.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_C3.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_C3.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_C5.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_C5.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_C5.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_C6.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_C6.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_C6.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_E4.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_E4.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_E4.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_E5.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_E5.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_E5.wav"
+ },
+ {
+  "instrument": "HARMONICA",
+  "file": "harmonica/Hohner-Special20_Normal_G5.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Aerophones/Free%20Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal/Hohner-Special20_Normal_G5.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "Hohner-Special20_Normal_G5.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumL_Hand_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumL_Hand_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumL_Hand_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumL_HitMuted_v2_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumL_HitMuted_v2_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumL_HitMuted_v2_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumL_Hit_v2_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumL_Hit_v2_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumL_Hit_v2_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumL_Hit_v3_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumL_Hit_v3_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumL_Hit_v3_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumS_Hand_v1_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumS_Hand_v1_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumS_Hand_v1_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumS_HitMuted_v2_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumS_HitMuted_v2_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumS_HitMuted_v2_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumS_Hit_v2_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumS_Hit_v2_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumS_Hit_v2_rr1_Sum.wav"
+ },
+ {
+  "instrument": "FRAMEDRUM",
+  "file": "framedrum/HDrumS_Hit_v3_rr1_Sum.mp3",
+  "source": "https://github.com/sgossner/VCSL/blob/master/Membranophones/Struck%20Membranophones/Frame%20Drum/HDrumS_Hit_v3_rr1_Sum.wav",
+  "author": "Versilian Studios (sgossner/VCSL)",
+  "licence": "CC0 1.0",
+  "title": "HDrumS_Hit_v3_rr1_Sum.wav"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-022-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-022-100 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-026-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-026-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-030-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-030-050 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-033-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-033-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-040-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-040-050 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-045-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-045-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-050-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-050-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-053-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-053-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-057-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-057-100 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_018",
+  "file": "ns_bass_el_018/bass_electronic_018-060-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_018-060-075 (fast_decay)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-022-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-022-050 (percussive)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-025-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-025-025 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-029-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-029-127 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-033-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-033-127 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-039-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-039-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-045-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-045-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-050-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-050-025 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-053-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-053-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-056-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-056-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_025",
+  "file": "ns_bass_el_025/bass_electronic_025-059-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_025-059-050 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-022-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-022-050 (percussive)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-027-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-027-025 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-032-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-032-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-035-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-035-050 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-038-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-038-025 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-044-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-044-100 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-048-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-048-075 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-051-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-051-100 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-055-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-055-050 (no tags)"
+ },
+ {
+  "instrument": "NS_BASS_EL_027",
+  "file": "ns_bass_el_027/bass_electronic_027-058-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "bass_electronic_027-058-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-021-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-021-127 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-028-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-028-025 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-040-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-040-050 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-052-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-052-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-059-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-059-127 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-068-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-068-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-074-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-074-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-084-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-084-025 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-092-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-092-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_010",
+  "file": "ns_guitar_ac_010/guitar_acoustic_010-101-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_010-101-075 (bright)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-021-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-021-050 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-028-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-028-050 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-037-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-037-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-046-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-046-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-057-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-057-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-066-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-066-050 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-073-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-073-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-081-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-081-025 (fast_decay)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-090-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-090-075 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_014",
+  "file": "ns_guitar_ac_014/guitar_acoustic_014-099-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_014-099-050 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-021-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-021-025 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-028-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-028-025 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-038-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-038-075 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-046-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-046-025 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-055-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-055-075 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-063-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-063-127 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-071-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-071-025 (reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-082-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-082-127 (fast_decay, percussive, reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-091-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-091-100 (fast_decay, percussive, reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_015",
+  "file": "ns_guitar_ac_015/guitar_acoustic_015-098-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_015-098-100 (fast_decay, percussive, reverb)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-022-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-022-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-030-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-030-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-042-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-042-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-050-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-050-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-057-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-057-127 (distortion)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-068-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-068-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-076-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-076-050 (fast_decay)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-085-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-085-050 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-093-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-093-050 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_021",
+  "file": "ns_guitar_ac_021/guitar_acoustic_021-101-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_021-101-100 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-021-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-021-127 (long_release, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-029-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-029-025 (long_release, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-040-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-040-127 (long_release, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-048-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-048-050 (tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-054-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-054-075 (fast_decay, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-062-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-062-050 (tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-074-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-074-050 (fast_decay, percussive, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-077-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-077-100 (tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-093-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-093-127 (fast_decay, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_AC_030",
+  "file": "ns_guitar_ac_030/guitar_acoustic_030-099-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_acoustic_030-099-025 (fast_decay, percussive, tempo-synced)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-024-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-024-050 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-032-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-032-127 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-037-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-037-075 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-043-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-043-075 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-049-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-049-050 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-055-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-055-100 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-060-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-060-075 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-071-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-071-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-079-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-079-100 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_022",
+  "file": "ns_guitar_el_022/guitar_electronic_022-084-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_022-084-075 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-021-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-021-075 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-028-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-028-050 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-034-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-034-025 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-045-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-045-075 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-055-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-055-050 (dark)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-064-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-064-050 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-070-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-070-127 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-081-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-081-025 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-091-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-091-127 (no tags)"
+ },
+ {
+  "instrument": "NS_GUITAR_EL_028",
+  "file": "ns_guitar_el_028/guitar_electronic_028-101-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "guitar_electronic_028-101-100 (bright)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-022-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-022-050 (dark, reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-031-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-031-050 (dark, reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-039-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-039-075 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-048-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-048-075 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-057-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-057-075 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-065-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-065-100 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-073-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-073-050 (dark, reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-081-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-081-075 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-089-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-089-127 (reverb)"
+ },
+ {
+  "instrument": "NS_KEYS_AC_004",
+  "file": "ns_keys_ac_004/keyboard_acoustic_004-100-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_acoustic_004-100-050 (reverb)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-021-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-021-127 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-027-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-027-050 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-037-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-037-075 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-043-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-043-100 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-053-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-053-050 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-061-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-061-075 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-069-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-069-127 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-080-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-080-127 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-094-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-094-127 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_001",
+  "file": "ns_ekeys_001/keyboard_electronic_001-100-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_001-100-100 (percussive)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-021-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-021-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-027-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-027-050 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-039-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-039-075 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-048-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-048-050 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-055-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-055-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-062-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-062-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-071-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-071-127 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-078-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-078-127 (distortion, fast_decay)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-087-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-087-100 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_EKEYS_002",
+  "file": "ns_ekeys_002/keyboard_electronic_002-101-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_002-101-025 (bright, fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-025-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-025-050 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-030-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-030-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-038-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-038-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-044-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-044-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-052-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-052-050 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-059-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-059-050 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-065-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-065-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-073-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-073-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-083-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-083-100 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_003",
+  "file": "ns_ekeys_003/keyboard_electronic_003-089-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_003-089-025 (long_release)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-031-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-031-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-036-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-036-050 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-046-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-046-025 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-052-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-052-075 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-058-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-058-050 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-063-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-063-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-069-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-069-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-075-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-075-075 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-082-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-082-100 (distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_069",
+  "file": "ns_ekeys_069/keyboard_electronic_069-086-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_069-086-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-029-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-029-075 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-035-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-035-050 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-042-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-042-025 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-049-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-049-100 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-056-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-056-050 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-062-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-062-075 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-066-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-066-025 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-071-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-071-100 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-078-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-078-100 (bright, fast_decay)"
+ },
+ {
+  "instrument": "NS_EKEYS_078",
+  "file": "ns_ekeys_078/keyboard_electronic_078-083-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_078-083-025 (bright)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-021-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-021-100 (dark, distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-032-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-032-075 (dark, distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-041-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-041-100 (dark, distortion)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-051-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-051-025 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-061-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-061-075 (dark)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-069-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-069-050 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-077-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-077-075 (no tags)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-084-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-084-100 (fast_decay)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-091-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-091-100 (fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_EKEYS_098",
+  "file": "ns_ekeys_098/keyboard_electronic_098-102-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "keyboard_electronic_098-102-127 (bright, fast_decay, percussive)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-036-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-036-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-041-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-041-075 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-048-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-048-127 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-055-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-055-100 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-061-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-061-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-067-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-067-050 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-071-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-071-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-078-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-078-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-087-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-087-025 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_001",
+  "file": "ns_organ_el_001/organ_electronic_001-092-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_001-092-127 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-009-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-009-075 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-018-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-018-075 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-025-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-025-075 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-033-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-033-075 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-041-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-041-100 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-052-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-052-075 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-058-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-058-025 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-067-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-067-127 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-074-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-074-025 (distortion, long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_007",
+  "file": "ns_organ_el_007/organ_electronic_007-089-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_007-089-100 (long_release, nonlinear_env)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-023-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-023-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-032-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-032-075 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-041-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-041-100 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-049-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-049-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-057-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-057-127 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-065-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-065-100 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-072-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-072-100 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-080-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-080-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-090-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-090-025 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_028",
+  "file": "ns_organ_el_028/organ_electronic_028-101-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_028-101-075 (bright)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-024-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-024-075 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-029-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-029-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-036-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-036-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-040-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-040-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-047-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-047-100 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-056-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-056-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-060-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-060-075 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-066-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-066-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-070-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-070-050 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_057",
+  "file": "ns_organ_el_057/organ_electronic_057-076-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_057-076-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-024-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-024-025 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-030-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-030-025 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-035-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-035-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-044-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-044-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-049-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-049-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-054-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-054-050 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-059-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-059-050 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-065-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-065-050 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-071-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-071-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_104",
+  "file": "ns_organ_el_104/organ_electronic_104-077-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_104-077-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-025-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-025-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-030-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-030-127 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-036-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-036-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-041-050.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-041-050 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-047-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-047-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-052-127.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-052-127 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-060-025.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-060-025 (dark)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-066-100.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-066-100 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-073-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-073-075 (no tags)"
+ },
+ {
+  "instrument": "NS_ORGAN_EL_113",
+  "file": "ns_organ_el_113/organ_electronic_113-080-075.mp3",
+  "source": "https://magenta.tensorflow.org/datasets/nsynth",
+  "author": "Google Inc. (Magenta NSynth)",
+  "licence": "CC BY",
+  "title": "organ_electronic_113-080-075 (no tags)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_02925.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (29.3s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01702.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (17.0s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01548.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (15.5s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01404.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (14.0s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_02787.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (27.9s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_00984.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (9.8s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01275.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (12.8s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01119.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (11.2s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_01941.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (19.4s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_00042.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (0.4s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_00131.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (1.3s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_00443.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (4.4s)"
+ },
+ {
+  "instrument": "NEY_MAKAM",
+  "file": "ney_makam/194637_00642.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194637/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huzzam Makam (6.4s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01584.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (15.8s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01148.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (11.5s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01036.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (10.4s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01367.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (13.7s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01476.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (14.8s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_00399.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (4.0s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_00816.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (8.2s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_00727.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (7.3s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194639_01753.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194639/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Ussak Makam (17.5s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194700_00601.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194700/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "ussak_cesni_kemence.wav (6.0s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194700_00321.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194700/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "ussak_cesni_kemence.wav (3.2s)"
+ },
+ {
+  "instrument": "KEMENCE_MAKAM",
+  "file": "kemence_makam/194700_00241.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194700/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "ussak_cesni_kemence.wav (2.4s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00449.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (4.5s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00384.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (3.8s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00320.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (3.2s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00748.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (7.5s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_01149.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (11.5s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00199.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (2.0s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00077.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (0.8s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00141.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (1.4s)"
+ },
+ {
+  "instrument": "BAGLAMA_MAKAM",
+  "file": "baglama_makam/194638_00936.mp3",
+  "source": "https://freesound.org/people/ajaysm/sounds/194638/",
+  "author": "ajaysm",
+  "licence": "CC BY",
+  "title": "Scale of Huseyni Makam (9.4s)"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717197.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717197/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Eb2"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717198.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717198/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Ebh"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717192.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717192/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Csh"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717191.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717191/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Cs3h"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717190.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717190/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Cs3"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717184.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717184/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Bb2h"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717183.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717183/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Bb2"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717179.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717179/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Abl"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717178.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717178/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Ab2l"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717177.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717177/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Ab2"
+ },
+ {
+  "instrument": "BAGLAMA_EXTRA",
+  "file": "baglama_extra/fcerim_717202.mp3",
+  "source": "https://freesound.org/people/fcerim/sounds/717202/",
+  "author": "fcerim",
+  "licence": "CC0 1.0",
+  "title": "Baglama_Fsharp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527276.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527276/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - Low A.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527269.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527269/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - B.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527268.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527268/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - C.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527275.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527275/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - D.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527274.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527274/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - E.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527273.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527273/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - F.mp3"
+ },
+ {
+  "instrument": "BAGPIPE",
+  "file": "bagpipe/chanter_527272.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527272/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe Chanter - High A.mp3"
+ },
+ {
+  "instrument": "BAGPIPE_DRONE",
+  "file": "bagpipe_drone/drone_527270.mp3",
+  "source": "https://freesound.org/people/IowaSpaceWizard/sounds/527270/",
+  "author": "IowaSpaceWizard",
+  "licence": "CC0 1.0",
+  "title": "Bagpipe - Drones.mp3"
+ }
+]

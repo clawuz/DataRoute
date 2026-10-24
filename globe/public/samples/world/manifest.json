@@ -1,0 +1,3773 @@
+{
+ "name": "World pack (CC0 and CC BY)",
+ "instruments": {
+  "SANTUR": {
+   "zones": [
+    {
+     "root": 57.91,
+     "lo": 0,
+     "hi": 58,
+     "file": "santur/santur_10676.mp3"
+    },
+    {
+     "root": 59.91,
+     "lo": 59,
+     "hi": 60,
+     "file": "santur/santur_10665.mp3"
+    },
+    {
+     "root": 61.71,
+     "lo": 61,
+     "hi": 62,
+     "file": "santur/santur_10666.mp3"
+    },
+    {
+     "root": 63.01,
+     "lo": 63,
+     "hi": 64,
+     "file": "santur/santur_10670.mp3"
+    },
+    {
+     "root": 66.71,
+     "lo": 65,
+     "hi": 74,
+     "file": "santur/santur_10671.mp3"
+    },
+    {
+     "root": 81.81,
+     "lo": 75,
+     "hi": 127,
+     "file": "santur/santur_10677.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "ERHU": {
+   "zones": [
+    {
+     "root": 62.01,
+     "lo": 0,
+     "hi": 63,
+     "file": "erhu/erhu_467479.mp3"
+    },
+    {
+     "root": 65.01,
+     "lo": 64,
+     "hi": 66,
+     "file": "erhu/erhu_467478.mp3"
+    },
+    {
+     "root": 68.01,
+     "lo": 67,
+     "hi": 69,
+     "file": "erhu/erhu_569840.mp3"
+    },
+    {
+     "root": 71.01,
+     "lo": 70,
+     "hi": 71,
+     "file": "erhu/erhu_467476.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 72,
+     "hi": 74,
+     "file": "erhu/erhu_569839.mp3"
+    },
+    {
+     "root": 76.11,
+     "lo": 75,
+     "hi": 76,
+     "file": "erhu/erhu_569838.mp3"
+    },
+    {
+     "root": 77.01,
+     "lo": 77,
+     "hi": 78,
+     "file": "erhu/erhu_467482.mp3"
+    },
+    {
+     "root": 80.01,
+     "lo": 79,
+     "hi": 127,
+     "file": "erhu/erhu_467481.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "KOTO": {
+   "zones": [
+    {
+     "root": 79.01,
+     "lo": 0,
+     "hi": 127,
+     "file": "koto/koto_223956.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "KAYAGEUM": {
+   "zones": [
+    {
+     "root": 38.01,
+     "lo": 0,
+     "hi": 39,
+     "file": "kayageum/kayageum_24561.mp3"
+    },
+    {
+     "root": 40.01,
+     "lo": 40,
+     "hi": 40,
+     "file": "kayageum/kayageum_24565.mp3"
+    },
+    {
+     "root": 41.01,
+     "lo": 41,
+     "hi": 43,
+     "file": "kayageum/kayageum_24568.mp3"
+    },
+    {
+     "root": 45.01,
+     "lo": 44,
+     "hi": 48,
+     "file": "kayageum/kayageum_24551.mp3"
+    },
+    {
+     "root": 52.01,
+     "lo": 49,
+     "hi": 52,
+     "file": "kayageum/kayageum_24566.mp3"
+    },
+    {
+     "root": 53.01,
+     "lo": 53,
+     "hi": 58,
+     "file": "kayageum/kayageum_24569.mp3"
+    },
+    {
+     "root": 64.01,
+     "lo": 59,
+     "hi": 66,
+     "file": "kayageum/kayageum_24567.mp3"
+    },
+    {
+     "root": 69.01,
+     "lo": 67,
+     "hi": 127,
+     "file": "kayageum/kayageum_24553.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "SHAKUHACHI": {
+   "zones": [
+    {
+     "root": 73.91,
+     "lo": 0,
+     "hi": 127,
+     "file": "shakuhachi/shakuhachi_473843.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "TANPURA": {
+   "zones": [
+    {
+     "root": 23.01,
+     "lo": 0,
+     "hi": 34,
+     "file": "tanpura/tanpura_562771.mp3"
+    },
+    {
+     "root": 46.01,
+     "lo": 35,
+     "hi": 47,
+     "file": "tanpura/tanpura_416606.mp3"
+    },
+    {
+     "root": 49.01,
+     "lo": 48,
+     "hi": 49,
+     "file": "tanpura/tanpura_416605.mp3"
+    },
+    {
+     "root": 50.01,
+     "lo": 50,
+     "hi": 62,
+     "file": "tanpura/tanpura_535129.mp3"
+    },
+    {
+     "root": 74.11,
+     "lo": 63,
+     "hi": 127,
+     "file": "tanpura/tanpura_535131.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "KALIMBA": {
+   "zones": [
+    {
+     "root": 60.01,
+     "lo": 0,
+     "hi": 61,
+     "file": "kalimba/kalimba_536551.mp3"
+    },
+    {
+     "root": 62.01,
+     "lo": 62,
+     "hi": 65,
+     "file": "kalimba/kalimba_691787.mp3"
+    },
+    {
+     "root": 68.91,
+     "lo": 66,
+     "hi": 70,
+     "file": "kalimba/kalimba_691773.mp3"
+    },
+    {
+     "root": 71.21,
+     "lo": 71,
+     "hi": 71,
+     "file": "kalimba/kalimba_441133.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 72,
+     "hi": 73,
+     "file": "kalimba/kalimba_536550.mp3"
+    },
+    {
+     "root": 74.11,
+     "lo": 74,
+     "hi": 75,
+     "file": "kalimba/kalimba_441139.mp3"
+    },
+    {
+     "root": 76.21,
+     "lo": 76,
+     "hi": 77,
+     "file": "kalimba/kalimba_441137.mp3"
+    },
+    {
+     "root": 79.01,
+     "lo": 78,
+     "hi": 81,
+     "file": "kalimba/kalimba_70675.mp3"
+    },
+    {
+     "root": 84.21,
+     "lo": 82,
+     "hi": 127,
+     "file": "kalimba/kalimba_536549.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "STEELDRUM": {
+   "zones": [
+    {
+     "root": 45.01,
+     "lo": 0,
+     "hi": 51,
+     "file": "steeldrum/steeldrum_344330.mp3"
+    },
+    {
+     "root": 58.01,
+     "lo": 52,
+     "hi": 59,
+     "file": "steeldrum/steeldrum_692567.mp3"
+    },
+    {
+     "root": 60.01,
+     "lo": 60,
+     "hi": 62,
+     "file": "steeldrum/steeldrum_692569.mp3"
+    },
+    {
+     "root": 64.11,
+     "lo": 63,
+     "hi": 64,
+     "file": "steeldrum/steeldrum_692571.mp3"
+    },
+    {
+     "root": 65.01,
+     "lo": 65,
+     "hi": 67,
+     "file": "steeldrum/steeldrum_692829.mp3"
+    },
+    {
+     "root": 69.11,
+     "lo": 68,
+     "hi": 69,
+     "file": "steeldrum/steeldrum_692561.mp3"
+    },
+    {
+     "root": 70.01,
+     "lo": 70,
+     "hi": 72,
+     "file": "steeldrum/steeldrum_692562.mp3"
+    },
+    {
+     "root": 74.01,
+     "lo": 73,
+     "hi": 127,
+     "file": "steeldrum/steeldrum_692564.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NYLONGUITAR": {
+   "zones": [
+    {
+     "root": 41.11,
+     "lo": 0,
+     "hi": 42,
+     "file": "nylonguitar/nylon_guitar_117716.mp3"
+    },
+    {
+     "root": 44.01,
+     "lo": 43,
+     "hi": 44,
+     "file": "nylonguitar/nylon_guitar_117717.mp3"
+    },
+    {
+     "root": 45.01,
+     "lo": 45,
+     "hi": 47,
+     "file": "nylonguitar/nylon_guitar_41679.mp3"
+    },
+    {
+     "root": 50.11,
+     "lo": 48,
+     "hi": 50,
+     "file": "nylonguitar/nylon_guitar_117675.mp3"
+    },
+    {
+     "root": 51.81,
+     "lo": 51,
+     "hi": 53,
+     "file": "nylonguitar/nylon_guitar_413073.mp3"
+    },
+    {
+     "root": 55.01,
+     "lo": 54,
+     "hi": 127,
+     "file": "nylonguitar/nylon_guitar_41683.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "TINWHISTLE": {
+   "zones": [
+    {
+     "root": 77.91,
+     "lo": 0,
+     "hi": 78,
+     "file": "tinwhistle/tinwhistle_394737.mp3"
+    },
+    {
+     "root": 79.01,
+     "lo": 79,
+     "hi": 82,
+     "file": "tinwhistle/tinwhistle_135696.mp3"
+    },
+    {
+     "root": 85.21,
+     "lo": 83,
+     "hi": 85,
+     "file": "tinwhistle/tinwhistle_394734.mp3"
+    },
+    {
+     "root": 86.31,
+     "lo": 86,
+     "hi": 127,
+     "file": "tinwhistle/tinwhistle_394739.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "ACCORDION": {
+   "zones": [
+    {
+     "root": 51.11,
+     "lo": 0,
+     "hi": 57,
+     "file": "accordion/accordion_560861.mp3"
+    },
+    {
+     "root": 63.01,
+     "lo": 58,
+     "hi": 68,
+     "file": "accordion/accordion_560848.mp3"
+    },
+    {
+     "root": 73.11,
+     "lo": 69,
+     "hi": 74,
+     "file": "accordion/accordion_560859.mp3"
+    },
+    {
+     "root": 76.01,
+     "lo": 75,
+     "hi": 77,
+     "file": "accordion/accordion_560847.mp3"
+    },
+    {
+     "root": 79.11,
+     "lo": 78,
+     "hi": 80,
+     "file": "accordion/accordion_560851.mp3"
+    },
+    {
+     "root": 81.11,
+     "lo": 81,
+     "hi": 127,
+     "file": "accordion/accordion_560844.mp3"
+    }
+   ],
+   "release": 0.4
+  },
+  "PANPIPE": {
+   "zones": [
+    {
+     "root": 66.91,
+     "lo": 0,
+     "hi": 67,
+     "file": "panpipe/panpipe_64936.mp3"
+    },
+    {
+     "root": 69.01,
+     "lo": 68,
+     "hi": 70,
+     "file": "panpipe/panpipe_64926.mp3"
+    },
+    {
+     "root": 71.91,
+     "lo": 71,
+     "hi": 72,
+     "file": "panpipe/panpipe_64930.mp3"
+    },
+    {
+     "root": 74.01,
+     "lo": 73,
+     "hi": 74,
+     "file": "panpipe/panpipe_64932.mp3"
+    },
+    {
+     "root": 75.91,
+     "lo": 75,
+     "hi": 78,
+     "file": "panpipe/panpipe_64934.mp3"
+    },
+    {
+     "root": 80.71,
+     "lo": 79,
+     "hi": 81,
+     "file": "panpipe/panpipe_64927.mp3"
+    },
+    {
+     "root": 82.91,
+     "lo": 82,
+     "hi": 83,
+     "file": "panpipe/panpipe_64929.mp3"
+    },
+    {
+     "root": 83.91,
+     "lo": 84,
+     "hi": 127,
+     "file": "panpipe/panpipe_64931.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "KAVAL": {
+   "zones": [
+    {
+     "root": 72.11,
+     "lo": 0,
+     "hi": 77,
+     "file": "kaval/kaval_159142.mp3"
+    },
+    {
+     "root": 83.21,
+     "lo": 78,
+     "hi": 83,
+     "file": "kaval/kaval_159140.mp3"
+    },
+    {
+     "root": 84.01,
+     "lo": 84,
+     "hi": 86,
+     "file": "kaval/kaval_159144.mp3"
+    },
+    {
+     "root": 88.71,
+     "lo": 87,
+     "hi": 127,
+     "file": "kaval/kaval_159151.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "DUDUK": {
+   "zones": [
+    {
+     "root": 60.01,
+     "lo": 0,
+     "hi": 127,
+     "file": "duduk/duduk_479213.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "TABLA": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_420858.mp3",
+     "vel": [
+      0.0,
+      0.17
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_171911.mp3",
+     "vel": [
+      0.17,
+      0.33
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_171905.mp3",
+     "vel": [
+      0.33,
+      0.5
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_130428.mp3",
+     "vel": [
+      0.5,
+      0.67
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_130422.mp3",
+     "vel": [
+      0.67,
+      0.83
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "tabla/tabla_130408.mp3",
+     "vel": [
+      0.83,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "DJEMBE": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "djembe/djembe_507878.mp3",
+     "vel": [
+      0.0,
+      0.2
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "djembe/djembe_413777.mp3",
+     "vel": [
+      0.2,
+      0.4
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "djembe/djembe_460986.mp3",
+     "vel": [
+      0.4,
+      0.6
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "djembe/djembe_505396.mp3",
+     "vel": [
+      0.6,
+      0.8
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "djembe/djembe_550945.mp3",
+     "vel": [
+      0.8,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "BASSGUITAR": {
+   "zones": [
+    {
+     "root": 30.91,
+     "lo": 0,
+     "hi": 31,
+     "file": "bassguitar/bass_guitar_69745.mp3"
+    },
+    {
+     "root": 33.01,
+     "lo": 32,
+     "hi": 33,
+     "file": "bassguitar/bass_guitar_69732.mp3"
+    },
+    {
+     "root": 34.11,
+     "lo": 34,
+     "hi": 34,
+     "file": "bassguitar/bass_guitar_43950.mp3"
+    },
+    {
+     "root": 35.11,
+     "lo": 35,
+     "hi": 35,
+     "file": "bassguitar/bass_guitar_43939.mp3"
+    },
+    {
+     "root": 36.11,
+     "lo": 36,
+     "hi": 37,
+     "file": "bassguitar/bass_guitar_43958.mp3"
+    },
+    {
+     "root": 38.11,
+     "lo": 38,
+     "hi": 39,
+     "file": "bassguitar/bass_guitar_43962.mp3"
+    },
+    {
+     "root": 40.01,
+     "lo": 40,
+     "hi": 41,
+     "file": "bassguitar/bass_guitar_396119.mp3"
+    },
+    {
+     "root": 42.91,
+     "lo": 42,
+     "hi": 127,
+     "file": "bassguitar/bass_guitar_396120.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "UPRIGHTBASS": {
+   "zones": [
+    {
+     "root": 32.01,
+     "lo": 0,
+     "hi": 32,
+     "file": "uprightbass/upright_bass_383710.mp3"
+    },
+    {
+     "root": 33.01,
+     "lo": 33,
+     "hi": 34,
+     "file": "uprightbass/upright_bass_383551.mp3"
+    },
+    {
+     "root": 36.01,
+     "lo": 35,
+     "hi": 36,
+     "file": "uprightbass/upright_bass_383569.mp3"
+    },
+    {
+     "root": 36.91,
+     "lo": 37,
+     "hi": 38,
+     "file": "uprightbass/upright_bass_383666.mp3"
+    },
+    {
+     "root": 39.41,
+     "lo": 39,
+     "hi": 48,
+     "file": "uprightbass/upright_bass_383680.mp3"
+    },
+    {
+     "root": 58.01,
+     "lo": 49,
+     "hi": 59,
+     "file": "uprightbass/upright_bass_383702.mp3"
+    },
+    {
+     "root": 60.11,
+     "lo": 60,
+     "hi": 62,
+     "file": "uprightbass/upright_bass_83122.mp3"
+    },
+    {
+     "root": 65.11,
+     "lo": 63,
+     "hi": 127,
+     "file": "uprightbass/upright_bass_83134.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "EGUITAR": {
+   "zones": [
+    {
+     "root": 44.01,
+     "lo": 0,
+     "hi": 45,
+     "file": "eguitar/electric_clean_688268.mp3"
+    },
+    {
+     "root": 47.21,
+     "lo": 46,
+     "hi": 48,
+     "file": "eguitar/electric_clean_557714.mp3"
+    },
+    {
+     "root": 50.01,
+     "lo": 49,
+     "hi": 50,
+     "file": "eguitar/electric_clean_705857.mp3"
+    },
+    {
+     "root": 51.01,
+     "lo": 51,
+     "hi": 52,
+     "file": "eguitar/electric_clean_705858.mp3"
+    },
+    {
+     "root": 53.71,
+     "lo": 53,
+     "hi": 54,
+     "file": "eguitar/electric_clean_713256.mp3"
+    },
+    {
+     "root": 55.01,
+     "lo": 55,
+     "hi": 60,
+     "file": "eguitar/electric_clean_705863.mp3"
+    },
+    {
+     "root": 65.01,
+     "lo": 61,
+     "hi": 67,
+     "file": "eguitar/electric_clean_705914.mp3"
+    },
+    {
+     "root": 70.81,
+     "lo": 68,
+     "hi": 127,
+     "file": "eguitar/electric_clean_493993.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "RHODES": {
+   "zones": [
+    {
+     "root": 36.01,
+     "lo": 0,
+     "hi": 43,
+     "file": "rhodes/rhodes_12760.mp3"
+    },
+    {
+     "root": 50.01,
+     "lo": 44,
+     "hi": 55,
+     "file": "rhodes/rhodes_4190.mp3"
+    },
+    {
+     "root": 60.01,
+     "lo": 56,
+     "hi": 61,
+     "file": "rhodes/rhodes_65720.mp3"
+    },
+    {
+     "root": 62.01,
+     "lo": 62,
+     "hi": 68,
+     "file": "rhodes/rhodes_4191.mp3"
+    },
+    {
+     "root": 74.01,
+     "lo": 69,
+     "hi": 80,
+     "file": "rhodes/rhodes_4192.mp3"
+    },
+    {
+     "root": 86.11,
+     "lo": 81,
+     "hi": 88,
+     "file": "rhodes/rhodes_4194.mp3"
+    },
+    {
+     "root": 90.11,
+     "lo": 89,
+     "hi": 91,
+     "file": "rhodes/rhodes_65661.mp3"
+    },
+    {
+     "root": 92.01,
+     "lo": 92,
+     "hi": 127,
+     "file": "rhodes/rhodes_65663.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "DRUMKIT": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_104239.mp3",
+     "vel": [
+      0.0,
+      0.1
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_93909.mp3",
+     "vel": [
+      0.1,
+      0.2
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_425449.mp3",
+     "vel": [
+      0.2,
+      0.3
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_8844.mp3",
+     "vel": [
+      0.3,
+      0.4
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_531787.mp3",
+     "vel": [
+      0.4,
+      0.5
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_696257.mp3",
+     "vel": [
+      0.5,
+      0.6
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_147043.mp3",
+     "vel": [
+      0.6,
+      0.7
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_488466.mp3",
+     "vel": [
+      0.7,
+      0.8
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_321454.mp3",
+     "vel": [
+      0.8,
+      0.9
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "drumkit/drumkit_459217.mp3",
+     "vel": [
+      0.9,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "BENDIR": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_797458.mp3",
+     "vel": [
+      0.0,
+      0.17
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_797456.mp3",
+     "vel": [
+      0.17,
+      0.33
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_797454.mp3",
+     "vel": [
+      0.33,
+      0.5
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_218920.mp3",
+     "vel": [
+      0.5,
+      0.67
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_797457.mp3",
+     "vel": [
+      0.67,
+      0.83
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "bendir/bendir_797455.mp3",
+     "vel": [
+      0.83,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "FRAMEDRUM_FS": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum_fs/bodhran_257181.mp3",
+     "vel": [
+      0.0,
+      0.33
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum_fs/bodhran_257160.mp3",
+     "vel": [
+      0.33,
+      0.67
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum_fs/bodhran_257156.mp3",
+     "vel": [
+      0.67,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "DANTRANH": {
+   "zones": [
+    {
+     "root": 35.01,
+     "lo": 0,
+     "hi": 36,
+     "file": "dantranh/B1_f_1.mp3"
+    },
+    {
+     "root": 37.01,
+     "lo": 37,
+     "hi": 40,
+     "file": "dantranh/Cs2_f_1.mp3"
+    },
+    {
+     "root": 44.11,
+     "lo": 41,
+     "hi": 47,
+     "file": "dantranh/Gs2_f_1.mp3"
+    },
+    {
+     "root": 51.01,
+     "lo": 48,
+     "hi": 52,
+     "file": "dantranh/Ds3_f_1.mp3"
+    },
+    {
+     "root": 53.91,
+     "lo": 53,
+     "hi": 56,
+     "file": "dantranh/Fs3_f_1.mp3"
+    },
+    {
+     "root": 59.01,
+     "lo": 57,
+     "hi": 60,
+     "file": "dantranh/B3_f_1.mp3"
+    },
+    {
+     "root": 61.01,
+     "lo": 61,
+     "hi": 62,
+     "file": "dantranh/Cs4_f_1.mp3"
+    },
+    {
+     "root": 63.01,
+     "lo": 63,
+     "hi": 65,
+     "file": "dantranh/Ds4_f_1.mp3"
+    },
+    {
+     "root": 67.91,
+     "lo": 66,
+     "hi": 127,
+     "file": "dantranh/Gs4_f_1.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "PSALTERY": {
+   "zones": [
+    {
+     "root": 58.01,
+     "lo": 0,
+     "hi": 61,
+     "file": "psaltery/BowedPsaltery_As3_Main_Pluck_rr1.mp3"
+    },
+    {
+     "root": 64.01,
+     "lo": 62,
+     "hi": 66,
+     "file": "psaltery/BowedPsaltery_E4_Main_Pluck_rr2.mp3"
+    },
+    {
+     "root": 68.01,
+     "lo": 67,
+     "hi": 69,
+     "file": "psaltery/BowedPsaltery_Gs4_Main_Pluck_rr3.mp3"
+    },
+    {
+     "root": 70.01,
+     "lo": 70,
+     "hi": 71,
+     "file": "psaltery/BowedPsaltery_As4_Main_Pluck_rr1.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 72,
+     "hi": 74,
+     "file": "psaltery/BowedPsaltery_C5_Main_Pluck_rr1.mp3"
+    },
+    {
+     "root": 76.01,
+     "lo": 75,
+     "hi": 77,
+     "file": "psaltery/BowedPsaltery_E5_Main_Pluck_rr1.mp3"
+    },
+    {
+     "root": 78.01,
+     "lo": 78,
+     "hi": 127,
+     "file": "psaltery/BowedPsaltery_Fs5_Main_Pluck_rr3.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "FOLKHARP": {
+   "zones": [
+    {
+     "root": 24.11,
+     "lo": 0,
+     "hi": 28,
+     "file": "folkharp/EWHarp_Normal_C1_v2_RR1.mp3"
+    },
+    {
+     "root": 32.01,
+     "lo": 29,
+     "hi": 33,
+     "file": "folkharp/EWHarp_Normal_Gs1_v2_RR1.mp3"
+    },
+    {
+     "root": 34.01,
+     "lo": 34,
+     "hi": 38,
+     "file": "folkharp/EWHarp_Normal_As1_v2_RR1.mp3"
+    },
+    {
+     "root": 42.01,
+     "lo": 39,
+     "hi": 47,
+     "file": "folkharp/EWHarp_Normal_Fs2_v2_RR1.mp3"
+    },
+    {
+     "root": 52.01,
+     "lo": 48,
+     "hi": 57,
+     "file": "folkharp/EWHarp_Normal_E3_v2_RR1.mp3"
+    },
+    {
+     "root": 62.01,
+     "lo": 58,
+     "hi": 67,
+     "file": "folkharp/EWHarp_Normal_D4_v2_RR1.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 68,
+     "hi": 76,
+     "file": "folkharp/EWHarp_Normal_C5_v2_RR1.mp3"
+    },
+    {
+     "root": 80.01,
+     "lo": 77,
+     "hi": 127,
+     "file": "folkharp/EWHarp_Normal_Gs5_v2_RR1.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "MBIRA": {
+   "zones": [
+    {
+     "root": 47.31,
+     "lo": 0,
+     "hi": 48,
+     "file": "mbira/Mbira6_Normal_MainSpirit_B2_k8_vl3_rr2.mp3"
+    },
+    {
+     "root": 49.21,
+     "lo": 49,
+     "hi": 50,
+     "file": "mbira/Mbira6_Normal_MainSpirit_Cs3_k7_vl3_rr2.mp3"
+    },
+    {
+     "root": 51.11,
+     "lo": 51,
+     "hi": 53,
+     "file": "mbira/Mbira6_Normal_MainSpirit_Ds3_k6_vl3_rr2.mp3"
+    },
+    {
+     "root": 56.41,
+     "lo": 54,
+     "hi": 61,
+     "file": "mbira/Mbira6_Normal_MainSpirit_Gs3_k11_vl3_rr2.mp3"
+    },
+    {
+     "root": 66.41,
+     "lo": 62,
+     "hi": 127,
+     "file": "mbira/Mbira6_Normal_MainSpirit_Fs4_k14_vl3_rr2.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "VIBES": {
+   "zones": [
+    {
+     "root": 45.01,
+     "lo": 0,
+     "hi": 46,
+     "file": "vibes/Vibes_hard_A2_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 48.01,
+     "lo": 47,
+     "hi": 50,
+     "file": "vibes/Vibes_hard_C3_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 52.01,
+     "lo": 51,
+     "hi": 53,
+     "file": "vibes/Vibes_hard_E3_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 55.01,
+     "lo": 54,
+     "hi": 60,
+     "file": "vibes/Vibes_hard_G3_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 65.01,
+     "lo": 61,
+     "hi": 67,
+     "file": "vibes/Vibes_hard_F4_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 69.01,
+     "lo": 68,
+     "hi": 70,
+     "file": "vibes/Vibes_hard_A4_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 71,
+     "hi": 74,
+     "file": "vibes/Vibes_hard_C5_v2_rr1_Main.mp3"
+    },
+    {
+     "root": 76.01,
+     "lo": 75,
+     "hi": 127,
+     "file": "vibes/Vibes_hard_E5_v2_rr1_Main.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "DARBUKA_VCSL": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "darbuka_vcsl/Darbuka_5_hit_vl2_rr1.mp3",
+     "vel": [
+      0.0,
+      0.2
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "darbuka_vcsl/Darbuka_4_hit_vl2_rr1.mp3",
+     "vel": [
+      0.2,
+      0.4
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "darbuka_vcsl/Darbuka_3_hit_vl2_rr1.mp3",
+     "vel": [
+      0.4,
+      0.6
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "darbuka_vcsl/Darbuka_2_hit_vl2_rr1.mp3",
+     "vel": [
+      0.6,
+      0.8
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "darbuka_vcsl/Darbuka_1_hit_vl2_rr1.mp3",
+     "vel": [
+      0.8,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "STEINWAY": {
+   "zones": [
+    {
+     "root": 26.11,
+     "lo": 0,
+     "hi": 35,
+     "file": "steinway/JHPiano_NoSus_Close_D1_vl3_rr1.mp3"
+    },
+    {
+     "root": 44.01,
+     "lo": 36,
+     "hi": 46,
+     "file": "steinway/JHPiano_NoSus_Close_Gs2_vl3_rr1.mp3"
+    },
+    {
+     "root": 48.01,
+     "lo": 47,
+     "hi": 50,
+     "file": "steinway/JHPiano_NoSus_Close_C3_vl3_rr1.mp3"
+    },
+    {
+     "root": 52.01,
+     "lo": 51,
+     "hi": 63,
+     "file": "steinway/JHPiano_NoSus_Close_E3_vl3_rr1.mp3"
+    },
+    {
+     "root": 74.01,
+     "lo": 64,
+     "hi": 76,
+     "file": "steinway/JHPiano_NoSus_Close_D5_vl3_rr1.mp3"
+    },
+    {
+     "root": 78.01,
+     "lo": 77,
+     "hi": 80,
+     "file": "steinway/JHPiano_NoSus_Close_Fs5_vl3_rr1.mp3"
+    },
+    {
+     "root": 82.01,
+     "lo": 81,
+     "hi": 91,
+     "file": "steinway/JHPiano_NoSus_Close_As5_vl3_rr1.mp3"
+    },
+    {
+     "root": 100.11,
+     "lo": 92,
+     "hi": 127,
+     "file": "steinway/JHPiano_NoSus_Close_E7_vl3_rr1.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "KAWAI": {
+   "zones": [
+    {
+     "root": 36.11,
+     "lo": 0,
+     "hi": 37,
+     "file": "kawai/GPiano_sus_C2_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 38.01,
+     "lo": 38,
+     "hi": 42,
+     "file": "kawai/GPiano_sus_D2_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 46.01,
+     "lo": 43,
+     "hi": 55,
+     "file": "kawai/GPiano_sus_As2_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 64.01,
+     "lo": 56,
+     "hi": 65,
+     "file": "kawai/GPiano_sus_E4_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 66.01,
+     "lo": 66,
+     "hi": 67,
+     "file": "kawai/GPiano_sus_Fs4_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 68.01,
+     "lo": 68,
+     "hi": 74,
+     "file": "kawai/GPiano_sus_Gs4_v3_rr1_Player.mp3"
+    },
+    {
+     "root": 81.01,
+     "lo": 75,
+     "hi": 127,
+     "file": "kawai/GPiano_sus_A5_v3_rr1_Player.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "UPRIGHTPNO": {
+   "zones": [
+    {
+     "root": 19.11,
+     "lo": 0,
+     "hi": 27,
+     "file": "uprightpno/Upright1_Sus_G0_vl2_rr1.mp3"
+    },
+    {
+     "root": 36.01,
+     "lo": 28,
+     "hi": 39,
+     "file": "uprightpno/Upright1_Sus_C2_vl2_rr1.mp3"
+    },
+    {
+     "root": 43.01,
+     "lo": 40,
+     "hi": 45,
+     "file": "uprightpno/Upright1_Sus_G2_vl2_rr1.mp3"
+    },
+    {
+     "root": 48.01,
+     "lo": 46,
+     "hi": 51,
+     "file": "uprightpno/Upright1_Sus_C3_vl2_rr1.mp3"
+    },
+    {
+     "root": 55.01,
+     "lo": 52,
+     "hi": 63,
+     "file": "uprightpno/Upright1_Sus_G3_vl2_rr1.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 64,
+     "hi": 75,
+     "file": "uprightpno/Upright1_Sus_C5_vl2_rr1.mp3"
+    },
+    {
+     "root": 79.11,
+     "lo": 76,
+     "hi": 127,
+     "file": "uprightpno/Upright1_Sus_G5_vl2_rr1.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "KNIGHTPNO": {
+   "zones": [
+    {
+     "root": 19.01,
+     "lo": 0,
+     "hi": 20,
+     "file": "knightpno/Player_vl2_rr1_G0.mp3"
+    },
+    {
+     "root": 21.01,
+     "lo": 21,
+     "hi": 25,
+     "file": "knightpno/Player_vl2_rr1_A0.mp3"
+    },
+    {
+     "root": 29.11,
+     "lo": 26,
+     "hi": 34,
+     "file": "knightpno/Player_vl2_rr1_F1.mp3"
+    },
+    {
+     "root": 39.01,
+     "lo": 35,
+     "hi": 50,
+     "file": "knightpno/Player_vl2_rr1_Ds2.mp3"
+    },
+    {
+     "root": 61.11,
+     "lo": 51,
+     "hi": 72,
+     "file": "knightpno/Player_vl2_rr1_Cs4.mp3"
+    },
+    {
+     "root": 83.31,
+     "lo": 73,
+     "hi": 127,
+     "file": "knightpno/Player_vl2_rr1_B5.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "HARPSICHORD": {
+   "zones": [
+    {
+     "root": 21.91,
+     "lo": 0,
+     "hi": 25,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_As0_rr1.mp3"
+    },
+    {
+     "root": 30.01,
+     "lo": 26,
+     "hi": 31,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_Fs1_rr1.mp3"
+    },
+    {
+     "root": 32.01,
+     "lo": 32,
+     "hi": 34,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_Gs1_rr1.mp3"
+    },
+    {
+     "root": 36.11,
+     "lo": 35,
+     "hi": 38,
+     "file": "harpsichord/ZuckermannKitHarpsi_Normal_Sus_C2_rr1.mp3"
+    },
+    {
+     "root": 40.11,
+     "lo": 39,
+     "hi": 51,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_E2_rr1.mp3"
+    },
+    {
+     "root": 62.11,
+     "lo": 52,
+     "hi": 66,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_D4_rr1.mp3"
+    },
+    {
+     "root": 69.91,
+     "lo": 67,
+     "hi": 70,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_As4_rr1.mp3"
+    },
+    {
+     "root": 71.91,
+     "lo": 71,
+     "hi": 127,
+     "file": "harpsichord/ZuckermannKitHarpsi_Lute_Sus_C5_rr1.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "RENORGAN": {
+   "zones": [
+    {
+     "root": 24.01,
+     "lo": 0,
+     "hi": 27,
+     "file": "organ/RenOrgan_8foot_Room_C1_rr1.mp3"
+    },
+    {
+     "root": 30.01,
+     "lo": 28,
+     "hi": 32,
+     "file": "organ/RenOrgan_8foot_Room_Fs1_rr1.mp3"
+    },
+    {
+     "root": 34.01,
+     "lo": 33,
+     "hi": 37,
+     "file": "organ/RenOrgan_8foot_Room_As1_rr1.mp3"
+    },
+    {
+     "root": 40.01,
+     "lo": 38,
+     "hi": 45,
+     "file": "organ/RenOrgan_8foot_Room_E2_rr1.mp3"
+    },
+    {
+     "root": 50.01,
+     "lo": 46,
+     "hi": 55,
+     "file": "organ/RenOrgan_8foot_Room_D3_rr1.mp3"
+    },
+    {
+     "root": 60.01,
+     "lo": 56,
+     "hi": 63,
+     "file": "organ/RenOrgan_8foot_Room_C4_rr1.mp3"
+    },
+    {
+     "root": 66.01,
+     "lo": 64,
+     "hi": 67,
+     "file": "organ/RenOrgan_8foot_Room_Fs4_rr1.mp3"
+    },
+    {
+     "root": 68.01,
+     "lo": 68,
+     "hi": 127,
+     "file": "organ/RenOrgan_8foot_Room_Gs4_rr1.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "TENORSAX": {
+   "zones": [
+    {
+     "root": 44.01,
+     "lo": 0,
+     "hi": 45,
+     "file": "tenorsax/BrettTenor_NV_Main_Gs1_vl2_rr1.mp3"
+    },
+    {
+     "root": 46.01,
+     "lo": 46,
+     "hi": 48,
+     "file": "tenorsax/BrettTenor_NV_Main_As1_vl2_rr1.mp3"
+    },
+    {
+     "root": 50.01,
+     "lo": 49,
+     "hi": 51,
+     "file": "tenorsax/BrettTenor_NV_Main_D3_vl2_rr1.mp3"
+    },
+    {
+     "root": 52.01,
+     "lo": 52,
+     "hi": 53,
+     "file": "tenorsax/BrettTenor_NV_Main_E3_vl2_rr1.mp3"
+    },
+    {
+     "root": 54.01,
+     "lo": 54,
+     "hi": 57,
+     "file": "tenorsax/BrettTenor_NV_Main_Fs2_vl2_rr1.mp3"
+    },
+    {
+     "root": 60.01,
+     "lo": 58,
+     "hi": 64,
+     "file": "tenorsax/BrettTenor_NV_Main_C4_vl2_rr1.mp3"
+    },
+    {
+     "root": 68.01,
+     "lo": 65,
+     "hi": 69,
+     "file": "tenorsax/BrettTenor_NV_Main_Gs4_vl2_rr1.mp3"
+    },
+    {
+     "root": 70.01,
+     "lo": 70,
+     "hi": 127,
+     "file": "tenorsax/BrettTenor_NV_Main_As4_vl2_rr1.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "HARMONICA": {
+   "zones": [
+    {
+     "root": 48.01,
+     "lo": 0,
+     "hi": 56,
+     "file": "harmonica/Hohner-Special20_Normal_C3.mp3"
+    },
+    {
+     "root": 64.01,
+     "lo": 57,
+     "hi": 68,
+     "file": "harmonica/Hohner-Special20_Normal_E4.mp3"
+    },
+    {
+     "root": 72.01,
+     "lo": 69,
+     "hi": 73,
+     "file": "harmonica/Hohner-Special20_Normal_C5.mp3"
+    },
+    {
+     "root": 75.91,
+     "lo": 74,
+     "hi": 77,
+     "file": "harmonica/Hohner-Special20_Normal_E5.mp3"
+    },
+    {
+     "root": 79.11,
+     "lo": 78,
+     "hi": 81,
+     "file": "harmonica/Hohner-Special20_Normal_G5.mp3"
+    },
+    {
+     "root": 84.01,
+     "lo": 82,
+     "hi": 127,
+     "file": "harmonica/Hohner-Special20_Normal_C6.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "FRAMEDRUM": {
+   "zones": [
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumS_Hand_v1_rr1_Sum.mp3",
+     "vel": [
+      0.0,
+      0.12
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumL_Hand_rr1_Sum.mp3",
+     "vel": [
+      0.12,
+      0.25
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumS_HitMuted_v2_rr1_Sum.mp3",
+     "vel": [
+      0.25,
+      0.38
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumS_Hit_v2_rr1_Sum.mp3",
+     "vel": [
+      0.38,
+      0.5
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumL_HitMuted_v2_rr1_Sum.mp3",
+     "vel": [
+      0.5,
+      0.62
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumL_Hit_v2_rr1_Sum.mp3",
+     "vel": [
+      0.62,
+      0.75
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumS_Hit_v3_rr1_Sum.mp3",
+     "vel": [
+      0.75,
+      0.88
+     ]
+    },
+    {
+     "root": 60,
+     "lo": 0,
+     "hi": 127,
+     "file": "framedrum/HDrumL_Hit_v3_rr1_Sum.mp3",
+     "vel": [
+      0.88,
+      1.0
+     ]
+    }
+   ],
+   "unpitched": true,
+   "release": 0.25
+  },
+  "NS_BASS_EL_018": {
+   "zones": [
+    {
+     "root": 22,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_bass_el_018/bass_electronic_018-022-100.mp3"
+    },
+    {
+     "root": 26,
+     "lo": 25,
+     "hi": 28,
+     "file": "ns_bass_el_018/bass_electronic_018-026-075.mp3"
+    },
+    {
+     "root": 30,
+     "lo": 29,
+     "hi": 31,
+     "file": "ns_bass_el_018/bass_electronic_018-030-050.mp3"
+    },
+    {
+     "root": 33,
+     "lo": 32,
+     "hi": 36,
+     "file": "ns_bass_el_018/bass_electronic_018-033-075.mp3"
+    },
+    {
+     "root": 40,
+     "lo": 37,
+     "hi": 42,
+     "file": "ns_bass_el_018/bass_electronic_018-040-050.mp3"
+    },
+    {
+     "root": 45,
+     "lo": 43,
+     "hi": 47,
+     "file": "ns_bass_el_018/bass_electronic_018-045-075.mp3"
+    },
+    {
+     "root": 50,
+     "lo": 48,
+     "hi": 51,
+     "file": "ns_bass_el_018/bass_electronic_018-050-075.mp3"
+    },
+    {
+     "root": 53,
+     "lo": 52,
+     "hi": 55,
+     "file": "ns_bass_el_018/bass_electronic_018-053-075.mp3"
+    },
+    {
+     "root": 57,
+     "lo": 56,
+     "hi": 58,
+     "file": "ns_bass_el_018/bass_electronic_018-057-100.mp3"
+    },
+    {
+     "root": 60,
+     "lo": 59,
+     "hi": 127,
+     "file": "ns_bass_el_018/bass_electronic_018-060-075.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_BASS_EL_025": {
+   "zones": [
+    {
+     "root": 22,
+     "lo": 0,
+     "hi": 23,
+     "file": "ns_bass_el_025/bass_electronic_025-022-050.mp3"
+    },
+    {
+     "root": 25,
+     "lo": 24,
+     "hi": 27,
+     "file": "ns_bass_el_025/bass_electronic_025-025-025.mp3"
+    },
+    {
+     "root": 29,
+     "lo": 28,
+     "hi": 31,
+     "file": "ns_bass_el_025/bass_electronic_025-029-127.mp3"
+    },
+    {
+     "root": 33,
+     "lo": 32,
+     "hi": 36,
+     "file": "ns_bass_el_025/bass_electronic_025-033-127.mp3"
+    },
+    {
+     "root": 39,
+     "lo": 37,
+     "hi": 42,
+     "file": "ns_bass_el_025/bass_electronic_025-039-075.mp3"
+    },
+    {
+     "root": 45,
+     "lo": 43,
+     "hi": 47,
+     "file": "ns_bass_el_025/bass_electronic_025-045-075.mp3"
+    },
+    {
+     "root": 50,
+     "lo": 48,
+     "hi": 51,
+     "file": "ns_bass_el_025/bass_electronic_025-050-025.mp3"
+    },
+    {
+     "root": 53,
+     "lo": 52,
+     "hi": 54,
+     "file": "ns_bass_el_025/bass_electronic_025-053-075.mp3"
+    },
+    {
+     "root": 56,
+     "lo": 55,
+     "hi": 57,
+     "file": "ns_bass_el_025/bass_electronic_025-056-075.mp3"
+    },
+    {
+     "root": 59,
+     "lo": 58,
+     "hi": 127,
+     "file": "ns_bass_el_025/bass_electronic_025-059-050.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_BASS_EL_027": {
+   "zones": [
+    {
+     "root": 22,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_bass_el_027/bass_electronic_027-022-050.mp3"
+    },
+    {
+     "root": 27,
+     "lo": 25,
+     "hi": 29,
+     "file": "ns_bass_el_027/bass_electronic_027-027-025.mp3"
+    },
+    {
+     "root": 32,
+     "lo": 30,
+     "hi": 33,
+     "file": "ns_bass_el_027/bass_electronic_027-032-075.mp3"
+    },
+    {
+     "root": 35,
+     "lo": 34,
+     "hi": 36,
+     "file": "ns_bass_el_027/bass_electronic_027-035-050.mp3"
+    },
+    {
+     "root": 38,
+     "lo": 37,
+     "hi": 41,
+     "file": "ns_bass_el_027/bass_electronic_027-038-025.mp3"
+    },
+    {
+     "root": 44,
+     "lo": 42,
+     "hi": 46,
+     "file": "ns_bass_el_027/bass_electronic_027-044-100.mp3"
+    },
+    {
+     "root": 48,
+     "lo": 47,
+     "hi": 49,
+     "file": "ns_bass_el_027/bass_electronic_027-048-075.mp3"
+    },
+    {
+     "root": 51,
+     "lo": 50,
+     "hi": 53,
+     "file": "ns_bass_el_027/bass_electronic_027-051-100.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 54,
+     "hi": 56,
+     "file": "ns_bass_el_027/bass_electronic_027-055-050.mp3"
+    },
+    {
+     "root": 58,
+     "lo": 57,
+     "hi": 127,
+     "file": "ns_bass_el_027/bass_electronic_027-058-075.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_AC_010": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-021-127.mp3"
+    },
+    {
+     "root": 28,
+     "lo": 25,
+     "hi": 34,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-028-025.mp3"
+    },
+    {
+     "root": 40,
+     "lo": 35,
+     "hi": 46,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-040-050.mp3"
+    },
+    {
+     "root": 52,
+     "lo": 47,
+     "hi": 55,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-052-100.mp3"
+    },
+    {
+     "root": 59,
+     "lo": 56,
+     "hi": 63,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-059-127.mp3"
+    },
+    {
+     "root": 68,
+     "lo": 64,
+     "hi": 71,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-068-075.mp3"
+    },
+    {
+     "root": 74,
+     "lo": 72,
+     "hi": 79,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-074-075.mp3"
+    },
+    {
+     "root": 84,
+     "lo": 80,
+     "hi": 88,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-084-025.mp3"
+    },
+    {
+     "root": 92,
+     "lo": 89,
+     "hi": 96,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-092-075.mp3"
+    },
+    {
+     "root": 101,
+     "lo": 97,
+     "hi": 127,
+     "file": "ns_guitar_ac_010/guitar_acoustic_010-101-075.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_AC_014": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-021-050.mp3"
+    },
+    {
+     "root": 28,
+     "lo": 25,
+     "hi": 32,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-028-050.mp3"
+    },
+    {
+     "root": 37,
+     "lo": 33,
+     "hi": 41,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-037-075.mp3"
+    },
+    {
+     "root": 46,
+     "lo": 42,
+     "hi": 51,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-046-075.mp3"
+    },
+    {
+     "root": 57,
+     "lo": 52,
+     "hi": 61,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-057-075.mp3"
+    },
+    {
+     "root": 66,
+     "lo": 62,
+     "hi": 69,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-066-050.mp3"
+    },
+    {
+     "root": 73,
+     "lo": 70,
+     "hi": 77,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-073-100.mp3"
+    },
+    {
+     "root": 81,
+     "lo": 78,
+     "hi": 85,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-081-025.mp3"
+    },
+    {
+     "root": 90,
+     "lo": 86,
+     "hi": 94,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-090-075.mp3"
+    },
+    {
+     "root": 99,
+     "lo": 95,
+     "hi": 127,
+     "file": "ns_guitar_ac_014/guitar_acoustic_014-099-050.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_AC_015": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-021-025.mp3"
+    },
+    {
+     "root": 28,
+     "lo": 25,
+     "hi": 33,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-028-025.mp3"
+    },
+    {
+     "root": 38,
+     "lo": 34,
+     "hi": 42,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-038-075.mp3"
+    },
+    {
+     "root": 46,
+     "lo": 43,
+     "hi": 50,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-046-025.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 51,
+     "hi": 59,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-055-075.mp3"
+    },
+    {
+     "root": 63,
+     "lo": 60,
+     "hi": 67,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-063-127.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 68,
+     "hi": 76,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-071-025.mp3"
+    },
+    {
+     "root": 82,
+     "lo": 77,
+     "hi": 86,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-082-127.mp3"
+    },
+    {
+     "root": 91,
+     "lo": 87,
+     "hi": 94,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-091-100.mp3"
+    },
+    {
+     "root": 98,
+     "lo": 95,
+     "hi": 127,
+     "file": "ns_guitar_ac_015/guitar_acoustic_015-098-100.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_AC_021": {
+   "zones": [
+    {
+     "root": 22,
+     "lo": 0,
+     "hi": 26,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-022-075.mp3"
+    },
+    {
+     "root": 30,
+     "lo": 27,
+     "hi": 36,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-030-100.mp3"
+    },
+    {
+     "root": 42,
+     "lo": 37,
+     "hi": 46,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-042-100.mp3"
+    },
+    {
+     "root": 50,
+     "lo": 47,
+     "hi": 53,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-050-100.mp3"
+    },
+    {
+     "root": 57,
+     "lo": 54,
+     "hi": 62,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-057-127.mp3"
+    },
+    {
+     "root": 68,
+     "lo": 63,
+     "hi": 72,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-068-100.mp3"
+    },
+    {
+     "root": 76,
+     "lo": 73,
+     "hi": 80,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-076-050.mp3"
+    },
+    {
+     "root": 85,
+     "lo": 81,
+     "hi": 89,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-085-050.mp3"
+    },
+    {
+     "root": 93,
+     "lo": 90,
+     "hi": 97,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-093-050.mp3"
+    },
+    {
+     "root": 101,
+     "lo": 98,
+     "hi": 127,
+     "file": "ns_guitar_ac_021/guitar_acoustic_021-101-100.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_AC_030": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 25,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-021-127.mp3"
+    },
+    {
+     "root": 29,
+     "lo": 26,
+     "hi": 34,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-029-025.mp3"
+    },
+    {
+     "root": 40,
+     "lo": 35,
+     "hi": 44,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-040-127.mp3"
+    },
+    {
+     "root": 48,
+     "lo": 45,
+     "hi": 51,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-048-050.mp3"
+    },
+    {
+     "root": 54,
+     "lo": 52,
+     "hi": 58,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-054-075.mp3"
+    },
+    {
+     "root": 62,
+     "lo": 59,
+     "hi": 68,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-062-050.mp3"
+    },
+    {
+     "root": 74,
+     "lo": 69,
+     "hi": 75,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-074-050.mp3"
+    },
+    {
+     "root": 77,
+     "lo": 76,
+     "hi": 85,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-077-100.mp3"
+    },
+    {
+     "root": 93,
+     "lo": 86,
+     "hi": 96,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-093-127.mp3"
+    },
+    {
+     "root": 99,
+     "lo": 97,
+     "hi": 127,
+     "file": "ns_guitar_ac_030/guitar_acoustic_030-099-025.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_EL_022": {
+   "zones": [
+    {
+     "root": 24,
+     "lo": 0,
+     "hi": 28,
+     "file": "ns_guitar_el_022/guitar_electronic_022-024-050.mp3"
+    },
+    {
+     "root": 32,
+     "lo": 29,
+     "hi": 34,
+     "file": "ns_guitar_el_022/guitar_electronic_022-032-127.mp3"
+    },
+    {
+     "root": 37,
+     "lo": 35,
+     "hi": 40,
+     "file": "ns_guitar_el_022/guitar_electronic_022-037-075.mp3"
+    },
+    {
+     "root": 43,
+     "lo": 41,
+     "hi": 46,
+     "file": "ns_guitar_el_022/guitar_electronic_022-043-075.mp3"
+    },
+    {
+     "root": 49,
+     "lo": 47,
+     "hi": 52,
+     "file": "ns_guitar_el_022/guitar_electronic_022-049-050.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 53,
+     "hi": 57,
+     "file": "ns_guitar_el_022/guitar_electronic_022-055-100.mp3"
+    },
+    {
+     "root": 60,
+     "lo": 58,
+     "hi": 65,
+     "file": "ns_guitar_el_022/guitar_electronic_022-060-075.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 66,
+     "hi": 75,
+     "file": "ns_guitar_el_022/guitar_electronic_022-071-100.mp3"
+    },
+    {
+     "root": 79,
+     "lo": 76,
+     "hi": 81,
+     "file": "ns_guitar_el_022/guitar_electronic_022-079-100.mp3"
+    },
+    {
+     "root": 84,
+     "lo": 82,
+     "hi": 127,
+     "file": "ns_guitar_el_022/guitar_electronic_022-084-075.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_GUITAR_EL_028": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_guitar_el_028/guitar_electronic_028-021-075.mp3"
+    },
+    {
+     "root": 28,
+     "lo": 25,
+     "hi": 31,
+     "file": "ns_guitar_el_028/guitar_electronic_028-028-050.mp3"
+    },
+    {
+     "root": 34,
+     "lo": 32,
+     "hi": 39,
+     "file": "ns_guitar_el_028/guitar_electronic_028-034-025.mp3"
+    },
+    {
+     "root": 45,
+     "lo": 40,
+     "hi": 50,
+     "file": "ns_guitar_el_028/guitar_electronic_028-045-075.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 51,
+     "hi": 59,
+     "file": "ns_guitar_el_028/guitar_electronic_028-055-050.mp3"
+    },
+    {
+     "root": 64,
+     "lo": 60,
+     "hi": 67,
+     "file": "ns_guitar_el_028/guitar_electronic_028-064-050.mp3"
+    },
+    {
+     "root": 70,
+     "lo": 68,
+     "hi": 75,
+     "file": "ns_guitar_el_028/guitar_electronic_028-070-127.mp3"
+    },
+    {
+     "root": 81,
+     "lo": 76,
+     "hi": 86,
+     "file": "ns_guitar_el_028/guitar_electronic_028-081-025.mp3"
+    },
+    {
+     "root": 91,
+     "lo": 87,
+     "hi": 96,
+     "file": "ns_guitar_el_028/guitar_electronic_028-091-127.mp3"
+    },
+    {
+     "root": 101,
+     "lo": 97,
+     "hi": 127,
+     "file": "ns_guitar_el_028/guitar_electronic_028-101-100.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_KEYS_AC_004": {
+   "zones": [
+    {
+     "root": 22,
+     "lo": 0,
+     "hi": 26,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-022-050.mp3"
+    },
+    {
+     "root": 31,
+     "lo": 27,
+     "hi": 35,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-031-050.mp3"
+    },
+    {
+     "root": 39,
+     "lo": 36,
+     "hi": 43,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-039-075.mp3"
+    },
+    {
+     "root": 48,
+     "lo": 44,
+     "hi": 52,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-048-075.mp3"
+    },
+    {
+     "root": 57,
+     "lo": 53,
+     "hi": 61,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-057-075.mp3"
+    },
+    {
+     "root": 65,
+     "lo": 62,
+     "hi": 69,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-065-100.mp3"
+    },
+    {
+     "root": 73,
+     "lo": 70,
+     "hi": 77,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-073-050.mp3"
+    },
+    {
+     "root": 81,
+     "lo": 78,
+     "hi": 85,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-081-075.mp3"
+    },
+    {
+     "root": 89,
+     "lo": 86,
+     "hi": 94,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-089-127.mp3"
+    },
+    {
+     "root": 100,
+     "lo": 95,
+     "hi": 127,
+     "file": "ns_keys_ac_004/keyboard_acoustic_004-100-050.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_001": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_ekeys_001/keyboard_electronic_001-021-127.mp3"
+    },
+    {
+     "root": 27,
+     "lo": 25,
+     "hi": 32,
+     "file": "ns_ekeys_001/keyboard_electronic_001-027-050.mp3"
+    },
+    {
+     "root": 37,
+     "lo": 33,
+     "hi": 40,
+     "file": "ns_ekeys_001/keyboard_electronic_001-037-075.mp3"
+    },
+    {
+     "root": 43,
+     "lo": 41,
+     "hi": 48,
+     "file": "ns_ekeys_001/keyboard_electronic_001-043-100.mp3"
+    },
+    {
+     "root": 53,
+     "lo": 49,
+     "hi": 57,
+     "file": "ns_ekeys_001/keyboard_electronic_001-053-050.mp3"
+    },
+    {
+     "root": 61,
+     "lo": 58,
+     "hi": 65,
+     "file": "ns_ekeys_001/keyboard_electronic_001-061-075.mp3"
+    },
+    {
+     "root": 69,
+     "lo": 66,
+     "hi": 74,
+     "file": "ns_ekeys_001/keyboard_electronic_001-069-127.mp3"
+    },
+    {
+     "root": 80,
+     "lo": 75,
+     "hi": 87,
+     "file": "ns_ekeys_001/keyboard_electronic_001-080-127.mp3"
+    },
+    {
+     "root": 94,
+     "lo": 88,
+     "hi": 97,
+     "file": "ns_ekeys_001/keyboard_electronic_001-094-127.mp3"
+    },
+    {
+     "root": 100,
+     "lo": 98,
+     "hi": 127,
+     "file": "ns_ekeys_001/keyboard_electronic_001-100-100.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_002": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 24,
+     "file": "ns_ekeys_002/keyboard_electronic_002-021-100.mp3"
+    },
+    {
+     "root": 27,
+     "lo": 25,
+     "hi": 33,
+     "file": "ns_ekeys_002/keyboard_electronic_002-027-050.mp3"
+    },
+    {
+     "root": 39,
+     "lo": 34,
+     "hi": 43,
+     "file": "ns_ekeys_002/keyboard_electronic_002-039-075.mp3"
+    },
+    {
+     "root": 48,
+     "lo": 44,
+     "hi": 51,
+     "file": "ns_ekeys_002/keyboard_electronic_002-048-050.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 52,
+     "hi": 58,
+     "file": "ns_ekeys_002/keyboard_electronic_002-055-075.mp3"
+    },
+    {
+     "root": 62,
+     "lo": 59,
+     "hi": 66,
+     "file": "ns_ekeys_002/keyboard_electronic_002-062-075.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 67,
+     "hi": 74,
+     "file": "ns_ekeys_002/keyboard_electronic_002-071-127.mp3"
+    },
+    {
+     "root": 78,
+     "lo": 75,
+     "hi": 82,
+     "file": "ns_ekeys_002/keyboard_electronic_002-078-127.mp3"
+    },
+    {
+     "root": 87,
+     "lo": 83,
+     "hi": 94,
+     "file": "ns_ekeys_002/keyboard_electronic_002-087-100.mp3"
+    },
+    {
+     "root": 101,
+     "lo": 95,
+     "hi": 127,
+     "file": "ns_ekeys_002/keyboard_electronic_002-101-025.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_003": {
+   "zones": [
+    {
+     "root": 25,
+     "lo": 0,
+     "hi": 27,
+     "file": "ns_ekeys_003/keyboard_electronic_003-025-050.mp3"
+    },
+    {
+     "root": 30,
+     "lo": 28,
+     "hi": 34,
+     "file": "ns_ekeys_003/keyboard_electronic_003-030-100.mp3"
+    },
+    {
+     "root": 38,
+     "lo": 35,
+     "hi": 41,
+     "file": "ns_ekeys_003/keyboard_electronic_003-038-100.mp3"
+    },
+    {
+     "root": 44,
+     "lo": 42,
+     "hi": 48,
+     "file": "ns_ekeys_003/keyboard_electronic_003-044-100.mp3"
+    },
+    {
+     "root": 52,
+     "lo": 49,
+     "hi": 55,
+     "file": "ns_ekeys_003/keyboard_electronic_003-052-050.mp3"
+    },
+    {
+     "root": 59,
+     "lo": 56,
+     "hi": 62,
+     "file": "ns_ekeys_003/keyboard_electronic_003-059-050.mp3"
+    },
+    {
+     "root": 65,
+     "lo": 63,
+     "hi": 69,
+     "file": "ns_ekeys_003/keyboard_electronic_003-065-075.mp3"
+    },
+    {
+     "root": 73,
+     "lo": 70,
+     "hi": 78,
+     "file": "ns_ekeys_003/keyboard_electronic_003-073-075.mp3"
+    },
+    {
+     "root": 83,
+     "lo": 79,
+     "hi": 86,
+     "file": "ns_ekeys_003/keyboard_electronic_003-083-100.mp3"
+    },
+    {
+     "root": 89,
+     "lo": 87,
+     "hi": 127,
+     "file": "ns_ekeys_003/keyboard_electronic_003-089-025.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_069": {
+   "zones": [
+    {
+     "root": 31,
+     "lo": 0,
+     "hi": 33,
+     "file": "ns_ekeys_069/keyboard_electronic_069-031-100.mp3"
+    },
+    {
+     "root": 36,
+     "lo": 34,
+     "hi": 41,
+     "file": "ns_ekeys_069/keyboard_electronic_069-036-050.mp3"
+    },
+    {
+     "root": 46,
+     "lo": 42,
+     "hi": 49,
+     "file": "ns_ekeys_069/keyboard_electronic_069-046-025.mp3"
+    },
+    {
+     "root": 52,
+     "lo": 50,
+     "hi": 55,
+     "file": "ns_ekeys_069/keyboard_electronic_069-052-075.mp3"
+    },
+    {
+     "root": 58,
+     "lo": 56,
+     "hi": 60,
+     "file": "ns_ekeys_069/keyboard_electronic_069-058-050.mp3"
+    },
+    {
+     "root": 63,
+     "lo": 61,
+     "hi": 66,
+     "file": "ns_ekeys_069/keyboard_electronic_069-063-100.mp3"
+    },
+    {
+     "root": 69,
+     "lo": 67,
+     "hi": 72,
+     "file": "ns_ekeys_069/keyboard_electronic_069-069-100.mp3"
+    },
+    {
+     "root": 75,
+     "lo": 73,
+     "hi": 78,
+     "file": "ns_ekeys_069/keyboard_electronic_069-075-075.mp3"
+    },
+    {
+     "root": 82,
+     "lo": 79,
+     "hi": 84,
+     "file": "ns_ekeys_069/keyboard_electronic_069-082-100.mp3"
+    },
+    {
+     "root": 86,
+     "lo": 85,
+     "hi": 127,
+     "file": "ns_ekeys_069/keyboard_electronic_069-086-075.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_078": {
+   "zones": [
+    {
+     "root": 29,
+     "lo": 0,
+     "hi": 32,
+     "file": "ns_ekeys_078/keyboard_electronic_078-029-075.mp3"
+    },
+    {
+     "root": 35,
+     "lo": 33,
+     "hi": 38,
+     "file": "ns_ekeys_078/keyboard_electronic_078-035-050.mp3"
+    },
+    {
+     "root": 42,
+     "lo": 39,
+     "hi": 45,
+     "file": "ns_ekeys_078/keyboard_electronic_078-042-025.mp3"
+    },
+    {
+     "root": 49,
+     "lo": 46,
+     "hi": 52,
+     "file": "ns_ekeys_078/keyboard_electronic_078-049-100.mp3"
+    },
+    {
+     "root": 56,
+     "lo": 53,
+     "hi": 59,
+     "file": "ns_ekeys_078/keyboard_electronic_078-056-050.mp3"
+    },
+    {
+     "root": 62,
+     "lo": 60,
+     "hi": 64,
+     "file": "ns_ekeys_078/keyboard_electronic_078-062-075.mp3"
+    },
+    {
+     "root": 66,
+     "lo": 65,
+     "hi": 68,
+     "file": "ns_ekeys_078/keyboard_electronic_078-066-025.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 69,
+     "hi": 74,
+     "file": "ns_ekeys_078/keyboard_electronic_078-071-100.mp3"
+    },
+    {
+     "root": 78,
+     "lo": 75,
+     "hi": 80,
+     "file": "ns_ekeys_078/keyboard_electronic_078-078-100.mp3"
+    },
+    {
+     "root": 83,
+     "lo": 81,
+     "hi": 127,
+     "file": "ns_ekeys_078/keyboard_electronic_078-083-025.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_EKEYS_098": {
+   "zones": [
+    {
+     "root": 21,
+     "lo": 0,
+     "hi": 26,
+     "file": "ns_ekeys_098/keyboard_electronic_098-021-100.mp3"
+    },
+    {
+     "root": 32,
+     "lo": 27,
+     "hi": 36,
+     "file": "ns_ekeys_098/keyboard_electronic_098-032-075.mp3"
+    },
+    {
+     "root": 41,
+     "lo": 37,
+     "hi": 46,
+     "file": "ns_ekeys_098/keyboard_electronic_098-041-100.mp3"
+    },
+    {
+     "root": 51,
+     "lo": 47,
+     "hi": 56,
+     "file": "ns_ekeys_098/keyboard_electronic_098-051-025.mp3"
+    },
+    {
+     "root": 61,
+     "lo": 57,
+     "hi": 65,
+     "file": "ns_ekeys_098/keyboard_electronic_098-061-075.mp3"
+    },
+    {
+     "root": 69,
+     "lo": 66,
+     "hi": 73,
+     "file": "ns_ekeys_098/keyboard_electronic_098-069-050.mp3"
+    },
+    {
+     "root": 77,
+     "lo": 74,
+     "hi": 80,
+     "file": "ns_ekeys_098/keyboard_electronic_098-077-075.mp3"
+    },
+    {
+     "root": 84,
+     "lo": 81,
+     "hi": 87,
+     "file": "ns_ekeys_098/keyboard_electronic_098-084-100.mp3"
+    },
+    {
+     "root": 91,
+     "lo": 88,
+     "hi": 96,
+     "file": "ns_ekeys_098/keyboard_electronic_098-091-100.mp3"
+    },
+    {
+     "root": 102,
+     "lo": 97,
+     "hi": 127,
+     "file": "ns_ekeys_098/keyboard_electronic_098-102-127.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "NS_ORGAN_EL_001": {
+   "zones": [
+    {
+     "root": 36,
+     "lo": 0,
+     "hi": 38,
+     "file": "ns_organ_el_001/organ_electronic_001-036-050.mp3"
+    },
+    {
+     "root": 41,
+     "lo": 39,
+     "hi": 44,
+     "file": "ns_organ_el_001/organ_electronic_001-041-075.mp3"
+    },
+    {
+     "root": 48,
+     "lo": 45,
+     "hi": 51,
+     "file": "ns_organ_el_001/organ_electronic_001-048-127.mp3"
+    },
+    {
+     "root": 55,
+     "lo": 52,
+     "hi": 58,
+     "file": "ns_organ_el_001/organ_electronic_001-055-100.mp3"
+    },
+    {
+     "root": 61,
+     "lo": 59,
+     "hi": 64,
+     "file": "ns_organ_el_001/organ_electronic_001-061-050.mp3"
+    },
+    {
+     "root": 67,
+     "lo": 65,
+     "hi": 69,
+     "file": "ns_organ_el_001/organ_electronic_001-067-050.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 70,
+     "hi": 74,
+     "file": "ns_organ_el_001/organ_electronic_001-071-100.mp3"
+    },
+    {
+     "root": 78,
+     "lo": 75,
+     "hi": 82,
+     "file": "ns_organ_el_001/organ_electronic_001-078-100.mp3"
+    },
+    {
+     "root": 87,
+     "lo": 83,
+     "hi": 89,
+     "file": "ns_organ_el_001/organ_electronic_001-087-025.mp3"
+    },
+    {
+     "root": 92,
+     "lo": 90,
+     "hi": 127,
+     "file": "ns_organ_el_001/organ_electronic_001-092-127.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NS_ORGAN_EL_007": {
+   "zones": [
+    {
+     "root": 9,
+     "lo": 0,
+     "hi": 13,
+     "file": "ns_organ_el_007/organ_electronic_007-009-075.mp3"
+    },
+    {
+     "root": 18,
+     "lo": 14,
+     "hi": 21,
+     "file": "ns_organ_el_007/organ_electronic_007-018-075.mp3"
+    },
+    {
+     "root": 25,
+     "lo": 22,
+     "hi": 29,
+     "file": "ns_organ_el_007/organ_electronic_007-025-075.mp3"
+    },
+    {
+     "root": 33,
+     "lo": 30,
+     "hi": 37,
+     "file": "ns_organ_el_007/organ_electronic_007-033-075.mp3"
+    },
+    {
+     "root": 41,
+     "lo": 38,
+     "hi": 46,
+     "file": "ns_organ_el_007/organ_electronic_007-041-100.mp3"
+    },
+    {
+     "root": 52,
+     "lo": 47,
+     "hi": 55,
+     "file": "ns_organ_el_007/organ_electronic_007-052-075.mp3"
+    },
+    {
+     "root": 58,
+     "lo": 56,
+     "hi": 62,
+     "file": "ns_organ_el_007/organ_electronic_007-058-025.mp3"
+    },
+    {
+     "root": 67,
+     "lo": 63,
+     "hi": 70,
+     "file": "ns_organ_el_007/organ_electronic_007-067-127.mp3"
+    },
+    {
+     "root": 74,
+     "lo": 71,
+     "hi": 81,
+     "file": "ns_organ_el_007/organ_electronic_007-074-025.mp3"
+    },
+    {
+     "root": 89,
+     "lo": 82,
+     "hi": 127,
+     "file": "ns_organ_el_007/organ_electronic_007-089-100.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NS_ORGAN_EL_028": {
+   "zones": [
+    {
+     "root": 23,
+     "lo": 0,
+     "hi": 27,
+     "file": "ns_organ_el_028/organ_electronic_028-023-050.mp3"
+    },
+    {
+     "root": 32,
+     "lo": 28,
+     "hi": 36,
+     "file": "ns_organ_el_028/organ_electronic_028-032-075.mp3"
+    },
+    {
+     "root": 41,
+     "lo": 37,
+     "hi": 45,
+     "file": "ns_organ_el_028/organ_electronic_028-041-100.mp3"
+    },
+    {
+     "root": 49,
+     "lo": 46,
+     "hi": 53,
+     "file": "ns_organ_el_028/organ_electronic_028-049-025.mp3"
+    },
+    {
+     "root": 57,
+     "lo": 54,
+     "hi": 61,
+     "file": "ns_organ_el_028/organ_electronic_028-057-127.mp3"
+    },
+    {
+     "root": 65,
+     "lo": 62,
+     "hi": 68,
+     "file": "ns_organ_el_028/organ_electronic_028-065-100.mp3"
+    },
+    {
+     "root": 72,
+     "lo": 69,
+     "hi": 76,
+     "file": "ns_organ_el_028/organ_electronic_028-072-100.mp3"
+    },
+    {
+     "root": 80,
+     "lo": 77,
+     "hi": 85,
+     "file": "ns_organ_el_028/organ_electronic_028-080-075.mp3"
+    },
+    {
+     "root": 90,
+     "lo": 86,
+     "hi": 95,
+     "file": "ns_organ_el_028/organ_electronic_028-090-025.mp3"
+    },
+    {
+     "root": 101,
+     "lo": 96,
+     "hi": 127,
+     "file": "ns_organ_el_028/organ_electronic_028-101-075.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NS_ORGAN_EL_057": {
+   "zones": [
+    {
+     "root": 24,
+     "lo": 0,
+     "hi": 26,
+     "file": "ns_organ_el_057/organ_electronic_057-024-075.mp3"
+    },
+    {
+     "root": 29,
+     "lo": 27,
+     "hi": 32,
+     "file": "ns_organ_el_057/organ_electronic_057-029-025.mp3"
+    },
+    {
+     "root": 36,
+     "lo": 33,
+     "hi": 38,
+     "file": "ns_organ_el_057/organ_electronic_057-036-050.mp3"
+    },
+    {
+     "root": 40,
+     "lo": 39,
+     "hi": 43,
+     "file": "ns_organ_el_057/organ_electronic_057-040-025.mp3"
+    },
+    {
+     "root": 47,
+     "lo": 44,
+     "hi": 51,
+     "file": "ns_organ_el_057/organ_electronic_057-047-100.mp3"
+    },
+    {
+     "root": 56,
+     "lo": 52,
+     "hi": 58,
+     "file": "ns_organ_el_057/organ_electronic_057-056-025.mp3"
+    },
+    {
+     "root": 60,
+     "lo": 59,
+     "hi": 63,
+     "file": "ns_organ_el_057/organ_electronic_057-060-075.mp3"
+    },
+    {
+     "root": 66,
+     "lo": 64,
+     "hi": 68,
+     "file": "ns_organ_el_057/organ_electronic_057-066-075.mp3"
+    },
+    {
+     "root": 70,
+     "lo": 69,
+     "hi": 73,
+     "file": "ns_organ_el_057/organ_electronic_057-070-050.mp3"
+    },
+    {
+     "root": 76,
+     "lo": 74,
+     "hi": 127,
+     "file": "ns_organ_el_057/organ_electronic_057-076-100.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NS_ORGAN_EL_104": {
+   "zones": [
+    {
+     "root": 24,
+     "lo": 0,
+     "hi": 27,
+     "file": "ns_organ_el_104/organ_electronic_104-024-025.mp3"
+    },
+    {
+     "root": 30,
+     "lo": 28,
+     "hi": 32,
+     "file": "ns_organ_el_104/organ_electronic_104-030-025.mp3"
+    },
+    {
+     "root": 35,
+     "lo": 33,
+     "hi": 39,
+     "file": "ns_organ_el_104/organ_electronic_104-035-075.mp3"
+    },
+    {
+     "root": 44,
+     "lo": 40,
+     "hi": 46,
+     "file": "ns_organ_el_104/organ_electronic_104-044-100.mp3"
+    },
+    {
+     "root": 49,
+     "lo": 47,
+     "hi": 51,
+     "file": "ns_organ_el_104/organ_electronic_104-049-075.mp3"
+    },
+    {
+     "root": 54,
+     "lo": 52,
+     "hi": 56,
+     "file": "ns_organ_el_104/organ_electronic_104-054-050.mp3"
+    },
+    {
+     "root": 59,
+     "lo": 57,
+     "hi": 62,
+     "file": "ns_organ_el_104/organ_electronic_104-059-050.mp3"
+    },
+    {
+     "root": 65,
+     "lo": 63,
+     "hi": 68,
+     "file": "ns_organ_el_104/organ_electronic_104-065-050.mp3"
+    },
+    {
+     "root": 71,
+     "lo": 69,
+     "hi": 74,
+     "file": "ns_organ_el_104/organ_electronic_104-071-100.mp3"
+    },
+    {
+     "root": 77,
+     "lo": 75,
+     "hi": 127,
+     "file": "ns_organ_el_104/organ_electronic_104-077-075.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NS_ORGAN_EL_113": {
+   "zones": [
+    {
+     "root": 25,
+     "lo": 0,
+     "hi": 27,
+     "file": "ns_organ_el_113/organ_electronic_113-025-025.mp3"
+    },
+    {
+     "root": 30,
+     "lo": 28,
+     "hi": 33,
+     "file": "ns_organ_el_113/organ_electronic_113-030-127.mp3"
+    },
+    {
+     "root": 36,
+     "lo": 34,
+     "hi": 38,
+     "file": "ns_organ_el_113/organ_electronic_113-036-050.mp3"
+    },
+    {
+     "root": 41,
+     "lo": 39,
+     "hi": 44,
+     "file": "ns_organ_el_113/organ_electronic_113-041-050.mp3"
+    },
+    {
+     "root": 47,
+     "lo": 45,
+     "hi": 49,
+     "file": "ns_organ_el_113/organ_electronic_113-047-025.mp3"
+    },
+    {
+     "root": 52,
+     "lo": 50,
+     "hi": 56,
+     "file": "ns_organ_el_113/organ_electronic_113-052-127.mp3"
+    },
+    {
+     "root": 60,
+     "lo": 57,
+     "hi": 63,
+     "file": "ns_organ_el_113/organ_electronic_113-060-025.mp3"
+    },
+    {
+     "root": 66,
+     "lo": 64,
+     "hi": 69,
+     "file": "ns_organ_el_113/organ_electronic_113-066-100.mp3"
+    },
+    {
+     "root": 73,
+     "lo": 70,
+     "hi": 76,
+     "file": "ns_organ_el_113/organ_electronic_113-073-075.mp3"
+    },
+    {
+     "root": 80,
+     "lo": 77,
+     "hi": 127,
+     "file": "ns_organ_el_113/organ_electronic_113-080-075.mp3"
+    }
+   ],
+   "release": 0.4,
+   "sustained": true,
+   "loop": [
+    0.9,
+    2.4
+   ]
+  },
+  "NEY_MAKAM": {
+   "zones": [
+    {
+     "root": 39.08,
+     "lo": 0,
+     "hi": 47,
+     "file": "ney_makam/194637_00642.mp3"
+    },
+    {
+     "root": 56.83,
+     "lo": 48,
+     "hi": 60,
+     "file": "ney_makam/194637_00443.mp3"
+    },
+    {
+     "root": 63.68,
+     "lo": 61,
+     "hi": 66,
+     "file": "ney_makam/194637_00131.mp3"
+    },
+    {
+     "root": 68.98,
+     "lo": 67,
+     "hi": 70,
+     "file": "ney_makam/194637_00042.mp3"
+    },
+    {
+     "root": 72.98,
+     "lo": 71,
+     "hi": 73,
+     "file": "ney_makam/194637_02925.mp3"
+    },
+    {
+     "root": 74.18,
+     "lo": 74,
+     "hi": 75,
+     "file": "ney_makam/194637_02787.mp3"
+    },
+    {
+     "root": 76.48,
+     "lo": 76,
+     "hi": 77,
+     "file": "ney_makam/194637_00984.mp3"
+    },
+    {
+     "root": 77.98,
+     "lo": 78,
+     "hi": 79,
+     "file": "ney_makam/194637_01119.mp3"
+    },
+    {
+     "root": 80.28,
+     "lo": 80,
+     "hi": 80,
+     "file": "ney_makam/194637_01275.mp3"
+    },
+    {
+     "root": 81.28,
+     "lo": 81,
+     "hi": 82,
+     "file": "ney_makam/194637_01404.mp3"
+    },
+    {
+     "root": 84.08,
+     "lo": 83,
+     "hi": 84,
+     "file": "ney_makam/194637_01548.mp3"
+    },
+    {
+     "root": 84.98,
+     "lo": 85,
+     "hi": 85,
+     "file": "ney_makam/194637_01702.mp3"
+    },
+    {
+     "root": 86.08,
+     "lo": 86,
+     "hi": 127,
+     "file": "ney_makam/194637_01941.mp3"
+    }
+   ],
+   "release": 0.4
+  },
+  "KEMENCE_MAKAM": {
+   "zones": [
+    {
+     "root": 47.18,
+     "lo": 0,
+     "hi": 52,
+     "file": "kemence_makam/194639_01753.mp3"
+    },
+    {
+     "root": 57.18,
+     "lo": 53,
+     "hi": 57,
+     "file": "kemence_makam/194700_00601.mp3"
+    },
+    {
+     "root": 58.68,
+     "lo": 58,
+     "hi": 58,
+     "file": "kemence_makam/194700_00321.mp3"
+    },
+    {
+     "root": 59.28,
+     "lo": 59,
+     "hi": 59,
+     "file": "kemence_makam/194639_01584.mp3"
+    },
+    {
+     "root": 59.98,
+     "lo": 60,
+     "hi": 60,
+     "file": "kemence_makam/194700_00241.mp3"
+    },
+    {
+     "root": 60.58,
+     "lo": 61,
+     "hi": 61,
+     "file": "kemence_makam/194639_01476.mp3"
+    },
+    {
+     "root": 62.18,
+     "lo": 62,
+     "hi": 63,
+     "file": "kemence_makam/194639_01367.mp3"
+    },
+    {
+     "root": 63.98,
+     "lo": 64,
+     "hi": 65,
+     "file": "kemence_makam/194639_00399.mp3"
+    },
+    {
+     "root": 66.18,
+     "lo": 66,
+     "hi": 66,
+     "file": "kemence_makam/194639_01148.mp3"
+    },
+    {
+     "root": 67.18,
+     "lo": 67,
+     "hi": 68,
+     "file": "kemence_makam/194639_01036.mp3"
+    },
+    {
+     "root": 69.18,
+     "lo": 69,
+     "hi": 70,
+     "file": "kemence_makam/194639_00727.mp3"
+    },
+    {
+     "root": 71.38,
+     "lo": 71,
+     "hi": 127,
+     "file": "kemence_makam/194639_00816.mp3"
+    }
+   ],
+   "release": 0.4
+  },
+  "BAGLAMA_MAKAM": {
+   "zones": [
+    {
+     "root": 47.98,
+     "lo": 0,
+     "hi": 48,
+     "file": "baglama_makam/194638_01149.mp3"
+    },
+    {
+     "root": 49.58,
+     "lo": 49,
+     "hi": 50,
+     "file": "baglama_makam/194638_00936.mp3"
+    },
+    {
+     "root": 50.98,
+     "lo": 51,
+     "hi": 51,
+     "file": "baglama_makam/194638_00141.mp3"
+    },
+    {
+     "root": 52.98,
+     "lo": 52,
+     "hi": 54,
+     "file": "baglama_makam/194638_00199.mp3"
+    },
+    {
+     "root": 55.08,
+     "lo": 55,
+     "hi": 55,
+     "file": "baglama_makam/194638_00748.mp3"
+    },
+    {
+     "root": 56.68,
+     "lo": 56,
+     "hi": 57,
+     "file": "baglama_makam/194638_00320.mp3"
+    },
+    {
+     "root": 57.98,
+     "lo": 58,
+     "hi": 58,
+     "file": "baglama_makam/194638_00384.mp3"
+    },
+    {
+     "root": 59.98,
+     "lo": 59,
+     "hi": 60,
+     "file": "baglama_makam/194638_00449.mp3"
+    },
+    {
+     "root": 61.58,
+     "lo": 61,
+     "hi": 127,
+     "file": "baglama_makam/194638_00077.mp3"
+    }
+   ],
+   "release": 0.4
+  },
+  "BAGLAMA_EXTRA": {
+   "zones": [
+    {
+     "root": 44.11,
+     "lo": 0,
+     "hi": 44,
+     "file": "baglama_extra/fcerim_717179.mp3"
+    },
+    {
+     "root": 44.61,
+     "lo": 45,
+     "hi": 45,
+     "file": "baglama_extra/fcerim_717178.mp3"
+    },
+    {
+     "root": 46.61,
+     "lo": 46,
+     "hi": 47,
+     "file": "baglama_extra/fcerim_717183.mp3"
+    },
+    {
+     "root": 48.61,
+     "lo": 48,
+     "hi": 50,
+     "file": "baglama_extra/fcerim_717190.mp3"
+    },
+    {
+     "root": 51.51,
+     "lo": 51,
+     "hi": 52,
+     "file": "baglama_extra/fcerim_717197.mp3"
+    },
+    {
+     "root": 53.61,
+     "lo": 53,
+     "hi": 55,
+     "file": "baglama_extra/fcerim_717202.mp3"
+    },
+    {
+     "root": 56.51,
+     "lo": 56,
+     "hi": 57,
+     "file": "baglama_extra/fcerim_717177.mp3"
+    },
+    {
+     "root": 58.51,
+     "lo": 58,
+     "hi": 59,
+     "file": "baglama_extra/fcerim_717184.mp3"
+    },
+    {
+     "root": 61.31,
+     "lo": 60,
+     "hi": 61,
+     "file": "baglama_extra/fcerim_717191.mp3"
+    },
+    {
+     "root": 61.81,
+     "lo": 62,
+     "hi": 62,
+     "file": "baglama_extra/fcerim_717192.mp3"
+    },
+    {
+     "root": 63.21,
+     "lo": 63,
+     "hi": 127,
+     "file": "baglama_extra/fcerim_717198.mp3"
+    }
+   ],
+   "release": 0.5
+  },
+  "BAGPIPE": {
+   "zones": [
+    {
+     "root": 70.82,
+     "file": "bagpipe/chanter_527276.mp3",
+     "lo": 0,
+     "hi": 71
+    },
+    {
+     "root": 72.82,
+     "file": "bagpipe/chanter_527269.mp3",
+     "lo": 72,
+     "hi": 73
+    },
+    {
+     "root": 74.72,
+     "file": "bagpipe/chanter_527268.mp3",
+     "lo": 74,
+     "hi": 75
+    },
+    {
+     "root": 75.82,
+     "file": "bagpipe/chanter_527275.mp3",
+     "lo": 76,
+     "hi": 76
+    },
+    {
+     "root": 77.92,
+     "file": "bagpipe/chanter_527274.mp3",
+     "lo": 77,
+     "hi": 78
+    },
+    {
+     "root": 79.62,
+     "file": "bagpipe/chanter_527273.mp3",
+     "lo": 79,
+     "hi": 81
+    },
+    {
+     "root": 82.92,
+     "file": "bagpipe/chanter_527272.mp3",
+     "lo": 82,
+     "hi": 127
+    }
+   ],
+   "release": 0.35,
+   "sustained": true,
+   "loop": [
+    0.7,
+    3.2
+   ]
+  },
+  "BAGPIPE_DRONE": {
+   "zones": [
+    {
+     "root": 46.91,
+     "lo": 0,
+     "hi": 127,
+     "file": "bagpipe_drone/drone_527270.mp3"
+    }
+   ],
+   "release": 0.5,
+   "sustained": true,
+   "loop": [
+    1.0,
+    5.5
+   ],
+   "maxShift": 3
+  }
+ }
+}
