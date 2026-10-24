@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { activeSampler, createSampler, freqOf, midiOf, pickZone, rateFor, setActiveSampler, type SampleZone } from "../src/audio/sampler";
 
 const Z = (root: number, lo: number, hi: number, file = `n${root}.ogg`, vel?: [number, number]): SampleZone => ({ root, lo, hi, file, vel });
@@ -42,5 +42,66 @@ describe("sampler: without a pack the synth plays", () => {
     expect(activeSampler()).toBe(s);
     setActiveSampler(null);
     expect(activeSampler()).toBeNull();
+  });
+});
+
+describe("sampler: use and ensure", () => {
+  const MANIFEST = {
+    name: "t",
+    instruments: {
+      A: { zones: [{ root: 60, lo: 0, hi: 127, file: "a/a1.mp3" }, { root: 72, lo: 0, hi: 127, file: "a/a2.mp3" }] },
+      B: { zones: [{ root: 60, lo: 0, hi: 127, file: "b/b1.mp3" }] },
+      C: { use: "A", zones: [] },
+    },
+  };
+  const ctx = { decodeAudioData: async () => ({ duration: 1 }) as unknown as AudioBuffer } as unknown as AudioContext;
+  const fetched: string[] = [];
+  const stub = (never?: string): void => {
+    fetched.length = 0;
+    vi.stubGlobal("fetch", async (url: string) => {
+      fetched.push(url);
+      if (never && url.endsWith(never)) return new Promise(() => {});
+      return url.endsWith("manifest.json") ? { ok: true, json: async () => MANIFEST } : { ok: true, arrayBuffer: async () => new ArrayBuffer(8) };
+    });
+  };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("downloads only the files of the instruments asked for", async () => {
+    stub();
+    const s = createSampler(ctx);
+    await s.use(["/x/manifest.json"]);
+    expect(fetched).toEqual(["/x/manifest.json"]);
+    await s.ensure(["A"]);
+    expect(fetched.sort()).toEqual(["/x/a/a1.mp3", "/x/a/a2.mp3", "/x/manifest.json"].sort());
+    expect(s.has("A")).toBe(true);
+    expect(s.has("B")).toBe(false);
+  });
+  it("does not fetch twice and builds an instrument that uses another one", async () => {
+    stub();
+    const s = createSampler(ctx);
+    await s.use(["/x/manifest.json", "/x/manifest.json"]);
+    await s.ensure(["A", "C"]);
+    await s.ensure(["A"]);
+    expect(fetched.filter((u) => u.endsWith("a1.mp3")).length).toBe(1);
+    expect(fetched.filter((u) => u.endsWith("manifest.json")).length).toBe(1);
+    expect(s.has("C")).toBe(true);
+  });
+  it("lets an unknown name through and gives up on a file that never arrives", async () => {
+    stub("b1.mp3");
+    const s = createSampler(ctx);
+    await s.use(["/x/manifest.json"]);
+    const t0 = Date.now();
+    await s.ensure(["NOPE", "B"], 40);
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(s.has("NOPE")).toBe(false);
+    expect(s.has("B")).toBe(false);
+  });
+  it("waits for the catalogue before looking names up", async () => {
+    stub();
+    const s = createSampler(ctx);
+    const loading = s.use(["/x/manifest.json"]);
+    await s.ensure(["B"]); // called before `use` has finished
+    await loading;
+    expect(s.has("B")).toBe(true);
   });
 });

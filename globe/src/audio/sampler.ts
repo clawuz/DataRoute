@@ -84,6 +84,10 @@ export function rateFor(freq: number, rootMidi: number, limit = 12): number {
 export interface Sampler {
   /** fetch a manifest and decode its files (in the background; resolves with how many files arrived) */
   load(manifestUrl: string): Promise<number>;
+  /** read manifests into a catalogue (nothing is decoded); the first manifest to name an instrument wins */
+  use(manifestUrls: string[]): Promise<void>;
+  /** decode the recordings of these instruments (only those); resolves when present or after `timeoutMs`, never rejects */
+  ensure(names: string[], timeoutMs?: number): Promise<void>;
   has(instrument: string): boolean;
   /** schedules a note; false when the instrument is not loaded (play the synth instead) */
   play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void): boolean;
@@ -94,6 +98,43 @@ export function createSampler(ctx: AudioContext): Sampler {
   const defs = new Map<string, SampleInstrument>();
   const buffers = new Map<string, AudioBuffer>();
   const loading = new Set<string>();
+  const catalogue = new Map<string, { inst: SampleInstrument; base: string }>();
+  const seenManifests = new Set<string>();
+  const inflight = new Map<string, Promise<boolean>>();
+  let catalogueReady: Promise<void> = Promise.resolve();
+
+  /** decode one instrument's recordings and register it; false when a file did not arrive */
+  function fetchInstrument(name: string): Promise<boolean> {
+    if (defs.has(name)) return Promise.resolve(true);
+    const known = catalogue.get(name);
+    if (!known) return Promise.resolve(false);
+    const running = inflight.get(name);
+    if (running) return running;
+    const job = (async () => {
+      const { inst, base } = known;
+      if (inst.use) {
+        const ok = await fetchInstrument(inst.use);
+        const from = defs.get(inst.use);
+        if (!ok || !from) return false;
+        defs.set(name, { ...from, ...inst, zones: from.zones });
+        return true;
+      }
+      const urls = [...new Set(inst.zones.map((z) => base + z.file))];
+      const ok = await Promise.all(
+        urls.map(async (u) => {
+          if (buffers.has(u)) return true;
+          const b = await decode(u);
+          if (b) buffers.set(u, b);
+          return !!b;
+        }),
+      );
+      if (!ok.every(Boolean)) return false;
+      defs.set(name, { ...inst, zones: inst.zones.map((z) => ({ ...z, file: base + z.file })) });
+      return true;
+    })().finally(() => inflight.delete(name));
+    inflight.set(name, job);
+    return job;
+  }
 
   async function decode(url: string): Promise<AudioBuffer | null> {
     try {
@@ -145,6 +186,36 @@ export function createSampler(ctx: AudioContext): Sampler {
         /* offline or a bad manifest: the synth plays */
       }
       return n;
+    },
+    use(manifestUrls) {
+      const run = async (): Promise<void> => {
+        for (const url of manifestUrls) {
+          if (seenManifests.has(url)) continue;
+          seenManifests.add(url);
+          try {
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const man = (await res.json()) as SampleManifest;
+            const base = url.slice(0, url.lastIndexOf("/") + 1);
+            for (const [name, inst] of Object.entries(man.instruments)) if (!catalogue.has(name)) catalogue.set(name, { inst, base });
+          } catch {
+            /* offline or a bad manifest: the synth plays */
+          }
+        }
+      };
+      catalogueReady = catalogueReady.then(run);
+      return catalogueReady;
+    },
+    async ensure(names, timeoutMs = 4000) {
+      await catalogueReady;
+      const wanted = [...new Set(names)].filter((n) => !defs.has(n) && catalogue.has(n));
+      if (wanted.length === 0) return;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const gaveUp = new Promise<void>((r) => {
+        timer = setTimeout(r, timeoutMs);
+      });
+      await Promise.race([Promise.all(wanted.map(fetchInstrument)).then(() => undefined), gaveUp]);
+      clearTimeout(timer);
     },
     has: (instrument) => defs.has(instrument),
     play(dest, instrument, freq, vel, when, durSec, onEnd) {
@@ -241,6 +312,9 @@ export function createSampler(ctx: AudioContext): Sampler {
     dispose() {
       defs.clear();
       buffers.clear();
+      catalogue.clear();
+      inflight.clear();
+      seenManifests.clear();
     },
   };
 }
