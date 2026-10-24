@@ -104,6 +104,15 @@ describe("sampler: use and ensure", () => {
     await loading;
     expect(s.has("B")).toBe(true);
   });
+  it("gives up within its time even when the manifest never arrives", async () => {
+    stub("manifest.json");
+    const s = createSampler(ctx);
+    void s.use(["/x/manifest.json"]);
+    const t0 = Date.now();
+    await expect(s.ensure(["A"], 40)).resolves.toBeUndefined();
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(s.has("A")).toBe(false);
+  });
   it("survives instruments that use each other or themselves", async () => {
     fetched.length = 0;
     const LOOPS = { name: "t", instruments: { X: { use: "Y", zones: [] }, Y: { use: "X", zones: [] }, S: { use: "S", zones: [] } } };

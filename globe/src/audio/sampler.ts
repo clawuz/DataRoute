@@ -54,6 +54,9 @@ export interface SampleManifest {
   instruments: Record<string, SampleInstrument>;
 }
 
+/** how long one manifest may take before the sampler goes on without it (the synth plays its instruments) */
+const MANIFEST_TIMEOUT_MS = 10000;
+
 export const midiOf = (freq: number): number => 69 + 12 * Math.log2(freq / 440);
 export const freqOf = (midi: number): number => 440 * 2 ** ((midi - 69) / 12);
 
@@ -193,14 +196,29 @@ export function createSampler(ctx: AudioContext): Sampler {
         for (const url of manifestUrls) {
           if (seenManifests.has(url)) continue;
           seenManifests.add(url);
+          // a manifest that never answers must not hold back the manifests after it (nor later calls to `ensure`)
+          const abort = typeof AbortController === "function" ? new AbortController() : null;
+          let timer: ReturnType<typeof setTimeout> | undefined;
           try {
-            const res = await fetch(url);
-            if (!res.ok) continue;
-            const man = (await res.json()) as SampleManifest;
+            const man = await Promise.race([
+              (async () => {
+                const res = await fetch(url, abort ? { signal: abort.signal } : undefined);
+                return res.ok ? ((await res.json()) as SampleManifest) : null;
+              })(),
+              new Promise<null>((r) => {
+                timer = setTimeout(() => {
+                  abort?.abort();
+                  r(null);
+                }, MANIFEST_TIMEOUT_MS);
+              }),
+            ]);
+            if (!man) continue;
             const base = url.slice(0, url.lastIndexOf("/") + 1);
             for (const [name, inst] of Object.entries(man.instruments)) if (!catalogue.has(name)) catalogue.set(name, { inst, base });
           } catch {
             /* offline or a bad manifest: the synth plays */
+          } finally {
+            clearTimeout(timer);
           }
         }
       };
@@ -208,15 +226,17 @@ export function createSampler(ctx: AudioContext): Sampler {
       return catalogueReady;
     },
     async ensure(names, timeoutMs = 4000) {
-      await catalogueReady;
-      const wanted = [...new Set(names)].filter((n) => !defs.has(n) && catalogue.has(n));
-      if (wanted.length === 0) return;
+      // the time limit covers the wait for the manifests too: a slow or hanging manifest never holds the piece back
       let timer: ReturnType<typeof setTimeout> | undefined;
       const gaveUp = new Promise<void>((r) => {
         timer = setTimeout(r, timeoutMs);
       });
+      const fetchAll = catalogueReady.then(async () => {
+        const wanted = [...new Set(names)].filter((n) => !defs.has(n) && catalogue.has(n));
+        await Promise.all(wanted.map((n) => fetchInstrument(n)));
+      }).catch(() => undefined); // a job that fails after the time is up must not surface as an unhandled rejection
       try {
-        await Promise.race([Promise.all(wanted.map((n) => fetchInstrument(n))).then(() => undefined), gaveUp]);
+        await Promise.race([fetchAll, gaveUp]);
       } catch {
         /* whatever went wrong inside a job, the synth plays */
       } finally {
