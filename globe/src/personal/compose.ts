@@ -316,7 +316,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       case "pluck": return choose(card.pluck, h, i, "pluck");
       case "backbeat": return resolveVoice(card.perc, h);
       case "kick": return folkish ? resolveVoice(card.perc, h) : "TIMP";
-      default: return folkish && card.perc !== "DARBUKA" ? resolveVoice(card.perc, h) : "TRI";
+      default: return folkish && !card.perc.startsWith("DARBUKA") ? resolveVoice(card.perc, h) : "TRI";
     }
   });
   // with more than three routes the piano is always there, as a steady voice (the arpeggio first, else the hook)

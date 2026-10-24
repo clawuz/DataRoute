@@ -105,4 +105,24 @@ describe("world voices", () => {
       expect(typeof n.instrument).toBe("string");
     }
   });
+  it("keeps the darbuka family off the hat: the hat routes of a big piece never play DARBUKA_VCSL", () => {
+    const places = ["LHR", "CDG", "FRA", "AMS", "MAD", "FCO", "VIE", "ATH", "JFK", "NRT", "SYD", "DXB", "IKA", "DOH", "CAI", "AMM", "BEY", "KWI", "RUH", "TBS", "BAK"];
+    let checked = 0;
+    for (const home of ["IKA", "CAI", "IST"]) {
+      const routes = buildRoutes(places, home);
+      const n = routes.length;
+      const plan = planCards("visited", routes);
+      const piece = composePiece("visited", routes);
+      // from 7 routes up the roles follow the distance, longest first, and BASE[floor(k*7/n)] is the role: index 6 is the hat
+      const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
+      order.forEach((x, k) => {
+        if (Math.floor((k * 7) / n) !== 6 || !["arabic", "persian"].includes(plan.perRoute[x.i].id)) return;
+        const used = new Set(piece.notes.filter((q) => q.route === x.i).map((q) => q.instrument));
+        expect(used.size).toBeGreaterThan(0);
+        expect(used.has("DARBUKA_VCSL"), `${home} route ${x.i}`).toBe(false);
+        checked++;
+      });
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
 });
