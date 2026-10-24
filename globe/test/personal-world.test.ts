@@ -69,3 +69,40 @@ describe("planCards", () => {
     expect(JSON.stringify(a.notes)).toBe(JSON.stringify(b.notes));
   });
 });
+
+import { WORLD_FAMILIES, WORLD_INSTRUMENTS } from "../src/audio/world-pack";
+import { CARDS } from "../src/personal/genres";
+import { WORLD_VOICES, resolveVoice } from "../src/personal/world-voices";
+
+const isWorld = (v: string): boolean => v in WORLD_FAMILIES || (WORLD_INSTRUMENTS as readonly string[]).includes(v);
+
+describe("world voices", () => {
+  it("turns a family into one of its instruments, by hash, and leaves other names alone", () => {
+    expect(resolveVoice("PNO", 7)).toBe("PNO");
+    expect(resolveVoice("SANTUR", 7)).toBe("SANTUR");
+    const list = WORLD_FAMILIES.GUITAR_EL;
+    expect(list).toContain(resolveVoice("GUITAR_EL", 5));
+    expect(resolveVoice("GUITAR_EL", 5)).toBe(list[5 % list.length]);
+  });
+  it("only names cards and instruments that exist", () => {
+    const ids = new Set(CARDS.map((c) => c.id));
+    for (const [id, v] of Object.entries(WORLD_VOICES)) {
+      expect(ids.has(id), id).toBe(true);
+      for (const list of [v.held, v.melody, v.pluck, v.bass, v.perc ? [v.perc] : []]) for (const x of list ?? []) expect(isWorld(x), `${id}: ${x}`).toBe(true);
+    }
+  });
+  it("puts the overlay voices into the cards", () => {
+    const persian = CARDS.find((c) => c.id === "persian")!;
+    expect(persian.pluck).toContain("SANTUR");
+    expect(persian.perc).toBe("DARBUKA_VCSL");
+    expect(CARDS.find((c) => c.id === "jazz")!.bass).toContain("UPRIGHTBASS");
+  });
+  it("lets a piece to Iran and Japan use their instruments, and only real instrument names reach the notes", () => {
+    const routes = buildRoutes(["IKA", "NRT", "JFK", "LOS"], "IST");
+    const piece = composePiece("visited", routes);
+    for (const n of piece.notes) {
+      expect(n.instrument in WORLD_FAMILIES, n.instrument).toBe(false);
+      expect(typeof n.instrument).toBe("string");
+    }
+  });
+});

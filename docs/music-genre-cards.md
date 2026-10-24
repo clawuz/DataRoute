@@ -114,3 +114,34 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 - Akor ilerlemesi 4 akor, her biri 1 ölçü (i–VI–III–VII, I–V–vi–IV gibi); kartta özel ilerleme varsa o.
 - Form: intro (pad, bass, arpej, hat) → verse (hook yarım) → build (kick her vuruş) → chorus (hepsi) → break (pad, hook, hat) → outro.
 - Nota süresi sırası: pad > bass ≈ hook > arpej > perküsyon; yani uzun rota uzun nota.
+
+## World pack voices
+
+The recordings of the world pack are added to the voices of the cards (`WORLD_VOICES` in `globe/src/personal/world-voices.ts`); the original voices stay as the fallback. `bass` is the list only the bass route draws from; `perc` replaces the card's percussion. A coloured hook route also sings in the scale of its own card.
+
+| Card | Melody | Pluck | Held | Bass | Perc |
+|---|---|---|---|---|---|
+| anatolian | NEY_MAKAM, KEMENCE_MAKAM, BAGLAMA_MAKAM | BAGLAMA_EXTRA, BAGLAMA_MAKAM | - | - | - |
+| karsilama | BAGPIPE, KEMENCE_MAKAM | BAGLAMA_EXTRA | - | - | - |
+| arabic | NEY_MAKAM | SANTUR | - | - | DARBUKA_VCSL |
+| persian | SANTUR | SANTUR | - | - | DARBUKA_VCSL |
+| hindustani | NEY_MAKAM | TANPURA | - | - | TABLA |
+| eastasia | SHAKUHACHI, ERHU, KOTO | KOTO, KAYAGEUM, DANTRANH | - | - | - |
+| gamelan | STEELDRUM | VIBES, STEELDRUM | - | - | - |
+| westafrica | - | KALIMBA, MBIRA | - | - | DJEMBE |
+| eastafrica | - | MBIRA, KALIMBA | - | - | DJEMBE |
+| salsa | - | NYLONGUITAR | - | UPRIGHTBASS | - |
+| mariachi | - | NYLONGUITAR, STEELDRUM | - | - | - |
+| flamenco | NYLONGUITAR | NYLONGUITAR | - | - | - |
+| bossa | - | NYLONGUITAR | - | UPRIGHTBASS | - |
+| tango | ACCORDION | - | ACCORDION | UPRIGHTBASS | - |
+| celtic | TINWHISTLE, BAGPIPE | FOLKHARP | - | - | FRAMEDRUM |
+| slavic | ACCORDION | PSALTERY | ACCORDION | - | - |
+| centralasia | - | PSALTERY | - | - | BENDIR |
+| jazz | TENORSAX, EKEYS | EKEYS, GUITAR_EL | - | UPRIGHTBASS | - |
+| funk | EKEYS, TENORSAX | GUITAR_EL, EKEYS | - | BASSGUITAR, BASS_EL | - |
+| pop | EKEYS, GUITAR_EL | GUITAR_EL | - | BASS_EL | - |
+| romantic | STEINWAY | STEINWAY, KAWAI | - | - | - |
+| baroque | HARPSICHORD | HARPSICHORD | RENORGAN | - | - |
+
+Instruments of the pack that no card names (`BAGPIPE_DRONE`, `KAVAL`, `DUDUK`, `NS_*` variants other than the family pick, `DRUMKIT`, `TENORSAX` outside jazz/funk, `HARMONICA`, `KNIGHTPNO`, `UPRIGHTPNO`) are on the site but not played yet.

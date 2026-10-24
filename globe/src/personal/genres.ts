@@ -1,4 +1,4 @@
-import type { Instrument } from "../audio/theory";
+import { WORLD_VOICES, type Voice } from "./world-voices";
 import { routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import { destinationOf } from "./destinations";
@@ -31,10 +31,12 @@ export interface GenreCard {
   /** progression as [semitones above the tonic, third (3 or 4)]; two bars each. Omitted: the common minor/major ones */
   prog?: [number, 3 | 4][];
   /** instruments by role, for every region */
-  held: Instrument[];
-  melody: Instrument[];
-  pluck: Instrument[];
-  perc: Instrument;
+  held: Voice[];
+  melody: Voice[];
+  pluck: Voice[];
+  perc: Voice;
+  /** the voices of the bass route (the chord pad does not draw from it); omitted: the held voices */
+  bass?: Voice[];
   /** how late the off-eighths lean (fraction of a beat); omitted: the piece's own swing */
   swing?: number;
 }
@@ -58,7 +60,7 @@ const YO = [0, 2, 5, 7, 9];
 const MIYAKO = [0, 1, 5, 7, 8];
 const PELOG = [0, 1, 3, 7, 8];
 
-export const CARDS: GenreCard[] = [
+const BASE_CARDS: GenreCard[] = [
   { id: "cinematic", fast: true, name: "Cinematic orchestra", family: "symphonic", bpm: [84, 108], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.12, 0.9, 0.95, 0.9], held: ["PNO", "CELLO", "VIOLA", "HORN"], melody: ["PNO", "VIOLIN", "HORN", "OBOE"], pluck: ["PNO", "HARP", "VIOLA_PIZZ"], perc: "TIMP" },
   { id: "romantic", name: "Romantic piano", family: "chamber", bpm: [76, 92], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1], accent: [1.15, 0.85, 0.85], held: ["CELLO", "VIOLA", "BSN"], melody: ["PNO", "VIOLIN", "FLUTE"], pluck: ["PNO", "HARP"], perc: "TRI" },
   { id: "baroque", fast: true, name: "Baroque strings", family: "chamber", bpm: [92, 120], scale: MINOR, scaleWish: MAJOR, cell: [1, 1], accent: [1.1, 0.9], held: ["CELLO", "VIOLA", "BSN"], melody: ["VIOLIN", "OBOE", "FLUTE", "PNO"], pluck: ["HARP", "VIOLIN_PIZZ", "PNO"], perc: "TRI" },
@@ -88,6 +90,20 @@ export const CARDS: GenreCard[] = [
   { id: "funk", name: "Funk & soul", family: "pulse", bpm: [92, 112], scale: [0, 3, 5, 6, 7, 10], scaleWish: [0, 2, 4, 7, 9], cell: [3, 3, 1, 1], accent: [1.25, 1.05, 0.9, 1.1], prog: [[0, 3], [5, 3], [0, 3], [7, 4]], held: ["BSN", "CELLO"], melody: ["PNO", "TPT", "CLA"], pluck: ["PNO", "MARIMBA", "XYLO"], perc: "CONGA", swing: 0.12 },
   { id: "pop", name: "Electro pop", family: "pulse", fast: true, bpm: [104, 124], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1, 1, 1, 1, 1], accent: [1.15, 0.8, 1, 0.8, 1.05, 0.8, 1, 0.8], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["PNO", "FLUTE", "XYLO", "VIOLIN"], pluck: ["PNO", "GLOCK", "MARIMBA"], perc: "TAMB" },
 ];
+
+/** the cards with the recordings of the world pack added to their voices (the original voices stay as the fallback) */
+export const CARDS: GenreCard[] = BASE_CARDS.map((c) => {
+  const w = WORLD_VOICES[c.id];
+  if (!w) return c;
+  return {
+    ...c,
+    held: [...c.held, ...(w.held ?? [])],
+    melody: [...c.melody, ...(w.melody ?? [])],
+    pluck: [...c.pluck, ...(w.pluck ?? [])],
+    perc: w.perc ?? c.perc,
+    ...(w.bass ? { bass: w.bass } : {}),
+  };
+});
 
 const byId = (id: string): GenreCard => CARDS.find((c) => c.id === id) ?? CARDS[0];
 

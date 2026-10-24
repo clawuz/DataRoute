@@ -5,6 +5,7 @@ import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
+import { resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 export { altitudeFt, cruiseFt };
 
@@ -289,7 +290,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   // every route gets its own instrument where its card has enough of them
   const taken = new Set<string>();
   let pianos = 0;
-  const choose = (list: Instrument[], h: number, i: number, kind: "melody" | "pluck" | "other"): Instrument => {
+  const choose = (list: Voice[], h: number, i: number, kind: "melody" | "pluck" | "other"): PlayInstrument => {
     // the piano is a prominent voice: a hook and an arpeggio may take it; the other instruments are not repeated
     if (list.includes("PNO") && pianos < 2 && kind !== "other" && (pianos === 0 || kind === "pluck")) {
       pianos++;
@@ -299,10 +300,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       const c = list[(h + st.ensemble + i + o) % list.length];
       if (c !== "PNO" && !taken.has(c)) {
         taken.add(c);
-        return c;
+        return resolveVoice(c, h);
       }
     }
-    return list[(h + st.ensemble + i) % list.length];
+    return resolveVoice(list[(h + st.ensemble + i) % list.length], h);
   };
   const voiceOf: PlayInstrument[] = routes.map((r, i) => {
     const h = routeHash(r.key + i);
@@ -310,12 +311,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const folkish = card.family === "folk" || card.family === "pulse";
     switch (role[i]) {
       case "pad": return choose(card.held, h, i, "other");
-      case "bass": return choose(card.held.filter((x) => x !== "PNO"), h, i + 1, "other");
+      case "bass": return choose(card.bass?.length ? card.bass : card.held.filter((x) => x !== "PNO"), h, i + 1, "other");
       case "hook": return choose(card.melody, h, i, "melody");
       case "pluck": return choose(card.pluck, h, i, "pluck");
-      case "backbeat": return card.perc;
-      case "kick": return folkish ? card.perc : "TIMP";
-      default: return folkish && card.perc !== "DARBUKA" ? card.perc : "TRI";
+      case "backbeat": return resolveVoice(card.perc, h);
+      case "kick": return folkish ? resolveVoice(card.perc, h) : "TIMP";
+      default: return folkish && card.perc !== "DARBUKA" ? resolveVoice(card.perc, h) : "TRI";
     }
   });
   // with more than three routes the piano is always there, as a steady voice (the arpeggio first, else the hook)
@@ -350,6 +351,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
 
   // the hook of each hook route: two bars of scale degrees (an arch that comes back to a chord tone), built from the route
   const L = scale.length;
+  /** the melody scale of each route: its own card's (a coloured route sings in the scale of its destination) */
+  const scaleOf = routes.map((_, i) => (mode === "wish" ? plan.perRoute[i].scaleWish ?? plan.perRoute[i].scale : plan.perRoute[i].scale));
   const motifs = routes.map((r, i) => {
     if (role[i] !== "hook") return null;
     const hh = routeHash(r.key + "hook" + i);
@@ -442,9 +445,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         slots.forEach((sl, k) => {
           if (!sl.hit) return;
           const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * 3);
-          const total = m[hi] + lift + (section === "chorus" ? L : 0) + (occ[i] > 0 ? 2 : 0);
+          const sc = scaleOf[i];
+          const total = m[hi] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           hi++;
-          let semis = KEY_ROOT + st.shift + scale[((total % L) + L) % L] + 12 * Math.floor(total / L);
+          let semis = KEY_ROOT + st.shift + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
           // the strong places of the groove rest on a chord tone
           if (sl.accent >= 1.1 || hi === 1) {
             let best = semis;

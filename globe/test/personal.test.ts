@@ -339,8 +339,8 @@ describe("the genre cards: the music of where the trip starts from", () => {
     expect(new Set(pieces.map((p) => p.style.genre)).size).toBeGreaterThanOrEqual(3);
   });
   it("a piece whose cards are all orchestral is played by the orchestra", () => {
-    const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "slavic", "epic", "calm", "bossa", "tango", "eastasia", "jazz"]);
-    const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB", "GONG"]);
+    const orchCards = new Set(["cinematic", "romantic", "baroque", "nordic", "epic", "calm"]);
+    const orch = new Set(["PNO", "CELLO", "VIOLA", "BSN", "HORN", "VIOLIN", "OBOE", "CLA", "TPT", "FLUTE", "PICC", "NEY", "HARP", "VIOLIN_PIZZ", "VIOLA_PIZZ", "CELLO_PIZZ", "BASS_PIZZ", "GLOCK", "XYLO", "TIMP", "TRI", "TAMB", "GONG", "STEINWAY", "KAWAI", "HARPSICHORD", "RENORGAN"]);
     // destination cards now colour 60% of the routes, so mixed selections rarely stay orchestral: a second sample of
     // trips between airports whose cards are all orchestral (checked against cardsOfAirport) can still produce such pieces
     const calm = ["VIE", "FCO", "MXP", "ZRH", "BRU", "WAW", "PRG", "BUD", "OSL", "HEL", "CPH"];
