@@ -19,7 +19,7 @@ describe("note length follows route length", () => {
     const p = composePiece(sel.mode, routes);
     const rows = routes
       .map((r, i) => {
-        const ns = p.notes.filter((n) => n.route === i);
+        const ns = p.notes.filter((n) => n.route === i && n.show !== false); // only the notes the box draws
         return { km: r.distKm, avg: ns.reduce((a, n) => a + (n.drawDur ?? n.d), 0) / Math.max(1, ns.length) };
       })
       .sort((a, b) => a.km - b.km);

@@ -315,7 +315,7 @@ describe("the music box: a route's notes never overlap in the drawing", () => {
   it("draws every note only until the next note of the same route", () => {
     const p = composePiece("visited", buildRoutes(["DPS", "JFK", "NRT", "GRU", "CAI", "SYD", "LAX", "BKK", "ESB", "ADB"], "IST"));
     const by = new Map<number, typeof p.notes>();
-    for (const n of p.notes) by.set(n.route, [...(by.get(n.route) ?? []), n]);
+    for (const n of p.notes) if (n.show !== false) by.set(n.route, [...(by.get(n.route) ?? []), n]);
     let checked = 0;
     for (const list of by.values()) {
       const s = [...list].sort((a, b) => a.t - b.t);

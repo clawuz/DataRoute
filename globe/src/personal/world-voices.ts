@@ -38,3 +38,12 @@ export const WORLD_VOICES: Record<string, { held?: Voice[]; melody?: Voice[]; pl
   romantic: { melody: ["STEINWAY"], pluck: ["STEINWAY", "KAWAI"] },
   baroque: { melody: ["HARPSICHORD"], pluck: ["HARPSICHORD"], held: ["RENORGAN"] },
 };
+
+/** the held low voice of home, by the card of the starting country; anything not listed is a cello */
+export const DRONE_BY_CARD: Record<string, Voice> = {
+  hindustani: "TANPURA",
+  celtic: "BAGPIPE_DRONE",
+  karsilama: "BAGPIPE_DRONE",
+  baroque: "RENORGAN",
+};
+export const droneVoice = (cardId: string): Voice => DRONE_BY_CARD[cardId] ?? "CELLO";

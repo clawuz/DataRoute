@@ -5,7 +5,7 @@ import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
-import { WORLD_VOICES, resolveVoice, type Voice } from "./world-voices";
+import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
@@ -460,6 +460,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   style.lift = lift;
   const chorusFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "chorus")).reduce((s, [, m]) => s + m, 0);
   const chorusLen = FORM.find(([name]) => name === "chorus")![1];
+  // home: the tonic and its fifth hum under the trip, played by the first route (nothing is added that is not a route).
+  // A plucked drone is struck every two bars, a held one every four; it is silent in the break and in the lifted bars.
+  const droneInst = resolveVoice(droneVoice(plan.main.id), routeHash(routes[0].key));
+  const droneEvery = droneInst === "TANPURA" ? 2 : 4;
+  const silentBar = (b: number): boolean => sectionOf(b).section === "break" || liftAt(b, chorusFirst, chorusLen, lift) !== 0;
 
   for (let b = 0; b < BARS; b++) {
     const { section, first, len: slen } = sectionOf(b);
@@ -548,6 +553,19 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, v(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
       }
     }
+
+    if (b % droneEvery === 0 && !silentBar(b)) {
+      let len = 1;
+      while (len < droneEvery && b + len < BARS && !silentBar(b + len)) len++;
+      [0, 7].forEach((semi, k) => {
+        const note: PersonalNote = {
+          t: t0, d: len * bar * 0.98, instrument: droneInst, freq: fit(hz(KEY_ROOT + st.shift - 12 + semi), droneInst), vel: clamp(v(k === 0 ? 0.22 : 0.15), 0.05, 1),
+          key: routes[0].key, route: 0, via: 0, alt: altitudeFt(0.5, routes[0].distKm), show: false, pan: 0, wet: 0.3,
+        };
+        notes.push(note);
+        roleOfNote.set(note, "drone");
+      });
+    }
   }
   // played, not printed: a few milliseconds and a few percent, looser the more time zones the trip crosses
   humanize(notes, {
@@ -557,7 +575,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   });
   // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
   const byRoute = new Map<number, PersonalNote[]>();
-  for (const x of notes) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
+  for (const x of notes) if (roleOfNote.get(x) !== "drone") byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
+  for (const x of notes) if (roleOfNote.get(x) === "drone") x.drawDur = x.d;
   for (const list of byRoute.values()) {
     list.sort((a, b) => a.t - b.t);
     list.forEach((x, k) => {
