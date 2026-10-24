@@ -117,7 +117,7 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 
 ## World pack voices
 
-The recordings of the world pack are added to the voices of the cards (`WORLD_VOICES` in `globe/src/personal/world-voices.ts`); the original voices stay as the fallback. `bass` is the list only the bass route draws from; `perc` replaces the card's percussion. A coloured hook route also sings in the scale of its own card.
+The recordings of the world pack are added to the voices of the cards (`WORLD_VOICES` in `globe/src/personal/world-voices.ts`); the original voices stay as the fallback. `bass` is the list only the bass route draws from; `perc` replaces the card's percussion. A coloured hook route also sings in the scale of its own card. A coloured route (one that plays the card of its destination) takes, by its hash, a recording of that card's world voices before anything else: the list of its role first (the role lists are served before any borrowed one), then the card's other melodic lists (a pad: held, melody, pluck; a hook: melody, pluck, held; a pluck route: pluck, melody; the bass only its `bass` list). It never takes the piano: the piano is a voice of the main card, and the steady piano of a piece with more than three routes goes to a pluck or hook route of the main card when there is one.
 
 | Card | Melody | Pluck | Held | Bass | Perc |
 |---|---|---|---|---|---|

@@ -5,7 +5,7 @@ import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards } from "./genres";
-import { resolveVoice, type Voice } from "./world-voices";
+import { WORLD_VOICES, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 export { altitudeFt, cruiseFt };
 
@@ -290,28 +290,65 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   // every route gets its own instrument where its card has enough of them
   const taken = new Set<string>();
   let pianos = 0;
-  const choose = (list: Voice[], h: number, i: number, kind: "melody" | "pluck" | "other"): PlayInstrument => {
-    // the piano is a prominent voice: a hook and an arpeggio may take it; the other instruments are not repeated
-    if (list.includes("PNO") && pianos < 2 && kind !== "other" && (pianos === 0 || kind === "pluck")) {
+  /**
+   * A coloured route (one playing the card of its destination) first takes, by its hash, a recording of that card's world
+   * voices that no other route has: the list of its role first, then the card's other melodic lists. The lists of the
+   * roles are served before the borrowed ones (a pad does not take the santur a pluck route of the same card needs).
+   */
+  const coloured = routes.map((_, i) => plan.perRoute[i] !== plan.main);
+  /** which list a coloured route's recording came from: 0 its role's own, 1+ a borrowed one, -1 none */
+  const worldTier = routes.map(() => -1);
+  const tiersOf = (i: number): (Voice[] | undefined)[] => {
+    const w = WORLD_VOICES[plan.perRoute[i].id] ?? {};
+    switch (role[i]) {
+      // a coloured pad strikes the chord on its card's held recording, else a melodic or plucked one; the bass stays a bass
+      case "pad": return [w.held, w.melody, w.pluck];
+      case "bass": return [w.bass];
+      case "hook": return [w.melody, w.pluck, w.held];
+      case "pluck": return [w.pluck, w.melody];
+      default: return [];
+    }
+  };
+  const hashOf = routes.map((r, i) => routeHash(r.key + i));
+  const fromWorld = (i: number, tier: number): PlayInstrument | undefined => {
+    const ws = tiersOf(i)[tier] ?? [];
+    for (let o = 0; o < ws.length; o++) {
+      const c = ws[(hashOf[i] + o) % ws.length];
+      if (!taken.has(c)) {
+        taken.add(c);
+        worldTier[i] = tier;
+        return resolveVoice(c, hashOf[i]);
+      }
+    }
+    return undefined;
+  };
+  const early: (PlayInstrument | undefined)[] = routes.map((_, i) => (coloured[i] ? fromWorld(i, 0) : undefined));
+  const choose = (list: Voice[], h: number, i: number, kind: "melody" | "pluck" | "other", turn = 0): PlayInstrument => {
+    if (coloured[i]) {
+      const got = early[i] ?? [1, 2].map((t) => (worldTier[i] < 0 ? fromWorld(i, t) : undefined)).find((x) => x);
+      if (got) return got;
+    }
+    // the piano is a prominent voice of the main card: a hook and an arpeggio may take it; the other instruments are not repeated
+    if (!coloured[i] && list.includes("PNO") && pianos < 2 && kind !== "other" && (pianos === 0 || kind === "pluck")) {
       pianos++;
       return "PNO";
     }
     for (let o = 0; o < list.length; o++) {
-      const c = list[(h + st.ensemble + i + o) % list.length];
+      const c = list[(h + st.ensemble + i + turn + o) % list.length];
       if (c !== "PNO" && !taken.has(c)) {
         taken.add(c);
         return resolveVoice(c, h);
       }
     }
-    return resolveVoice(list[(h + st.ensemble + i) % list.length], h);
+    return resolveVoice(list[(h + st.ensemble + i + turn) % list.length], h);
   };
-  const voiceOf: PlayInstrument[] = routes.map((r, i) => {
-    const h = routeHash(r.key + i);
+  const voiceOf: PlayInstrument[] = routes.map((_, i) => {
+    const h = hashOf[i];
     const card = plan.perRoute[i];
     const folkish = card.family === "folk" || card.family === "pulse";
     switch (role[i]) {
       case "pad": return choose(card.held, h, i, "other");
-      case "bass": return choose(card.bass?.length ? card.bass : card.held.filter((x) => x !== "PNO"), h, i + 1, "other");
+      case "bass": return choose(card.bass?.length ? card.bass : card.held.filter((x) => x !== "PNO"), h, i, "other", 1);
       case "hook": return choose(card.melody, h, i, "melody");
       case "pluck": return choose(card.pluck, h, i, "pluck");
       case "backbeat": return resolveVoice(card.perc, h);
@@ -319,9 +356,18 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       default: return folkish && !card.perc.startsWith("DARBUKA") ? resolveVoice(card.perc, h) : "TRI";
     }
   });
-  // with more than three routes the piano is always there, as a steady voice (the arpeggio first, else the hook)
+  // with more than three routes the piano is always there, as a steady voice: on a route of the main card (the arpeggio
+  // first, else the hook); else on a pluck or hook route without a recording of its destination, else one whose
+  // recording was borrowed from another list of its card
   if (n > 3 && !voiceOf.includes("PNO")) {
-    const at = role.indexOf("pluck") >= 0 ? role.indexOf("pluck") : role.indexOf("hook");
+    const pick = (ok: (i: number) => boolean): number => {
+      for (const rl of ["pluck", "hook"] as PopRole[]) {
+        const at = role.findIndex((q, i) => q === rl && ok(i));
+        if (at >= 0) return at;
+      }
+      return -1;
+    };
+    const at = [pick((i) => !coloured[i]), pick((i) => worldTier[i] < 0), pick((i) => worldTier[i] > 0), pick(() => true)].find((x) => x >= 0) ?? -1;
     if (at >= 0) voiceOf[at] = "PNO";
   }
 

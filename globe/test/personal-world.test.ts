@@ -74,6 +74,15 @@ import { WORLD_FAMILIES, WORLD_INSTRUMENTS } from "../src/audio/world-pack";
 import { CARDS } from "../src/personal/genres";
 import { WORLD_VOICES, resolveVoice } from "../src/personal/world-voices";
 
+/** every recording a card's world voices may resolve to (families expanded) */
+const worldOf = (id: string): Set<string> => {
+  const w = WORLD_VOICES[id];
+  const out = new Set<string>();
+  for (const v of w ? [...(w.held ?? []), ...(w.melody ?? []), ...(w.pluck ?? []), ...(w.bass ?? []), ...(w.perc ? [w.perc] : [])] : []) {
+    for (const x of (WORLD_FAMILIES as Record<string, readonly string[]>)[v] ?? [v]) out.add(x);
+  }
+  return out;
+};
 const isWorld = (v: string): boolean => v in WORLD_FAMILIES || (WORLD_INSTRUMENTS as readonly string[]).includes(v);
 
 describe("world voices", () => {
@@ -99,11 +108,63 @@ describe("world voices", () => {
   });
   it("lets a piece to Iran and Japan use their instruments, and only real instrument names reach the notes", () => {
     const routes = buildRoutes(["IKA", "NRT", "JFK", "LOS"], "IST");
+    const plan = planCards("visited", routes);
     const piece = composePiece("visited", routes);
     for (const n of piece.notes) {
       expect(n.instrument in WORLD_FAMILIES, n.instrument).toBe(false);
       expect(typeof n.instrument).toBe("string");
     }
+    const on = (code: string): Set<string> => new Set(piece.notes.filter((n) => routes[n.route].to === code).map((n) => n.instrument));
+    expect(plan.perRoute[routes.findIndex((r) => r.to === "IKA")].id).toBe("persian");
+    expect(plan.perRoute[routes.findIndex((r) => r.to === "NRT")].id).toBe("eastasia");
+    // a Persian recording on the route to Tehran, a Japanese / East Asian one on the route to Tokyo
+    expect([...on("IKA")].some((x) => worldOf("persian").has(x)), [...on("IKA")].join("/")).toBe(true);
+    expect([...on("NRT")].some((x) => worldOf("eastasia").has(x)), [...on("NRT")].join("/")).toBe(true);
+  });
+  it("most coloured routes sound a recording of their own card's world voices (where the card has some)", () => {
+    const pool = ["JFK", "NRT", "DPS", "LOS", "GRU", "LHR", "DEL", "NBO", "SYD", "CAI", "IKA", "DXB", "BKK", "MEX", "EZE", "DUB", "MAD", "CDG", "SVO", "TAS", "ICN", "HAV", "ACC", "JNB", "ATH", "BEY", "LIS", "VIE", "FCO", "YYZ"];
+    let coloured = 0;
+    let world = 0;
+    for (let s = 0; s < 60; s++) {
+      const home = ["IST", "LHR", "JFK", "DXB"][s % 4];
+      const places = pool.filter((x) => x !== home).filter((_, k) => (k * 7 + s * 3) % 5 === 0).slice(0, 3 + (s % 4) * 3);
+      const routes = buildRoutes(places, home);
+      const plan = planCards(s % 2 ? "wish" : "visited", routes);
+      const piece = composePiece(s % 2 ? "wish" : "visited", routes);
+      plan.perRoute.forEach((c, i) => {
+        const w = worldOf(c.id);
+        if (c === plan.main || w.size === 0) return;
+        coloured++;
+        if (piece.notes.some((n) => n.route === i && w.has(n.instrument))) world++;
+      });
+    }
+    expect(coloured).toBeGreaterThan(100);
+    // 0.29 before the coloured routes took their card's world voices first; the rest are mostly bass and drum routes
+    // whose card has no world bass or drum
+    expect(world / coloured).toBeGreaterThan(0.5);
+  });
+  it("puts the steady piano of a piece with more than three routes on a route of the main card when one can take it", () => {
+    const pool = ["JFK", "NRT", "DPS", "LOS", "GRU", "LHR", "DEL", "NBO", "SYD", "CAI", "IKA", "DXB", "BKK", "MEX", "EZE", "DUB", "MAD", "CDG", "SVO", "ICN"];
+    const SMALL: Record<number, string[]> = { 4: ["pad", "bass", "hook", "pluck"], 5: ["pad", "bass", "hook", "pluck", "kick"], 6: ["pad", "bass", "hook", "pluck", "kick", "backbeat"] };
+    const BASE = ["pad", "bass", "hook", "pluck", "kick", "backbeat", "hat"];
+    let checked = 0;
+    for (let s = 0; s < 40; s++) {
+      const home = ["IST", "LHR", "JFK", "DXB"][s % 4];
+      const places = pool.filter((x) => x !== home).filter((_, k) => (k * 3 + s) % 4 === 0).slice(0, 4 + (s % 5));
+      const routes = buildRoutes(places, home);
+      const n = routes.length;
+      if (n <= 3) continue;
+      const plan = planCards("visited", routes);
+      const piece = composePiece("visited", routes);
+      const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
+      const role: string[] = [];
+      order.forEach((x, k) => (role[x.i] = n <= 6 ? SMALL[n][k] : BASE[Math.floor((k * 7) / n)]));
+      const mainMelodic = routes.some((_, i) => plan.perRoute[i] === plan.main && (role[i] === "hook" || role[i] === "pluck"));
+      if (!mainMelodic) continue;
+      checked++;
+      expect(piece.notes.some((x) => x.instrument === "PNO" && plan.perRoute[x.route] === plan.main), places.join(",")).toBe(true);
+    }
+    expect(checked).toBeGreaterThan(5);
   });
   it("keeps the darbuka family off the hat: the hat routes of a big piece never play DARBUKA_VCSL", () => {
     const places = ["LHR", "CDG", "FRA", "AMS", "MAD", "FCO", "VIE", "ATH", "JFK", "NRT", "SYD", "DXB", "IKA", "DOH", "CAI", "AMM", "BEY", "KWI", "RUH", "TBS", "BAK"];
