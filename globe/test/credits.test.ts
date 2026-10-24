@@ -6,13 +6,32 @@ const read = (p: string): string => readFileSync(fileURLToPath(new URL(p, import
 const html = read("../../docs/credits.html");
 const world = JSON.parse(read("../../docs/music-pack-world-ledger.json")) as { author: string; licence: string; source: string }[];
 
+const section = (page: string): string => {
+  const start = page.search(/<h2>[^<]*Creative Commons Attribution \(CC BY\)/);
+  if (start < 0) return "";
+  const next = page.indexOf("<h2>", start + 4);
+  return page.slice(start, next < 0 ? undefined : next);
+};
+
 describe("credits page", () => {
-  it("names every CC BY author of the world pack with a link to the work", () => {
+  it("finds the CC BY section, with the authors who also have CC0 sounds", () => {
+    const sec = section(html);
+    expect(sec.length).toBeGreaterThan(0);
+    expect(sec).toContain("pjcohen");
+    expect(sec).toContain("tarane468");
+  });
+  it("names every CC BY author of the world pack with a link to the work, inside the CC BY section", () => {
+    const sec = section(html);
     const by = world.filter((r) => r.licence === "CC BY");
     expect(by.length).toBeGreaterThan(20);
     for (const r of by) {
-      expect(html, r.author).toContain(r.author.replace(/&/g, "&amp;"));
-      expect(html, r.source).toContain(r.source.replace(/&/g, "&amp;"));
+      if (r.author.startsWith("Google")) {
+        expect(html, r.author).toContain(r.author.replace(/&/g, "&amp;"));
+        expect(html, r.source).toContain(r.source.replace(/&/g, "&amp;"));
+        continue; // NSynth is credited under "Recorded instruments"
+      }
+      expect(sec, r.author).toContain(r.author.replace(/&/g, "&amp;"));
+      expect(sec, r.source).toContain(r.source.replace(/&/g, "&amp;"));
     }
   });
   it("credits the sources that need it", () => {
