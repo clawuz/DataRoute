@@ -45,7 +45,8 @@ region of the far end, the altitude profile along the flight, trip/leg index, an
   `BAGPIPE_DRONE`; `anatolian`, `arabic`, `persian`, `centralasia` → `CELLO` (held, low); `baroque` → `RENORGAN`; others → `CELLO`.
   Plucked tanpura is re-struck every two bars; held instruments are re-struck every four bars (a note of the chord progression's length).
 - Level: 0.22 × the section level; absent in the `break`; during the key lift it is silent (it is "home", the piece is away) and it returns
-  in the outro. Pitch: two octaves below the bass line's tonic, inside the instrument's range (`fit`).
+  in the outro. Pitch: the tonic and the fifth above it in the octave of the bass line's tonic (a lower octave would be inaudible on small
+  speakers), inside the instrument's range (`fit`). A drone note never runs into a silent bar: its length is cut at the next lifted or break bar.
 - With one route there is no piece-level drone (the solo piece stays as it is).
 
 ## 2. Key lift
@@ -66,7 +67,8 @@ region of the far end, the altitude profile along the flight, trip/leg index, an
   `timeZonesSpanned = (max longitude − min longitude over all route end points, wrapped) / 15`.
 - Never breaks the existing invariants: the offset is clamped to 20% of the gap to the neighbouring notes of the same route, so notes of a
   route keep their order and `drawDur` (never into the next note) still holds; no note starts before 0 or ends after the piece.
-- Pad chords struck together keep their small "roll" (already in the code); the offset is applied per chord, not per tone.
+- Notes of one route that sound at the same moment (a chord) move together; the offset is keyed per route and moment, not per note. Notes of
+  different routes drift independently (a natural roll).
 
 ## 4. Space from the map
 
