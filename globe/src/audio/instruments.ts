@@ -1,12 +1,12 @@
 import { activeSampler } from "./sampler";
 import type { NoteKind } from "./notes-bus";
-import { baseOf, type Instrument } from "./theory";
+import { baseOf, type Instrument, type PlayInstrument } from "./theory";
 
 /** What a recipe needs of a planned note (`PlannedNote` is one). */
 export interface SynthNote {
   /** audio-clock time */
   when: number;
-  instrument: Instrument;
+  instrument: PlayInstrument;
   freq: number;
   /** chord voicing (KEYS: one Rhodes per tone; BRASS: trumpets on the two lower tones, sax on the third) */
   freqs?: number[];

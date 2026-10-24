@@ -1,4 +1,5 @@
-import type { Instrument } from "../audio/theory";
+import type { Instrument, PlayInstrument } from "../audio/theory";
+import { WORLD_RANGE } from "../audio/world-pack";
 import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
@@ -11,7 +12,7 @@ export { altitudeFt, cruiseFt };
 export interface PersonalNote {
   t: number;
   d: number;
-  instrument: Instrument;
+  instrument: PlayInstrument;
   freq: number;
   vel: number;
   /** route key — what lights on the globe when the note sounds */
@@ -165,6 +166,12 @@ const FLOOR: Partial<Record<Instrument, number>> = {
   FLUTE: 262, PICC: 520, OBOE: 233, CLA: 147, VIOLIN: 196, VIOLA: 131, TPT: 165, HORN: 87, SAZ: 82, NEY: 294, XYLO: 349, GLOCK: 520, MARIMBA: 65, KANUN: 130, OUD: 55,
 };
 
+/** the pitch limits of an instrument: the world pack's range around its recordings, else the tables above */
+const limitsOf = (inst: PlayInstrument): { cap?: number; floor?: number } => {
+  const w = (WORLD_RANGE as Partial<Record<string, readonly [number, number]>>)[inst];
+  return w ? { floor: w[0], cap: w[1] } : { cap: CEILING[inst as Instrument], floor: FLOOR[inst as Instrument] };
+};
+
 function sectionOf(bar: number): { section: Section; first: number; len: number } {
   let b = 0;
   for (const [s, n] of FORM) {
@@ -268,15 +275,14 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const phraseBars = routes.map((_, i) => clamp(Math.round(4 + 12 * (rank.get(i) ?? 0.5)), 4, 16));
   const phaseAt = (i: number, b: number, frac: number): number => ((((b % phraseBars[i]) + phraseBars[i]) % phraseBars[i]) + frac) / phraseBars[i];
 
-  const fit = (f: number, inst: Instrument): number => {
-    const cap = CEILING[inst];
-    const floor = FLOOR[inst];
+  const fit = (f: number, inst: PlayInstrument): number => {
+    const { cap, floor } = limitsOf(inst);
     let x = f;
     if (cap) while (x > cap) x /= 2;
     if (floor) while (x < floor) x *= 2;
     return x;
   };
-  const push = (i: number, t: number, d: number, instrument: Instrument, f: number, vel: number, p = 0.5): void => {
+  const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5): void => {
     notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm) });
   };
 
@@ -298,7 +304,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     }
     return list[(h + st.ensemble + i) % list.length];
   };
-  const voiceOf: Instrument[] = routes.map((r, i) => {
+  const voiceOf: PlayInstrument[] = routes.map((r, i) => {
     const h = routeHash(r.key + i);
     const card = plan.perRoute[i];
     const folkish = card.family === "folk" || card.family === "pulse";
@@ -647,9 +653,8 @@ function composeSolo(mode: PersonalMode, route: PersonalRoute, st: PersonalStyle
 }
 
 /** an instrument's own range: above its ceiling or below its floor a note is moved by octaves */
-function fitPitch(f: number, inst: Instrument): number {
-  const cap = CEILING[inst];
-  const floor = FLOOR[inst];
+function fitPitch(f: number, inst: PlayInstrument): number {
+  const { cap, floor } = limitsOf(inst);
   let x = f;
   if (cap) while (x > cap) x /= 2;
   if (floor) while (x < floor) x *= 2;

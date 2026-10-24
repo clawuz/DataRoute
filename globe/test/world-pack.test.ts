@@ -47,3 +47,15 @@ describe("world pack", () => {
     }
   });
 });
+
+import { baseOf } from "../src/audio/theory";
+
+describe("baseOf", () => {
+  it("maps a world instrument to its synthesised stand-in and leaves the others alone", () => {
+    expect(baseOf("SANTUR")).toBe("KANUN");
+    expect(baseOf("STEINWAY")).toBe("PNO");
+    expect(baseOf("RENORGAN")).toBe("ORGAN");
+    expect(baseOf("OUD")).toBe("MEA"); // lite stand-ins keep working
+    expect(baseOf("CELLO")).toBe("CELLO");
+  });
+});

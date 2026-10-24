@@ -1,4 +1,5 @@
 import { REGIONS } from "@web/data/palette";
+import { WORLD_STAND_IN, type WorldInstrument } from "./world-pack";
 
 export type RegionName = (typeof REGIONS)[number];
 /**
@@ -15,13 +16,17 @@ export type Instrument =
   | "VIOLA" | "OBOE" | "BSN" | "PICC" | "HORN" | "TBN" | "TUBA" | "GLOCK" | "XYLO" | "TRI" | "TAMB" | "GONG"
   | "OUD" | "VIOLIN_PIZZ" | "VIOLA_PIZZ" | "CELLO_PIZZ" | "BASS_PIZZ";
 
+/** what a note may name: a synthesised voice, or a recording of the world pack (which has a synthesised stand-in) */
+export type PlayInstrument = Instrument | WorldInstrument;
+
 /** the synthesised voice that stands in for an instrument that has no synth of its own (and the scope lane it sits in) */
 const STAND_IN: Partial<Record<Instrument, Instrument>> = {
   OUD: "MEA", VIOLA: "VIOLIN", OBOE: "CLA", BSN: "CELLO", PICC: "FLUTE", HORN: "BRASS", TBN: "BRASS", TUBA: "BASS",
   GLOCK: "EP", XYLO: "MARIMBA", TRI: "OHAT", TAMB: "SHAKER", GONG: "CRASH",
   VIOLIN_PIZZ: "HARP", VIOLA_PIZZ: "HARP", CELLO_PIZZ: "BASS", BASS_PIZZ: "BASS",
 };
-export const baseOf = (i: Instrument): Instrument => STAND_IN[i] ?? i;
+export const baseOf = (i: PlayInstrument): Instrument =>
+  i in WORLD_STAND_IN ? WORLD_STAND_IN[i as WorldInstrument] : STAND_IN[i as Instrument] ?? (i as Instrument);
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */
 export function euclid(k: number, n: number): boolean[] {
