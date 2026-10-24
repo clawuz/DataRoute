@@ -8,6 +8,7 @@ import { planCards } from "./genres";
 import { WORLD_VOICES, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 import { panOf, wetOf } from "./space";
+import { humanize, looseness, timeZonesSpanned } from "./humanize";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -255,6 +256,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const scale = mode === "wish" ? plan.main.scaleWish ?? plan.main.scale : plan.main.scale;
   const prog: Chord[] = plan.main.prog ? plan.main.prog.map(([off, third]) => ({ root: KEY_ROOT + off, third })) : PROGS[mode][st.progression];
   const notes: PersonalNote[] = [];
+  const roleOfNote = new Map<PersonalNote, string>();
 
   // ---- the arrangement of a popular song, made of the routes ----
   // The longest route holds the chords, the next one plays the bass, the middle ones carry the hook and the arpeggio,
@@ -293,7 +295,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     return x;
   };
   const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5): void => {
-    notes.push({ t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm), pan: panFor[i], wet: wetFor[i] });
+    const note: PersonalNote = { t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm), pan: panFor[i], wet: wetFor[i] };
+    notes.push(note);
+    roleOfNote.set(note, role[i]);
   };
 
   // every route gets its own instrument where its card has enough of them
@@ -536,6 +540,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       }
     }
   }
+  // played, not printed: a few milliseconds and a few percent, looser the more time zones the trip crosses
+  humanize(notes, {
+    loose: looseness(timeZonesSpanned(routes)),
+    tight: (x) => ["kick", "backbeat", "hat"].includes(roleOfNote.get(x) ?? ""),
+    skip: (x) => roleOfNote.get(x) === "drone",
+  });
   // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
   const byRoute = new Map<number, PersonalNote[]>();
   for (const x of notes) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
