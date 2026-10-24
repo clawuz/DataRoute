@@ -43,8 +43,9 @@ Replaced: the rule "every third route takes its destination's card" in `planCard
 - Each route's colour = the card of its far end (`cardsOfAirport(far, region)` with the hash choice as today). Routes whose colour is the
   main card are not coloured.
 - Colour budget: `round(0.6 × n)` routes (at least one when n ≥ 2, never more than the number of routes not on the main card). Each
-  colour present gets `max(1, round(share × budget))` routes, `share` = its routes / all coloured candidates; any rounding remainder goes
-  to the largest share, ties by the route-key hash. Within a colour the longest routes are taken first (they carry the audible roles).
+  colour present gets `max(1, floor(share × budget))` routes, `share` = its routes / all coloured candidates; the rest of the budget goes
+  to the larger colours first (ties by the hash of the card id); a colour with candidates always gets at least one route, even beyond the budget. Within a colour the longest routes are taken first (they carry the audible roles).
+- Cards get an optional `bass` voice list (the bass route draws from it; the chord pad never does, so a bass guitar is never asked to play chords).
 - A coloured route plays its card's figure, accents, instruments **and melody scale**; chords stay in the main card's scale so the
   harmony holds.
 - Cards get the new instruments (a table in `docs/music-genre-cards.md` is updated with the code):
