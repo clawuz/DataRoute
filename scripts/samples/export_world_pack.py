@@ -44,6 +44,34 @@ def stand_in(name):
             return synth
     sys.exit(f"no synth stand-in for {name}: add it to STAND_IN")
 
+# the licence deed of every file: the Freesound fetch ledger records it per sound (joined by the sound's page); the makam
+# fetch did not, so its CC BY pages are listed here (checked on freesound.org, 2026-10-24); NSynth is CC BY 4.0
+FETCH_LEDGER = os.path.join(ROOT, "tmp-music-v1", "world-fetch", "world-ledger.json")
+MAKAM_BY = {f"https://freesound.org/people/ajaysm/sounds/{i}/": "https://creativecommons.org/licenses/by/4.0/" for i in (194637, 194638, 194639, 194700)}
+CC0_URL = "https://creativecommons.org/publicdomain/zero/1.0/"
+NSYNTH_URL = "https://creativecommons.org/licenses/by/4.0/"
+
+def norm(u):
+    u = u.strip().replace("http://", "https://", 1)
+    return u if u.endswith("/") else u + "/"
+
+def licence_urls():
+    out = dict(MAKAM_BY)
+    for r in json.load(open(FETCH_LEDGER)):
+        if r.get("page") and r.get("licence_url"):
+            out[norm(r["page"])] = norm(r["licence_url"])
+    return out
+
+def licence_url(row, urls):
+    if row["author"].startswith("Google"):
+        return NSYNTH_URL
+    got = urls.get(norm(row["source"])) if row["source"].startswith("http") else None
+    if got:
+        return got
+    if row["licence"].startswith("CC0"):
+        return CC0_URL
+    sys.exit(f"no licence deed known for {row['source']} ({row['licence']}): add it to MAKAM_BY or the fetch ledger")
+
 def hz(midi):
     return round(440 * 2 ** ((midi - 69) / 12), 1)
 
@@ -65,10 +93,11 @@ def main():
             files.add(z["file"])
     json.dump({"name": "World pack (CC0 and CC BY)", "instruments": insts}, open(os.path.join(PUB, "manifest.json"), "w"), indent=1)
     renamed_from = {v: k for k, v in RENAME.items()}
+    urls = licence_urls()
     rows = []
     for l in ledger:
         if l["file"] in files:
-            rows.append({**l, "instrument": RENAME.get(l["instrument"], l["instrument"])})
+            rows.append({**l, "instrument": RENAME.get(l["instrument"], l["instrument"]), "licence_url": licence_url(l, urls)})
     json.dump(rows, open(LEDGER_OUT, "w"), indent=1)
 
     names = sorted(insts)

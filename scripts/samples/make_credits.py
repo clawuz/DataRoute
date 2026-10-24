@@ -3,7 +3,7 @@
 Build docs/credits.html from the ledgers (not published: it is outside globe/public). Never edit the page by hand: change a ledger or this script and re-run.
   python3 scripts/samples/make_credits.py
 """
-import html, json, os
+import html, json, os, re
 from collections import OrderedDict
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
@@ -20,10 +20,16 @@ def by_author(rows):
         out.setdefault(r["author"], []).append(r)
     return out
 
+def deed(r):
+    """the licence of one sound, linked to its deed (CC BY sounds only: each keeps the version it was published under)"""
+    u = r.get("licence_url", "")
+    m = re.search(r"/licenses/by/([0-9.]+)/", u)
+    return f' <a class="l" href="{e(u)}" rel="noopener license">CC BY {m.group(1)}</a>' if m else ""
+
 def author_block(rows, open_=False):
     parts = []
     for a, rs in by_author(rows).items():
-        links = "".join(f'<li><a href="{e(r["source"])}" rel="noopener">{e(r.get("title") or r["file"])}</a> <span class="i">{e(r["instrument"].title().replace("_", " "))}</span></li>' for r in rs)
+        links = "".join(f'<li><a href="{e(r["source"])}" rel="noopener">{e(r.get("title") or r["file"])}</a> <span class="i">{e(r["instrument"].title().replace("_", " "))}</span>{deed(r)}</li>' for r in rs)
         parts.append(f"<details><summary>{e(a)} <span class=\"n\">{len(rs)}</span></summary><ul>{links}</ul></details>")
     return "\n".join(parts)
 
@@ -33,6 +39,7 @@ nsynth_author = nsynth[0]["author"] if nsynth else "Google Magenta"
 vcsl = [r for r in world if r["author"].startswith("Versilian")]
 cc0_fs = [r for r in world if r["licence"].startswith("CC0") and not r["author"].startswith("Versilian")] + fs
 n_instr = len({r["instrument"] for r in world})
+by3 = '<a href="https://creativecommons.org/licenses/by/3.0/" rel="noopener license">CC BY 3.0</a>' if any("/by/3.0/" in r.get("licence_url", "") for r in cc_by) else ""
 
 PAGE = f"""<!doctype html>
 <html lang="en">
@@ -54,7 +61,7 @@ PAGE = f"""<!doctype html>
   p {{ margin: 8px 0; color: var(--fg); }} .mute {{ color: var(--mute); }}
   details {{ border-top: 1px solid var(--line); padding: 6px 0; }} summary {{ cursor: pointer; }}
   summary .n {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
-  ul {{ margin: 6px 0 10px; padding-left: 20px; }} li .i {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
+  ul {{ margin: 6px 0 10px; padding-left: 20px; }} li .i, li .l {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
 </style>
 </head>
 <body>
@@ -69,7 +76,7 @@ PAGE = f"""<!doctype html>
 <p>All recordings were trimmed, level-matched and converted to mono MP3; the pitch of each was measured. No recording is presented as made by anyone else.</p>
 
 <h2>Sounds from Freesound — Creative Commons Attribution (CC BY)</h2>
-<p class="mute">Each author below, with the sounds used. Licence: <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY</a>.</p>
+<p class="mute">Each author below, with the sounds used and the licence each was published under: <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">CC BY 4.0</a>{" or " + by3 if by3 else ""}.</p>
 {author_block(cc_by, True)}
 
 <h2>Sounds from Freesound — CC0 (with thanks)</h2>

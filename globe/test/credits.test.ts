@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const read = (p: string): string => readFileSync(fileURLToPath(new URL(p, import.meta.url)), "utf8");
 const html = read("../../docs/credits.html");
-const world = JSON.parse(read("../../docs/music-pack-world-ledger.json")) as { author: string; licence: string; source: string }[];
+const world = JSON.parse(read("../../docs/music-pack-world-ledger.json")) as { author: string; licence: string; source: string; licence_url?: string }[];
 
 const section = (page: string): string => {
   const start = page.search(/<h2>[^<]*Creative Commons Attribution \(CC BY\)/);
@@ -33,6 +33,20 @@ describe("credits page", () => {
       expect(sec, r.author).toContain(r.author.replace(/&/g, "&amp;"));
       expect(sec, r.source).toContain(r.source.replace(/&/g, "&amp;"));
     }
+  });
+  it("links every CC BY sound to the licence version it was published under (six are CC BY 3.0)", () => {
+    const sec = section(html);
+    const v3 = ["FaireDesVagues/sounds/69732/", "FaireDesVagues/sounds/69745/", "RealRhodesSounds/sounds/4190/", "RealRhodesSounds/sounds/4191/", "RealRhodesSounds/sounds/4192/", "RealRhodesSounds/sounds/4194/"];
+    const by = world.filter((r) => r.licence === "CC BY");
+    for (const r of by) {
+      const want = v3.some((x) => r.source.endsWith(x)) ? "3.0" : "4.0";
+      expect(r.licence_url, r.source).toBe(`https://creativecommons.org/licenses/by/${want}/`);
+      if (r.author.startsWith("Google")) continue;
+      const items = sec.split("<li>").filter((li) => li.includes(`href="${r.source.replace(/&/g, "&amp;")}"`));
+      expect(items.length, r.source).toBeGreaterThan(0);
+      for (const li of items) expect(li, r.source).toContain(`href="https://creativecommons.org/licenses/by/${want}/"`);
+    }
+    expect(by.filter((r) => r.licence_url?.includes("/by/3.0/")).length).toBe(6);
   });
   it("credits the sources that need it", () => {
     for (const s of ["VSCO 2 Community Edition", "VCSL", "NSynth", "CC BY 4.0", "adsb.fi", "NASA", "Julien Sulpis", "Freesound"]) expect(html, s).toContain(s);
