@@ -164,7 +164,8 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
       master.gain.setTargetAtTime(m ? 0 : 0.9, ctx.currentTime, 0.05);
     },
     position() {
-      return piece ? Math.max(0, ctx.currentTime - loopStart) : 0;
+      // while a piece waits for its samples it has not started: 0, not the offset of the piece before it
+      return piece && timer !== null ? Math.max(0, ctx.currentTime - loopStart) : 0;
     },
     dispose() {
       disposed = true;

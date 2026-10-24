@@ -61,6 +61,20 @@ describe("player loading", () => {
     pl.stop();
   });
 
+  it("reports position 0 while a new piece waits for its samples (not the old piece's offset)", async () => {
+    sam.loaded.add("a");
+    const ctx = fakeCtx() as unknown as { currentTime: number };
+    const pl = createPersonalPlayer(ctx as unknown as AudioContext, () => {});
+    pl.play(piece("a"), () => {});
+    ctx.currentTime = 10;
+    expect(pl.position()).toBeGreaterThan(9);
+    pl.play(piece("b"), () => {});
+    expect(pl.position()).toBe(0);
+    sam.resolvers[0]();
+    await flush();
+    expect(pl.position()).toBe(0); // the new piece starts 0.15 s ahead of the clock
+    pl.stop();
+  });
   it("stop() cancels a waiting start and clears loading", async () => {
     const calls: boolean[] = [];
     const si = vi.spyOn(globalThis, "setInterval");
