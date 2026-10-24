@@ -8,6 +8,7 @@ import { planCards } from "./genres";
 import { WORLD_VOICES, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 import { panOf, wetOf } from "./space";
+import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
 export { altitudeFt, cruiseFt };
 
@@ -38,6 +39,8 @@ export interface PersonalNote {
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
 export interface PersonalStyle {
+  /** semitones the last bars of the chorus are lifted (lift.ts): 0 when the trip stays in one region */
+  lift?: number;
   /** how busy the voices are: 0 sparse … 5 busy */
   groove: number;
   /** subdivision of the plucked voices: 0 sixteenths, 1 triplets, 2 eighths */
@@ -452,15 +455,21 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const hook = hookStart;
   const deg = routes.map(() => 0);
   const END_T = BARS * bar;
+  // the key lift: a trip across regions arrives somewhere brighter in the last bars of the chorus, then goes home
+  const lift = liftFor(mode, routes.map((r) => r.region));
+  style.lift = lift;
+  const chorusFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "chorus")).reduce((s, [, m]) => s + m, 0);
+  const chorusLen = FORM.find(([name]) => name === "chorus")![1];
 
   for (let b = 0; b < BARS; b++) {
     const { section, first, len: slen } = sectionOf(b);
+    const sh = st.shift + liftAt(b, chorusFirst, chorusLen, lift);
     const t0 = b * bar;
     const level = LEVEL[section];
     const fade = section === "outro" ? 1 - ((b - first) / slen) * 0.3 : 1;
     const v = (x: number): number => x * level * fade;
     const chord = popProg[b % popProg.length];
-    const cr = chord.root + st.shift;
+    const cr = chord.root + sh;
     const tones = [0, chord.third, 7].map((x) => cr + x);
     const full = section === "chorus" || section === "build";
     for (let i = 0; i < n; i++) {
@@ -493,7 +502,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const turn = varyTune(tune, routeHash(tune.id + routes.map((r) => r.key).join(">")) + Math.floor(b / tune.bars));
         for (const [semis, beats] of turn) {
           const when = t0 + off * stretch * beat;
-          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + st.shift + 12 + semis), v(0.78), phaseAt(i, b + Math.floor((off * stretch) / 4), ((off * stretch) % 4) / 4));
+          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + sh + 12 + semis), v(0.78), phaseAt(i, b + Math.floor((off * stretch) / 4), ((off * stretch) % 4) / 4));
           off += beats;
         }
       } else if (rl === "hook") {
@@ -507,7 +516,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           const sc = scaleOf[i];
           const total = m[hi] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           hi++;
-          let semis = KEY_ROOT + st.shift + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
+          let semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
           // the strong places of the groove rest on a chord tone
           if (sl.accent >= 1.1 || hi === 1) {
             let best = semis;
