@@ -66,23 +66,46 @@ describe("humanize", () => {
   it("leaves skipped notes alone and is the same every time", () => {
     const a = grid(30, 0.5);
     const b = copy(a), c = copy(a);
-    humanize(b, { loose: 1, skip: (n) => n.t < 5 });
-    humanize(c, { loose: 1, skip: (n) => n.t < 5 });
-    expect(b.filter((n) => n.t < 5).every((n, i) => n.t === a[i].t && n.vel === a[i].vel)).toBe(true);
+    const early = new Set(a.filter((n) => n.t < 5));
+    const skip = (n: PersonalNote): boolean => n.t < 5;
+    humanize(b, { loose: 1, skip });
+    humanize(c, { loose: 1, skip });
+    expect(early.size).toBeGreaterThan(0);
+    a.forEach((n, i) => {
+      if (early.has(n)) expect(b[i].t === n.t && b[i].vel === n.vel).toBe(true);
+    });
     expect(b.map((n) => n.t)).toEqual(c.map((n) => n.t));
   });
 });
 
 describe("humanize in a piece", () => {
-  it("composes the same piece every time, and a far trip is looser than a near one", () => {
-    const near = buildRoutes(["ESB", "ADB", "AYT", "TZX"], "IST");
-    const far = buildRoutes(["JFK", "NRT", "LAX", "SYD"], "IST");
+  const near = buildRoutes(["ESB", "ADB", "AYT", "TZX", "BJV", "DLM"], "IST");
+  const far = buildRoutes(["JFK", "NRT", "LAX", "SYD", "GRU", "CPT"], "IST");
+  // kick (beats 0 and 2, 0.4 of a beat long) and backbeat (beats 1 and 3, 0.35 of a beat long) sit exactly on the
+  // beat before humanizing; the hat is swung and so is left out. Found by that length and the beat grid.
+  const drumDrift = (p: ReturnType<typeof composePiece>): number[] => {
+    const beat = 60 / p.bpm;
+    return p.notes
+      .filter((n) => [0.4, 0.35].some((f) => Math.abs(n.d - f * beat) < 1e-9))
+      .map((n) => ({ n, off: (n.t / beat) - Math.round(n.t / beat) }))
+      .filter((x) => Math.abs(x.off) < 0.05)
+      .map((x) => Math.abs(x.off * beat));
+  };
+  const mean = (a: number[]): number => a.reduce((s, x) => s + x, 0) / a.length;
+
+  it("composes the same piece every time, and a far trip spans more time zones than a near one", () => {
     const a = composePiece("visited", far);
     expect(JSON.stringify(composePiece("visited", far).notes)).toBe(JSON.stringify(a.notes));
-    // swing and other rules also leave the beat grid, so compare the trips by their time zones, and check that
-    // the notes of the far trip are not all on the exact sixteenth grid
     expect(timeZonesSpanned(far)).toBeGreaterThan(timeZonesSpanned(near));
-    const beat = 60 / a.bpm / 4;
-    expect(a.notes.some((n) => Math.abs(((n.t / beat + 0.5) % 1) - 0.5) > 0.002 / beat)).toBe(true);
+  });
+  it("lets the kick and backbeat drift a little (30% of the amount), and a far trip more than a near one", () => {
+    const f = drumDrift(composePiece("visited", far));
+    const n = drumDrift(composePiece("visited", near));
+    expect(f.length).toBeGreaterThan(20);
+    expect(n.length).toBeGreaterThan(20);
+    expect(f.some((x) => x > 0.0005)).toBe(true);
+    expect(Math.max(...f)).toBeLessThanOrEqual(0.3 * 0.018 + 1e-6);
+    expect(Math.max(...n)).toBeLessThanOrEqual(0.3 * 0.018 + 1e-6);
+    expect(mean(f)).toBeGreaterThan(mean(n));
   });
 });
