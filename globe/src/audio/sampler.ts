@@ -104,8 +104,9 @@ export function createSampler(ctx: AudioContext): Sampler {
   let catalogueReady: Promise<void> = Promise.resolve();
 
   /** decode one instrument's recordings and register it; false when a file did not arrive */
-  function fetchInstrument(name: string): Promise<boolean> {
+  function fetchInstrument(name: string, chain: readonly string[] = []): Promise<boolean> {
     if (defs.has(name)) return Promise.resolve(true);
+    if (chain.includes(name)) return Promise.resolve(false); // a `use` cycle: give up, the synth plays
     const known = catalogue.get(name);
     if (!known) return Promise.resolve(false);
     const running = inflight.get(name);
@@ -113,7 +114,7 @@ export function createSampler(ctx: AudioContext): Sampler {
     const job = (async () => {
       const { inst, base } = known;
       if (inst.use) {
-        const ok = await fetchInstrument(inst.use);
+        const ok = await fetchInstrument(inst.use, [...chain, name]);
         const from = defs.get(inst.use);
         if (!ok || !from) return false;
         defs.set(name, { ...from, ...inst, zones: from.zones });
@@ -214,8 +215,13 @@ export function createSampler(ctx: AudioContext): Sampler {
       const gaveUp = new Promise<void>((r) => {
         timer = setTimeout(r, timeoutMs);
       });
-      await Promise.race([Promise.all(wanted.map(fetchInstrument)).then(() => undefined), gaveUp]);
-      clearTimeout(timer);
+      try {
+        await Promise.race([Promise.all(wanted.map((n) => fetchInstrument(n))).then(() => undefined), gaveUp]);
+      } catch {
+        /* whatever went wrong inside a job, the synth plays */
+      } finally {
+        clearTimeout(timer);
+      }
     },
     has: (instrument) => defs.has(instrument),
     play(dest, instrument, freq, vel, when, durSec, onEnd) {

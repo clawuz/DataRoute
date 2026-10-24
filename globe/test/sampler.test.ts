@@ -104,4 +104,15 @@ describe("sampler: use and ensure", () => {
     await loading;
     expect(s.has("B")).toBe(true);
   });
+  it("survives instruments that use each other or themselves", async () => {
+    fetched.length = 0;
+    const LOOPS = { name: "t", instruments: { X: { use: "Y", zones: [] }, Y: { use: "X", zones: [] }, S: { use: "S", zones: [] } } };
+    vi.stubGlobal("fetch", async () => ({ ok: true, json: async () => LOOPS }));
+    const s = createSampler(ctx);
+    await s.use(["/x/manifest.json"]);
+    await expect(s.ensure(["X", "Y", "S"], 200)).resolves.toBeUndefined();
+    expect(s.has("X")).toBe(false);
+    expect(s.has("Y")).toBe(false);
+    expect(s.has("S")).toBe(false);
+  });
 });
