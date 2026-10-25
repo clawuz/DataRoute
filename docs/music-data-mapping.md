@@ -23,10 +23,10 @@ A mapping is allowed only if it is:
 | east / west direction | direction of the melody's walk | travelling east rises | `compose.ts` |
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
-| starting country | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
+| main card of the piece (usually a card of the starting country; sometimes a lively generic one when the trip has many routes) | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
 | mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
 | regions crossed | **whether there is a key lift** | a trip inside one region has no journey | `lift.ts` |
-| longitude of a route's middle, relative to home | **stereo position** | east is right, west is left, like the map | `space.ts` |
+| longitude of a route's middle, relative to the start of the first route (the home airport when the trip starts at home) | **stereo position** | east is right, west is left, like the map (when the first route starts at home) | `space.ts` |
 | route distance | **reverb amount** | far = distant = more room | `space.ts` |
 | time zones spanned by the trip | **how loose the timing is** (jet lag) | the further, the more it drifts | `humanize.ts` |
 
@@ -35,8 +35,8 @@ A mapping is allowed only if it is:
 **Space** (`space.ts`; each note of the piece carries `pan` and `wet`)
 
 - `wrap180(d)` brings a longitude difference into −180…180. `midLon(route)` is the longitude of the middle of the route, going the short way round.
-- Home longitude = `fromLon` of the first route.
-- `pan = clamp(wrap180(midLon − homeLon) / 100, −0.8, 0.8) × width(role)`, so a route 80° or more east of home is fully right (×width), 80° or more west fully left.
+- The reference longitude (`homeLon`) = `fromLon` of the first route, the start of the first route. It is the home airport when the trip starts at home; the code does not check that.
+- `pan = clamp(wrap180(midLon − homeLon) / 100, −0.8, 0.8) × width(role)`, so a route 80° or more east of that longitude is fully right (×width), 80° or more west fully left ("home" in `homeLon` is the start of the first route).
   `width`: bass 0.15, kick 0.15, backbeat 0.5, hat 0.5, pad 0.6, hook 0.85, pluck 1.
 - `wet = (0.12 + 0.38 × clamp(distKm / 9000, 0, 1)) × wetOfRole(role)`: 0.12 for a very short route, 0.5 from 9000 km. `wetOfRole`: bass and kick 0.4, every other role 1.
 - Player: a note goes to one of three reverb sends by its `wet`: below 0.25 the first (dry-ish), below 0.4 the middle one, otherwise the wet one (`sendOf`).
@@ -59,11 +59,11 @@ A mapping is allowed only if it is:
 
 **Home drone** (`world-voices.ts`, `compose.ts`)
 
-- Instrument from the main card (the card of the starting country): `hindustani` → `TANPURA`; `celtic`, `karsilama` → `BAGPIPE_DRONE`; `baroque` → `RENORGAN`; every other card → `CELLO` (`DRONE_BY_CARD`, `droneVoice`). The family is resolved by `routeHash` of the first route like any other voice.
+- Instrument from the main card of the piece (usually a card of the starting country; with about 10% probability for fewer than 6 routes, 20% from 6 routes and 40% from 10 routes it is a lively generic card instead, `takeGeneric` in `planCards`): `hindustani` → `TANPURA`; `celtic`, `karsilama` → `BAGPIPE_DRONE`; `baroque` → `RENORGAN`; every other card → `CELLO` (`DRONE_BY_CARD`, `droneVoice`). The family is resolved by `routeHash` of the first route like any other voice.
 - Notes: the tonic and the fifth above it (+7 semitones) of the home key, one octave below the key root, folded into the range of the instrument (`fit`). The key is the piece's own, **not** the lifted one.
 - Re-struck every 2 bars for the plucked tanpura, every 4 bars for the other instruments; a note ends before the next silent bar.
 - Level: tonic `0.22`, fifth `0.15`, times the section level and the outro fade.
-- Silent in the break and in the lifted bars, so it plays in bars 0–43 and 56–63 (in the outro again).
+- Silent in the break (bars 52–55). Additionally silent in the lifted bars 44–51 when the trip crosses regions (lift ≠ 0), so then it plays in bars 0–43 and 56–63. With no lift (a one-region trip, which includes any all-Turkey trip) it plays through bar 51 and again in the outro.
 - Played by the **first route** (route 0, the home leg): `route: 0`, `show: false` (it sounds, the music box does not draw it). A piece of one route (the solo piece) has no drone.
 - `pan` 0 and `wet` 0.3 (the middle send); no timing drift.
 
