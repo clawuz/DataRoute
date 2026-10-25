@@ -7,6 +7,7 @@ import { clipNotes, clipStart, composePiece, type PersonalNote, type PersonalPie
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
+import { tripView } from "./frame";
 import { countLabel, pieceStats } from "./stats";
 import { searchFromSelection, type PersonalSelection } from "./codec";
 import { destinationOf, flagOf } from "./destinations";
@@ -113,6 +114,10 @@ export function Experience({ selection, onBack }: Props) {
     setExtraColors(palette.rgb); // before the model: the arcs read the palette when they are built
     const model = buildPersonalModel(routes);
     engine.setModel(model, model.span, nowSec());
+    const view = tripView(routes);
+    engine.centerOn(view.lat, view.lon, 0); // the camera frames the trip: every route that sounds is in the picture
+    engine.setRigDistance(view.dist);
+    engine.setIdleSpin(view.spin, 1);
     engine.setFrameSource(() => ({ absTime: nowSec(), cur: model.span, highlight: -1, nowSec: nowSec() }));
     setIntroReady(engine.loadTextures(() => {}).catch(() => null).then(() => engine.whenAssetsReady()));
 
@@ -445,7 +450,7 @@ export function Experience({ selection, onBack }: Props) {
       await work(frame, comp);
     } finally {
       engine.setAfterRender(null);
-      engine.setIdleSpin(true, 1);
+      engine.setIdleSpin(tripView(routes).spin, 1);
       engine.setLineScale(1);
       engine.setPortraitFit(true);
       engine.setPortraitShift(-20);
