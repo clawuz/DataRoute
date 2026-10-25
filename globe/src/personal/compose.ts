@@ -8,7 +8,7 @@ import { planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
-import { idiomOf, walkMotif } from "./idiom";
+import { idiomOf, phraseMotifs } from "./idiom";
 import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
@@ -454,10 +454,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const idiom = idiomOf(plan.perRoute[i]);
     const rnd = rng(routeHash(r.key + "hook" + i));
     const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
-    // each bar's motif is a walk of the idiom of the route's own card, pulled by the heading of the route; it ends on the cadence degree
-    const make = (end: number): number[] =>
-      walkMotif(idiom, hits.length, dir, rnd, idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, end);
-    return [make(2), make(0), make(2), make(4)] as number[][]; // four bars: A B A B′
+    // four bars A B A B′: each a walk of the idiom of the route's own card, pulled by its direction, coming home on the idiom's cadence;
+    // the third bar is the first again
+    return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2);
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
   const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);

@@ -53,34 +53,34 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at music B0 (the hook is an original melody now); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at music B0 (the hook is an original melody now, with a cadence plan and a motif return); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["ESB,TZX,ADB", "visited", 1870802000],
-  ["ESB,SAW,GZT", "wish", 1844219003],
-  ["ADB,VAN,AYT", "wish", 2515651697],
-  ["SAW,ESB,TZX", "visited", 3903243150],
+  ["ESB,TZX,ADB", "visited", 1344455991],
+  ["ESB,SAW,GZT", "wish", 4058508164],
+  ["ADB,VAN,AYT", "wish", 2545902595],
+  ["SAW,ESB,TZX", "visited", 2702941258],
   ["ESB", "visited", 2318824395],
   ["LHR", "wish", 3509170890],
-  ["SAW,DLM,VAN", "wish", 1374020869],
+  ["SAW,DLM,VAN", "wish", 2937653354],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
-// episodes shows up; hashes captured with the BASE code (54595a7). [places, home ("" = a journey without home), mode, hash]
+// episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["NMI,BLR,BOM,DEL", "MAA", "visited", 460497153], // 5 routes
-  ["BLR,DEL,HYD,MAA", "BOM", "visited", 2839998147], // 5 routes
-  ["BOM,DEL,HYD,MAA", "BLR", "wish", 3643958655], // 5 routes
-  ["TFU,XIY,CAN,URC", "", "visited", 1381697262], // 6 routes
-  ["BOM,DEL,HYD,MAA", "", "wish", 3805695607], // 6 routes
-  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 1450919894], // 7 routes
-  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 708662431], // 8 routes
-  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 3644283906], // 8 routes
+  ["NMI,BLR,BOM,DEL", "MAA", "visited", 2753503077], // 5 routes
+  ["BLR,DEL,HYD,MAA", "BOM", "visited", 2573715248], // 5 routes
+  ["BOM,DEL,HYD,MAA", "BLR", "wish", 2077533067], // 5 routes
+  ["TFU,XIY,CAN,URC", "", "visited", 4251337249], // 6 routes
+  ["BOM,DEL,HYD,MAA", "", "wish", 1421722377], // 6 routes
+  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 2408147669], // 7 routes
+  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 2863694970], // 8 routes
+  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 3236987512], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has 3 episode cards
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 1864182971],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 3359972000],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3813264119],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 541198611],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 4009625767],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 1039411121],
 ];
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> => buildRoutes(places.split(","), home || undefined);
 const outside = (p: ReturnType<typeof composePiece>): typeof p.notes => {
@@ -93,10 +93,10 @@ describe("episodes in a piece: what must not change", () => {
     expect(GOLDEN_NO_COLOUR.length).toBeGreaterThanOrEqual(4);
     expect(GOLDEN_OUTSIDE_VERSE.length).toBeGreaterThanOrEqual(3);
   });
-  it("a piece without colours is exactly the piece of before", () => {
+  it("regression guard: a piece without colours stays the piece it is", () => {
     for (const [places, mode, h] of GOLDEN_NO_COLOUR) expect(routeHash(JSON.stringify(composePiece(mode, routesOf(places)).notes)), places).toBe(h);
   });
-  it("a piece without colours that has drums (5-8 routes) is exactly the piece of before: no bridge fills", () => {
+  it("regression guard: a piece without colours that has drums (5-8 routes) stays the piece it is: no bridge fills", () => {
     const sizes = new Set<number>();
     for (const [places, home, mode, h] of GOLDEN_NO_COLOUR_DRUMS) {
       const rs = routesOf(places, home);
@@ -107,7 +107,7 @@ describe("episodes in a piece: what must not change", () => {
     }
     for (const k of [5, 6, 8]) expect(sizes.has(k), `a piece of ${k} routes`).toBe(true);
   });
-  it("every note outside the verse is exactly the note of before", () => {
+  it("regression guard: every note outside the verse stays the note it is", () => {
     for (const [places, mode, h] of GOLDEN_OUTSIDE_VERSE) expect(routeHash(JSON.stringify(outside(composePiece(mode, routesOf(places))))), places).toBe(h);
   });
 });

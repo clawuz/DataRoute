@@ -19,12 +19,14 @@ export interface Idiom {
   arc: number;
   /** the degrees a motif may start on */
   start: number[];
+  /** the degrees the four bars of a phrase (A B A B′) end on: a descending line comes home on the karar, an ascending one ends high */
+  cadence: [number, number, number, number];
 }
 
 /** the lowest scale degree a motif may reach */
 export const LOW = -2;
 
-export const DEFAULT_IDIOM: Idiom = { step: 0.65, repeat: 0.15, leaps: [2, 3], bias: 0, span: 6, arc: 3, start: [0, 2, 4] };
+export const DEFAULT_IDIOM: Idiom = { step: 0.65, repeat: 0.15, leaps: [2, 3], bias: 0, span: 6, arc: 3, start: [0, 2, 4], cadence: [2, 0, 2, 4] };
 
 export const IDIOMS: Record<string, Partial<Idiom>> = {
   cinematic: { step: 0.6, repeat: 0.1, leaps: [2, 3], span: 6, arc: 3 },
@@ -56,25 +58,39 @@ export const IDIOMS: Record<string, Partial<Idiom>> = {
   pop: { step: 0.5, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3 },
 };
 
-export const idiomOf = (card: { id: string }): Idiom => ({ ...DEFAULT_IDIOM, ...(IDIOMS[card.id] ?? {}) });
+const CADENCE_OF_BIAS: Record<number, [number, number, number, number]> = { [-1]: [2, 0, 2, 0], 0: [2, 0, 2, 4], 1: [2, 2, 4, 4] };
+
+export const idiomOf = (card: { id: string }): Idiom => {
+  const own = IDIOMS[card.id] ?? {};
+  const merged: Idiom = { ...DEFAULT_IDIOM, ...own };
+  if (!own.cadence) merged.cadence = CADENCE_OF_BIAS[merged.bias];
+  return merged;
+};
 
 const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(a, x));
 
 /**
  * The scale degrees of the hits of ONE bar: a walk that starts on `start`, moves by steps, repeats and leaps as the idiom says, is
- * pulled by the heading of the route (`dir`) and by the idiom's own direction (`bias`), stays inside [LOW, span] and ends on the
- * cadence degree `end`. `rnd` is a seeded generator: the same input gives the same bar.
+ * pulled by the idiom's own direction (`bias`, which wins over the heading of the route `dir`), stays inside [LOW, span], comes
+ * toward the cadence in its last free move (by up to 2 degrees) and ends on the cadence degree `end`. `rnd` is a seeded generator: the same input gives the same bar.
  */
 export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, start: number, end: number): number[] {
   const out: number[] = [];
-  const drift = 0.4 * dir + 0.4 * idiom.bias;
+  const drift = idiom.bias !== 0 ? 0.6 * idiom.bias + 0.15 * dir : 0.4 * dir;
   const pUp = clamp(0.5 + drift / 2, 0.1, 0.9);
   let d = clamp(start, LOW, idiom.span);
   for (let k = 0; k < hits; k++) {
     out.push(d);
-    if (rnd() < idiom.repeat) continue;
+    const rep = rnd() < idiom.repeat;
     const up = rnd() < pUp ? 1 : -1;
     const size = rnd() < idiom.step ? 1 : idiom.leaps[Math.floor(rnd() * idiom.leaps.length)];
+    if (hits >= 3 && k === hits - 3) {
+      // the move into the second-to-last degree approaches the cadence instead of jumping onto it
+      const gap = end - d;
+      if (Math.abs(gap) > 1) d += Math.sign(gap) * Math.min(2, Math.abs(gap));
+      continue;
+    }
+    if (rep) continue;
     d += up * size;
     if (d > idiom.span) d = idiom.span - (d - idiom.span);
     if (d < LOW) d = LOW + (LOW - d);
@@ -82,4 +98,16 @@ export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => nu
   }
   if (out.length > 0) out[out.length - 1] = end;
   return out;
+}
+
+/**
+ * The four bars of a phrase (A B A B′): each bar is a walk of the idiom that ends on its cadence degree; bar 3 repeats bar 1 exactly
+ * (the return) when they end on the same degree. `startOf` draws the start degree of a bar.
+ */
+export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number): number[][] {
+  const make = (end: number): number[] => walkMotif(idiom, hits, dir, rnd, startOf(), end);
+  const [c0, c1, c2, c3] = idiom.cadence;
+  const A = make(c0);
+  const B = make(c1);
+  return [A, B, c2 === c0 ? A.slice() : make(c2), make(c3)];
 }
