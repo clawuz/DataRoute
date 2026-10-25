@@ -145,3 +145,19 @@ The recordings of the world pack are added to the voices of the cards (`WORLD_VO
 | baroque | HARPSICHORD | HARPSICHORD | RENORGAN | - | - |
 
 Instruments of the pack that no card names (`BAGPIPE_DRONE`, `KAVAL`, `DUDUK`, `NS_*` variants other than the family pick, `DRUMKIT`, `TENORSAX` outside jazz/funk, `HARMONICA`, `KNIGHTPNO`, `UPRIGHTPNO`) are on the site but not played yet.
+
+## Home drone
+
+The tonic of the starting country's home hums under the whole trip (and its fifth, softer). It is played by the first route of the
+trip and is not drawn by the music box. The instrument follows the main card (`DRONE_BY_CARD` in `world-voices.ts`):
+
+| Main card | Drone voice |
+|---|---|
+| hindustani | TANPURA (struck every 2 bars) |
+| celtic | BAGPIPE_DRONE (held, re-struck every 4 bars) |
+| karsilama | BAGPIPE_DRONE (held, re-struck every 4 bars) |
+| baroque | RENORGAN (held, re-struck every 4 bars) |
+| every other card | CELLO (held, re-struck every 4 bars) |
+
+It is silent in the break and in the lifted bars of a trip across regions (bars 44–51), and returns in the outro. The whole rule,
+with the other data → music mappings, is in `docs/music-data-mapping.md`.

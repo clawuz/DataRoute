@@ -1,0 +1,83 @@
+# Route data → music: the mapping
+
+The personal piece (`globe/src/personal/compose.ts`) is made only of notes that come from routes. Every musical decision is a rule
+that turns data the site has into sound. This page lists each rule and the reason it is heard that way. It is kept in step with the
+code: when a rule changes in the code, change it here.
+
+## The rule
+
+A mapping is allowed only if it is:
+
+1. **from data the site has**: per route both end points (lat, lon), distance, region of the far end, the altitude profile along the
+   flight, trip/leg index; per selection the mode (visited / wish), the home and the places;
+2. **deterministic**: the same selection composes the same piece (no `Math.random`, no clock; variation comes from `routeHash`);
+3. **obvious in the direction**: more of X sounds like more of Y, so a listener can learn the map by ear;
+4. **listed here**, with the reason.
+
+## The table
+
+| Data | Musical decision | Why it is heard that way | Where |
+|---|---|---|---|
+| route distance | role (pad / bass / hook / pluck / drums), phrase length | a longer line is a longer, lower, slower voice | `compose.ts` |
+| altitude along the flight | pitch of the line | a climb rises, a descent falls | `compose.ts`, `flight.ts` |
+| east / west direction | direction of the melody's walk | travelling east rises | `compose.ts` |
+| destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
+| share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
+| starting country | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
+| mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
+| regions crossed | **whether there is a key lift** | a trip inside one region has no journey | `lift.ts` |
+| longitude of a route's middle, relative to home | **stereo position** | east is right, west is left, like the map | `space.ts` |
+| route distance | **reverb amount** | far = distant = more room | `space.ts` |
+| time zones spanned by the trip | **how loose the timing is** (jet lag) | the further, the more it drifts | `humanize.ts` |
+
+### Formulas and constants
+
+**Space** (`space.ts`; each note of the piece carries `pan` and `wet`)
+
+- `wrap180(d)` brings a longitude difference into −180…180. `midLon(route)` is the longitude of the middle of the route, going the short way round.
+- Home longitude = `fromLon` of the first route.
+- `pan = clamp(wrap180(midLon − homeLon) / 100, −0.8, 0.8) × width(role)`, so a route 80° or more east of home is fully right (×width), 80° or more west fully left.
+  `width`: bass 0.15, kick 0.15, backbeat 0.5, hat 0.5, pad 0.6, hook 0.85, pluck 1.
+- `wet = (0.12 + 0.38 × clamp(distKm / 9000, 0, 1)) × wetOfRole(role)`: 0.12 for a very short route, 0.5 from 9000 km. `wetOfRole`: bass and kick 0.4, every other role 1.
+- Player: a note goes to one of three reverb sends by its `wet`: below 0.25 the first (dry-ish), below 0.4 the middle one, otherwise the wet one (`sendOf`).
+
+**Looseness** (`humanize.ts`)
+
+- `timeZonesSpanned` = the span of the longitudes of all route end points, going the short way round the Earth (360° minus the biggest empty gap), divided by 15.
+- `looseness = clamp(timeZonesSpanned / 10, 0, 1)`: ten time zones or more is the loosest.
+- Time offset of a moment: up to `±(5 + 13 × looseness)` ms (5 ms tight, 18 ms loosest); loudness `× (1 ± 0.06)`, clamped to 0.05…1.
+  Both come from `routeHash` of the route and the moment, so they are the same on every run.
+- Kick, backbeat and hat get 30% of the time offset. The drone is not touched.
+- Notes of one route that start at the same moment (a chord) move together. An offset never passes 20% of the gap to the neighbouring moments of the same route, and never moves a note before 0, so a route's notes keep their order. Different routes drift independently.
+
+**Key lift** (`lift.ts`)
+
+- There is a lift when the routes belong to two or more different `region` values; the regions counted are those of the routes (`new Set(routes.map(r => r.region)).size >= 2`).
+- Size: `visited` (minor) **+3 semitones** (to the relative major: arrival), `wish` (major) **+2** (a whole step: hope). It is also written to `style.lift` (0 = none).
+- Bars: the **last 8 bars of the chorus**. The form is 64 bars (intro 8, verse 16, build 8, chorus 20, break 4, outro 8), so the chorus is bars 32–51 and the lift is **bars 44–51** (0-based). The break (52–55) and the outro (56–63) are back in the home key.
+- It is added to the key shift of those bars wherever pitches are computed (chords, bass, hook, pluck, the public-domain tune).
+
+**Home drone** (`world-voices.ts`, `compose.ts`)
+
+- Instrument from the main card (the card of the starting country): `hindustani` → `TANPURA`; `celtic`, `karsilama` → `BAGPIPE_DRONE`; `baroque` → `RENORGAN`; every other card → `CELLO` (`DRONE_BY_CARD`, `droneVoice`). The family is resolved by `routeHash` of the first route like any other voice.
+- Notes: the tonic and the fifth above it (+7 semitones) of the home key, one octave below the key root, folded into the range of the instrument (`fit`). The key is the piece's own, **not** the lifted one.
+- Re-struck every 2 bars for the plucked tanpura, every 4 bars for the other instruments; a note ends before the next silent bar.
+- Level: tonic `0.22`, fifth `0.15`, times the section level and the outro fade.
+- Silent in the break and in the lifted bars, so it plays in bars 0–43 and 56–63 (in the outro again).
+- Played by the **first route** (route 0, the home leg): `route: 0`, `show: false` (it sounds, the music box does not draw it). A piece of one route (the solo piece) has no drone.
+- `pan` 0 and `wet` 0.3 (the middle send); no timing drift.
+
+## How to add a mapping
+
+1. **Data**: name the field the site already has (a route field, the mode, the home, the places). If it is not there, it does not go in yet.
+2. **Decision**: say which single musical choice it drives (a number, an instrument, a bar range) and write the formula with its constants.
+3. **Why it is heard that way**: one line that makes the direction obvious (more of X → more of Y). If you cannot write it, the mapping will not be heard.
+4. **A test**: a deterministic Vitest in `globe/test/` that composes a fixed selection and checks the direction and the bounds, and one that the same selection composes the same piece twice.
+5. Add the row and the formula to this page in the same commit. Share links of existing pieces will sound different; say so.
+
+## Not mapped yet
+
+- **Latitude**: no clear, safe musical dimension.
+- **Flight frequency** (how often a route is flown): the site does not carry it.
+- **Delay** and other live flight data: not part of a personal selection.
+- **Local time of day**: would make the same selection sound different at different times, which breaks determinism.
