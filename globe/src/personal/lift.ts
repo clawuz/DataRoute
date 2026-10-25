@@ -4,8 +4,8 @@ import type { PersonalMode } from "./codec";
 export const LIFT_BARS = 8;
 
 /**
- * The key lift of a trip that really crosses regions: a visited (minor) trip arrives in the relative major (+3
- * semitones), a wish (major) rises a whole step (+2). A trip inside one region has none.
+ * The key lift of a trip that really crosses regions: up a minor third (+3) for a visited trip, the same mood, higher;
+ * up a whole step (+2) for a wish. A trip inside one region has none.
  */
 export const liftFor = (mode: PersonalMode, regions: string[]): number => (new Set(regions).size < 2 ? 0 : mode === "visited" ? 3 : 2);
 

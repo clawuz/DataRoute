@@ -474,7 +474,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const hook = hookStart;
   const deg = routes.map(() => 0);
   const END_T = BARS * bar;
-  // the key lift: a trip across regions arrives somewhere brighter in the last bars of the chorus, then goes home
+  // the key lift: a trip across regions sings the last bars of the chorus higher, in the same mood, then goes home
   const keyLift = liftFor(mode, routes.map((r) => r.region));
   style.lift = keyLift;
   const chorusFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "chorus")).reduce((s, [, m]) => s + m, 0);

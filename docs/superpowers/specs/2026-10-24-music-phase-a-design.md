@@ -8,7 +8,7 @@ The piece is made of notes that all come from routes. This phase makes it sound 
 single note that is not a route**: each change is a rule that turns route data into a musical decision. Four changes:
 
 1. **Home drone** — the starting country's tonic hums under the whole trip ("home").
-2. **Key lift** — when the trip crosses more than one region, the last part of the chorus lifts to a brighter key; the next section returns home.
+2. **Key lift** — when the trip crosses more than one region, the last part of the chorus lifts to a higher key in the same mood; the next section returns home.
 3. **Human timing** — tiny deterministic timing and loudness differences, looser when the trip crosses more time zones.
 4. **Space from the map** — stereo position from the route's longitude, reverb from its length.
 
@@ -53,8 +53,8 @@ region of the far end, the altitude profile along the flight, trip/leg index, an
 
 - Condition: the routes of the piece belong to **two or more regions** (`route.region`, counting the main card's region) — the
   trip really crosses regions. Otherwise no lift.
-- What: the **last 8 bars of the chorus** are transposed: `visited` (minor) → **+3 semitones** (the relative major: arrival),
-  `wish` (major) → **+2** (a whole step up: hope). The `break` and the `outro` return to the home key.
+- What: the **last 8 bars of the chorus** are transposed: `visited` → **+3 semitones** (up a minor third: the same mood, higher),
+  `wish` → **+2** (a whole step up). The `break` and the `outro` return to the home key.
 - Implementation: a per-bar `lift(bar)` added to `st.shift` wherever pitches are computed in the bar loop (chords, bass, hook, pluck,
   tune); the drone ignores it (it is silent then). The public-domain tunes of `melodies.ts` are transposed with the rest.
 - Notes outside an instrument's range are folded by `fit`/`limitsOf` as before.

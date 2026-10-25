@@ -14,6 +14,8 @@ A mapping is allowed only if it is:
 3. **obvious in the direction**: more of X sounds like more of Y, so a listener can learn the map by ear;
 4. **listed here**, with the reason.
 
+Existing share links sound different after the music phase A series (pan, humanize, drone, lift): a link stores the selection, not the notes.
+
 ## The table
 
 | Data | Musical decision | Why it is heard that way | Where |
@@ -31,6 +33,8 @@ A mapping is allowed only if it is:
 | time zones spanned by the trip | **how loose the timing is** (jet lag) | the further, the more it drifts | `humanize.ts` |
 
 ### Formulas and constants
+
+A piece of one route (`composeSolo`) gets none of the following: no pan, wet, lift, drone or humanize.
 
 **Space** (`space.ts`; each note of the piece carries `pan` and `wet`)
 
@@ -53,9 +57,10 @@ A mapping is allowed only if it is:
 **Key lift** (`lift.ts`)
 
 - There is a lift when the routes belong to two or more different `region` values; the regions counted are those of the routes (`new Set(routes.map(r => r.region)).size >= 2`).
-- Size: `visited` (minor) **+3 semitones** (to the relative major: arrival), `wish` (major) **+2** (a whole step: hope). It is also written to `style.lift` (0 = none).
+- Size: up a minor third (**+3**) for a `visited` trip: the same mood, higher; up a whole step (**+2**) for a `wish`. The chords keep their thirds and the scales stay the same, so a minor piece stays minor. It is also written to `style.lift` (0 = none).
 - Bars: the **last 8 bars of the chorus**. The form is 64 bars (intro 8, verse 16, build 8, chorus 20, break 4, outro 8), so the chorus is bars 32–51 and the lift is **bars 44–51** (0-based). The break (52–55) and the outro (56–63) are back in the home key.
-- It is added to the key shift of those bars wherever pitches are computed (chords, bass, hook, pluck, the public-domain tune).
+- It is added to the key shift of those bars wherever pitches are computed (chords, bass, hook, pluck, the public-domain tune). A note of the tune takes the lift of the bar it sounds in, so a tune that started before bar 44 is lifted from bar 44 on, and one that runs into the break is home again there.
+- A possible later change: a real switch to the relative major would need the major scale and major thirds for the lifted bars.
 
 **Home drone** (`world-voices.ts`, `compose.ts`)
 

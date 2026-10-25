@@ -24,7 +24,7 @@ const notesOfRoute = (p: ReturnType<typeof composePiece>, route: number): { bar:
 };
 
 describe("lift", () => {
-  it("is nothing when the trip stays in one region, a relative major (+3) for a visited trip and a whole step (+2) for a wish", () => {
+  it("is nothing when the trip stays in one region, a minor third up (+3) for a visited trip and a whole step (+2) for a wish", () => {
     expect(liftFor("visited", ["EUR", "EUR"])).toBe(0);
     expect(liftFor("visited", ["EUR", "ASI"])).toBe(3);
     expect(liftFor("wish", ["EUR", "ASI", "AME"])).toBe(2);
