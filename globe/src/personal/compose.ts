@@ -518,13 +518,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       const p0 = phaseAt(i, b, 0);
       if (rl === "pad") {
         // the chord, re-struck on beats one and three, one tone per pad route, rolled a little
-        [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9, inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), vs(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
+        [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9 * (0.7 + 0.6 * rk), inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), vs(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
       } else if (rl === "bass") {
         const roots = g.strong.length ? g.strong : [g.slots[0]];
         roots.forEach((sl, k) => {
           const next = roots[k + 1]?.start ?? 4;
           const tone = (b % 4 === 3 && k === roots.length - 1 ? tones[2] : tones[0]) - 12 + (occ[i] > 0 ? 12 : 0);
-          push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92, inst, hz(tone), vs(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
+          push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92 * (0.8 + 0.4 * rk), inst, hz(tone), vs(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
         });
       } else if (rl === "hook" && tune && occ[i] === 0) {
         // the melody plays through when its bars begin: once in a verse, every time in the build, chorus and break
@@ -570,7 +570,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
             if (bd <= 1.5) semis = best;
           }
           const nextRest = g.slots[k + 1] && !g.slots[k + 1].hit ? g.slots[k + 1].len : 0;
-          push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95, inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
+          push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95 * (0.8 + 0.4 * rk), inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
         });
       } else if (rl === "pluck") {
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);

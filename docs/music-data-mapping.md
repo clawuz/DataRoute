@@ -142,3 +142,10 @@ kept for a possible later exact quotation). The hook of a hook route is built in
 - **Flight frequency** (how often a route is flown): the site does not carry it.
 - **Delay** and other live flight data: not part of a personal selection.
 - **Local time of day**: would make the same selection sound different at different times, which breaks determinism.
+
+
+## Note length by route length (rank)
+
+| Data | Decision | Why it is heard that way | Where |
+|---|---|---|---|
+| rank of the route's distance within the selection (1 = longest) | pad ×0.7–1.3, bass and hook ×0.8–1.2 held longer for longer routes (drums unchanged) | a longer flight is a longer breath; the shortest routes stay clipped | `compose.ts` (pad, bass, hook) |

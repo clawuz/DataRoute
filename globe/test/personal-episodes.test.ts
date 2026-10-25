@@ -53,34 +53,34 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["ESB,TZX,ADB", "visited", 214413911],
-  ["ESB,SAW,GZT", "wish", 4004698758],
-  ["ADB,VAN,AYT", "wish", 1736755257],
-  ["SAW,ESB,TZX", "visited", 3488717183],
+  ["ESB,TZX,ADB", "visited", 1255062387],
+  ["ESB,SAW,GZT", "wish", 1638765537],
+  ["ADB,VAN,AYT", "wish", 382354687],
+  ["SAW,ESB,TZX", "visited", 2183563548],
   ["ESB", "visited", 2318824395],
   ["LHR", "wish", 3509170890],
-  ["SAW,DLM,VAN", "wish", 3000329294],
+  ["SAW,DLM,VAN", "wish", 156953160],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["NMI,BLR,BOM,DEL", "MAA", "visited", 1717227406], // 5 routes
-  ["BLR,DEL,HYD,MAA", "BOM", "visited", 2786345808], // 5 routes
-  ["BOM,DEL,HYD,MAA", "BLR", "wish", 528969322], // 5 routes
-  ["TFU,XIY,CAN,URC", "", "visited", 3143375958], // 6 routes
-  ["BOM,DEL,HYD,MAA", "", "wish", 2275985623], // 6 routes
-  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 2273017075], // 7 routes
-  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 3367129444], // 8 routes
-  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 3043307636], // 8 routes
+  ["NMI,BLR,BOM,DEL", "MAA", "visited", 1177507454], // 5 routes
+  ["BLR,DEL,HYD,MAA", "BOM", "visited", 2603789184], // 5 routes
+  ["BOM,DEL,HYD,MAA", "BLR", "wish", 3140509971], // 5 routes
+  ["TFU,XIY,CAN,URC", "", "visited", 3458211586], // 6 routes
+  ["BOM,DEL,HYD,MAA", "", "wish", 3851818224], // 6 routes
+  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 2137230001], // 7 routes
+  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 2852165729], // 8 routes
+  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 2450920318], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has 3 episode cards
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 3133413125],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 3100263971],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 1039411121],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 2079613014],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 3939163998],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3575517252],
 ];
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> => buildRoutes(places.split(","), home || undefined);
 const outside = (p: ReturnType<typeof composePiece>): typeof p.notes => {
