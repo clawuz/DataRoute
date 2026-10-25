@@ -49,7 +49,7 @@ describe("walkMotif", () => {
     expect(a[0]).toBe(2);
   });
   it("stays inside [LOW, span]", () => {
-    for (const span of [4, 6, 7]) for (const m of many(I({ span, leaps: [2, 4] }), 1)) for (const d of m) {
+    for (const dir of [1, -1] as const) for (const span of [4, 6, 7]) for (const m of many(I({ span, leaps: [2, 4] }), dir)) for (const d of m) {
       expect(d).toBeGreaterThanOrEqual(LOW);
       expect(d).toBeLessThanOrEqual(span);
     }
@@ -77,5 +77,18 @@ describe("walkMotif", () => {
     expect(slope({ ...base, bias: -1 }, -1)).toBeLessThan(-0.5);
     expect(slope({ ...base, bias: 1 }, 1)).toBeGreaterThan(0.5);
     expect(slope({ ...base, bias: 0 }, 1)).toBeGreaterThan(slope({ ...base, bias: 0 }, -1) + 0.5);
+  });
+  it("lets the bias of the tradition pull on its own, and cancel an opposite heading", () => {
+    const slope = (idiom: Idiom, dir: 1 | -1): number => {
+      const ms = many(idiom, dir);
+      return ms.reduce((s, m) => s + (m[m.length - 2] - m[0]), 0) / ms.length;
+    };
+    const base = I({ span: 7, repeat: 0, step: 0.7, start: [2] }); // mid-range start: the walls reflect evenly
+    const up = slope({ ...base, bias: 1 }, 1);
+    const flat = slope({ ...base, bias: 0 }, 1);
+    const down = slope({ ...base, bias: -1 }, 1);
+    expect(up).toBeGreaterThan(flat + 0.3);
+    expect(flat).toBeGreaterThan(down + 0.3);
+    expect(Math.abs(down)).toBeLessThan(0.5); // 0.3 was too tight: residual wall reflection gives 0.325; without the bias it is ~2.3
   });
 });
