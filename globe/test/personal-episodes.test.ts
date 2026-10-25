@@ -122,6 +122,10 @@ describe("episodes in a piece: what changes in the verse", () => {
     expect(eps.length).toBeGreaterThanOrEqual(1);
     expect(p.style.episodes).toEqual(eps);
   });
+  it("records nothing in the style of a piece without episodes (its style is the style of before)", () => {
+    for (const [places, home, mode] of GOLDEN_NO_COLOUR_DRUMS) expect("episodes" in composePiece(mode, routesOf(places, home)).style, places).toBe(false);
+    expect("episodes" in composePiece("visited", routesOf("ESB,TZX,ADB")).style).toBe(false);
+  });
   it("ends every verse block with a drum fill: a kick on beat 3 and a backbeat on beat 3.5", () => {
     const beat = bar / 4;
     const fill = (b: number): number => inBars(b, b + 1).filter((n) => Math.abs(((n.t - b * bar) / beat) - 3.5) < 0.05 && n.d < beat * 0.3).length;

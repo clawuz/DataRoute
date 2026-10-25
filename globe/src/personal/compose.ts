@@ -40,7 +40,7 @@ export interface PersonalNote {
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
 export interface PersonalStyle {
-  /** the cards that get a block of the verse (episodes.ts), in the order they are told */
+  /** the cards that get a block of the verse (episodes.ts), in the order they are told; absent when there are none */
   episodes?: string[];
   /** semitones the last bars of the chorus are lifted (lift.ts): 0 when the trip stays in one region */
   lift?: number;
@@ -428,7 +428,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const swingAmt = main.swing;
   // region episodes: the verse tells the regions of the trip, each with the groove of its own card
   const eps = episodeCards(plan);
-  style.episodes = eps.map((c) => c.id);
+  if (eps.length) style.episodes = eps.map((c) => c.id);
   const verseFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "verse")).reduce((s, [, m]) => s + m, 0);
   const grooves = new Map<string, ReturnType<typeof grooveOf>>(eps.map((c) => [c.id, grooveOf(c)]));
   const POP_PROGS: Record<PersonalMode, [number, 3 | 4][][]> = {

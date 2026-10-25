@@ -74,12 +74,12 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 - Played by the **first route** (route 0, the home leg): `route: 0`, `show: false` (it sounds, the music box does not draw it). A piece of one route (the solo piece) has no drone.
 - `pan` 0 and `wet` 0.3 (the middle send); no timing drift.
 
-**Region episodes** (`episodes.ts`, `compose.ts`; new)
+**Region episodes** (`episodes.ts`, `compose.ts`)
 
 - The verse (bars 8-23) is four blocks of four bars. `A` is home (the main card); `B`, `C`, `D` are the first, second and third episode card.
   Episode cards are the cards of the coloured routes (a route is coloured when its card is not the main card), the card with the most routes first,
   ties by `routeHash` of the card id, at most three (`episodeCards`). A coloured route can be in the same country as home: a country has several cards.
-  The cards are written to `style.episodes`.
+  The cards are written to `style.episodes` (only when there are any: a piece without episodes has no `episodes` in its style).
 
 | episode cards | bars 8-11 | 12-15 | 16-19 | 20-23 |
 |---|---|---|---|---|
@@ -90,14 +90,14 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 
 - Beats are counted from 0: beat 0 is the first beat of the bar, beat 3 the fourth, 3.5 the last half beat.
 - Inside an episode block the figure of the episode card (stretched to four beats, same tempo) drives: the **bass** (its strong beats), the **hook's rhythm**
-  (hit places; the hook's notes still snap to the chord on strong places), the **pluck's swing**, the **kick** (its strong beats rounded to quarter beats, beat 0, the first beat, always) and the **hat**
-  (its hit places instead of straight eighths). The **backbeat** stays on beats 1 and 3 (the second and fourth beat, as in the other sections) and the chords and progression stay the main card's. In the home blocks of the verse everything is as before.
+  (hit places; the hook's notes still snap to the chord on strong places), the **pluck's swing**, the **kick** (beat 0, the first beat, always, and the exact strong beats of the figure, on the bass) and the **hat**
+  (its hit places instead of straight eighths, swung on the odd slots of the figure exactly like the hook: a rest counts as a slot). The **backbeat** stays on beats 1 and 3 (the second and fourth beat, as in the other sections) and the chords and progression stay the main card's. In the home blocks of the verse everything is as before.
 - **Spotlight:** in an episode block the voices of routes whose card is the episode card play at ×1.15, the others at ×0.85. The hook's public-domain tune works the
   spotlight out per note from the bar the note sounds in (an 8-bar tune that starts at bar 8 is spotlit by the block of each bar); the other voices by the bar they start in.
+- A hook that plays a public-domain tune keeps the tune's rhythm; only the spotlight applies to it. The drone is not spotlit.
 - **Bridge fill:** on the last bar of every four-bar block of the verse (bars 11, 15, 19, 23) the kick adds a hit on beat 3 (the fourth beat; if it is not already there) and the backbeat a hit on the
-  last half beat (3.5). They exist only where those drum roles exist: the kick fill from five routes, the backbeat fill from six. The fill is not tied to episodes existing: a piece with no episodes and five or more routes would
-  get it too. In practice every such piece has colours; this is a known limit, not a guarantee.
-- A piece where every route plays the main card has no episodes and its verse is unchanged (apart from the fill above), and every bar outside the verse is unchanged.
+  last half beat (3.5). They exist only in a piece that has episodes, and only where those drum roles exist: the kick fill from five routes, the backbeat fill from six.
+- A piece where every route plays the main card has no episodes and its verse is unchanged (no fills either), and every bar outside the verse is unchanged.
 
 ## How to add a mapping
 
