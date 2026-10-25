@@ -290,7 +290,6 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
         }
         g.fillStyle = tr.color;
         const barH = (wide ? (neon ? 3.4 : 3.2) : NOTE_BAR_H_PX) * dpr;
-        let lastLow = -1e9; // thin, long lines
         for (const p of tr.points) {
           const [x, bw] = noteBar(xOf(p.t), p.dur, pxPerSec, dpr);
           if (x + bw < 0 || x > w) continue;
@@ -304,11 +303,7 @@ export function MusicScope({ bus, music, compact = false, footer, label, routeCo
             const hh = sounding ? barH * (neon ? 1.2 : 1.7) : barH;
             if (neon) { // a flight line: it grows from a hairline to a full stroke towards its head, which ends in a dot
               const yc = yOfPoint(p, tr.lineId);
-              const low = (p.alt ?? 30000) < 4000; // near the ground: short lines, spaced out, so the bottom stays calm
-              if (low) {
-                if (!sounding && x - lastLow < 110 * dpr && lastLow > -1e8) continue; // (a sounding note is always drawn)
-                lastLow = x;
-              }
+              const low = (p.alt ?? 30000) < 4000; // near the ground: short lines — but every hit keeps its line
               const len = low ? Math.min(bw, 46 * dpr) : bw;
               const lw = (sounding ? 3.2 : 2.4) * dpr;
               g.shadowBlur = sounding ? 5 * dpr : 0;
