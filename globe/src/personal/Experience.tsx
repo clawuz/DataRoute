@@ -3,7 +3,7 @@ import { Eq } from "../hud/Eq";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "../scene/engine";
 import { routeKey } from "../audio/theory";
-import { clipStart, composePiece, type PersonalNote, type PersonalPiece } from "./compose";
+import { clipNotes, clipStart, composePiece, type PersonalNote, type PersonalPiece } from "./compose";
 import { buildPersonalModel } from "./model";
 import { createPersonalPlayer, type PersonalPlayer } from "./player";
 import { buildRoutes } from "./routes";
@@ -148,14 +148,14 @@ export function Experience({ selection, onBack }: Props) {
       pieceRef.current = piece;
       noteCbRef.current = (n) => {
         const r = n.route >= 0 ? routes[n.route] : undefined;
-        if (!r) return;
+        if (!r || n.show === false) return; // the home drone hums under the trip: it does not flash a corridor
         engine.pulseRoute(routeKey(r.from, r.to, "")); // the live globe's flash: the corridor of the sounding route
       };
       // the music box: a note appears on the ribbon three seconds before it sounds
       planCbRef.current = (n, wallAt) => {
         // the lead's own route, or for the accompaniment the route that leads its bar: every hit is on the ribbon
         const r = routes[n.route >= 0 ? n.route : n.via];
-        if (!r || n.show === false) return; // the upper tones of a held chord sound but are not drawn again
+        if (!r || n.show === false) return; // the home drone (show: false) sounds but is not drawn
         // the accompaniment is drawn softer than the line, so the line stays the picture
         noteBus.emit({ instrument: baseOf(n.instrument), lane: baseOf(n.instrument), freq: n.freq, pitch: ribbonPitch(n.route >= 0 ? n.route : n.via, n.freq, routes.length), vel: n.route >= 0 ? n.vel : n.vel * 0.55, kind: "line", key: r.key, at: wallAt, durSec: n.drawDur ?? n.d, lineId: r.key, alt: n.alt });
       };
@@ -502,7 +502,7 @@ export function Experience({ selection, onBack }: Props) {
         const from = clipStart(piece);
         const hookPiece: PersonalPiece = {
           ...piece,
-          notes: piece.notes.filter((n) => n.t >= from).map((n) => ({ ...n, t: n.t - from })),
+          notes: clipNotes(piece.notes, from),
           duration: piece.duration - from,
           hook: Math.max(0, piece.hook - from),
         };

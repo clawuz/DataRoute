@@ -245,6 +245,25 @@ export function clipStart(piece: PersonalPiece): number {
   return Math.max(build, piece.hook - 3 * bar, 0);
 }
 
+/** how early humanize may move a note (s): a note this much before the clip's start still belongs to it */
+const CLIP_SLACK = 0.03;
+
+/**
+ * The notes of the shared clip, moved so that the clip starts at 0: every note from `from` on (and the ones humanize
+ * moved a few ms before it), plus the home drone that is still sounding at `from`, trimmed to start with the clip.
+ */
+export function clipNotes(notes: PersonalNote[], from: number): PersonalNote[] {
+  const out: PersonalNote[] = [];
+  for (const n of notes) {
+    if (n.t >= from - CLIP_SLACK) out.push({ ...n, t: Math.max(0, n.t - from) });
+    else if (n.show === false && n.t + n.d > from) {
+      const cut = from - n.t;
+      out.push({ ...n, t: 0, d: n.d - cut, drawDur: n.drawDur === undefined ? undefined : Math.max(0, n.drawDur - cut) });
+    }
+  }
+  return out;
+}
+
 export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
   const st = styleFor(mode, routes);
   const bpm = st.bpm;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { composePiece } from "../src/personal/compose";
+import { clipNotes, clipStart, composePiece } from "../src/personal/compose";
 import { buildRoutes } from "../src/personal/routes";
 import { droneVoice } from "../src/personal/world-voices";
 
@@ -39,5 +39,26 @@ describe("home drone", () => {
   it("is not in a solo piece, and does not change the composition of the same selection", () => {
     expect(drone(composePiece("visited", buildRoutes(["JFK"], "IST"))).length).toBe(0);
     expect(JSON.stringify(composePiece("visited", routes).notes)).toBe(JSON.stringify(p.notes));
+  });
+});
+
+describe("clipNotes", () => {
+  const p = composePiece("visited", buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST"));
+  const base = { instrument: "CELLO" as const, freq: 110, vel: 0.5, key: "k", route: 0, via: 0, alt: 0 };
+  it("keeps a downbeat that humanize moved a few ms before the clip's start, at 0", () => {
+    const got = clipNotes([{ ...base, t: 9.985, d: 0.5 }, { ...base, t: 9.5, d: 0.2 }, { ...base, t: 11, d: 0.5 }], 10);
+    expect(got.map((n) => n.t)).toEqual([0, 1]);
+  });
+  it("keeps the drone still sounding at the start, trimmed to begin with the clip", () => {
+    const got = clipNotes([{ ...base, t: 8, d: 4, drawDur: 4, show: false }, { ...base, t: 6, d: 3, show: false }], 10);
+    expect(got).toHaveLength(1);
+    expect(got[0]).toMatchObject({ t: 0, d: 2, drawDur: 2, show: false });
+  });
+  it("gives a real piece's clip a downbeat and the drone at once", () => {
+    const from = clipStart(p);
+    const clip = clipNotes(p.notes, from);
+    expect(clip.some((n) => n.show === false && n.t === 0)).toBe(true);
+    expect(clip.filter((n) => n.show !== false && n.t < 0.03).length).toBeGreaterThan(0);
+    expect(clip.every((n) => n.t >= 0)).toBe(true);
   });
 });
