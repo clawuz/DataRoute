@@ -63,7 +63,7 @@ Every other section plays the home figure. (Why: the verse is where a trip "tell
 2. **Spotlight:** the routes whose card is the episode card play at level ×1.15, the other routes ×0.85, so the instruments of the
    region come forward. (Applied to the velocity of each note by route; clamped as everywhere. The hook's tune branch works it out per note from the bar the note sounds in, the other voices by the bar they start in.)
 3. **Bridge:** the last bar of every episode block (bars 11, 15, 19, 23) adds a short drum fill: the backbeat voice's extra hit on
-   beat 3.5 (the one the build already has) and a kick on beat 3. If there is no drum role in the piece (fewer than five routes) the bar
+   beat 3.5 (the one the build already has) and a kick on beat 3 (beats counted from 0, as in item 1). The kick fill needs the kick role (from five routes), the backbeat fill the backbeat role (from six); if the piece has neither role (fewer than five routes) the bar
    is simply the last bar of the block.
 4. The hook's motif is built for the main figure's number of hits; for an episode the hook uses its motif with the hit count of the
    episode figure by repeating or truncating the motif's degrees (no new random numbers: the motif of a hook route is cycled with the
@@ -83,7 +83,7 @@ Every other section plays the home figure. (Why: the verse is where a trip "tell
 - `compose.ts`: the groove helpers that build `slots`/`hits`/`strong` from a card become a function `groove(card)` (memoised by card id),
   the bar loop asks `episodeAt(b, cards)` and takes `groove(card ?? plan.main)`; spotlight and bridge as above.
   `PersonalStyle.episodes?: string[]` records the card ids (for tests and for a future display of the structure).
-- Nothing changes for a piece without colours (every route plays the main card): it is byte-identical to today's, except that the bridge fills (item 3) are not gated by episodes and fire whenever the kick and backbeat roles exist (five routes or more); in practice every such piece has colours.
+- Nothing changes for a piece without colours (every route plays the main card): it is byte-identical to today's, except that the bridge fills (item 3) are not gated by episodes and fire whenever the roles exist (the kick fill from five routes, the backbeat fill from six); in practice every such piece has colours.
 
 ### Tests
 
