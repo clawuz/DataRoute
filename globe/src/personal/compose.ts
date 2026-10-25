@@ -456,19 +456,19 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const deg = routes.map(() => 0);
   const END_T = BARS * bar;
   // the key lift: a trip across regions arrives somewhere brighter in the last bars of the chorus, then goes home
-  const lift = liftFor(mode, routes.map((r) => r.region));
-  style.lift = lift;
+  const keyLift = liftFor(mode, routes.map((r) => r.region));
+  style.lift = keyLift;
   const chorusFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "chorus")).reduce((s, [, m]) => s + m, 0);
   const chorusLen = FORM.find(([name]) => name === "chorus")![1];
   // home: the tonic and its fifth hum under the trip, played by the first route (nothing is added that is not a route).
   // A plucked drone is struck every two bars, a held one every four; it is silent in the break and in the lifted bars.
   const droneInst = resolveVoice(droneVoice(plan.main.id), routeHash(routes[0].key));
   const droneEvery = droneInst === "TANPURA" ? 2 : 4;
-  const silentBar = (b: number): boolean => sectionOf(b).section === "break" || liftAt(b, chorusFirst, chorusLen, lift) !== 0;
+  const silentBar = (b: number): boolean => sectionOf(b).section === "break" || liftAt(b, chorusFirst, chorusLen, keyLift) !== 0;
 
   for (let b = 0; b < BARS; b++) {
     const { section, first, len: slen } = sectionOf(b);
-    const sh = st.shift + liftAt(b, chorusFirst, chorusLen, lift);
+    const sh = st.shift + liftAt(b, chorusFirst, chorusLen, keyLift);
     const t0 = b * bar;
     const level = LEVEL[section];
     const fade = section === "outro" ? 1 - ((b - first) / slen) * 0.3 : 1;
@@ -507,7 +507,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         const turn = varyTune(tune, routeHash(tune.id + routes.map((r) => r.key).join(">")) + Math.floor(b / tune.bars));
         for (const [semis, beats] of turn) {
           const when = t0 + off * stretch * beat;
-          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + sh + 12 + semis), v(0.78), phaseAt(i, b + Math.floor((off * stretch) / 4), ((off * stretch) % 4) / 4));
+          // an 8-bar tune runs into later bars: each note takes the key of the bar it sounds in (lifted or home)
+          const nb = b + Math.floor((off * stretch) / 4);
+          const shN = st.shift + liftAt(nb, chorusFirst, chorusLen, keyLift);
+          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + shN + 12 + semis), v(0.78), phaseAt(i, nb, ((off * stretch) % 4) / 4));
           off += beats;
         }
       } else if (rl === "hook") {
