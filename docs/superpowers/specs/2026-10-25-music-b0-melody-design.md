@@ -73,7 +73,7 @@ the camera and the corridor of short routes on the globe (a visual change, to be
   leaps follows the idiom over many samples; the direction follows `drift` (descending bias goes down more often than up).
 - `composePiece`: no piece has `style.tune` without `{ tunes: true }`; with `{ tunes: true }` the tune branch still works (the existing tune tests
   move to the option); notes of every route that is NOT a hook route are unchanged against the code before this step (a hash of those notes,
-  checked once from the base code); only the hook routes' notes change.
+  checked once from the base code); only the hook routes' notes change. (Exception: a piece that used to play a tune also gets the main card's chord progression instead of the tune-mode one, so its pad, bass and pluck change too, about 8% of pieces.)
 - Over a few hundred selections: no NaN/negative times, every note in its instrument's range, the hook of a descending-bias card ends lower than it
   starts more often than an ascending-bias card's.
 - The golden hashes of phase B1 (pieces without colours, bars outside the verse) change legitimately because the hook changed: they are re-captured
