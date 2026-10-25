@@ -4,6 +4,7 @@ import { EPISODE_CAP, episodeAt, episodeCards } from "../src/personal/episodes";
 import { buildRoutes } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
 import { routeHash } from "../src/audio/theory";
+import destinations from "../src/personal/destinations.json";
 
 const card = (id: string): GenreCard => CARDS.find((c) => c.id === id)!;
 const plan = (main: string, per: string[]): CardPlan => ({ main: card(main), perRoute: per.map(card) });
@@ -163,6 +164,35 @@ const SPOT_OFF = 0.85;
 const meanOf = (xs: number[]): number => xs.reduce((s, x) => s + x, 0) / xs.length;
 const quarter = (x: number): number => Math.round(x * 4) / 4 + 0;
 
+/** a composed piece and what the tests read of it: the bars, the onsets of a route in a bar (in beats), the card of a bar */
+const pieceOf = (places: string, mode: "visited" | "wish") => {
+  const rs = routesOf(places);
+  const pl = planCards(mode, rs);
+  const p = composePiece(mode, rs);
+  const eps = episodeCards(pl);
+  const bar = 240 / p.bpm;
+  const beat = bar / 4;
+  const barNotes = (route: number, b: number) => p.notes.filter((n) => n.route === route && n.show !== false && n.t >= b * bar - 0.05 && n.t < (b + 1) * bar - 0.05);
+  const onsets = (route: number, b: number): number[] => barNotes(route, b).map((n) => (n.t - b * bar) / beat).sort((x, y) => x - y);
+  return { rs, pl, p, eps, role: rolesOf(rs), barNotes, onsets, blockCard: (b: number): GenreCard | null => episodeAt(b, 8, eps).card };
+};
+/** the kick: beat 1 and the exact strong places of the card in an episode block (the bass plays them too), beats 1 and 3 at home, beat 4 in a fill bar */
+const checkKick = (places: string, mode: "visited" | "wish"): void => {
+  const { role, onsets, blockCard } = pieceOf(places, mode);
+  const r = role.indexOf("kick");
+  expect(r).toBeGreaterThanOrEqual(0);
+  for (let blk = 0; blk < 4; blk++) for (const b of [0, 1, 2, 3].map((k) => 8 + blk * 4 + k)) {
+    const c = blockCard(b);
+    const want = c ? [...new Set([0, ...grooveStarts(c).strong])] : [0, 2];
+    if (b % 4 === 3) { if (!want.includes(3)) want.push(3); }
+    want.sort((x, y) => x - y);
+    const got = onsets(r, b);
+    expect(got.length, `bar ${b}`).toBe(want.length);
+    // a kick is a tight voice: humanize moves it a few milliseconds at most (well under 0.03 beat)
+    got.forEach((x, k) => expect(Math.abs(x - want[k]), `${places} bar ${b} kick ${k}`).toBeLessThan(0.03));
+  }
+};
+
 describe("episodes in a piece: the voices and the groove follow the episode card", () => {
   const places = "NRT,LOS,GRU,LHR,DEL,CAI,SYD,JFK";
   const rs = routesOf(places);
@@ -197,16 +227,8 @@ describe("episodes in a piece: the voices and the groove follow the episode card
       got.forEach((x, k) => expect(Math.abs(x - want[k]), `bar ${b} note ${k}`).toBeLessThan(0.15));
     }
   });
-  it("the kick plays beat 1 and the strong places (rounded to quarter beats) in an episode block, beats 1 and 3 at home; the fill adds beat 4", () => {
-    const r = first("kick");
-    for (let blk = 0; blk < 4; blk++) for (const b of [...barsOfBlock(blk), 11 + blk * 4]) {
-      const c = blockCard(b);
-      const want = c ? [...new Set([0, ...grooveStarts(c).strong.map(quarter)])] : [0, 2];
-      if (b % 4 === 3) { if (!want.includes(3)) want.push(3); }
-      want.sort((x, y) => x - y);
-      const got = onsets(r, b).map(quarter).sort((x, y) => x - y);
-      expect(got, `bar ${b}`).toEqual(want);
-    }
+  it("the kick plays beat 1 and the exact strong places in an episode block, beats 1 and 3 at home; the fill adds beat 4", () => {
+    checkKick(places, "visited");
   });
   it("the hat plays the hit places of the episode figure in an episode block and eight eighths at home", () => {
     const r = first("hat");
@@ -251,5 +273,86 @@ describe("episodes in a piece: a tune that runs on from a home block into an epi
     const want = pl.perRoute[r] === c ? SPOT_ON : SPOT_OFF;
     expect(mean(12, 16) / mean(8, 12)).toBeGreaterThan(want - 0.06);
     expect(mean(12, 16) / mean(8, 12)).toBeLessThan(want + 0.06);
+  });
+});
+
+describe("episodes in a piece: the kick plays with the bass on a card whose strong places are off the sixteenth grid", () => {
+  const places = "LOS,ACC,ABJ,MAD,SVQ,NRT,JFK";
+  it("has the West African bell and the flamenco compás among the episodes (their strong beats sit at 1.667 and 3.333)", () => {
+    const { eps } = pieceOf(places, "wish");
+    expect(eps.map((c) => c.id)).toEqual(expect.arrayContaining(["westafrica", "flamenco"]));
+    expect(eps.some((c) => grooveStarts(c).strong.some((x) => Math.abs(quarter(x) - x) > 0.05))).toBe(true);
+  });
+  it("the kick hits the exact strong places, not the nearest sixteenth", () => {
+    checkKick(places, "wish");
+  });
+});
+
+/** the slots of a card's figure stretched to four beats, each hit at its start plus the swing of the odd slots (the hook's rule) */
+const swungHits = (c: GenreCard, swing: number): number[] => {
+  const total = c.cell.reduce((x, y) => x + Math.abs(y), 0);
+  let at = 0;
+  const out: number[] = [];
+  c.cell.forEach((u, k) => {
+    const len = (Math.abs(u) / total) * 4;
+    if (u > 0) out.push(at + (k % 2 ? swing * 0.33 * len : 0));
+    at += len;
+  });
+  return out;
+};
+
+describe("episodes in a piece: a card with rests in its figure, with swing, and a hook without a tune", () => {
+  // the gamelan cycle (1, rest, 1, 1) is the second episode card here: block 2 of the verse, bars 16-19; the hook plays bars 16 and 17
+  const places = "KUL,ROB,NSI,NBO,DUS,CGK,VAS";
+  const { p, eps, role, onsets, blockCard } = pieceOf(places, "wish");
+  const gam = eps.find((c) => c.id === "gamelan")!;
+  const swing = gam?.swing ?? p.style.swing;
+  const want = gam ? swungHits(gam, swing) : [];
+  it("has no tune, swings, and has the gamelan cycle as an episode in bars 16-19 (the checks below are not vacuous)", () => {
+    expect(p.style.tune).toBeUndefined();
+    expect(gam).toBeTruthy();
+    expect(swing).toBeGreaterThan(0);
+    expect(gam.cell.some((u) => u < 0)).toBe(true);
+    expect([16, 17, 18, 19].every((b) => blockCard(b) === gam)).toBe(true);
+    expect(new Set(role).size).toBe(7);
+  });
+  it("the hat swings the same places as the hook: the odd slots of the figure, not the odd hits", () => {
+    const r = role.indexOf("hat");
+    for (const b of [16, 17, 18]) {
+      const got = onsets(r, b);
+      expect(got.length, `bar ${b}`).toBe(want.length);
+      // the hat is a tight voice (a few milliseconds of humanize, under 0.025 beat); the odd-hit swing would be 0.066 beat off here
+      got.forEach((x, k) => expect(Math.abs(x - want[k]), `bar ${b} hat ${k}`).toBeLessThan(0.025));
+    }
+  });
+  it("the hook without a tune plays the hit places of the episode figure, swung like the hat", () => {
+    const r = role.indexOf("hook");
+    for (const b of [16, 17]) {
+      const got = onsets(r, b);
+      expect(got.length, `bar ${b}`).toBe(want.length);
+      got.forEach((x, k) => expect(Math.abs(x - want[k]), `bar ${b} hook ${k}`).toBeLessThan(0.045));
+    }
+  });
+});
+
+describe("episodes in a piece: every note of many pieces is a number", () => {
+  // a deterministic sweep: 2-8 places from the destination list, both modes, home Istanbul, another place or none
+  const codes = (destinations as { i: string }[]).map((d) => d.i);
+  const pick = (k: number): string => codes[routeHash("sweep" + k) % codes.length];
+  it("has finite time, length, pitch and loudness in about fifty pieces with and without episodes, with and without a tune", () => {
+    let withEp = 0, noTuneEp = 0;
+    for (let s = 0; s < 50; s++) {
+      const k = 2 + (s % 7);
+      const pl = [...new Set(Array.from({ length: k }, (_, j) => pick(s * 13 + j)))];
+      const home = s % 3 === 0 ? undefined : s % 3 === 1 ? "IST" : pick(s * 13 + 99);
+      for (const mode of ["visited", "wish"] as const) {
+        const rs = buildRoutes(pl.filter((x) => x !== home), home);
+        const p = composePiece(mode, rs);
+        if (episodeCards(planCards(mode, rs)).length && rs.length > 1) { withEp++; if (!p.style.tune) noTuneEp++; }
+        for (const n of p.notes) expect([n.t, n.d, n.freq, n.vel].every(Number.isFinite), `${pl.join(",")} home ${home ?? "none"} ${mode}`).toBe(true);
+      }
+    }
+    expect(withEp).toBeGreaterThanOrEqual(20);
+    expect(noTuneEp).toBeGreaterThanOrEqual(5);
   });
 });

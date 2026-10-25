@@ -588,14 +588,19 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
         if (ep.blockEnd && eps.length > 0) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
       } else if (rl === "kick") {
-        const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => Math.round(s.start * 4) / 4)])] : null;
+        // inside an episode: beat 1 and the exact strong places of the episode card, where the bass plays them (every figure starts with a hit, at 0)
+        const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => s.start)])] : null;
         const beats = section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
         if (ep.blockEnd && eps.length > 0 && !beats.includes(3)) beats.push(3);
         beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
         if (ep.card) {
-          // inside an episode the hat plays the hit places of the episode figure instead of straight eighths
-          g.hits.forEach((sl, k) => push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.2, inst, 200, vs(sl.accent >= 1.1 ? 0.3 : 0.2), phaseAt(i, b, sl.start / 4)));
+          // inside an episode the hat plays the hit places of the episode figure instead of straight eighths,
+          // swung on the odd slots of the figure exactly like the hook (a rest is a slot too)
+          g.slots.forEach((sl, k) => {
+            if (!sl.hit) return;
+            push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.2, inst, 200, vs(sl.accent >= 1.1 ? 0.3 : 0.2), phaseAt(i, b, sl.start / 4));
+          });
         } else {
           for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, vs(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
         }
