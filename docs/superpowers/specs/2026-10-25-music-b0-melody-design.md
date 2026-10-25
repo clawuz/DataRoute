@@ -4,7 +4,7 @@ Date: 2026-10-25. Branch: `feat/ui-v2`. Builds on phases A and B1 (built; the us
 
 ## Why
 
-Today about half of the pieces play a public-domain tune (`melodies.ts`: Ode to Joy, Greensleeves, Üsküdar …) as "a relative of the tune: the same
+Before this change about half of the pieces play a public-domain tune (`melodies.ts`: Ode to Joy, Greensleeves, Üsküdar …) as "a relative of the tune: the same
 shape, a few passing notes moved". The user's ear, and a musician's, would say the same: **a tune that is almost the known one is worse than either
 the real tune or none**: the ear keeps looking for the original and hears errors. In the other half of the pieces the hook is a random walk on the
 scale with a small lift from the flight's altitude. And on makam cards (Anatolian, Karşılama, Arabic, Persian … with micro-tonal scales) no known tune
@@ -38,7 +38,7 @@ the docs say so.
 | `leaps` | sizes (in scale degrees) a leap may have | e.g. [2], [2,3], [2,4] |
 | `bias` | −1 descending seyir (Anatolian, Arabic, Persian, flamenco), 0 arch, +1 ascending (alap-like, Hindustani) | −1, 0, 1 |
 | `span` | the highest scale degree the motif may reach (the lowest is −2) | 4-7 |
-| `arc` | how many degrees the flight's altitude lifts the line | 1-5 |
+| `arc` | how many degrees the flight's altitude lifts the line | 1-4 |
 | `start` | degrees a motif may start on (the dominant for makams) | list |
 | `cadence` | the end degrees of bars A, B, A, B′. Default `[2, 0, 2, 4]`; when the table gives none it comes from the bias: −1 → `[2, 0, 2, 0]` (the line comes home on the karar), +1 → `[2, 2, 4, 4]` (it ends high); an explicit entry wins | four degrees |
 

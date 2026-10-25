@@ -126,6 +126,7 @@ ascending; `span` highest degree (the lowest is −2); `arc` degrees the flight'
 Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]`. The values below are what `idiomOf` returns for every card. The rules of the walk are in
 `music-data-mapping.md` ("The hook's melody").
 
+| card | step | repeat | leaps | bias | span | arc | start | cadence |
 |---|---|---|---|---|---|---|---|---|
 | cinematic | 0.6 | 0.1 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
 | romantic | 0.7 | 0.05 | 2, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
