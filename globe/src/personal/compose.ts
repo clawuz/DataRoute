@@ -177,7 +177,7 @@ const FLOOR: Partial<Record<Instrument, number>> = {
 };
 
 /** the pitch limits of an instrument: the world pack's range around its recordings, else the tables above */
-const limitsOf = (inst: PlayInstrument): { cap?: number; floor?: number } => {
+export const limitsOf = (inst: PlayInstrument): { cap?: number; floor?: number } => {
   const w = (WORLD_RANGE as Partial<Record<string, readonly [number, number]>>)[inst];
   return w ? { floor: w[0], cap: w[1] } : { cap: CEILING[inst as Instrument], floor: FLOOR[inst as Instrument] };
 };

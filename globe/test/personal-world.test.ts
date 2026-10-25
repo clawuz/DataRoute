@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { allocateColour, cardsOfAirport, planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
-import { composePiece } from "../src/personal/compose";
+import { composePiece, limitsOf } from "../src/personal/compose";
 
 const keys = (n: number): string[] => Array.from({ length: n }, (_, i) => `R${i}`);
 const all = (n: number): boolean[] => Array(n).fill(true);
@@ -185,5 +185,25 @@ describe("world voices", () => {
       });
     }
     expect(checked).toBeGreaterThan(0);
+  });
+});
+
+describe("range", () => {
+  it("keeps every note of a lifted piece inside the range of its instrument", () => {
+    const trips: [Parameters<typeof composePiece>[0], string[]][] = [
+      ["visited", ["JFK", "NRT", "LHR", "DEL"]],
+      ["wish", ["JFK", "NRT", "DPS", "LOS", "GRU", "LHR", "DEL", "NBO", "SYD", "CAI"]],
+      ["visited", ["MZH", "OHD", "BJV", "MRU"]],
+      ["wish", ["CPT", "AER", "SGC", "HND", "BOG"]],
+    ];
+    for (const [mode, places] of trips) {
+      const p = composePiece(mode, buildRoutes(places, "IST"));
+      expect(p.style.lift).toBeGreaterThan(0);
+      const out = p.notes.filter((n) => {
+        const { cap, floor } = limitsOf(n.instrument);
+        return (cap !== undefined && n.freq > cap * 1.0001) || (floor !== undefined && n.freq < floor * 0.9999);
+      });
+      expect(out.map((n) => `${n.instrument} ${n.freq.toFixed(1)}`)).toEqual([]);
+    }
   });
 });
