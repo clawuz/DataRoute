@@ -8,6 +8,7 @@ import { planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
+import { idiomOf, walkMotif } from "./idiom";
 import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
@@ -267,7 +268,11 @@ export function clipNotes(notes: PersonalNote[], from: number): PersonalNote[] {
   return out;
 }
 
-export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): PersonalPiece {
+/**
+ * `opts.tunes` (off by default) brings back the relatives of public-domain tunes for the hook: a nearly-known tune makes the ear
+ * search for the original, so by default every hook is an original melody walked in the idiom of its route's own card.
+ */
+export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: { tunes?: boolean } = {}): PersonalPiece {
   const st = styleFor(mode, routes);
   const bpm = st.bpm;
   const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre, cards: [...new Set([planCards(mode, routes).main.id, ...planCards(mode, routes).perRoute.map((c) => c.id)])] };
@@ -435,8 +440,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     visited: [[[0, 3], [8, 4], [3, 4], [10, 4]], [[0, 3], [10, 4], [8, 4], [10, 4]], [[0, 3], [5, 3], [8, 4], [7, 4]], [[0, 3], [8, 4], [3, 4], [7, 4]]],
     wish: [[[0, 4], [7, 4], [9, 3], [5, 4]], [[9, 3], [5, 4], [0, 4], [7, 4]], [[0, 4], [9, 3], [5, 4], [7, 4]], [[0, 4], [5, 4], [9, 3], [7, 4]]],
   };
-  // a well-known melody for the hook (only when it suits the scale of the card): the chords then follow its mode
-  const tune = tuneFor(plan.main, mode, routes);
+  // a well-known melody for the hook (only when asked for, and when it suits the scale of the card): the chords then follow its mode
+  const tune = opts.tunes ? tuneFor(plan.main, mode, routes) : null;
   if (tune) style.tune = tune.id;
   const popProg: Chord[] = (tune ? POP_PROGS[tune.mode === "major" ? "wish" : "visited"][st.progression % 4] : plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third }));
 
@@ -446,24 +451,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
   const scaleOf = routes.map((_, i) => (mode === "wish" ? plan.perRoute[i].scaleWish ?? plan.perRoute[i].scale : plan.perRoute[i].scale));
   const motifs = routes.map((r, i) => {
     if (role[i] !== "hook") return null;
-    const hh = routeHash(r.key + "hook" + i);
-    const rnd = rng(hh);
-    const dir = r.toLon >= r.fromLon ? 1 : -1;
-    const make = (end: number): number[] => {
-      const out: number[] = [];
-      let d = [0, 2, 4][Math.floor(rnd() * 3)] + (occ[i] % 2) * 2;
-      for (let k = 0; k < hits.length; k++) {
-        out.push(d);
-        const step = rnd() < 0.7 ? dir : -dir;
-        d += rnd() < 0.18 ? step * 2 : step * (rnd() < 0.8 ? 1 : 0);
-        if (d > 7) d -= 2;
-        if (d < -2) d += 2;
-      }
-      out[out.length - 1] = end;
-      return out;
-    };
+    const idiom = idiomOf(plan.perRoute[i]);
+    const rnd = rng(routeHash(r.key + "hook" + i));
+    const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
+    // each bar's motif is a walk of the idiom of the route's own card, pulled by the heading of the route; it ends on the cadence degree
+    const make = (end: number): number[] =>
+      walkMotif(idiom, hits.length, dir, rnd, idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, end);
     return [make(2), make(0), make(2), make(4)] as number[][]; // four bars: A B A B′
   });
+  /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
+  const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);
 
   const ACTIVE: Record<Section, PopRole[]> = {
     intro: ["pad", "bass", "pluck", "hat"],
@@ -557,7 +554,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         let hi = 0;
         g.slots.forEach((sl, k) => {
           if (!sl.hit) return;
-          const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * 3);
+          const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * arcOf[i]);
           const sc = scaleOf[i];
           const total = m[hi % m.length] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           hi++;

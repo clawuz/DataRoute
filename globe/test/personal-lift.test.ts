@@ -68,7 +68,7 @@ describe("lift in a piece", () => {
     ];
     for (const [mode, places, home, id] of cases) {
       const routes = buildRoutes(places, home);
-      const p = composePiece(mode, routes);
+      const p = composePiece(mode, routes, { tunes: true });
       const tune = TUNES.find((t) => t.id === p.style.tune)!;
       expect(tune.id).toBe(id);
       expect(tune.bars).toBe(8);

@@ -82,7 +82,7 @@ import { TUNES } from "../src/personal/melodies";
 
 describe("well-known melodies in the hook", () => {
   const homes = ["VIE", "FRA", "JFK", "LHR", "CDG", "MEX", "NRT", "AMS", "DUB", "EDI", "ZRH", "BRU", "ATH", "SOF", "MAD", "LAX", "YYZ", "SYD", "HKG"];
-  const pieces = homes.flatMap((h) => (["visited", "wish"] as const).map((m) => ({ h, m, p: composePiece(m, buildRoutes(["IST", "DXB", "LHR", "JFK", "CDG"].filter((x) => x !== h), h)) })));
+  const pieces = homes.flatMap((h) => (["visited", "wish"] as const).map((m) => ({ h, m, p: composePiece(m, buildRoutes(["IST", "DXB", "LHR", "JFK", "CDG"].filter((x) => x !== h), h), { tunes: true }) })));
   it("uses several tunes across different starting places", () => {
     const used = new Set(pieces.map((x) => x.p.style.tune).filter(Boolean));
     expect(used.size).toBeGreaterThanOrEqual(4);

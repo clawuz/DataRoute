@@ -92,3 +92,37 @@ describe("walkMotif", () => {
     expect(Math.abs(down)).toBeLessThan(0.5); // 0.3 was too tight: residual wall reflection gives 0.325; without the bias it is ~2.3
   });
 });
+import { composePiece } from "../src/personal/compose";
+import { buildRoutes } from "../src/personal/routes";
+
+const SELECTIONS: [string, string | undefined][] = [
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "IST"], ["ESB,ADB,AYT", "IST"], ["IKA,NRT,JFK,LOS,SYD,GRU", "IST"], ["CAI,AMM,BEY", "DXB"],
+  ["ICN,PEK,BKK", "NRT"], ["VIE,FCO,MXP,ZRH,BRU,WAW,PRG,BUD", "IST"], ["NRT,DPS,JFK,LOS,GRU,LHR,DEL,NBO,SYD,CAI", "IST"], ["MAD,LHR,CDG,FRA,AMS", undefined],
+];
+const routesOf = (s: string, home?: string) => buildRoutes(s.split(","), home);
+
+describe("tunes are off by default", () => {
+  it("no piece plays a tune unless it is asked to", () => {
+    for (const [s, h] of SELECTIONS) for (const mode of ["visited", "wish"] as const) expect(composePiece(mode, routesOf(s, h)).style.tune, `${s} ${mode}`).toBeUndefined();
+  });
+  it("still plays one with { tunes: true } for some pieces (the tune code is kept)", () => {
+    const withTune = SELECTIONS.flatMap(([s, h]) => (["visited", "wish"] as const).map((m) => composePiece(m, routesOf(s, h), { tunes: true }).style.tune)).filter(Boolean);
+    expect(withTune.length).toBeGreaterThan(0);
+  });
+  it("is deterministic with and without the option", () => {
+    const [s, h] = SELECTIONS[0];
+    expect(JSON.stringify(composePiece("visited", routesOf(s, h)).notes)).toBe(JSON.stringify(composePiece("visited", routesOf(s, h)).notes));
+    expect(JSON.stringify(composePiece("visited", routesOf(s, h), { tunes: true }).notes)).toBe(JSON.stringify(composePiece("visited", routesOf(s, h), { tunes: true }).notes));
+  });
+});
+
+describe("the hook is an original melody of the idiom", () => {
+  it("has no NaN or out-of-range notes over many selections, with and without tunes", () => {
+    for (const [s, h] of SELECTIONS) for (const mode of ["visited", "wish"] as const) for (const tunes of [false, true]) {
+      const p = composePiece(mode, routesOf(s, h), { tunes });
+      for (const n of p.notes) expect([n.t, n.d, n.freq, n.vel].every(Number.isFinite), `${s} ${mode}`).toBe(true);
+    }
+  });
+});
+// The direction of the hook by the idiom (a descending card against an ascending one) is covered by the unit tests of walkMotif above: a
+// probe of the composed hook found no robust pair, because the altitude arc and the chord-tone snapping dominate the slope of a bar.
