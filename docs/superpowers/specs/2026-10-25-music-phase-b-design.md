@@ -33,6 +33,7 @@ outro keep the home sound and the piece stays recognisable.
 ### Definitions
 
 - **Colours of the trip:** the cards of the coloured routes (`plan.perRoute[i] !== plan.main`), counted by number of routes per card.
+  A route is coloured when its card differs from the main card, so a trip inside one country can have colours too (a country has several cards).
   Cards with the most routes first; ties by `routeHash(card id)`.
 - **Episode cards:** the first three colours (cap 3: a verse of 16 bars cannot tell more without becoming a list). Further colours are
   not given an episode (their routes still sound in every bar as today).
@@ -44,7 +45,7 @@ The verse is four blocks of four bars, `A` = home, `B`, `C`, `D` = the first, se
 
 | episode cards | verse blocks (bars 8-11, 12-15, 16-19, 20-23) |
 |---|---|
-| none (one region, or no colour) | A A A A (unchanged piece) |
+| none (every route plays the main card) | A A A A (unchanged piece) |
 | 1 | A B A B |
 | 2 | A B A C |
 | 3 | A B C D |
@@ -53,11 +54,14 @@ Every other section plays the home figure. (Why: the verse is where a trip "tell
 
 ### What changes inside an episode block
 
-1. **Figure:** bass, kick, backbeat, hat and the hook's rhythm (the `slots`/`hits`/`strong` derived from `cell` and `accent` of a card)
-   use the figure of the episode card for those four bars. The bar is still four beats and the tempo does not change (the cell is
-   stretched to four beats as today), so the transitions are smooth. Chords and the progression stay the main card's.
+1. **Figure:** the kick, backbeat and hat do not read the card's figure today; they play fixed patterns (kick on beats 0 and 2, backbeat on
+   beats 1 and 3, hat in straight eighths; beats counted from 0). So inside an episode block the **bass** and the **hook's rhythm** follow the
+   figure of the episode card (the `slots`/`hits`/`strong` derived from `cell` and `accent`), the **kick** plays the strong beats of that
+   figure (rounded to quarter beats, beat 0 always), the **hat** plays its hit positions, and the **backbeat stays on beats 1 and 3**. The bar is
+   still four beats and the tempo does not change (the cell is stretched to four beats as today), so the transitions are smooth. Chords and the
+   progression stay the main card's.
 2. **Spotlight:** the routes whose card is the episode card play at level ×1.15, the other routes ×0.85, so the instruments of the
-   region come forward. (Applied to the velocity of each note by route; clamped as everywhere.)
+   region come forward. (Applied to the velocity of each note by route; clamped as everywhere. The hook's tune branch works it out per note from the bar the note sounds in, the other voices by the bar they start in.)
 3. **Bridge:** the last bar of every episode block (bars 11, 15, 19, 23) adds a short drum fill: the backbeat voice's extra hit on
    beat 3.5 (the one the build already has) and a kick on beat 3. If there is no drum role in the piece (fewer than five routes) the bar
    is simply the last bar of the block.
@@ -79,7 +83,7 @@ Every other section plays the home figure. (Why: the verse is where a trip "tell
 - `compose.ts`: the groove helpers that build `slots`/`hits`/`strong` from a card become a function `groove(card)` (memoised by card id),
   the bar loop asks `episodeAt(b, cards)` and takes `groove(card ?? plan.main)`; spotlight and bridge as above.
   `PersonalStyle.episodes?: string[]` records the card ids (for tests and for a future display of the structure).
-- Nothing changes for a piece without colours (one region, or fewer than two routes): it is byte-identical to today's.
+- Nothing changes for a piece without colours (every route plays the main card): it is byte-identical to today's, except that the bridge fills (item 3) are not gated by episodes and fire whenever the kick and backbeat roles exist (five routes or more); in practice every such piece has colours.
 
 ### Tests
 

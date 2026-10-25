@@ -31,6 +31,8 @@ Existing share links sound different after the music phase A series (pan, humani
 | longitude of a route's middle, relative to the start of the first route (the home airport when the trip starts at home) | **stereo position** | east is right, west is left, like the map (when the first route starts at home) | `space.ts` |
 | route distance | **reverb amount** | far = distant = more room | `space.ts` |
 | time zones spanned by the trip | **how loose the timing is** (jet lag) | the further, the more it drifts | `humanize.ts` |
+| number of routes per destination region (card) | **which regions get an episode** (the three with the most routes) and their order | the places you went most are told first |
+| region (card) of a route | **the rhythm figure of its episode block and the spotlight** (×1.15 for its voices, ×0.85 for the others) | where you go sounds like there, and has its moment |
 
 ### Formulas and constants
 
@@ -71,6 +73,30 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 - Silent in the break (bars 52–55). Additionally silent in the lifted bars 44–51 when the trip crosses regions (lift ≠ 0), so then it plays in bars 0–43 and 56–63. With no lift (a one-region trip, which includes any all-Turkey trip) it plays through bar 51 and again in the outro.
 - Played by the **first route** (route 0, the home leg): `route: 0`, `show: false` (it sounds, the music box does not draw it). A piece of one route (the solo piece) has no drone.
 - `pan` 0 and `wet` 0.3 (the middle send); no timing drift.
+
+**Region episodes** (`episodes.ts`, `compose.ts`; new)
+
+- The verse (bars 8-23) is four blocks of four bars. `A` is home (the main card); `B`, `C`, `D` are the first, second and third episode card.
+  Episode cards are the cards of the coloured routes (a route is coloured when its card is not the main card), the card with the most routes first,
+  ties by `routeHash` of the card id, at most three (`episodeCards`). A coloured route can be in the same country as home: a country has several cards.
+  The cards are written to `style.episodes`.
+
+| episode cards | bars 8-11 | 12-15 | 16-19 | 20-23 |
+|---|---|---|---|---|
+| none (every route plays the main card) | A | A | A | A |
+| 1 | A | B | A | B |
+| 2 | A | B | A | C |
+| 3 | A | B | C | D |
+
+- Inside an episode block the figure of the episode card (stretched to four beats, same tempo) drives: the **bass** (its strong beats), the **hook's rhythm**
+  (hit places; the hook's notes still snap to the chord on strong places), the **pluck's swing**, the **kick** (its strong beats rounded to quarter beats, beat 1 always) and the **hat**
+  (its hit places instead of straight eighths). The **backbeat** stays on beats 1 and 3 (beats counted from 0, so the second and fourth beat, as in the other sections) and the chords and progression stay the main card's. In the home blocks of the verse everything is as before.
+- **Spotlight:** in an episode block the voices of routes whose card is the episode card play at ×1.15, the others at ×0.85. The hook's public-domain tune works the
+  spotlight out per note from the bar the note sounds in (an 8-bar tune that starts at bar 8 is spotlit by the block of each bar); the other voices by the bar they start in.
+- **Bridge fill:** on the last bar of every four-bar block of the verse (bars 11, 15, 19, 23) the kick adds a hit on beat 3 (counted from 0, the fourth beat; if it is not already there) and the backbeat a hit on the
+  last half beat (3.5). They exist only where those drum roles exist (five routes or more). The fill is not tied to episodes existing: a piece with no episodes and five or more routes would
+  get it too. In practice every such piece has colours; this is a known limit, not a guarantee.
+- A piece where every route plays the main card has no episodes and its verse is unchanged (apart from the fill above), and every bar outside the verse is unchanged.
 
 ## How to add a mapping
 
