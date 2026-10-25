@@ -19,7 +19,7 @@ export interface Idiom {
   arc: number;
   /** the degrees a motif may start on */
   start: number[];
-  /** the degrees the four bars of a phrase (A B A B′) end on: a descending line comes home on the karar, an ascending one ends high */
+  /** the degrees the four bars of a phrase end on: a descending line comes home on the karar, an ascending one ends high (the third bar repeats the first only when cadence[2] === cadence[0]) */
   cadence: [number, number, number, number];
 }
 
@@ -72,7 +72,10 @@ const clamp = (x: number, a: number, b: number): number => Math.min(b, Math.max(
 /**
  * The scale degrees of the hits of ONE bar: a walk that starts on `start`, moves by steps, repeats and leaps as the idiom says, is
  * pulled by the idiom's own direction (`bias`, which wins over the heading of the route `dir`), stays inside [LOW, span], comes
- * toward the cadence in its last free move (by up to 2 degrees) and ends on the cadence degree `end`. `rnd` is a seeded generator: the same input gives the same bar.
+ * (from 4 hits on) comes toward the cadence in the move into the second-to-last degree, by up to 2 degrees and stopping one step short of
+ * it, and ends on the cadence degree `end`. `rnd` is a seeded generator: the same input gives the same bar. Draw order: every move draws
+ * the repeat, the up/down and the size (plus the pick of the leap when the size is not a step), even a move that is then a repeat or
+ * the approach, so the number of draws depends only on the idiom and the random values, not on the approach.
  */
 export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, start: number, end: number): number[] {
   const out: number[] = [];
@@ -84,10 +87,11 @@ export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => nu
     const rep = rnd() < idiom.repeat;
     const up = rnd() < pUp ? 1 : -1;
     const size = rnd() < idiom.step ? 1 : idiom.leaps[Math.floor(rnd() * idiom.leaps.length)];
-    if (hits >= 3 && k === hits - 3) {
+    if (hits >= 4 && k === hits - 3) {
       // the move into the second-to-last degree approaches the cadence instead of jumping onto it
       const gap = end - d;
-      if (Math.abs(gap) > 1) d += Math.sign(gap) * Math.min(2, Math.abs(gap));
+      const room = Math.abs(gap) - 1;
+      if (room > 0) d += Math.sign(gap) * Math.min(2, room);
       continue;
     }
     if (rep) continue;
@@ -101,7 +105,7 @@ export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => nu
 }
 
 /**
- * The four bars of a phrase (A B A B′): each bar is a walk of the idiom that ends on its cadence degree; bar 3 repeats bar 1 exactly
+ * The four bars of a phrase: each bar is a walk of the idiom that ends on its cadence degree; the third bar repeats the first exactly
  * (the return) when they end on the same degree. `startOf` draws the start degree of a bar.
  */
 export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number): number[][] {

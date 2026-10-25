@@ -445,7 +445,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   if (tune) style.tune = tune.id;
   const popProg: Chord[] = (tune ? POP_PROGS[tune.mode === "major" ? "wish" : "visited"][st.progression % 4] : plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third }));
 
-  // the hook of each hook route: two bars of scale degrees (an arch that comes back to a chord tone), built from the route
+  // the hook of each hook route: four bars of scale degrees (`phraseMotifs`), walked in the idiom of the route's card and pulled by its heading
   const L = scale.length;
   /** the melody scale of each route: its own card's (a coloured route sings in the scale of its destination) */
   const scaleOf = routes.map((_, i) => (mode === "wish" ? plan.perRoute[i].scaleWish ?? plan.perRoute[i].scale : plan.perRoute[i].scale));
@@ -454,8 +454,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const idiom = idiomOf(plan.perRoute[i]);
     const rnd = rng(routeHash(r.key + "hook" + i));
     const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
-    // four bars A B A B′: each a walk of the idiom of the route's own card, pulled by its direction, coming home on the idiom's cadence;
-    // the third bar is the first again
+    // four bars: each a walk of the idiom of the route's own card, pulled by its direction, coming home on the idiom's cadence;
+    // bar 3 repeats bar 1 only when the idiom's cadence gives them the same end degree (otherwise it is its own walk)
     return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2);
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */

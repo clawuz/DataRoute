@@ -26,6 +26,7 @@ describe("idiomOf", () => {
       expect(i.arc).toBeGreaterThanOrEqual(1);
       expect(i.arc).toBeLessThanOrEqual(4);
       expect(i.start.every((s) => s >= LOW && s <= i.span)).toBe(true);
+      expect(i.cadence.every((s) => s >= LOW && s <= i.span), c.id).toBe(true);
     }
   });
   it("names only cards that exist, and falls back to the default", () => {
@@ -120,12 +121,23 @@ describe("phraseMotifs", () => {
     const own = I({ cadence: [2, 0, 4, 4] });
     for (const p of phrases(own, 1, 5, 50)) expect(p[2][p[2].length - 1]).toBe(4);
   });
-  it("comes into the cadence with a small move", () => {
-    for (const id of ["anatolian", "hindustani", "pop", "eastasia"]) for (const hits of [3, 4, 6]) {
-      const bars = phrases(card(id), 1, hits).flat();
-      const small = bars.filter((m) => Math.abs(m[m.length - 1] - m[m.length - 2]) <= 2).length / bars.length;
-      expect(small, `${id} ${hits}`).toBeGreaterThanOrEqual(0.9);
+  const SOME = ["anatolian", "hindustani", "pop", "eastasia", "gamelan", "epic"];
+  const bars = (hits: number): number[][] => SOME.flatMap((id) => ([1, -1] as const).flatMap((dir) => phrases(card(id), dir, hits).flat()));
+  const share = (ms: number[][], f: (m: number[]) => boolean): number => ms.filter(f).length / ms.length;
+  it("comes into the cadence with a small move when there are four hits or more", () => {
+    // measured: the worst of the idioms and headings is 0.877 at 4 hits and 0.828 at 6; the threshold is 0.05 below the worst
+    for (const hits of [4, 6]) expect(share(bars(hits), (m) => Math.abs(m[m.length - 1] - m[m.length - 2]) <= 2), `${hits} hits`).toBeGreaterThanOrEqual(0.78);
+  });
+  it("does not double the last note: with 3 hits the second-to-last is the cadence note in at most 40% of the bars, and bars are not a single degree", () => {
+    for (const id of SOME) for (const dir of [1, -1] as const) {
+      const ms = phrases(card(id), dir, 3).flat();
+      expect(share(ms, (m) => m[1] === m[2]), `${id} ${dir}`).toBeLessThanOrEqual(0.4); // measured at most 0.24
+      expect(share(ms, (m) => new Set(m).size === 1), `${id} ${dir}`).toBeLessThan(0.15); // measured at most 0.126
     }
+  });
+  it("does not double the last note in more than 35% of the bars of 4 hits or more", () => {
+    for (const hits of [4, 6]) for (const id of SOME) for (const dir of [1, -1] as const)
+      expect(share(phrases(card(id), dir, hits).flat(), (m) => m[m.length - 1] === m[m.length - 2]), `${id} ${dir} ${hits}`).toBeLessThanOrEqual(0.35); // measured at most 0.23
   });
   it("derives the cadence from the bias unless the table gives one", () => {
     expect(card("anatolian").cadence).toEqual([2, 0, 2, 0]);
