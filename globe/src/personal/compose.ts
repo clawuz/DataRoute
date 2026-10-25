@@ -4,7 +4,8 @@ import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
-import { planCards } from "./genres";
+import { planCards, type GenreCard } from "./genres";
+import { episodeAt, episodeCards } from "./episodes";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 import { panOf, wetOf } from "./space";
@@ -39,6 +40,8 @@ export interface PersonalNote {
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
 export interface PersonalStyle {
+  /** the cards that get a block of the verse (episodes.ts), in the order they are told */
+  episodes?: string[];
   /** semitones the last bars of the chorus are lifted (lift.ts): 0 when the trip stays in one region */
   lift?: number;
   /** how busy the voices are: 0 sparse … 5 busy */
@@ -406,21 +409,28 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     if (at >= 0) voiceOf[at] = "PNO";
   }
 
-  // the groove of one bar: the figure of the main card, stretched to four beats
-  const fig = plan.main.cell;
-  const figTotal = fig.reduce((x, y) => x + Math.abs(y), 0);
-  const slots: { start: number; len: number; hit: boolean; accent: number }[] = [];
-  {
+  // the groove of one bar: the figure of a card, stretched to four beats (the main card's, or an episode card's in the verse)
+  const grooveOf = (card: GenreCard) => {
+    const fig = card.cell;
+    const figTotal = fig.reduce((x, y) => x + Math.abs(y), 0);
+    const gs: { start: number; len: number; hit: boolean; accent: number }[] = [];
     let at = 0;
     fig.forEach((c, k) => {
       const len = (Math.abs(c) / figTotal) * 4;
-      slots.push({ start: at, len, hit: c > 0, accent: plan.main.accent?.[k] || 1 });
+      gs.push({ start: at, len, hit: c > 0, accent: card.accent?.[k] || 1 });
       at += len;
     });
-  }
-  const hits = slots.filter((x) => x.hit);
-  const strong = hits.filter((x, k) => k === 0 || x.accent >= 1.1).slice(0, 4);
-  const swingAmt = plan.main.swing ?? st.swing;
+    const gh = gs.filter((x) => x.hit);
+    return { slots: gs, hits: gh, strong: gh.filter((x, k) => k === 0 || x.accent >= 1.1).slice(0, 4), swing: card.swing ?? st.swing };
+  };
+  const main = grooveOf(plan.main);
+  const { slots, hits, strong } = main;
+  const swingAmt = main.swing;
+  // region episodes: the verse tells the regions of the trip, each with the groove of its own card
+  const eps = episodeCards(plan);
+  style.episodes = eps.map((c) => c.id);
+  const verseFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "verse")).reduce((s, [, m]) => s + m, 0);
+  const grooves = new Map<string, ReturnType<typeof grooveOf>>(eps.map((c) => [c.id, grooveOf(c)]));
   const POP_PROGS: Record<PersonalMode, [number, 3 | 4][][]> = {
     visited: [[[0, 3], [8, 4], [3, 4], [10, 4]], [[0, 3], [10, 4], [8, 4], [10, 4]], [[0, 3], [5, 3], [8, 4], [7, 4]], [[0, 3], [8, 4], [3, 4], [7, 4]]],
     wish: [[[0, 4], [7, 4], [9, 3], [5, 4]], [[9, 3], [5, 4], [0, 4], [7, 4]], [[0, 4], [9, 3], [5, 4], [7, 4]], [[0, 4], [5, 4], [9, 3], [7, 4]]],
@@ -496,24 +506,29 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
     const cr = chord.root + sh;
     const tones = [0, chord.third, 7].map((x) => cr + x);
     const full = section === "chorus" || section === "build";
+    const ep = episodeAt(b, verseFirst, eps);
+    const g = ep.card ? grooves.get(ep.card.id)! : main;
     for (let i = 0; i < n; i++) {
       const rl = role[i];
       if (!ACTIVE[section].includes(rl)) continue;
       // a second voice of a role only joins in the chorus and the build
       if (occ[i] > 0 && !full) continue;
       const r = routes[i];
+      // the voices of the region whose turn it is come forward, the others step back
+      const spot = ep.card ? (plan.perRoute[i] === ep.card ? 1.15 : 0.85) : 1;
+      const vs = (x: number): number => v(x) * spot;
       const inst = voiceOf[i];
       const rk = rank.get(i) ?? 0.5;
       const p0 = phaseAt(i, b, 0);
       if (rl === "pad") {
         // the chord, re-struck on beats one and three, one tone per pad route, rolled a little
-        [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9, inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), v(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
+        [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9, inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), vs(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
       } else if (rl === "bass") {
-        const roots = strong.length ? strong : [slots[0]];
+        const roots = g.strong.length ? g.strong : [g.slots[0]];
         roots.forEach((sl, k) => {
           const next = roots[k + 1]?.start ?? 4;
           const tone = (b % 4 === 3 && k === roots.length - 1 ? tones[2] : tones[0]) - 12 + (occ[i] > 0 ? 12 : 0);
-          push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92, inst, hz(tone), v(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
+          push(i, t0 + sl.start * beat, Math.min(1.5, Math.max(0.5, next - sl.start)) * beat * 0.92, inst, hz(tone), vs(0.62 * sl.accent), phaseAt(i, b, sl.start / 4));
         });
       } else if (rl === "hook" && tune && occ[i] === 0) {
         // the melody plays through when its bars begin: once in a verse, every time in the build, chorus and break
@@ -529,7 +544,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           // an 8-bar tune runs into later bars: each note takes the key of the bar it sounds in (lifted or home)
           const nb = b + Math.floor((off * stretch) / 4);
           const shN = st.shift + liftAt(nb, chorusFirst, chorusLen, keyLift);
-          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + shN + 12 + semis), v(0.78), phaseAt(i, nb, ((off * stretch) % 4) / 4));
+          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + shN + 12 + semis), vs(0.78), phaseAt(i, nb, ((off * stretch) % 4) / 4));
           off += beats;
         }
       } else if (rl === "hook") {
@@ -537,11 +552,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
         if (section === "verse" && b % 4 >= 2) continue;
         const m = motifs[i]![b % 4];
         let hi = 0;
-        slots.forEach((sl, k) => {
+        g.slots.forEach((sl, k) => {
           if (!sl.hit) return;
           const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * 3);
           const sc = scaleOf[i];
-          const total = m[hi] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
+          const total = m[hi % m.length] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           hi++;
           let semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
           // the strong places of the groove rest on a chord tone
@@ -555,24 +570,32 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
             }
             if (bd <= 1.5) semis = best;
           }
-          const nextRest = slots[k + 1] && !slots[k + 1].hit ? slots[k + 1].len : 0;
-          push(i, t0 + sl.start * beat + (k % 2 ? swingAmt * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95, inst, hz(semis), v((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
+          const nextRest = g.slots[k + 1] && !g.slots[k + 1].hit ? g.slots[k + 1].len : 0;
+          push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95, inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
         });
       } else if (rl === "pluck") {
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
         for (let e = 0; e < 8; e++) {
           const p = phaseAt(i, b, e / 8);
           const tone = tones[seqTones[(e + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
-          push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.48, inst, hz(tone), v(e % 4 === 0 ? 0.42 : 0.3), p);
+          push(i, t0 + e * 0.5 * beat + (e % 2 ? g.swing * beat * 0.33 : 0), beat * 0.48, inst, hz(tone), vs(e % 4 === 0 ? 0.42 : 0.3), p);
         }
       } else if (rl === "backbeat") {
-        [1, 3].forEach((bt) => push(i, t0 + bt * beat, beat * 0.35, inst, 200, v(0.55), phaseAt(i, b, bt / 4)));
-        if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, v(0.4), phaseAt(i, b, 0.9));
+        [1, 3].forEach((bt) => push(i, t0 + bt * beat, beat * 0.35, inst, 200, vs(0.55), phaseAt(i, b, bt / 4)));
+        if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
+        if (ep.blockEnd) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
       } else if (rl === "kick") {
-        const beats = section === "build" ? [0, 1, 2, 3] : [0, 2];
-        beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, v(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
+        const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => Math.round(s.start * 4) / 4)])] : null;
+        const beats = section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
+        if (ep.blockEnd && !beats.includes(3)) beats.push(3);
+        beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
-        for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, v(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
+        if (ep.card) {
+          // inside an episode the hat plays the hit places of the episode figure instead of straight eighths
+          g.hits.forEach((sl, k) => push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.2, inst, 200, vs(sl.accent >= 1.1 ? 0.3 : 0.2), phaseAt(i, b, sl.start / 4)));
+        } else {
+          for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, vs(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
+        }
       }
     }
 
