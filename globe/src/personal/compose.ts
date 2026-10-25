@@ -586,11 +586,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
       } else if (rl === "backbeat") {
         [1, 3].forEach((bt) => push(i, t0 + bt * beat, beat * 0.35, inst, 200, vs(0.55), phaseAt(i, b, bt / 4)));
         if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
-        if (ep.blockEnd) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
+        if (ep.blockEnd && eps.length > 0) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
       } else if (rl === "kick") {
         const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => Math.round(s.start * 4) / 4)])] : null;
         const beats = section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
-        if (ep.blockEnd && !beats.includes(3)) beats.push(3);
+        if (ep.blockEnd && eps.length > 0 && !beats.includes(3)) beats.push(3);
         beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
         if (ep.card) {
