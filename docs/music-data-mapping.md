@@ -23,6 +23,9 @@ Existing share links sound different after the music phase A series (pan, humani
 | route distance | role (pad / bass / hook / pluck / drums), phrase length | a longer line is a longer, lower, slower voice | `compose.ts` |
 | altitude along the flight | pitch of the line | a climb rises, a descent falls | `compose.ts`, `flight.ts` |
 | east / west direction | direction of the melody's walk | travelling east rises | `compose.ts` |
+| altitude along the flight | the large contour of the hook: it rises on take-off, plateaus in the cruise, falls on landing; the size is `round(altitude / 39000 × arc)` scale degrees, `arc` being the card's | the melody is the flight | `compose.ts`, `idiom.ts` |
+| east / west direction of the hook route | which way the motif's walk tends to go (a weaker pull than the tradition's own direction) | travelling east rises | `compose.ts`, `idiom.ts` |
+| destination region (the card of the hook route) | the idiom: stepwise or leaping, how much it repeats, the direction of the line (seyir), range, start degrees, the degrees the bars end on | the melody sounds like where it goes | `idiom.ts`, `genres.ts` |
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
 | main card of the piece (usually a card of the starting country; sometimes a lively generic one when the trip has many routes) | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
@@ -61,7 +64,7 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 - There is a lift when the routes belong to two or more different `region` values; the regions counted are those of the routes (`new Set(routes.map(r => r.region)).size >= 2`).
 - Size: up a minor third (**+3**) for a `visited` trip: the same mood, higher; up a whole step (**+2**) for a `wish`. The chords keep their thirds and the scales stay the same, so a minor piece stays minor. It is also written to `style.lift` (0 = none).
 - Bars: the **last 8 bars of the chorus**. The form is 64 bars (intro 8, verse 16, build 8, chorus 20, break 4, outro 8), so the chorus is bars 32–51 and the lift is **bars 44–51** (0-based). The break (52–55) and the outro (56–63) are back in the home key.
-- It is added to the key shift of those bars wherever pitches are computed (chords, bass, hook, pluck, the public-domain tune). A note of the tune takes the lift of the bar it sounds in, so a tune that started before bar 44 is lifted from bar 44 on, and one that runs into the break is home again there.
+- It is added to the key shift of those bars wherever pitches are computed (chords, bass, hook, pluck, and the public-domain tune when tunes are switched on, see "The hook's melody"). A note of the tune takes the lift of the bar it sounds in, so a tune that started before bar 44 is lifted from bar 44 on, and one that runs into the break is home again there.
 - A possible later change: a real switch to the relative major would need the major scale and major thirds for the lifted bars.
 
 **Home drone** (`world-voices.ts`, `compose.ts`)
@@ -92,12 +95,38 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 - Inside an episode block the figure of the episode card (stretched to four beats, same tempo) drives: the **bass** (its strong beats), the **hook's rhythm**
   (hit places; the hook's notes still snap to the chord on strong places), the **pluck's swing**, the **kick** (beat 0, the first beat, always, and the exact strong beats of the figure, on the bass) and the **hat**
   (its hit places instead of straight eighths, swung on the odd slots of the figure exactly like the hook: a rest counts as a slot). The **backbeat** stays on beats 1 and 3 (the second and fourth beat, as in the other sections) and the chords and progression stay the main card's. In the home blocks of the verse everything is as before.
-- **Spotlight:** in an episode block the voices of routes whose card is the episode card play at ×1.15, the others at ×0.85. The hook's public-domain tune works the
+- **Spotlight:** in an episode block the voices of routes whose card is the episode card play at ×1.15, the others at ×0.85. The hook's public-domain tune (only with `{ tunes: true }`) works the
   spotlight out per note from the bar the note sounds in (an 8-bar tune that starts at bar 8 is spotlit by the block of each bar); the other voices by the bar they start in.
-- A hook that plays a public-domain tune keeps the tune's rhythm; only the spotlight applies to it. The drone is not spotlit.
+- A hook that plays a public-domain tune (only with `{ tunes: true }`) keeps the tune's rhythm; only the spotlight applies to it. The drone is not spotlit.
 - **Bridge fill:** on the last bar of every four-bar block of the verse (bars 11, 15, 19, 23) the kick adds a hit on beat 3 (the fourth beat; if it is not already there) and the backbeat a hit on the
   last half beat (3.5). They exist only in a piece that has episodes, and only where those drum roles exist: the kick fill from five routes, the backbeat fill from six.
 - A piece where every route plays the main card has no episodes and its verse is unchanged (no fills either), and every bar outside the verse is unchanged.
+
+## The hook's melody
+
+Every hook is an original melody made of the route; no piece plays a known tune any more (the "relatives of public-domain tunes" are
+**off by default**: `composePiece(mode, routes, { tunes: true })` plays them, nothing on the site passes it; the code and its tests are
+kept for a possible later exact quotation). The hook of a hook route is built in `idiom.ts` from the idiom of the route's own card
+(a coloured route uses the card of its destination).
+
+- **Large contour from the flight.** Each note is lifted by `round(altitude / 39000 × arc)` scale degrees, where the altitude is that of the
+  flight at the note (a climb rises, the cruise plateaus, a descent falls) and `arc` (1-4 degrees) is the card's.
+- **Small motif from the idiom.** A card's idiom is a few numbers: `step` (share of moves that are one scale step), `repeat` (share that
+  repeat the note), `leaps` (sizes of the other moves), `bias` (−1 descending seyir, 0 arch, +1 ascending), `span` (highest degree; the
+  lowest is −2), `arc`, `start` (degrees a bar may start on) and `cadence`. The table is in `music-genre-cards.md`.
+- **The walk** (`walkMotif`) runs once per bar, seeded by the route (deterministic). Every move goes up with probability
+  `clamp(0.5 + drift / 2, 0.1, 0.9)`, where `drift = 0.6 × bias + 0.15 × dir` when the card has a bias (the tradition wins over the
+  heading of the route) and `drift = 0.4 × dir` when it has none; `dir` is +1 for a route that flies east, −1 west.
+- **Cadence.** A phrase is four bars (A, B, A, B′); each bar ends on its cadence degree. Default `2, 0, 2, 4`; when a card gives none it comes
+  from the bias: descending `2, 0, 2, 0` (the line comes home on the karar), ascending `2, 2, 4, 4` (it ends high). From 4 hits in a
+  bar on, the move into the second-to-last note goes toward the cadence degree by up to 2 degrees and stops one step short of it, so the last
+  note is not a doubled one; a bar with fewer hits has no such move.
+- **The return.** Bar 3 repeats bar 1 exactly only when their cadence degrees are the same (`cadence[0] === cadence[2]`: true for the
+  default and the descending plans, not for the ascending one, whose four bars are independent walks).
+- In the verse the hook answers in the first two bars of each four-bar block (bars 8, 9, 12, 13, ...); in the chorus it plays all four bars, an octave up.
+  The strong places of the groove still snap to a chord tone.
+- **The numbers of the idioms are hand-set judgements** of the known character of each tradition, not measurements (the reference
+  statistics hold scales and rhythms, not melodic intervals). They are meant to be tuned by listening: the table is the one place to do it.
 
 ## How to add a mapping
 

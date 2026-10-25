@@ -105,7 +105,7 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 |---|---|---|
 | en uzun | pad | akor, 1. ve 3. vuruşta yeniden vurulur |
 | 2. | bass | karttaki figürün güçlü yerlerinde kök notalar |
-| 3. | hook | iki ölçülük bir cümle (A B A B′), nakarat bölümünde oktav yukarıda ve hep çalar |
+| 3. | hook | dört ölçülük bir cümle (A B A B′: her ölçü kendi kadans derecesinde biter; üçüncü ölçü birinciyi yalnızca ikisi aynı derecede bitiyorsa aynen tekrarlar). Verse'te her dört ölçünün ilk ikisinde cevap verir, nakarat bölümünde dört ölçüde de, oktav yukarıda çalar. Ezgi kartın melodik deyiminden gelir (aşağıda) |
 | 4. | pluck | sekizliklerle akor arpeji (piyano / arp) |
 | sonrakiler | kick, backbeat, hat | 1-3, 2-4 ve sekizlikler (perküsyon) |
 
@@ -114,6 +114,46 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 - Akor ilerlemesi 4 akor, her biri 1 ölçü (i–VI–III–VII, I–V–vi–IV gibi); kartta özel ilerleme varsa o.
 - Form: intro (pad, bass, arpej, hat) → verse (hook yarım) → build (kick her vuruş) → chorus (hepsi) → break (pad, hook, hat) → outro.
 - Nota süresi sırası: pad > bass ≈ hook > arpej > perküsyon; yani uzun rota uzun nota.
+
+## Melodic idiom of a card
+
+The small motif of a hook (one bar of scale degrees) is walked in the idiom of the hook route's own card (`IDIOMS` in `globe/src/personal/idiom.ts`; a card
+without an entry gets `DEFAULT_IDIOM`). These numbers are **hand-set judgements** of how a tradition's melody moves, not measurements (the reference
+statistics hold scales and rhythms, not melodic intervals); they are written as a table so that they can be tuned by ear. Columns: `step` share of moves
+that are one scale step; `repeat` share that repeat the note; `leaps` sizes of the other moves (scale degrees); `bias` −1 descending seyir, 0 arch, +1
+ascending; `span` highest degree (the lowest is −2); `arc` degrees the flight's altitude lifts the line (`round(altitude / 39000 × arc)`); `start` degrees a bar may start on;
+`cadence` the end degrees of the four bars A, B, A, B′ (default `2, 0, 2, 4`; when the table gives none: bias −1 `2, 0, 2, 0`, bias +1 `2, 2, 4, 4`).
+Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]`. The values below are what `idiomOf` returns for every card. The rules of the walk are in
+`music-data-mapping.md` ("The hook's melody").
+
+|---|---|---|---|---|---|---|---|---|
+| cinematic | 0.6 | 0.1 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| romantic | 0.7 | 0.05 | 2, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| baroque | 0.75 | 0.05 | 2, 3 | 0 | 7 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| anatolian | 0.8 | 0.25 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| karsilama | 0.7 | 0.2 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| arabic | 0.8 | 0.2 | 2 | -1 | 6 | 3 | 3, 4, 2 | 2, 0, 2, 0 |
+| hindustani | 0.85 | 0.3 | 2 | +1 | 7 | 4 | 0, 2, 4 | 2, 2, 4, 4 |
+| eastasia | 0.35 | 0.1 | 2, 3 | 0 | 4 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| gamelan | 0.5 | 0.35 | 2 | 0 | 4 | 1 | 0, 2, 4 | 2, 0, 2, 4 |
+| westafrica | 0.5 | 0.3 | 2, 3 | 0 | 4 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| eastafrica | 0.5 | 0.3 | 2, 3 | 0 | 4 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| salsa | 0.55 | 0.25 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| bossa | 0.6 | 0.15 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| tango | 0.6 | 0.15 | 2, 3 | -1 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 0 |
+| flamenco | 0.8 | 0.3 | 2 | -1 | 5 | 2 | 4, 3, 2 | 2, 0, 2, 0 |
+| celtic | 0.55 | 0.1 | 2, 3, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| nordic | 0.85 | 0.3 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| slavic | 0.7 | 0.15 | 2, 3 | -1 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 0 |
+| centralasia | 0.6 | 0.3 | 2, 3 | -1 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 0 |
+| dance | 0.5 | 0.3 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| epic | 0.5 | 0.1 | 2, 4, 5 | 0 | 7 | 4 | 0, 2, 4 | 2, 0, 2, 4 |
+| calm | 0.85 | 0.3 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| mariachi | 0.55 | 0.2 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| persian | 0.8 | 0.25 | 2 | -1 | 6 | 3 | 3, 4, 2 | 2, 0, 2, 0 |
+| jazz | 0.5 | 0.1 | 2, 3, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| funk | 0.4 | 0.4 | 3, 4 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| pop | 0.5 | 0.3 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
 
 ## World pack voices
 

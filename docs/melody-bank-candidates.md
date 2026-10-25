@@ -1,5 +1,7 @@
 # Melodi bankası — aday ezgiler
 
+> Güncel durum (2026-10-25): ezgiler (ve "akrabaları") varsayılan olarak kapalı; `composePiece(..., { tunes: true })` ile çalışır, sitede hiçbir şey bunu açmaz. Hook artık rotadan ve bölgenin deyiminden üretilen özgün bir ezgidir (`docs/music-data-mapping.md`, "The hook's melody"). Bu dosya olası bir "birebir alıntı" özelliği için aday listesi olarak kalır.
+
 Amaç: hook rotası, bölgeye uygun, herkesin tanıdığı bir ezgiyi çalsın (tür kartının ölçeğine ve ritmine uyarlanmış, irtifa eğrisine göre hafif değiştirilmiş). Yalnızca kamu malı ve geleneksel (anonim) ezgiler.
 
 Durum işaretleri (bilgime dayanıyor, her ezgi için kod yazılmadan önce nota kaynağıyla ve telif durumuyla tek tek doğrulanacak):

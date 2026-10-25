@@ -19,11 +19,11 @@ region** (options A + C of the proposal). Exact quotations of a known tune can c
    stays (and stays tested with `{ tunes: true }`) for a later "exact quotation" feature. Share links and the site call it without options: no
    piece plays a tune any more.
 2. **The hook's motif comes from an idiom, not from a uniform random walk.** A new pure module `idiom.ts` holds, per genre card, a small set of
-   numbers that describe how a melody of that tradition moves, and one function that builds the four one-bar motifs (A, B, A, B′) of a hook route
-   from them. The motifs are still deterministic (the same seeded generator as today) and still end on the cadence degrees 2, 0, 2, 4 (the arch the
-   code already has: a motif comes back to a chord tone).
+   numbers that describe how a melody of that tradition moves, and functions (`walkMotif`, `phraseMotifs`) that build the four one-bar motifs (A, B, A, B′) of a
+   hook route from them. The motifs are still deterministic (the same seeded generator as today); each bar ends on a cadence degree of the idiom (default
+   `2, 0, 2, 4`; see the cadence plan below).
 3. **The flight is the large-scale contour.** Today the altitude of the flight lifts the melody by 0-3 scale degrees. The same rule stays but its
-   size is the card's `arc` (1-5 degrees): a climb rises, the cruise plateaus, a descent falls, and the motif (small scale) rides on that arc.
+   size is the card's `arc` (1-4 degrees, `round(altitude / 39000 × arc)`): a climb rises, the cruise plateaus, a descent falls, and the motif (small scale) rides on that arc.
 
 ### The idiom of a card (hand-set, to be tuned by ear)
 
@@ -40,9 +40,19 @@ the docs say so.
 | `span` | the highest scale degree the motif may reach (the lowest is −2) | 4-7 |
 | `arc` | how many degrees the flight's altitude lifts the line | 1-5 |
 | `start` | degrees a motif may start on (the dominant for makams) | list |
+| `cadence` | the end degrees of bars A, B, A, B′. Default `[2, 0, 2, 4]`; when the table gives none it comes from the bias: −1 → `[2, 0, 2, 0]` (the line comes home on the karar), +1 → `[2, 2, 4, 4]` (it ends high); an explicit entry wins | four degrees |
 
-The walk's direction at every move is `drift = 0.4 × direction of the route (east +1, west −1) + 0.4 × bias`; the line goes up with probability
-`clamp(0.5 + drift / 2, 0.1, 0.9)`. So the heading of the flight and the character of the tradition both pull the melody.
+The walk's direction at every move: `drift = 0.6 × bias + 0.15 × dir` when `bias ≠ 0`, and `drift = 0.4 × dir` when the bias is 0 (`dir` = direction of the
+route, east +1, west −1); the line goes up with probability `clamp(0.5 + drift / 2, 0.1, 0.9)`. So the tradition wins over the heading of the flight where it
+has a direction (the first version, `0.4 × dir + 0.4 × bias`, let an opposite heading cancel the bias), and the heading decides where it has none.
+
+**Approach to the cadence.** In a bar of 4 hits or more, the move that produces the second-to-last degree goes toward the cadence degree by
+`min(2, |gap| − 1)` degrees (it stops one step short; if that is 0 or less it stays), so the last note is not a doubled one. A bar with fewer hits has no such move.
+
+**The return.** Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]` (the default and the descending plans). With the ascending plan
+`[2, 2, 4, 4]` the four bars are independent walks. In the verse the hook plays the first two bars of each four-bar block, in the chorus all four.
+
+The numbers of the table are hand-set judgements, to be tuned by ear (see `idiom.ts`).
 
 ## Data → music (rows added to `docs/music-data-mapping.md`)
 
