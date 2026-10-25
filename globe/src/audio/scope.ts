@@ -62,7 +62,8 @@ export const TRAIL_TTL_SEC = 6;
 /** art:track — the recorded track fills the ribbon with many routes: a long window, many trails (a flowing field of colour). */
 export const TRACK_RIBBON_SEC = 14;
 export const TRACK_MAX_TRAILS = 120;
-export const TRACK_MAX_POINTS = 60;
+/** the notes of a route are drawn up to 7 s ahead of the line: a small cap would drop the NEAREST ones first, so the cap is only a safety net (age prunes) */
+export const TRACK_MAX_POINTS = 600;
 
 /** Trail of a note: its flight line, the instrument for Istanbul (ney, winds) notes, none for groove voices. */
 export const trailIdOf = (n: NoteEvent): string | null =>
@@ -103,7 +104,10 @@ export const noteBar = (x: number, dur: number, pxPerSec: number, dpr: number): 
 
 /** Drops the trails not hit for `ttl` seconds. */
 export function pruneTrails(trails: Map<string, Trail>, now: number, ttl = TRAIL_TTL_SEC): void {
-  for (const [k, v] of trails) if (now - v.lastHit > ttl) trails.delete(k);
+  for (const [k, v] of trails) {
+    if (now - v.lastHit > ttl) trails.delete(k);
+    else if (v.points.length > 0 && now - v.points[0].t - v.points[0].dur > ttl) v.points = v.points.filter((p) => now - p.t - p.dur <= ttl); // notes long past the line
+  }
 }
 
 export interface Lane {

@@ -126,6 +126,12 @@ describe("trails", () => {
     expect(trails.has("new")).toBe(true);
   });
 
+  it("pruneTrails drops the points that passed the line long ago and keeps the ones ahead", () => {
+    const trails = new Map<string, Trail>();
+    for (const at of [0, 1, 2, 30, 31, 36]) pushTrail(trails, note({ lineId: "R", at }), "#fff", 600);
+    pruneTrails(trails, 32, 14);
+    expect(trails.get("R")!.points.map((p) => p.t)).toEqual([30, 31, 36]);
+  });
   it("pruneTrails removes trails not hit within the ttl", () => {
     const trails = new Map<string, Trail>();
     pushTrail(trails, note({ lineId: "old", at: 1 }), "#fff");
