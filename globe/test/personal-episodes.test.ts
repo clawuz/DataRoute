@@ -98,35 +98,11 @@ describe("episodes in a piece: what changes in the verse", () => {
     expect(eps.length).toBeGreaterThanOrEqual(1);
     expect(p.style.episodes).toEqual(eps);
   });
-  it("brings the voices of the episode region forward and the others back (x1.15 against x0.85)", () => {
-    const plan = planCards("visited", routes);
-    const e = episodeCards(plan)[0];
-    const block = [12, 16].map((b) => ({ b, c: episodeAt(b, 8, episodeCards(plan)).card })).find((x) => x.c)!;
-    const mean = (xs: number[]): number => xs.reduce((s, x) => s + x, 0) / xs.length;
-    const mine = inBars(block.b, block.b + 4).filter((n) => plan.perRoute[n.route] === block.c);
-    const others = inBars(block.b, block.b + 4).filter((n) => plan.perRoute[n.route] !== block.c);
-    expect(mine.length).toBeGreaterThan(4);
-    expect(others.length).toBeGreaterThan(4);
-    // the same kind of voice would be needed for an exact ratio: assert the direction and a clear gap
-    expect(mean(mine.map((n) => n.vel)) / mean(others.map((n) => n.vel))).toBeGreaterThan(1.1);
-    expect(e).toBeTruthy();
-  });
   it("ends every verse block with a drum fill: a kick on beat 3 and a backbeat on beat 3.5", () => {
     const beat = bar / 4;
     const fill = (b: number): number => inBars(b, b + 1).filter((n) => Math.abs(((n.t - b * bar) / beat) - 3.5) < 0.05 && n.d < beat * 0.3).length;
     expect([11, 15, 19, 23].filter((b) => fill(b) > 0).length).toBeGreaterThanOrEqual(2);
     expect(fill(9) + fill(10)).toBe(0);
-  });
-  it("changes the rhythm of the groove inside an episode: the onsets of the lowest voice differ from the home blocks", () => {
-    const beat = bar / 4;
-    const onsets = (b: number): string => {
-      const notes = inBars(b, b + 1);
-      const low = Math.min(...notes.map((n) => n.freq));
-      return notes.filter((n) => n.freq === low).map((n) => ((n.t - b * bar) / beat).toFixed(1)).join(",");
-    };
-    const home = onsets(9);
-    const eps = [12, 16, 20].filter((b) => episodeAt(b, 8, episodeCards(planCards("visited", routes))).card).map(onsets);
-    expect(eps.some((o) => o !== home)).toBe(true);
   });
   it("is deterministic and keeps the invariants (no negative times, no NaN, notes of a route in order)", () => {
     expect(JSON.stringify(composePiece("visited", routes).notes)).toBe(JSON.stringify(p.notes));
@@ -134,5 +110,123 @@ describe("episodes in a piece: what changes in the verse", () => {
       expect(n.t).toBeGreaterThanOrEqual(0);
       expect([n.t, n.d, n.freq, n.vel].every(Number.isFinite)).toBe(true);
     }
+  });
+});
+
+// the roles of the routes, recomputed the way composePiece deals them (longest route first), so the tests can tell a bass from a hat
+type Role = "pad" | "bass" | "hook" | "pluck" | "kick" | "backbeat" | "hat";
+const BASE: Role[] = ["pad", "bass", "hook", "pluck", "kick", "backbeat", "hat"];
+const SMALL: Record<number, Role[]> = { 2: ["bass", "hook"], 3: ["bass", "hook", "pluck"], 4: ["pad", "bass", "hook", "pluck"], 5: ["pad", "bass", "hook", "pluck", "kick"], 6: ["pad", "bass", "hook", "pluck", "kick", "backbeat"] };
+const rolesOf = (routes: ReturnType<typeof buildRoutes>): Role[] => {
+  const n = routes.length;
+  const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
+  const role: Role[] = new Array(n);
+  order.forEach((x, k) => (role[x.i] = n <= 6 ? SMALL[n][k] : BASE[Math.floor((k * 7) / n)]));
+  return role;
+};
+/** the groove of a card as composePiece builds it: the hit places and the strong ones (first, or accent >= 1.1; at most four), in beats */
+const grooveStarts = (c: GenreCard): { hits: number[]; strong: number[] } => {
+  const total = c.cell.reduce((x, y) => x + Math.abs(y), 0);
+  let at = 0;
+  const hits: { start: number; accent: number }[] = [];
+  c.cell.forEach((u, k) => {
+    if (u > 0) hits.push({ start: (at / total) * 4, accent: c.accent?.[k] || 1 });
+    at += Math.abs(u);
+  });
+  return { hits: hits.map((h) => h.start), strong: hits.filter((h, k) => k === 0 || h.accent >= 1.1).slice(0, 4).map((h) => h.start) };
+};
+const SPOT_ON = 1.15;
+const SPOT_OFF = 0.85;
+const meanOf = (xs: number[]): number => xs.reduce((s, x) => s + x, 0) / xs.length;
+const quarter = (x: number): number => Math.round(x * 4) / 4 + 0;
+
+describe("episodes in a piece: the voices and the groove follow the episode card", () => {
+  const places = "NRT,LOS,GRU,LHR,DEL,CAI,SYD,JFK";
+  const rs = routesOf(places);
+  const pl = planCards("visited", rs);
+  const p = composePiece("visited", rs);
+  const role = rolesOf(rs);
+  const eps = episodeCards(pl);
+  const bar = 240 / p.bpm;
+  const beat = bar / 4;
+  const blockCard = (b: number): GenreCard | null => episodeAt(b, 8, eps).card;
+  const barNotes = (route: number, b: number) => p.notes.filter((n) => n.route === route && n.show !== false && n.t >= b * bar - 0.05 && n.t < (b + 1) * bar - 0.05);
+  const onsets = (route: number, b: number): number[] => barNotes(route, b).map((n) => (n.t - b * bar) / beat);
+  const cardOf = (b: number): GenreCard => blockCard(b) ?? pl.main;
+  const barsOfBlock = (blk: number): number[] => [0, 1, 2].map((k) => 8 + blk * 4 + k); // the three bars before the fill bar
+  const first = (r: Role): number => role.indexOf(r);
+
+  it("deals one route to each role, and the episodes are not the main card (the checks below are not vacuous)", () => {
+    expect(new Set(role).size).toBe(7);
+    expect(eps.length).toBeGreaterThanOrEqual(2);
+    expect(eps.every((c) => c !== pl.main)).toBe(true);
+    // at least one episode card has other strong places and other hit count than the main card
+    const m = grooveStarts(pl.main);
+    expect(eps.some((c) => grooveStarts(c).strong.join() !== m.strong.join())).toBe(true);
+    expect(eps.some((c) => grooveStarts(c).hits.length !== 8)).toBe(true);
+  });
+  it("the bass plays the strong places of the episode card in an episode block and those of the main card in the home block", () => {
+    const r = first("bass");
+    for (let blk = 0; blk < 4; blk++) for (const b of barsOfBlock(blk)) {
+      const want = grooveStarts(cardOf(b)).strong;
+      const got = onsets(r, b);
+      expect(got.length, `bar ${b}`).toBe(want.length);
+      got.forEach((x, k) => expect(Math.abs(x - want[k]), `bar ${b} note ${k}`).toBeLessThan(0.15));
+    }
+  });
+  it("the kick plays beat 1 and the strong places (rounded to quarter beats) in an episode block, beats 1 and 3 at home; the fill adds beat 4", () => {
+    const r = first("kick");
+    for (let blk = 0; blk < 4; blk++) for (const b of [...barsOfBlock(blk), 11 + blk * 4]) {
+      const c = blockCard(b);
+      const want = c ? [...new Set([0, ...grooveStarts(c).strong.map(quarter)])] : [0, 2];
+      if (b % 4 === 3) { if (!want.includes(3)) want.push(3); }
+      want.sort((x, y) => x - y);
+      const got = onsets(r, b).map(quarter).sort((x, y) => x - y);
+      expect(got, `bar ${b}`).toEqual(want);
+    }
+  });
+  it("the hat plays the hit places of the episode figure in an episode block and eight eighths at home", () => {
+    const r = first("hat");
+    for (let blk = 0; blk < 4; blk++) for (const b of barsOfBlock(blk)) {
+      const c = blockCard(b);
+      expect(barNotes(r, b).length, `bar ${b}`).toBe(c ? grooveStarts(c).hits.length : 8);
+    }
+  });
+  it("the voices of the episode card come forward (x1.15) and the others step back (x0.85) against the home block of the verse", () => {
+    let checked = 0;
+    for (const role2 of ["pad", "pluck"] as Role[]) {
+      const r = first(role2);
+      const home = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + k)).map((n) => n.vel));
+      for (let blk = 1; blk < 4; blk++) {
+        const c = blockCard(8 + blk * 4);
+        if (!c) continue;
+        const mean = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + blk * 4 + k)).map((n) => n.vel));
+        const want = pl.perRoute[r] === c ? SPOT_ON : SPOT_OFF;
+        expect(mean / home, `${role2} in block ${blk}`).toBeGreaterThan(want - 0.06);
+        expect(mean / home, `${role2} in block ${blk}`).toBeLessThan(want + 0.06);
+        checked++;
+      }
+    }
+    expect(checked).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe("episodes in a piece: a tune that runs on from a home block into an episode block", () => {
+  const rs = routesOf("NRT,LOS,GRU,LHR,DEL,CAI");
+  const pl = planCards("visited", rs);
+  const p = composePiece("visited", rs);
+  const role = rolesOf(rs);
+  const bar = 240 / p.bpm;
+  const r = role.indexOf("hook");
+  const mean = (a: number, b: number): number => meanOf(p.notes.filter((n) => n.route === r && n.show !== false && n.t >= a * bar - 0.05 && n.t < b * bar - 0.05).map((n) => n.vel));
+  it("has a tune and an episode in the second block of the verse", () => {
+    expect(p.style.tune).toBeTruthy();
+    expect(episodeAt(12, 8, episodeCards(pl)).card).toBeTruthy();
+  });
+  it("spotlights the notes by the bar they sound in: x0.85 (or x1.15) in bars 12-15 against bars 8-11", () => {
+    const c = episodeAt(12, 8, episodeCards(pl)).card!;
+    const want = pl.perRoute[r] === c ? SPOT_ON : SPOT_OFF;
+    expect(mean(12, 16) / mean(8, 12)).toBeGreaterThan(want - 0.06);
+    expect(mean(12, 16) / mean(8, 12)).toBeLessThan(want + 0.06);
   });
 });

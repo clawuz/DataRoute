@@ -544,7 +544,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[]): Perso
           // an 8-bar tune runs into later bars: each note takes the key of the bar it sounds in (lifted or home)
           const nb = b + Math.floor((off * stretch) / 4);
           const shN = st.shift + liftAt(nb, chorusFirst, chorusLen, keyLift);
-          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + shN + 12 + semis), vs(0.78), phaseAt(i, nb, ((off * stretch) % 4) / 4));
+          // the spotlight of the bar the note sounds in (a tune that starts in a home block runs on into an episode block)
+          const epN = episodeAt(nb, verseFirst, eps);
+          const spotN = epN.card ? (plan.perRoute[i] === epN.card ? 1.15 : 0.85) : 1;
+          if (when < END_T - 1e-6) push(i, when, beats * stretch * beat * 0.95, inst, hz(KEY_ROOT + shN + 12 + semis), v(0.78) * spotN, phaseAt(i, nb, ((off * stretch) % 4) / 4));
           off += beats;
         }
       } else if (rl === "hook") {
