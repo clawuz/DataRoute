@@ -134,7 +134,17 @@ Eleven cards added so that a destination can sound like where it goes (spec `doc
 | spguitar | Spanish classical guitar | chamber | 76-96 | MINOR / MAJOR | 3,1,2,2 (1.25, 0.9, 1.05, 0.95) | NYLONGUITAR, FLUTE | NYLONGUITAR | CELLO, VIOLA | FRAMEDRUM |
 
 Progressions: italian i-VI-III-V (`[[0,3],[8,4],[3,4],[7,4]]`), classical I-IV-V-I, rnb i-iv-bVII-III (`[[0,3],[5,3],[10,4],[3,4]]`), country I-IV-V-I, spguitar i-bVII-VI-V (`[[0,3],[10,4],[8,4],[7,4]]`); the others use the default ones.
-The new cards are not reachable from any airport yet (the airport table comes in a later step), so no existing piece changes.
+### Where each card plays (airport first, then country, then region; `genres.ts`: `BY_AIRPORT`, `BY_ISO`, `BY_REGION`)
+
+The first card of a list is the most likely; the hash of the route picks among them. All lists are hand-set judgements to be tuned by ear.
+
+- **Turkey**: Black Sea (TZX RZV OGU SZF NOP KFS ONQ MZH TJK) `karadeniz`; Central Anatolia (ESB ASR KYA NAV VAS AOE ISE KZR) `icanadolu`; Mediterranean (AYT GZP DLM ADA COV HTY KCM) `akdeniz`; Aegean (ADB BJV DNZ USQ EDO CKZ) `zeybek`; East and South-East Anatolia (VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF) `dogu`; Istanbul and Marmara (IST KCO TEQ YEI; SAW is not in the destination list) `anatolian`, `karsilama`, `cinematic`, `jazz`.
+- **Greece** `greek`; **Cyprus** `greek`, `anatolian`; **Italy** `italian`, `romantic`.
+- **Spain**: Seville, Malaga (SVQ AGP) `flamenco`; Madrid, Barcelona, Bilbao, Valencia, Zaragoza `spguitar`, `flamenco`.
+- **Germany, Austria, Switzerland**: `classical`, `baroque` (Germany adds `pop`).
+- **United States**: JFK EWR BOS IAD `jazz`, `classical`, `pop`; MIA `salsa`, `pop`; LAX SFO OAK SEA `pop`, `rnb`, `cinematic`; ATL DTW ORD `rnb`, `funk`, `jazz`; DFW IAH DEN `country`, `rnb`; any other `pop`, `jazz`, `country`, `rnb`.
+- **United Kingdom**: LHR LGW STN MAN BHX `pop`, `classical`, `celtic`; EDI `celtic`. **Australia** `country`, `pop`. France keeps `romantic`, `jazz`, `baroque`.
+- Every card is reachable from at least one airport (a test). `dance`, `epic` and `calm`, which a trip otherwise only meets as lively or calm generic cards, also sit in the lists of Colombia, Canada and Sweden for that reason.
 
 ## Melodic idiom of a card
 

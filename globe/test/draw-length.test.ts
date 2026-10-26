@@ -14,7 +14,7 @@ describe("drawLength", () => {
 
 describe("note length follows route length", () => {
   it("the longer routes of a piece draw and sound longer notes", () => {
-    const sel = selectionFromSearch("?v=SZG,TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=FCO")!;
+    const sel = selectionFromSearch("?v=SZG,TLL,OTP,GOT,CDG,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=FCO")!;
     const routes = buildRoutes(sel.places, sel.home);
     const p = composePiece(sel.mode, routes);
     const rows = routes
@@ -31,7 +31,7 @@ describe("note length follows route length", () => {
 
 describe("the piano with more than three routes", () => {
   const links = [
-    "?v=SZG,TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=FCO",
+    "?v=SZG,TLL,OTP,GOT,CDG,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=FCO",
     "?v=JFK,LAX,MIA,YYZ,GRU",
     "?w=DPS,NRT,SYD,BKK,SIN",
     "?v=ADB,ESB,AYT,TZX,DLM,BJV",
@@ -48,7 +48,7 @@ describe("the piano with more than three routes", () => {
 });
 
 describe("a popular-song arrangement made of the routes", () => {
-  const sel = selectionFromSearch("?v=TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG")!;
+  const sel = selectionFromSearch("?v=TLL,OTP,GOT,CDG,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG")!;
   const routes = buildRoutes(sel.places, sel.home);
   const p = composePiece(sel.mode, routes);
   it("the form is felt: the chorus is busier than the intro and the break", () => {
@@ -185,7 +185,7 @@ import { clipStart } from "../src/personal/compose";
 
 describe("the shared clip", () => {
   it("starts three bars before the chorus, inside the build, so the lift into the chorus is in it", () => {
-    for (const l of ["?v=TLL,OTP,GOT,EDI,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG", "?v=JFK,LAX,MIA&h=IST", "?w=DPS,NRT&h=IST", "?v=LHR,CDG,FCO,MAD&h=IST"]) {
+    for (const l of ["?v=TLL,OTP,GOT,CDG,TJM,GRU,ORN,EVN,PEK,KTI,NQZ,KGF,DAM&h=SZG", "?v=JFK,LAX,MIA&h=IST", "?w=DPS,NRT&h=IST", "?v=LHR,CDG,FCO,MAD&h=IST"]) {
       const sel = selectionFromSearch(l)!;
       const p = composePiece(sel.mode, buildRoutes(sel.places, sel.home));
       const bar = 240 / p.bpm;

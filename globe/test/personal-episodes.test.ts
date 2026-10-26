@@ -53,36 +53,38 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["ESB,TZX,ADB", "visited", 883111836],
-  ["ESB,SAW,GZT", "wish", 1638765537],
-  ["ADB,VAN,AYT", "wish", 3632793157],
-  ["SAW,ESB,TZX", "visited", 2183563548],
-  ["ESB", "visited", 2318824395],
-  ["LHR", "wish", 3509170890],
-  ["SAW,DLM,VAN", "wish", 156953160],
+  ["~ESB,ASR,KYA", "visited", 3409171832],
+  ["~TZX,RZV,OGU", "wish", 2234836826],
+  ["~VAN,ERZ,ERC", "wish", 3120771146],
+  ["~AYT,GZP,DLM", "visited", 2733596025],
+  ["ESB", "visited", 2163962449],
+  ["LHR", "wish", 1899864630],
+  ["~ADB,BJV,DNZ", "wish", 205179905],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["NMI,BLR,BOM,DEL", "MAA", "visited", 339129909], // 5 routes
-  ["BLR,DEL,HYD,MAA", "BOM", "visited", 1869613281], // 5 routes
-  ["BOM,DEL,HYD,MAA", "BLR", "wish", 2918383885], // 5 routes
-  ["TFU,XIY,CAN,URC", "", "visited", 839803562], // 6 routes
-  ["BOM,DEL,HYD,MAA", "", "wish", 452361954], // 6 routes
-  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 825423173], // 7 routes
-  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 4293524660], // 8 routes
-  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 1076501268], // 8 routes
+  ["NMI,BLR,BOM,DEL", "MAA", "visited", 4148840924], // 5 routes
+  ["BLR,DEL,HYD,MAA", "BOM", "visited", 2671278784], // 5 routes
+  ["BOM,DEL,HYD,MAA", "BLR", "wish", 1246607281], // 5 routes
+  ["TFU,XIY,CAN,URC", "", "visited", 2089192737], // 6 routes
+  ["BOM,DEL,HYD,MAA", "", "wish", 2232321417], // 6 routes
+  ["CGO,PEK,PVG,SZX,TFU,URC", "CAN", "visited", 3041679140], // 7 routes
+  ["BLR,BOM,DEL,HYD,MAA", "", "wish", 3499421947], // 8 routes
+  ["CAN,CGO,PEK,PVG,SZX", "", "visited", 3119985404], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has 3 episode cards
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 763923696],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 2521699670],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 589439719],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 2048158556],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 1625142779],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 424782551],
 ];
-const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> => buildRoutes(places.split(","), home || undefined);
+// a leading "~" in places: a journey without home, so the first place is where the trip starts (and the card of the piece)
+const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> =>
+  places.startsWith("~") ? buildRoutes(places.slice(1).split(","), undefined) : buildRoutes(places.split(","), home || undefined);
 const outside = (p: ReturnType<typeof composePiece>): typeof p.notes => {
   const bar = 240 / p.bpm;
   return p.notes.filter((n) => n.t < 8 * bar || n.t >= 24 * bar);
@@ -125,7 +127,7 @@ describe("episodes in a piece: what changes in the verse", () => {
   });
   it("records nothing in the style of a piece without episodes (its style is the style of before)", () => {
     for (const [places, home, mode] of GOLDEN_NO_COLOUR_DRUMS) expect("episodes" in composePiece(mode, routesOf(places, home)).style, places).toBe(false);
-    expect("episodes" in composePiece("visited", routesOf("ESB,TZX,ADB")).style).toBe(false);
+    expect("episodes" in composePiece("visited", routesOf("~ESB,ASR,KYA")).style).toBe(false);
   });
   it("ends every verse block with a drum fill: a kick on beat 3 and a backbeat on beat 3.5", () => {
     const beat = bar / 4;
@@ -282,7 +284,7 @@ describe("episodes in a piece: a tune that runs on from a home block into an epi
 });
 
 describe("episodes in a piece: the kick plays with the bass on a card whose strong places are off the sixteenth grid", () => {
-  const places = "LOS,ACC,ABJ,MAD,SVQ,NRT,JFK";
+  const places = "LOS,ACC,ABJ,MAD,SVQ,JFK,LHR";
   it("has the West African bell and the flamenco compás among the episodes (their strong beats sit at 1.667 and 3.333)", () => {
     const { eps } = pieceOf(places, "wish");
     expect(eps.map((c) => c.id)).toEqual(expect.arrayContaining(["westafrica", "flamenco"]));
@@ -308,7 +310,7 @@ const swungHits = (c: GenreCard, swing: number): number[] => {
 
 describe("episodes in a piece: a card with rests in its figure, with swing, and a hook without a tune", () => {
   // the gamelan cycle (1, rest, 1, 1) is the second episode card here: block 2 of the verse, bars 16-19; the hook plays bars 16 and 17
-  const places = "KUL,ROB,NSI,NBO,DUS,CGK,VAS";
+  const places = "KUL,ROB,NSI,NBO,DUS,CGK,CDG";
   const { p, eps, role, onsets, blockCard } = pieceOf(places, "wish");
   const gam = eps.find((c) => c.id === "gamelan")!;
   const swing = gam?.swing ?? p.style.swing;

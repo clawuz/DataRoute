@@ -27,6 +27,7 @@ Existing share links sound different after the music phase A series (pan, humani
 | east / west direction of the hook route | which way the motif's walk tends to go (a weaker pull than the tradition's own direction) | travelling east rises | `compose.ts`, `idiom.ts` |
 | destination region (the card of the hook route) | the idiom: stepwise or leaping, how much it repeats, the direction of the line (seyir), range, start degrees, the degrees the bars end on | the melody sounds like where it goes | `idiom.ts`, `genres.ts` |
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
+| destination airport | the card list of the airport (airport table, then country, then region), the hash of the route picks one | the voices, scale, figure and tempo of the piece: Trabzon sounds of the Black Sea, Seville of flamenco, Dallas of country | `genres.ts` (`BY_AIRPORT`) |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
 | main card of the piece (usually a card of the starting country; sometimes a lively generic one when the trip has many routes) | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
 | mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
