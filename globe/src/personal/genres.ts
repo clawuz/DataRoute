@@ -252,6 +252,29 @@ export function colourCardOf(r: PersonalRoute, i: number): GenreCard {
   return list[(routeHash(r.key + i) >>> 3) % list.length];
 }
 
+/** the region cluster of every card (spec 2026-10-26-many-destinations): the dominant cluster of the destinations leads the piece */
+export const CLUSTER_OF: Record<string, string> = Object.fromEntries(
+  Object.entries({
+    turkish: ["anatolian", "karsilama", "karadeniz", "icanadolu", "akdeniz", "dogu", "zeybek"],
+    arab: ["arabic", "khaleeji", "maghrebi"],
+    "persian-central": ["persian", "centralasia", "caucasus"],
+    "south-asia": ["hindustani", "bollywood"],
+    "east-asia": ["eastasia", "chinese"],
+    "south-east-asia": ["gamelan", "thai"],
+    africa: ["westafrica", "eastafrica", "afrobeat"],
+    latin: ["salsa", "mariachi", "bossa", "samba", "tango", "cumbia", "andean"],
+    "south-europe": ["greek", "italian", "flamenco", "spguitar", "fado"],
+    slavic: ["slavic", "russian"],
+    "west-europe": ["baroque", "romantic", "classical", "chanson"],
+    north: ["nordic", "celtic", "calm"],
+    anglo: ["pop", "jazz", "funk", "country", "rnb", "cinematic", "epic", "dance"],
+  }).flatMap(([cluster, ids]) => ids.map((id) => [id, cluster])),
+);
+
+export function clusterOf(card: GenreCard): string {
+  return CLUSTER_OF[card.id] ?? card.id;
+}
+
 export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan {
   const n = routes.length;
   if (n === 0) return { main: CARDS[0], home: CARDS[0], perRoute: [] };
@@ -264,15 +287,24 @@ export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan
   const takeGeneric = n >= 10 ? seed % 10 < 4 : n >= 6 ? seed % 10 < 2 : seed % 10 < 1;
   const homeCard = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
   const colourOf = routes.map((r, i) => colourCardOf(r, i));
-  // the main card is the one most routes go to; ties: the larger total distance, then the smaller hash of the id
+  // the main card: the dominant region first (the cluster with the most routes; ties: the larger total distance, then the smaller hash of
+  // the cluster id), inside it the card with the most routes (ties: the larger total distance, then the smaller hash of the card id)
   const tally = new Map<string, { card: GenreCard; n: number; km: number }>();
+  const regions = new Map<string, { n: number; km: number }>();
   colourOf.forEach((c, i) => {
     const t = tally.get(c.id) ?? { card: c, n: 0, km: 0 };
     t.n++;
     t.km += routes[i].distKm;
     tally.set(c.id, t);
+    const g = regions.get(clusterOf(c)) ?? { n: 0, km: 0 };
+    g.n++;
+    g.km += routes[i].distKm;
+    regions.set(clusterOf(c), g);
   });
-  const main = [...tally.values()].sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.card.id) - routeHash(b.card.id))[0].card;
+  const lead = [...regions.entries()].sort((a, b) => b[1].n - a[1].n || b[1].km - a[1].km || routeHash(a[0]) - routeHash(b[0]))[0][0];
+  const main = [...tally.values()]
+    .filter((t) => clusterOf(t.card) === lead)
+    .sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.card.id) - routeHash(b.card.id))[0].card;
   const budget = n >= 2 ? Math.max(1, Math.round(COLOUR_SHARE * n)) : 0;
   const chosen = new Set(
     allocateColour(colourOf.map((c) => c.id), colourOf.map((c) => c.id !== main.id), routes.map((r) => r.distKm), routes.map((r) => r.key), budget),

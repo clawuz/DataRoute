@@ -284,6 +284,26 @@ It is silent in the break (bars 52–55) and, when the trip crosses regions, als
 with the other data → music mappings, is in `docs/music-data-mapping.md`.
 
 
+## Clusters: the dominant region leads (2026-10-26, spec `docs/superpowers/specs/2026-10-26-many-destinations-design.md`)
+
+The main card is chosen in two steps: first the cluster with the most routes (far-end cards; ties: the larger total distance, then the smaller hash of the cluster id), then, inside it, the card with the most routes (ties: distance, hash of the card id). `CLUSTER_OF` in `genres.ts`:
+
+| cluster | cards |
+|---|---|
+| turkish | anatolian, karsilama, karadeniz, icanadolu, akdeniz, dogu, zeybek |
+| arab | arabic, khaleeji, maghrebi |
+| persian-central | persian, centralasia, caucasus |
+| south-asia | hindustani, bollywood |
+| east-asia | eastasia, chinese |
+| south-east-asia | gamelan, thai |
+| africa | westafrica, eastafrica, afrobeat |
+| latin | salsa, mariachi, bossa, samba, tango, cumbia, andean |
+| south-europe | greek, italian, flamenco, spguitar, fado |
+| slavic | slavic, russian |
+| west-europe | baroque, romantic, classical, chanson |
+| north | nordic, celtic, calm |
+| anglo | pop, jazz, funk, country, rnb, cinematic, epic, dance |
+
 ## Variety (2026-10-26, audit by a probe over random selections; `globe/test/personal-variety.test.ts` keeps a light version)
 
 Over 1000 random selections of 3-8 places (half with home Istanbul), after the 51 cards: 49 of the 51 cards come out as the main card at least once; the most frequent are `eastafrica` 10.4%, `arabic` 9.7%, `pop` 7.0%, `westafrica` 6.9%, `centralasia` 6.7%; the tempo spans 78-126 bpm. `chanson` (five airports) and `andean` (one) are almost never the main sound; `anatolian` did not come out in that draw.

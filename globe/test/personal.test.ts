@@ -354,7 +354,7 @@ describe("the genre cards: the music of where the trip starts from", () => {
     for (const p of mine) for (const n of p.notes) expect(orch.has(n.instrument), n.instrument).toBe(true);
   });
   it("starting from a different country gives a different music", () => {
-    const from = (home: string) => composePiece("visited", buildRoutes(["JFK", "NRT", "DXB", "LHR"], home)).style.cards![0];
+    const from = (home: string) => composePiece("visited", buildRoutes(["NRT", "DXB", "FCO", "GRU"], home)).style.cards![0];
     const seen = new Set(["IST", "GRU", "NBO", "BKK", "DEL", "MAD", "DXB", "BUE", "LOS", "ATH"].map(from));
     expect(seen.size).toBeGreaterThanOrEqual(4);
   });

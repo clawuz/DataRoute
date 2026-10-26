@@ -65,7 +65,7 @@ describe("lift in a piece", () => {
     // stretched to the bar, and a major one in 4/4). The tunes start at bars 32, 40, 48: the one of bar 40 runs into the
     // lifted bars 44-51, the one of bar 48 runs into the break (52-55), which is home again.
     const cases: [Parameters<typeof composePiece>[0], string[], string | undefined, string][] = [
-      ["visited", ["JFK", "OHD", "ADA"], "IST", "uskudar"],
+      ["visited", ["JFK", "OHD", "MSQ"], "IST", "uskudar"],
       ["wish", ["EWR", "MSQ", "NAV", "LOS"], undefined, "twinkle"],
     ];
     for (const [mode, places, home, id] of cases) {

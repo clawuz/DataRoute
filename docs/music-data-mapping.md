@@ -29,7 +29,7 @@ Existing share links sound different after the music phase A series (pan, humani
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
 | destination airport | the card list of the airport (airport table, then country, then region), the hash of the route picks one | the voices, scale, figure and tempo of the piece: Trabzon sounds of the Black Sea, Seville of flamenco, Dallas of country, Moscow of the Russian romance, Mumbai of Bollywood | `genres.ts` (`BY_AIRPORT`) |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
-| the card most routes go to (the main card; ties: the larger total distance, then the smaller hash of the card id) | tempo, scale, progression, groove | the piece plays the sound of where the trip goes | `genres.ts` (`planCards`) |
+| the dominant region of the destinations (the cluster of cards with the most routes; ties: the larger total distance, then the smaller hash of the cluster id), then inside it the card with the most routes (the main card; same ties) | tempo, scale, progression, groove | the piece plays the sound of where the trip goes | `genres.ts` (`planCards`) |
 | home card (`plan.home`: a card of the starting airport; sometimes a lively generic one when the trip has many routes) | the intro, the outro and the **home drone** | home opens and closes the story | `genres.ts`, `world-voices.ts` |
 | mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
 | regions crossed | **whether there is a key lift** | a trip inside one region has no journey | `lift.ts` |
