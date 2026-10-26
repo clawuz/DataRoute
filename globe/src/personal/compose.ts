@@ -467,7 +467,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const answering = (section: string, b: number): boolean => answerer >= 0 && callerIdx >= 0 && section === "chorus" && b % 2 === 1;
 
   const ACTIVE: Record<Section, PopRole[]> = {
-    intro: ["pad", "bass", "pluck", "hat"],
+    intro: ["pad", "bass", "pluck"], // no hat: a constant tick in the intro is not a groove yet
     verse: ["pad", "bass", "pluck", "backbeat", "kick", "hat", "hook"],
     build: ["pad", "bass", "hook", "pluck", "backbeat", "kick", "hat"],
     chorus: ["pad", "bass", "hook", "pluck", "backbeat", "kick", "hat"],
@@ -593,6 +593,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
         for (let e = 0; e < 8; e++) {
           if (i === answerer && answering(section, b) && e >= 4) continue; // it answers instead
+          if (section === "intro" && (b - first < 4 || e % 4 !== 0)) continue; // the intro: the pluck waits four bars, then plays two soft notes a bar, not a run of eighths
           const p = phaseAt(i, b, e / 8);
           const tone = tones[seqTones[(e + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
           push(i, t0 + e * 0.5 * beat + (e % 2 ? g.swing * beat * 0.33 : 0), beat * 0.48, inst, hz(tone), vs(e % 4 === 0 ? 0.42 : 0.3), p);
