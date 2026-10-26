@@ -72,7 +72,7 @@ Her kart `style.ts` benzeri bir ayar nesnesine dönüşür:
 ## 5. Uygulama durumu (2026-10-16)
 
 - Kartlar `globe/src/personal/genres.ts` içinde (24 kart), seçim `planCards(mode, routes)`. Ana kart (`plan.main`) artık varış yerlerinin kartıdır (en çok rotanın gittiği kart); kalkış yerinin kartı `plan.home` olarak kalır (giriş, çıkış ve drone).
-- Ana kart: yolculuğun başladığı yerin (from) ülkesine göre; rota sayısı arttıkça canlı genel kartlar (dance / epic / cinematic) pay alır.
+- Ev kartı (`plan.home`): yolculuğun başladığı yerin (from) ülkesine göre; rota sayısı arttıkça canlı genel kartlar (dance / epic / cinematic) pay alır. Giriş, final ve drone bunu çalar; ana kart varış yerlerinin kartıdır.
 - Her üçüncü rota kendi varış ülkesinin kartından figür ve enstrüman alır.
 - Kartın tempo, ölçek, ilerleme, ritim figürü (usul), vurgu ve enstrümanları `compose.ts` içinde kullanılıyor.
 - Parçanın kartları `style.cards` alanında.
@@ -245,3 +245,8 @@ trip and is not drawn by the music box. The instrument follows the main card of 
 
 It is silent in the break (bars 52–55) and, when the trip crosses regions, also in the lifted bars (44–51); a one-region trip has no lift and the drone plays through bar 51. It returns in the outro. The whole rule,
 with the other data → music mappings, is in `docs/music-data-mapping.md`.
+
+
+## Variety (2026-10-26, audit by a probe over random selections; `globe/test/personal-variety.test.ts` keeps a light version)
+
+Over 1000 random selections of 3-8 places (half with home Istanbul): 36 different main cards; the most frequent is `arabic` with 15.3%, then `westafrica` 10.9%, `eastafrica` 9.8%, `slavic` 7.2% (many airports map to them); the tempo spans 79-126 bpm; in 94% of the pieces the home card differs from the main card, so the intro and the outro tell home while the rest tells where the trip goes. `greek` never came out as the main card in 1000 draws (two airports only); `calm` only appears as a home card.

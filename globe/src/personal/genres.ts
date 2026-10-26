@@ -220,8 +220,8 @@ export function allocateColour(ids: string[], eligible: boolean[], dist: number[
 }
 
 /**
- * Chooses the cards of a piece. The main card is the music of where the trip starts from (most of the time; with many
- * routes a lively generic card takes a share); the routes that take the card of their own destination are chosen by the share of each destination colour (see `allocateColour`),
+ * Chooses the cards of a piece. The main card is the card most routes go to (the sound of where the trip goes); `home` is the music of where
+ * the trip starts from (most of the time; with many routes a lively generic card takes a share). The routes that take the card of their own destination are chosen by the share of each destination colour (see `allocateColour`),
  * so the music changes colour as the trip crosses regions. The choice is a function of the routes only.
  */
 /** the card of the far end of a route (the place it goes to, or where it comes from when it lands at the hub): the colour it may play */
@@ -238,7 +238,7 @@ export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan
   const seed = routeHash(`${mode}|${routes.map((r) => r.key).join(">")}`);
   const homeCards = cardsOfAirport(first.from, home?.region ?? "UNK");
   const pool = generic(n);
-  // the further from a calm start, the more a lively generic card is in play for the main voice
+  // the further from a calm start, the more a lively generic card is in play for the home voice
   const takeGeneric = n >= 10 ? seed % 10 < 4 : n >= 6 ? seed % 10 < 2 : seed % 10 < 1;
   const homeCard = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
   const colourOf = routes.map((r, i) => colourCardOf(r, i));

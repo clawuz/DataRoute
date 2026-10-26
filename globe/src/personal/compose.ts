@@ -214,7 +214,7 @@ function rng(seed: number): () => number {
 /** the arrangement chosen for a selection */
 export function styleFor(mode: PersonalMode, routes: PersonalRoute[]): PersonalStyle & { bpm: number } {
   const r = rng(routeHash(`${mode}|${routes.map((x) => x.key).join(">")}`));
-  // the music of the place the trip starts from sets the tempo, the family of sound and (in composePiece) the scale
+  // the card most routes go to (the sound of where the trip goes) sets the tempo, the family of sound and (in composePiece) the scale
   const card = planCards(mode, routes).main;
   const [lo, hi] = card.bpm;
   // a wish is a little brighter; a busy selection is a livelier piece: many routes lift the tempo (up to 16 bpm)

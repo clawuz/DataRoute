@@ -29,7 +29,7 @@ Existing share links sound different after the music phase A series (pan, humani
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
 | destination airport | the card list of the airport (airport table, then country, then region), the hash of the route picks one | the voices, scale, figure and tempo of the piece: Trabzon sounds of the Black Sea, Seville of flamenco, Dallas of country | `genres.ts` (`BY_AIRPORT`) |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
-| the card most routes go to (the main card; ties: the larger total distance, then the smaller hash of the card id) | tempo, scale, progression, groove | the piece plays the sound of where the trip goes |
+| the card most routes go to (the main card; ties: the larger total distance, then the smaller hash of the card id) | tempo, scale, progression, groove | the piece plays the sound of where the trip goes | `genres.ts` (`planCards`) |
 | home card (`plan.home`: a card of the starting airport; sometimes a lively generic one when the trip has many routes) | the intro, the outro and the **home drone** | home opens and closes the story | `genres.ts`, `world-voices.ts` |
 | mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
 | regions crossed | **whether there is a key lift** | a trip inside one region has no journey | `lift.ts` |
@@ -81,7 +81,7 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 
 **Region episodes** (`episodes.ts`, `compose.ts`)
 
-- The verse (bars 8-23) is four blocks of four bars. `A` is home (the main card); `B`, `C`, `D` are the first, second and third episode card.
+- The verse (bars 8-23) is four blocks of four bars. `A` is the main card (the destinations' sound); `B`, `C`, `D` are the first, second and third episode card.
   Episode cards are the cards of the coloured routes (a route is coloured when its card is not the main card), the card with the most routes first,
   ties by `routeHash` of the card id, at most three (`episodeCards`). A coloured route can be in the same country as home: a country has several cards.
   The cards are written to `style.episodes` (only when there are any: a piece without episodes has no `episodes` in its style).
@@ -102,7 +102,7 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 - A hook that plays a public-domain tune (only with `{ tunes: true }`) keeps the tune's rhythm; only the spotlight applies to it. The drone is not spotlit.
 - **Bridge fill:** on the last bar of every four-bar block of the verse (bars 11, 15, 19, 23) the kick adds a hit on beat 3 (the fourth beat; if it is not already there) and the backbeat a hit on the
   last half beat (3.5). They exist only in a piece that has episodes, and only where those drum roles exist: the kick fill from five routes, the backbeat fill from six.
-- A piece where every route plays the main card has no episodes and its verse is unchanged (no fills either), and every bar outside the verse is unchanged.
+- A piece where every route plays the main card has no episodes and its verse is unchanged (no fills either), and every bar outside the verse is unchanged, except the intro and the outro when the home card differs from the main card (they play the home groove).
 
 ## The hook's melody
 
