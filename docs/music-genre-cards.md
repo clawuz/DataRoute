@@ -115,6 +115,27 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 - Form: intro (pad, bass, arpej, hat) → verse (hook yarım) → build (kick her vuruş) → chorus (hepsi) → break (pad, hook, hat) → outro.
 - Nota süresi sırası: pad > bass ≈ hook > arpej > perküsyon; yani uzun rota uzun nota.
 
+## 8. Destination cards (2026-10-26)
+
+Eleven cards added so that a destination can sound like where it goes (spec `docs/superpowers/specs/2026-10-26-destination-styles-design.md`, section 1). They are hand-set judgements to be tuned by ear. The Turkish regional cards approximate zurna (DUDUK / NEY_MAKAM), tulum (BAGPIPE / BAGPIPE_DRONE), ud (NYLONGUITAR / KANUN), tambur (SAZ) and davul (FRAMEDRUM / BENDIR) with the pack's instruments; real recordings replace them later. Cards in `BASE_CARDS` of `genres.ts`; 38 cards in all.
+
+| id | name | family | bpm | scale / wish | cell (accent) | melody | pluck | held | perc |
+|---|---|---|---|---|---|---|---|---|---|
+| karadeniz | Black Sea horon (fast) | folk | 112-126 | USSAK / HICAZ | 2,2,3 (1.3, 0.9, 1.1) | KEMENCE_MAKAM, BAGPIPE (tulum) | BAGLAMA_EXTRA, SAZ | BAGPIPE_DRONE, CELLO | FRAMEDRUM |
+| icanadolu | Central Anatolian bağlama | folk | 88-108 | USSAK / HICAZ | 2,1,1,2,2 (1.25, 0.85, 0.85, 1.1, 0.9) | SAZ, BAGLAMA_MAKAM | BAGLAMA_EXTRA, SAZ | CELLO, VIOLA | BENDIR |
+| akdeniz | Turkish Mediterranean (ud, tambur, kanun) | folk | 96-114 | HICAZ / NIHAVENT | 3,2,2,3 (1.25, 0.9, 0.9, 1.1) | KANUN, NYLONGUITAR (ud) | NYLONGUITAR, SAZ (tambur) | CELLO, VIOLA | DARBUKA |
+| dogu | East Anatolian davul-zurna halay (fast) | folk | 104-124 | HICAZ / SEGAH | 1,1,1,1 (1.35, 0.8, 1.1, 0.8) | DUDUK, NEY_MAKAM (zurna) | SAZ, BAGLAMA_EXTRA | DUDUK, CELLO | FRAMEDRUM (davul) |
+| zeybek | Aegean zeybek | folk | 82-98 | USSAK / HICAZ | 2,2,2,3 (1.3, 0.85, 0.9, 1.15) | CLA, SAZ | SAZ, NYLONGUITAR | CELLO, VIOLA | DARBUKA |
+| greek | Greek syrtos & kalamatianos | folk | 100-120 | HICAZ / DORIAN | 3,2,2 (1.3, 0.9, 1) | SAZ (bouzouki), CLA, NYLONGUITAR | NYLONGUITAR, SAZ | ACCORDION, CELLO | BENDIR |
+| italian | Italian symphonic & tarantella | symphonic | 84-110 | MINOR / MAJOR | 3,3 (1.2, 0.9) | VIOLIN, HARP, FLUTE | HARP, PSALTERY (mandolin) | CELLO, VIOLA, HORN | TIMP |
+| classical | Classical (Vienna) | chamber | 92-116 | MAJOR / LYDIAN | 1,1,1,1 (1.15, 0.85, 1, 0.85) | VIOLIN, FLUTE, OBOE, PNO | PNO, HARP | CELLO, VIOLA, BSN | TRI |
+| rnb | R&B / neo-soul (swing 0.2) | pulse | 76-96 | DORIAN / MIXO | 3,3,2 (1.2, 1, 1.1) | RHODES, EKEYS, TENORSAX | GUITAR_EL, EKEYS | RHODES, CELLO | CONGA (bass BASS_EL, UPRIGHTBASS) |
+| country | Country & Americana (swing 0.12) | folk | 92-116 | MAJOR / MIXO | 1,1,1,1 (1.2, 0.85, 1, 0.85) | VIOLIN, HARMONICA, GUITAR_AC | GUITAR_AC, FOLKHARP | HARMONICA, CELLO | TAMB (bass UPRIGHTBASS) |
+| spguitar | Spanish classical guitar | chamber | 76-96 | MINOR / MAJOR | 3,1,2,2 (1.25, 0.9, 1.05, 0.95) | NYLONGUITAR, FLUTE | NYLONGUITAR | CELLO, VIOLA | FRAMEDRUM |
+
+Progressions: italian i-VI-III-V (`[[0,3],[8,4],[3,4],[7,4]]`), classical I-IV-V-I, rnb i-iv-bVII-III (`[[0,3],[5,3],[10,4],[3,4]]`), country I-IV-V-I, spguitar i-bVII-VI-V (`[[0,3],[10,4],[8,4],[7,4]]`); the others use the default ones.
+The new cards are not reachable from any airport yet (the airport table comes in a later step), so no existing piece changes.
+
 ## Melodic idiom of a card
 
 The small motif of a hook (one bar of scale degrees) is walked in the idiom of the hook route's own card (`IDIOMS` in `globe/src/personal/idiom.ts`; a card
@@ -155,6 +176,17 @@ Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]`. The values be
 | jazz | 0.5 | 0.1 | 2, 3, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
 | funk | 0.4 | 0.4 | 3, 4 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
 | pop | 0.5 | 0.3 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| karadeniz | 0.7 | 0.3 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| icanadolu | 0.8 | 0.25 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| akdeniz | 0.7 | 0.2 | 2, 3 | -1 | 6 | 3 | 3, 4, 2 | 2, 0, 2, 0 |
+| dogu | 0.6 | 0.35 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| zeybek | 0.8 | 0.2 | 2 | -1 | 5 | 2 | 4, 3, 2 | 2, 0, 2, 0 |
+| greek | 0.65 | 0.25 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| italian | 0.55 | 0.1 | 2, 3, 4 | 0 | 7 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
+| classical | 0.7 | 0.05 | 2, 3 | 0 | 7 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| rnb | 0.6 | 0.2 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| country | 0.7 | 0.15 | 2, 4 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| spguitar | 0.7 | 0.1 | 2, 3 | -1 | 6 | 2 | 4, 2, 0 | 2, 0, 2, 0 |
 
 ## World pack voices
 
@@ -198,6 +230,7 @@ trip and is not drawn by the music box. The instrument follows the main card of 
 | celtic | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | karsilama | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | baroque | RENORGAN (held, re-struck every 4 bars) |
+| karadeniz | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | every other card | CELLO (held, re-struck every 4 bars) |
 
 It is silent in the break (bars 52–55) and, when the trip crosses regions, also in the lifted bars (44–51); a one-region trip has no lift and the drone plays through bar 51. It returns in the outro. The whole rule,
