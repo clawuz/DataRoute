@@ -52,7 +52,7 @@ describe("lift in a piece", () => {
     expect(composePiece("visited", buildRoutes(["ADA", "ESB", "DIY", "AYT"], "IST")).style.lift).toBe(0);
   });
   it("sounds the same chord a step higher, then goes home", () => {
-    const routes = buildRoutes(["DEL", "NRT", "CAI", "GRU"], "IST");
+    const routes = buildRoutes(["BOM", "NRT", "CAI", "GRU"], "IST");
     const p = composePiece("visited", routes);
     expect(pc(lowest(p, 44) - lowest(p, 40))).toBe(3);
     expect(pc(lowest(p, 56) - lowest(p, 40))).toBe(0);

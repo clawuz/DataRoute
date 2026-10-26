@@ -27,11 +27,28 @@ describe("destination cards by airport", () => {
     expect(ids("LHR")).toContain("celtic");
     expect(ids("EDI")).toEqual(["celtic"]);
   });
+  it("the big countries and cities choose their own cards (first card, then membership)", () => {
+    const first: Record<string, string> = {
+      GRU: "samba", VCP: "samba", LOS: "afrobeat", PHC: "afrobeat", ABV: "westafrica", KAN: "westafrica", ACC: "westafrica",
+      BOM: "bollywood", BLR: "bollywood", DEL: "hindustani", ISB: "hindustani", KHI: "hindustani",
+      RUH: "khaleeji", DXB: "khaleeji", DOH: "khaleeji", KWI: "khaleeji", BAH: "khaleeji", MCT: "khaleeji",
+      CMN: "maghrebi", ALG: "maghrebi", TUN: "maghrebi", CAI: "arabic", AMM: "arabic",
+      SVO: "russian", LED: "russian", MSQ: "slavic", BKK: "thai", PEK: "chinese", PVG: "chinese", URC: "chinese", HKG: "chinese", TPE: "chinese", MFM: "chinese", SIN: "chinese",
+      BOG: "cumbia", CCS: "salsa", PTY: "salsa", UIO: "andean", SCL: "andean", TBS: "caucasus", BUS: "caucasus", EVN: "caucasus", GYD: "caucasus",
+      LIS: "fado", OPO: "fado", CDG: "chanson", LYS: "chanson", MRS: "jazz", NCE: "jazz",
+    };
+    for (const [a, c] of Object.entries(first)) if (DESTINATIONS.some((d) => d.iata === a)) expect(ids(a)[0], a).toBe(c);
+    const more: Record<string, string[]> = {
+      GRU: ["bossa", "funk"], LOS: ["westafrica"], ABV: ["afrobeat"], ACC: ["afrobeat"], BOM: ["hindustani"], DEL: ["bollywood"], ISB: ["bollywood"],
+      RUH: ["arabic"], CMN: ["arabic", "flamenco"], SVO: ["slavic"], MSQ: ["russian"], BKK: ["gamelan"], PEK: ["eastasia"], URC: ["centralasia"], HKG: ["pop"],
+      SIN: ["gamelan", "pop"], BOG: ["salsa"], CCS: ["cumbia"], UIO: ["cumbia"], SCL: ["tango"], TBS: ["slavic"], EVN: ["anatolian"], GYD: ["centralasia", "anatolian"],
+      LIS: ["bossa"], CDG: ["romantic", "jazz"], MRS: ["chanson", "romantic"],
+    };
+    for (const [a, cs] of Object.entries(more)) expect(ids(a), a).toEqual(expect.arrayContaining(cs));
+  });
   it("every card is reachable from some airport", () => {
     const seen = new Set(DESTINATIONS.flatMap((d) => ids(d.iata)));
-    // TASK 2 REMOVES THIS LIST: the 13 cards of all-airports Task 1 are not on any airport list until Task 2 maps them
-    const NOT_YET = new Set(["samba", "afrobeat", "bollywood", "khaleeji", "maghrebi", "russian", "thai", "chinese", "cumbia", "andean", "caucasus", "fado", "chanson"]);
-    for (const c of CARDS) if (!NOT_YET.has(c.id)) expect(seen.has(c.id), c.id).toBe(true);
+    for (const c of CARDS) expect(seen.has(c.id), c.id).toBe(true);
   });
   it("is deterministic", () => {
     expect(ids("ATL")).toEqual(ids("ATL"));

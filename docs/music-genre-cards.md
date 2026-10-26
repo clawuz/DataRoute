@@ -158,8 +158,16 @@ The first card of a list is the most likely; the hash of the route picks among t
 - **Spain**: Seville, Malaga (SVQ AGP) `flamenco`; Madrid, Barcelona, Bilbao, Valencia, Zaragoza `spguitar`, `flamenco`.
 - **Germany, Austria, Switzerland**: `classical`, `baroque` (Germany adds `pop`).
 - **United States**: JFK EWR BOS IAD `jazz`, `classical`, `pop`; MIA `salsa`, `pop`; LAX SFO OAK SEA `pop`, `rnb`, `cinematic`; ATL DTW ORD `rnb`, `funk`, `jazz`; DFW IAH DEN `country`, `rnb`; any other `pop`, `jazz`, `country`, `rnb`.
-- **United Kingdom**: LHR LGW STN MAN BHX `pop`, `classical`, `celtic`; EDI `celtic`. **Australia** `country`, `pop`. France keeps `romantic`, `jazz`, `baroque`.
-- Every card is reachable from at least one airport (a test). `dance`, `epic` and `calm`, which a trip otherwise only meets as lively or calm generic cards, also sit in the lists of Colombia, Canada and Sweden for that reason.
+- **United Kingdom**: LHR LGW STN MAN BHX `pop`, `classical`, `celtic`; EDI `celtic`. **Australia** `country`, `pop`.
+- **Brazil**: GRU VCP `samba`, `bossa`, `funk`. **Nigeria**: LOS PHC `afrobeat`, `westafrica`; ABV KAN `westafrica`, `afrobeat`. **Ghana** `westafrica`, `afrobeat`.
+- **India**: BOM NMI BLR HYD MAA `bollywood`, `hindustani`; DEL `hindustani`, `bollywood`. **Pakistan** `hindustani`, `bollywood`.
+- **Gulf** (SA AE QA KW BH OM) `khaleeji`, `arabic`; **Maghreb** (MA DZ TN LY) `maghrebi`, `arabic` (Morocco also `flamenco`); the rest of the Arab world stays `arabic`.
+- **Russia** `russian`, `slavic`; Belarus, Ukraine `slavic`, `russian`.
+- **Thailand** `thai`, `gamelan`. **China** `chinese`, `eastasia` (URC `chinese`, `centralasia`); Hong Kong, Taiwan, Macau `chinese`, `pop`; **Singapore** `chinese`, `gamelan`, `pop`.
+- **Colombia** `cumbia`, `salsa` (and `dance`, so that card stays reachable); Venezuela, Panama `salsa`, `cumbia`; Ecuador `andean`, `cumbia`; Chile `andean`, `tango`.
+- **Georgia** `caucasus`, `slavic`; Armenia `caucasus`, `anatolian`; Azerbaijan `caucasus`, `centralasia`, `anatolian`.
+- **Portugal** `fado`, `bossa`. **France**: CDG LYS BOD TLS BSL `chanson`, `romantic`, `jazz`; MRS NCE `jazz`, `chanson`, `romantic`.
+- Every card is reachable from at least one airport (a test). `dance`, `epic` and `calm`, which a trip otherwise only meets as lively or calm generic cards, also sit in the lists of Colombia (`dance`), Canada and Sweden for that reason.
 
 ## Melodic idiom of a card
 

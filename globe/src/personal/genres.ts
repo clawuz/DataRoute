@@ -138,18 +138,18 @@ const byId = (id: string): GenreCard => CARDS.find((c) => c.id === id) ?? CARDS[
 /** cards of a country (ISO 3166-1 alpha-2) */
 const BY_ISO: Record<string, string[]> = {
   TR: ["anatolian", "karsilama", "cinematic", "jazz"], GR: ["greek"], BG: ["karsilama", "slavic"], RS: ["karsilama", "slavic"], MK: ["karsilama"], AL: ["karsilama"], BA: ["karsilama", "slavic"], XK: ["karsilama"],
-  EG: ["arabic"], SA: ["arabic"], AE: ["arabic"], QA: ["arabic"], KW: ["arabic"], BH: ["arabic"], OM: ["arabic"], JO: ["arabic"], LB: ["arabic"], SY: ["arabic"], IQ: ["arabic"], YE: ["arabic"], MA: ["arabic", "flamenco"], DZ: ["arabic"], TN: ["arabic"], LY: ["arabic"], SD: ["arabic"],
-  IR: ["persian"], AF: ["persian", "centralasia"], KZ: ["centralasia"], UZ: ["centralasia"], KG: ["centralasia"], TM: ["centralasia"], TJ: ["centralasia"], AZ: ["centralasia", "anatolian"], GE: ["centralasia", "slavic"], AM: ["slavic", "anatolian"],
-  IN: ["hindustani"], PK: ["hindustani"], BD: ["hindustani"], LK: ["hindustani"], NP: ["hindustani"], MV: ["hindustani"],
-  JP: ["eastasia", "pop"], CN: ["eastasia"], KR: ["pop", "eastasia"], TW: ["eastasia"], HK: ["eastasia"], MN: ["eastasia", "centralasia"], VN: ["eastasia", "gamelan"],
-  ID: ["gamelan"], TH: ["gamelan"], MY: ["gamelan"], SG: ["gamelan", "eastasia"], PH: ["gamelan", "mariachi"], KH: ["gamelan"], LA: ["gamelan"], MM: ["gamelan"],
-  NG: ["westafrica"], GH: ["westafrica"], SN: ["westafrica"], CI: ["westafrica"], ML: ["westafrica"], GM: ["westafrica"], GN: ["westafrica"], SL: ["westafrica"], LR: ["westafrica"], BF: ["westafrica"], BJ: ["westafrica"], TG: ["westafrica"], CM: ["westafrica"], GA: ["westafrica"], CG: ["westafrica"], CD: ["westafrica", "eastafrica"],
+  EG: ["arabic"], SA: ["khaleeji", "arabic"], AE: ["khaleeji", "arabic"], QA: ["khaleeji", "arabic"], KW: ["khaleeji", "arabic"], BH: ["khaleeji", "arabic"], OM: ["khaleeji", "arabic"], JO: ["arabic"], LB: ["arabic"], SY: ["arabic"], IQ: ["arabic"], YE: ["arabic"], MA: ["maghrebi", "arabic", "flamenco"], DZ: ["maghrebi", "arabic"], TN: ["maghrebi", "arabic"], LY: ["maghrebi", "arabic"], SD: ["arabic"],
+  IR: ["persian"], AF: ["persian", "centralasia"], KZ: ["centralasia"], UZ: ["centralasia"], KG: ["centralasia"], TM: ["centralasia"], TJ: ["centralasia"], AZ: ["caucasus", "centralasia", "anatolian"], GE: ["caucasus", "slavic"], AM: ["caucasus", "anatolian"],
+  IN: ["bollywood", "hindustani"], PK: ["hindustani", "bollywood"], BD: ["hindustani"], LK: ["hindustani"], NP: ["hindustani"], MV: ["hindustani"],
+  JP: ["eastasia", "pop"], CN: ["chinese", "eastasia"], KR: ["pop", "eastasia"], TW: ["chinese", "pop"], HK: ["chinese", "pop"], MN: ["eastasia", "centralasia"], VN: ["eastasia", "gamelan"],
+  MO: ["chinese", "pop"], ID: ["gamelan"], TH: ["thai", "gamelan"], MY: ["gamelan"], SG: ["chinese", "gamelan", "pop"], PH: ["gamelan", "mariachi"], KH: ["gamelan"], LA: ["gamelan"], MM: ["gamelan"],
+  NG: ["westafrica", "afrobeat"], GH: ["westafrica", "afrobeat"], SN: ["westafrica"], CI: ["westafrica"], ML: ["westafrica"], GM: ["westafrica"], GN: ["westafrica"], SL: ["westafrica"], LR: ["westafrica"], BF: ["westafrica"], BJ: ["westafrica"], TG: ["westafrica"], CM: ["westafrica"], GA: ["westafrica"], CG: ["westafrica"], CD: ["westafrica", "eastafrica"],
   KE: ["eastafrica"], TZ: ["eastafrica"], UG: ["eastafrica"], RW: ["eastafrica"], ET: ["eastafrica"], ZA: ["eastafrica"], ZW: ["eastafrica"], ZM: ["eastafrica"], MZ: ["eastafrica"], AO: ["eastafrica", "bossa"], MG: ["eastafrica"], MU: ["eastafrica"], SO: ["eastafrica"], DJ: ["eastafrica"], NA: ["eastafrica"], BW: ["eastafrica"],
-  CU: ["salsa", "mariachi"], CO: ["salsa", "dance"], PR: ["salsa"], DO: ["salsa"], VE: ["salsa"], PA: ["salsa"], CR: ["salsa"], EC: ["salsa"], PE: ["salsa", "mariachi"], JM: ["mariachi", "salsa"], TT: ["mariachi"], MX: ["mariachi"], GT: ["mariachi"], HN: ["mariachi"], SV: ["mariachi"], NI: ["mariachi"], CW: ["mariachi", "salsa"], AW: ["mariachi"], BS: ["mariachi"],
-  BR: ["bossa", "funk"], PT: ["bossa", "romantic"], AR: ["tango"], UY: ["tango"], CL: ["tango", "bossa"], PY: ["tango"], BO: ["tango", "mariachi"],
+  CU: ["salsa", "mariachi"], CO: ["cumbia", "salsa", "dance"], PR: ["salsa"], DO: ["salsa"], VE: ["salsa", "cumbia"], PA: ["salsa", "cumbia"], CR: ["salsa"], EC: ["andean", "cumbia"], PE: ["salsa", "mariachi"], JM: ["mariachi", "salsa"], TT: ["mariachi"], MX: ["mariachi"], GT: ["mariachi"], HN: ["mariachi"], SV: ["mariachi"], NI: ["mariachi"], CW: ["mariachi", "salsa"], AW: ["mariachi"], BS: ["mariachi"],
+  BR: ["samba", "bossa", "funk"], PT: ["fado", "bossa"], AR: ["tango"], UY: ["tango"], CL: ["andean", "tango"], PY: ["tango"], BO: ["tango", "mariachi"],
   ES: ["spguitar", "flamenco"], IE: ["celtic"], GB: ["pop", "classical", "celtic"], IS: ["nordic"], NO: ["nordic"], SE: ["nordic", "pop", "calm"], FI: ["nordic"], DK: ["nordic"], EE: ["nordic"], LV: ["nordic"], LT: ["nordic"],
-  RU: ["slavic"], UA: ["slavic"], BY: ["slavic"], PL: ["slavic", "romantic"], CZ: ["baroque", "slavic"], SK: ["slavic"], HU: ["slavic", "romantic"], RO: ["slavic", "karsilama"], MD: ["slavic"], HR: ["slavic"], SI: ["baroque"], ME: ["slavic"],
-  DE: ["classical", "baroque", "pop"], AT: ["classical", "baroque"], IT: ["italian", "romantic"], FR: ["romantic", "jazz", "baroque"], CH: ["classical", "baroque"], NL: ["baroque", "pop"], BE: ["baroque", "romantic"], LU: ["romantic"], MT: ["baroque"], CY: ["greek", "anatolian"],
+  RU: ["russian", "slavic"], UA: ["slavic", "russian"], BY: ["slavic", "russian"], PL: ["slavic", "romantic"], CZ: ["baroque", "slavic"], SK: ["slavic"], HU: ["slavic", "romantic"], RO: ["slavic", "karsilama"], MD: ["slavic"], HR: ["slavic"], SI: ["baroque"], ME: ["slavic"],
+  DE: ["classical", "baroque", "pop"], AT: ["classical", "baroque"], IT: ["italian", "romantic"], FR: ["chanson", "romantic", "jazz"], CH: ["classical", "baroque"], NL: ["baroque", "pop"], BE: ["baroque", "romantic"], LU: ["romantic"], MT: ["baroque"], CY: ["greek", "anatolian"],
   US: ["pop", "jazz", "country", "rnb"], CA: ["cinematic", "nordic", "jazz", "epic"], AU: ["country", "pop"], NZ: ["cinematic", "nordic"],
 };
 /** cards of one airport, before its country: the regions of Turkey and the big cities of the United States, the United Kingdom, Spain */
@@ -172,6 +172,13 @@ group("ATL DTW ORD", ["rnb", "funk", "jazz"]);
 group("DFW IAH DEN", ["country", "rnb"]);
 group("LHR LGW STN MAN BHX", ["pop", "classical", "celtic"]);
 group("EDI", ["celtic"]);
+group("GRU VCP", ["samba", "bossa", "funk"]);
+group("LOS PHC", ["afrobeat", "westafrica"]);
+group("ABV KAN", ["westafrica", "afrobeat"]);
+group("BOM NMI BLR HYD MAA", ["bollywood", "hindustani"]);
+group("DEL", ["hindustani", "bollywood"]);
+group("URC", ["chinese", "centralasia"]);
+group("MRS NCE", ["jazz", "chanson", "romantic"]);
 const BY_REGION: Record<string, string[]> = {
   DOM: ["anatolian", "karsilama"], EUR: ["romantic", "baroque", "cinematic"], MEA: ["arabic", "persian"], AFR: ["westafrica", "eastafrica"], ASI: ["eastasia", "gamelan", "hindustani", "centralasia"], AME: ["cinematic", "salsa", "bossa", "mariachi"], UNK: ["cinematic"],
 };
