@@ -5,7 +5,9 @@ import { IDIOMS } from "../src/personal/idiom";
 import { DRONE_BY_CARD } from "../src/personal/world-voices";
 import { WORLD_FAMILIES, WORLD_INSTRUMENTS } from "../src/audio/world-pack";
 
-const NEW = ["karadeniz", "icanadolu", "akdeniz", "dogu", "zeybek", "greek", "italian", "classical", "rnb", "country", "spguitar"];
+const NEW_ELEVEN = ["karadeniz", "icanadolu", "akdeniz", "dogu", "zeybek", "greek", "italian", "classical", "rnb", "country", "spguitar"];
+const NEW_THIRTEEN = ["samba", "afrobeat", "bollywood", "khaleeji", "maghrebi", "russian", "thai", "chinese", "cumbia", "andean", "caucasus", "fado", "chanson"];
+const NEW = [...NEW_ELEVEN, ...NEW_THIRTEEN];
 
 // the synthesised and orchestra voices of theory.ts's `Instrument` that a card may name
 const BASE = new Set([
@@ -15,9 +17,9 @@ const BASE = new Set([
 const isVoice = (v: string): boolean => v in WORLD_FAMILIES || (WORLD_INSTRUMENTS as readonly string[]).includes(v) || BASE.has(v);
 const docs = readFileSync(new URL("../../docs/music-genre-cards.md", import.meta.url), "utf8");
 
-describe("the eleven destination cards", () => {
-  it("brings the number of cards to 38 (27 + 11)", () => {
-    expect(CARDS.length).toBe(38);
+describe("the destination cards (11 + 13)", () => {
+  it("brings the number of cards to 51 (27 + 11 + 13)", () => {
+    expect(CARDS.length).toBe(51);
   });
   for (const id of NEW) {
     describe(id, () => {
@@ -47,11 +49,14 @@ describe("the eleven destination cards", () => {
       });
       it("has an idiom and is in the docs", () => {
         expect(IDIOMS[id]).toBeTruthy();
-        expect(docs).toContain(id);
+        expect(docs, `${id}: a table row "| ${id} |"`).toContain(`| ${id} |`);
       });
     });
   }
   it("gives the Black Sea card the bagpipe drone", () => {
     expect(DRONE_BY_CARD.karadeniz).toBe("BAGPIPE_DRONE");
+  });
+  it("gives the Caucasus card the bagpipe drone", () => {
+    expect(DRONE_BY_CARD.caucasus).toBe("BAGPIPE_DRONE");
   });
 });

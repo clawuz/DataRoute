@@ -132,6 +132,21 @@ Eleven cards added so that a destination can sound like where it goes (spec `doc
 | rnb | R&B / neo-soul (swing 0.2) | pulse | 76-96 | DORIAN / MIXO | 3,3,2 (1.2, 1, 1.1) | RHODES, EKEYS, TENORSAX | GUITAR_EL, EKEYS | RHODES, CELLO | CONGA (bass BASS_EL, UPRIGHTBASS) |
 | country | Country & Americana (swing 0.12) | folk | 92-116 | MAJOR / MIXO | 1,1,1,1 (1.2, 0.85, 1, 0.85) | VIOLIN, HARMONICA, GUITAR_AC | GUITAR_AC, FOLKHARP | HARMONICA, CELLO | TAMB (bass UPRIGHTBASS) |
 | spguitar | Spanish classical guitar | chamber | 76-96 | MINOR / MAJOR | 3,1,2,2 (1.25, 0.9, 1.05, 0.95) | NYLONGUITAR, FLUTE | NYLONGUITAR | CELLO, VIOLA | FRAMEDRUM |
+| samba | Brazilian samba | pulse | 96-112 | MAJOR / MIXO | 3,3,2,3,3,2 (1.2, 0.9, 1, 1.1, 0.9, 1) | NYLONGUITAR, FLUTE, ACCORDION | NYLONGUITAR, PSALTERY | ACCORDION, CELLO | TAMB (bass UPRIGHTBASS) |
+| afrobeat | Afrobeat & highlife | pulse | 100-118 | DORIAN / MIXO | 3,1,2,3,1,2 (1.25, 0.9, 1, 1.15, 0.9, 1) | TENORSAX, GUITAR_EL, EKEYS | GUITAR_EL, KALIMBA | EKEYS, BSN | CONGA (bass BASS_EL) |
+| bollywood | Bollywood film song | pulse | 96-116 | HARMONIC / MAJOR | 2,1,1,1,1,2 (1.2, 0.85, 0.9, 0.85, 0.9, 1.05) | VIOLIN, SANTUR, FLUTE | SANTUR, GUITAR_AC | VIOLA, CELLO, ACCORDION | TABLA |
+| khaleeji | Gulf khaleeji | folk | 92-108 | HICAZ / RAST | 2,2,1,1,2 (1.25, 0.9, 0.85, 0.9, 1.1) | NEY_MAKAM, KANUN, DUDUK | KANUN, SANTUR | CELLO, VIOLA | DARBUKA |
+| maghrebi | Maghreb chaabi & raï | folk | 100-118 | HICAZ / DORIAN | 3,2,3 (1.25, 0.9, 1.1) | NEY_MAKAM, ACCORDION, VIOLIN | NYLONGUITAR, SANTUR | CELLO, ACCORDION | DARBUKA |
+| russian | Russian romance & waltz | symphonic | 84-108 | MINOR / MAJOR | 1,1,1 (1.2, 0.9, 0.9) | VIOLIN, ACCORDION, CLA | PSALTERY, HARP | CELLO, HORN, BSN | TIMP |
+| thai | Thai ranat | chamber | 88-108 | LYDIAN / MAJOR_PENT | 2,2,1,1,2 (1.2, 0.9, 0.85, 0.9, 1.05) | VIBES, STEELDRUM, FLUTE | VIBES, KALIMBA | GONG, CELLO | TRI |
+| chinese | Chinese pentatonic | chamber | 76-96 | MAJOR_PENT / MAJOR_PENT | 2,1,1,2 (1.2, 0.9, 0.9, 1) | ERHU, KOTO, FLUTE | KOTO, KAYAGEUM, DANTRANH | CELLO, VIOLA | GONG |
+| cumbia | Cumbia | pulse | 92-108 | MINOR_PENT / MAJOR_PENT | 3,1,2,2 (1.25, 0.85, 1.05, 1) | ACCORDION, FLUTE, GUITAR_AC | NYLONGUITAR, KALIMBA | ACCORDION, CELLO | CONGA (bass UPRIGHTBASS) |
+| andean | Andean | folk | 84-104 | MINOR_PENT / MAJOR_PENT | 1,1,2 (1.2, 0.9, 1) | PANPIPE, FLUTE, NYLONGUITAR | NYLONGUITAR, KALIMBA | PANPIPE, CELLO | FRAMEDRUM |
+| caucasus | Caucasus (duduk) | folk | 88-108 | HARMONIC / MIXO | 2,1,2,1,2 (1.25, 0.85, 1, 0.85, 1.05) | DUDUK, BAGPIPE, ACCORDION | PSALTERY, SAZ | DUDUK, BAGPIPE_DRONE | BENDIR |
+| fado | Fado | chamber | 76-92 | MINOR / MAJOR | 1,1,1,1 (1.15, 0.9, 1, 0.9) | NYLONGUITAR, PSALTERY, ACCORDION | PSALTERY, NYLONGUITAR | CELLO, VIOLA | TRI |
+| chanson | French chanson & musette | chamber | 92-112 | MAJOR / LYDIAN | 1,1,1 (1.2, 0.9, 0.9) | ACCORDION, VIOLIN, CLA | GUITAR_AC, HARP | ACCORDION, CELLO | TAMB (bass UPRIGHTBASS) |
+
+The 13 cards of the other countries and big cities (2026-10-26, spec `docs/superpowers/specs/2026-10-26-all-airports-design.md`; 51 cards in all) follow the table above. Missing instruments stand in with the pack: balalaika, guitarra and cavaquinho = PSALTERY, charango = NYLONGUITAR, bombo = FRAMEDRUM. Their progressions: samba I-IV-V-I (`[[0,4],[5,4],[7,4],[0,4]]`), afrobeat i-IV-i-V, bollywood i-VI-III-bVII, khaleeji I-II-I-V (`[[0,4],[1,4],[0,4],[7,4]]`), maghrebi i-bVII-i-V, russian i-VI-III-V, thai I-IV-I-V, chinese I-V-vi-IV, cumbia i-IV-V-i, andean i-VI-III-bVII, caucasus i-bVII-VI-V, fado i-bVII-VI-V, chanson I-vi-IV-V.
 
 Progressions: italian i-VI-III-V (`[[0,3],[8,4],[3,4],[7,4]]`), classical I-IV-V-I, rnb i-iv-bVII-III (`[[0,3],[5,3],[10,4],[3,4]]`), country I-IV-V-I, spguitar i-bVII-VI-V (`[[0,3],[10,4],[8,4],[7,4]]`); the others use the default ones.
 ### Where each card plays (airport first, then country, then region; `genres.ts`: `BY_AIRPORT`, `BY_ISO`, `BY_REGION`)
@@ -197,6 +212,19 @@ Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]`. The values be
 | rnb | 0.6 | 0.2 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
 | country | 0.7 | 0.15 | 2, 4 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
 | spguitar | 0.7 | 0.1 | 2, 3 | -1 | 6 | 2 | 4, 2, 0 | 2, 0, 2, 0 |
+| samba | 0.6 | 0.25 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| afrobeat | 0.55 | 0.3 | 2, 3 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| bollywood | 0.65 | 0.15 | 2, 3 | -1 | 7 | 3 | 4, 2, 3 | 2, 0, 2, 0 |
+| khaleeji | 0.75 | 0.25 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| maghrebi | 0.7 | 0.25 | 2, 3 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| russian | 0.7 | 0.1 | 2, 3 | -1 | 7 | 3 | 4, 2, 0 | 2, 0, 2, 0 |
+| thai | 0.6 | 0.2 | 2, 3 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| chinese | 0.55 | 0.1 | 2, 3 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| cumbia | 0.65 | 0.3 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
+| andean | 0.7 | 0.25 | 2, 3 | -1 | 5 | 2 | 4, 2, 0 | 2, 0, 2, 0 |
+| caucasus | 0.75 | 0.2 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| fado | 0.75 | 0.1 | 2, 3 | -1 | 6 | 2 | 4, 2, 0 | 2, 0, 2, 0 |
+| chanson | 0.7 | 0.1 | 2, 4 | 0 | 6 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
 
 ## World pack voices
 
@@ -241,6 +269,7 @@ trip and is not drawn by the music box. The instrument follows the main card of 
 | karsilama | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | baroque | RENORGAN (held, re-struck every 4 bars) |
 | karadeniz | BAGPIPE_DRONE (held, re-struck every 4 bars) |
+| caucasus | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | every other card | CELLO (held, re-struck every 4 bars) |
 
 It is silent in the break (bars 52–55) and, when the trip crosses regions, also in the lifted bars (44–51); a one-region trip has no lift and the drone plays through bar 51. It returns in the outro. The whole rule,

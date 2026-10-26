@@ -29,7 +29,9 @@ describe("destination cards by airport", () => {
   });
   it("every card is reachable from some airport", () => {
     const seen = new Set(DESTINATIONS.flatMap((d) => ids(d.iata)));
-    for (const c of CARDS) expect(seen.has(c.id), c.id).toBe(true);
+    // TASK 2 REMOVES THIS LIST: the 13 cards of all-airports Task 1 are not on any airport list until Task 2 maps them
+    const NOT_YET = new Set(["samba", "afrobeat", "bollywood", "khaleeji", "maghrebi", "russian", "thai", "chinese", "cumbia", "andean", "caucasus", "fado", "chanson"]);
+    for (const c of CARDS) if (!NOT_YET.has(c.id)) expect(seen.has(c.id), c.id).toBe(true);
   });
   it("is deterministic", () => {
     expect(ids("ATL")).toEqual(ids("ATL"));

@@ -68,6 +68,19 @@ export const IDIOMS: Record<string, Partial<Idiom>> = {
   rnb: { step: 0.6, repeat: 0.2, leaps: [2, 3], bias: 0, span: 6, arc: 2, start: [0, 2, 4] },
   country: { step: 0.7, repeat: 0.15, leaps: [2, 4], bias: 0, span: 6, arc: 2, start: [0, 2, 4] },
   spguitar: { step: 0.7, repeat: 0.1, leaps: [2, 3], bias: -1, span: 6, arc: 2, start: [4, 2, 0] },
+  samba: { step: 0.6, repeat: 0.25, leaps: [2, 3], bias: 0, span: 6, arc: 2, start: [0, 2, 4] },
+  afrobeat: { step: 0.55, repeat: 0.3, leaps: [2, 3], bias: 0, span: 5, arc: 2, start: [0, 2, 4] },
+  bollywood: { step: 0.65, repeat: 0.15, leaps: [2, 3], bias: -1, span: 7, arc: 3, start: [4, 2, 3] },
+  khaleeji: { step: 0.75, repeat: 0.25, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
+  maghrebi: { step: 0.7, repeat: 0.25, leaps: [2, 3], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
+  russian: { step: 0.7, repeat: 0.1, leaps: [2, 3], bias: -1, span: 7, arc: 3, start: [4, 2, 0] },
+  thai: { step: 0.6, repeat: 0.2, leaps: [2, 3], bias: 0, span: 6, arc: 2 },
+  chinese: { step: 0.55, repeat: 0.1, leaps: [2, 3], bias: 0, span: 5, arc: 2, start: [0, 2, 4] },
+  cumbia: { step: 0.65, repeat: 0.3, leaps: [2], bias: 0, span: 5, arc: 2, start: [0, 2, 4] },
+  andean: { step: 0.7, repeat: 0.25, leaps: [2, 3], bias: -1, span: 5, arc: 2, start: [4, 2, 0] },
+  caucasus: { step: 0.75, repeat: 0.2, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
+  fado: { step: 0.75, repeat: 0.1, leaps: [2, 3], bias: -1, span: 6, arc: 2, start: [4, 2, 0] },
+  chanson: { step: 0.7, repeat: 0.1, leaps: [2, 4], bias: 0, span: 6, arc: 2 },
 };
 
 const CADENCE_OF_BIAS: Record<number, [number, number, number, number]> = { [-1]: [2, 0, 2, 0], 0: [2, 0, 2, 4], 1: [2, 2, 4, 4] };

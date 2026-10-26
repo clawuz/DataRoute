@@ -46,5 +46,6 @@ export const DRONE_BY_CARD: Record<string, Voice> = {
   karsilama: "BAGPIPE_DRONE",
   baroque: "RENORGAN",
   karadeniz: "BAGPIPE_DRONE",
+  caucasus: "BAGPIPE_DRONE",
 };
 export const droneVoice = (cardId: string): Voice => DRONE_BY_CARD[cardId] ?? "CELLO";
