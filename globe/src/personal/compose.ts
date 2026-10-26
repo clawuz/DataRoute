@@ -6,6 +6,7 @@ import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
 import { planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
+import { journeyCard, journeyOf } from "./journey";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
 import { idiomOf, phraseMotifs } from "./idiom";
@@ -43,6 +44,8 @@ export interface PersonalNote {
 export interface PersonalStyle {
   /** the cards that get a block of the verse (episodes.ts), in the order they are told; absent when there are none */
   episodes?: string[];
+  /** the cards of the trip told in order after the home sound: [Istanbul's (when the trip changes planes there), the destination's]; absent when the trip has one sound */
+  journey?: string[];
   /** semitones the last bars of the chorus are lifted (lift.ts): 0 when the trip stays in one region */
   lift?: number;
   /** how busy the voices are: 0 sparse … 5 busy */
@@ -435,7 +438,17 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const eps = episodeCards(plan);
   if (eps.length) style.episodes = eps.map((c) => c.id);
   const verseFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "verse")).reduce((s, [, m]) => s + m, 0);
-  const grooves = new Map<string, ReturnType<typeof grooveOf>>(eps.map((c) => [c.id, grooveOf(c)]));
+  // the trip told in order: the sound of where it leaves, of Istanbul, of where it arrives (journey.ts)
+  const journey = journeyOf(routes, plan);
+  if (journey) style.journey = [journey.transit?.id, journey.dest?.id].filter((x): x is string => !!x);
+  const grooves = new Map<string, ReturnType<typeof grooveOf>>([...eps, ...(journey?.transit ? [journey.transit] : []), ...(journey?.dest ? [journey.dest] : [])].map((c) => [c.id, grooveOf(c)]));
+  // a bar's stage: the journey's card when it has one for the section, else the episode of the verse
+  const stageAt = (bar: number, section: Section): ReturnType<typeof episodeAt> => {
+    const e = episodeAt(bar, verseFirst, eps);
+    const jc = journey ? journeyCard(section, journey) : undefined;
+    return jc === undefined ? e : { card: jc, blockEnd: e.blockEnd, block: e.block };
+  };
+  const fills = eps.length > 0 || !!journey?.transit;
   const POP_PROGS: Record<PersonalMode, [number, 3 | 4][][]> = {
     visited: [[[0, 3], [8, 4], [3, 4], [10, 4]], [[0, 3], [10, 4], [8, 4], [10, 4]], [[0, 3], [5, 3], [8, 4], [7, 4]], [[0, 3], [8, 4], [3, 4], [7, 4]]],
     wish: [[[0, 4], [7, 4], [9, 3], [5, 4]], [[9, 3], [5, 4], [0, 4], [7, 4]], [[0, 4], [9, 3], [5, 4], [7, 4]], [[0, 4], [5, 4], [9, 3], [7, 4]]],
@@ -507,7 +520,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const cr = chord.root + sh;
     const tones = [0, chord.third, 7].map((x) => cr + x);
     const full = section === "chorus" || section === "build";
-    const ep = episodeAt(b, verseFirst, eps);
+    const ep = stageAt(b, section);
     const g = ep.card ? grooves.get(ep.card.id)! : main;
     for (let i = 0; i < n; i++) {
       const rl = role[i];
@@ -516,7 +529,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       if (occ[i] > 0 && !full) continue;
       const r = routes[i];
       // the voices of the region whose turn it is come forward, the others step back
-      const spot = ep.card ? (plan.perRoute[i] === ep.card ? 1.15 : 0.85) : 1;
+      const spot = ep.card && plan.perRoute.includes(ep.card) ? (plan.perRoute[i] === ep.card ? 1.15 : 0.85) : 1;
       const vs = (x: number): number => v(x) * spot;
       const inst = voiceOf[i];
       const rk = rank.get(i) ?? 0.5;
@@ -601,12 +614,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       } else if (rl === "backbeat") {
         [1, 3].forEach((bt) => push(i, t0 + bt * beat, beat * 0.35, inst, 200, vs(0.55), phaseAt(i, b, bt / 4)));
         if (section === "build") push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
-        if (ep.blockEnd && eps.length > 0) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
+        if (ep.blockEnd && fills) push(i, t0 + 3.5 * beat, beat * 0.25, inst, 200, vs(0.4), phaseAt(i, b, 0.9));
       } else if (rl === "kick") {
         // inside an episode: beat 1 and the exact strong places of the episode card, where the bass plays them (every figure starts with a hit, at 0)
         const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => s.start)])] : null;
         const beats = section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
-        if (ep.blockEnd && eps.length > 0 && !beats.includes(3)) beats.push(3);
+        if (ep.blockEnd && fills && !beats.includes(3)) beats.push(3);
         beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
         if (ep.card) {

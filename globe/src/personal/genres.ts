@@ -1,7 +1,7 @@
 import { WORLD_VOICES, type Voice } from "./world-voices";
 import { routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
-import { destinationOf } from "./destinations";
+import { HUB, destinationOf } from "./destinations";
 import type { PersonalRoute } from "./routes";
 
 /**
@@ -189,6 +189,12 @@ export function allocateColour(ids: string[], eligible: boolean[], dist: number[
  * routes a lively generic card takes a share); the routes that take the card of their own destination are chosen by the share of each destination colour (see `allocateColour`),
  * so the music changes colour as the trip crosses regions. The choice is a function of the routes only.
  */
+/** the card of the far end of a route (the place it goes to, or where it comes from when it lands at the hub): the colour it may play */
+export function colourCardOf(r: PersonalRoute, i: number): GenreCard {
+  const list = cardsOfAirport(r.to === HUB ? r.from : r.to, r.region);
+  return list[(routeHash(r.key + i) >>> 3) % list.length];
+}
+
 export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan {
   const n = routes.length;
   if (n === 0) return { main: CARDS[0], perRoute: [] };
@@ -200,11 +206,7 @@ export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan
   // the further from a calm start, the more a lively generic card is in play for the main voice
   const takeGeneric = n >= 10 ? seed % 10 < 4 : n >= 6 ? seed % 10 < 2 : seed % 10 < 1;
   const main = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
-  const far = (r: PersonalRoute): string => (r.to === "IST" ? r.from : r.to);
-  const colourOf = routes.map((r, i) => {
-    const list = cardsOfAirport(far(r), r.region);
-    return list[(routeHash(r.key + i) >>> 3) % list.length];
-  });
+  const colourOf = routes.map((r, i) => colourCardOf(r, i));
   const budget = n >= 2 ? Math.max(1, Math.round(COLOUR_SHARE * n)) : 0;
   const chosen = new Set(
     allocateColour(colourOf.map((c) => c.id), colourOf.map((c) => c.id !== main.id), routes.map((r) => r.distKm), routes.map((r) => r.key), budget),

@@ -155,3 +155,13 @@ kept for a possible later exact quotation). The hook of a hook route is built in
 | Data | Decision | Why it is heard that way | Where |
 |---|---|---|---|
 | the pluck route of the selection (from 4 routes) | in the odd bars of the chorus it answers in the second half of the bar with the hook's motif turned upside down around its first note; the hook rests there and the pluck's own eighths rest too | a phrase and its reply: the melody breathes instead of running on | `compose.ts` (`answerer`, hook branch) |
+
+## The journey: where it leaves, Istanbul, where it arrives
+
+| Data | Decision | Why it is heard that way | Where |
+|---|---|---|---|
+| the trip changes planes at Istanbul away from home | the verse and the break play the Turkish card's rhythm (episodes.ts is replaced in the verse by blocks of the Turkish figure) | the middle of the trip sounds like Turkey | `journey.ts`, `compose.ts` (`stageAt`) |
+| the destination (last leg's far end with a transit; the card with the most routes otherwise) | the build and the chorus play the destination card's rhythm figure, and its routes come forward (x1.15, the others x0.85) | the song arrives where the trip goes | same |
+| the home card (where the trip leaves) | the intro and the outro stay home | the piece starts and ends at its own sound | same |
+
+A trip with one sound (same card all through) has no journey and is unchanged. The key, the chords and the instruments of each route stay as they are; the stage changes the rhythm figure and who is spotlit (a card that no route plays only changes the figure).
