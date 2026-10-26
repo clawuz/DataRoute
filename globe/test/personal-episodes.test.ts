@@ -53,13 +53,13 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
   ["~ESB,ASR,KYA", "visited", 3409171832],
   ["~TZX,RZV,OGU", "wish", 2234836826],
   ["~VAN,ERZ,ERC", "wish", 3120771146],
-  ["~AYT,GZP,DLM", "visited", 2733596025],
+  ["~AYT,GZP,ADA", "visited", 382984302],
   ["ESB", "visited", 2163962449],
   ["LHR", "wish", 1899864630],
   ["~ADB,BJV,DNZ", "wish", 205179905],
@@ -82,7 +82,7 @@ const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 1625142779],
   ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 424782551],
 ];
-// a leading "~" in places: a journey without home, so the first place is where the trip starts (and the card of the piece)
+// a leading "~" in places: a journey without home (the first place is where the trip starts)
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> =>
   places.startsWith("~") ? buildRoutes(places.slice(1).split(","), undefined) : buildRoutes(places.split(","), home || undefined);
 const outside = (p: ReturnType<typeof composePiece>): typeof p.notes => {
@@ -96,7 +96,10 @@ describe("episodes in a piece: what must not change", () => {
     expect(GOLDEN_OUTSIDE_VERSE.length).toBeGreaterThanOrEqual(3);
   });
   it("regression guard: a piece without colours stays the piece it is", () => {
-    for (const [places, mode, h] of GOLDEN_NO_COLOUR) expect(routeHash(JSON.stringify(composePiece(mode, routesOf(places)).notes)), places).toBe(h);
+    for (const [places, mode, h] of GOLDEN_NO_COLOUR) {
+      expect(episodeCards(planCards(mode, routesOf(places))), places).toEqual([]); // the premise of the golden: no coloured route
+      expect(routeHash(JSON.stringify(composePiece(mode, routesOf(places)).notes)), places).toBe(h);
+    }
   });
   it("regression guard: a piece without colours that has drums (5-8 routes) stays the piece it is: no bridge fills", () => {
     const sizes = new Set<number>();
