@@ -117,7 +117,7 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 
 ## 8. Destination cards (2026-10-26)
 
-Eleven cards added so that a destination can sound like where it goes (spec `docs/superpowers/specs/2026-10-26-destination-styles-design.md`, section 1). They are hand-set judgements to be tuned by ear. The Turkish regional cards approximate zurna (DUDUK / NEY_MAKAM), tulum (BAGPIPE / BAGPIPE_DRONE), ud (NYLONGUITAR / KANUN), tambur (SAZ) and davul (FRAMEDRUM / BENDIR) with the pack's instruments; real recordings replace them later. Cards in `BASE_CARDS` of `genres.ts`; 38 cards in all.
+Eleven cards added so that a destination can sound like where it goes (spec `docs/superpowers/specs/2026-10-26-destination-styles-design.md`, section 1). They are hand-set judgements to be tuned by ear. The Turkish regional cards approximate zurna (DUDUK / NEY_MAKAM), tulum (BAGPIPE / BAGPIPE_DRONE), ud (NYLONGUITAR / KANUN), tambur (SAZ) and davul (FRAMEDRUM / BENDIR) with the pack's instruments; real recordings replace them later. Cards in `BASE_CARDS` of `genres.ts`; 51 cards in all after the next table.
 
 | id | name | family | bpm | scale / wish | cell (accent) | melody | pluck | held | perc |
 |---|---|---|---|---|---|---|---|---|---|
@@ -286,4 +286,4 @@ with the other data → music mappings, is in `docs/music-data-mapping.md`.
 
 ## Variety (2026-10-26, audit by a probe over random selections; `globe/test/personal-variety.test.ts` keeps a light version)
 
-Over 1000 random selections of 3-8 places (half with home Istanbul): 36 different main cards; the most frequent is `arabic` with 15.3%, then `westafrica` 10.9%, `eastafrica` 9.8%, `slavic` 7.2% (many airports map to them); the tempo spans 79-126 bpm; in 94% of the pieces the home card differs from the main card, so the intro and the outro tell home while the rest tells where the trip goes. `greek` never came out as the main card in 1000 draws (two airports only); `calm` only appears as a home card.
+Over 1000 random selections of 3-8 places (half with home Istanbul), after the 51 cards: 49 of the 51 cards come out as the main card at least once; the most frequent are `eastafrica` 10.4%, `arabic` 9.7%, `pop` 7.0%, `westafrica` 6.9%, `centralasia` 6.7%; the tempo spans 78-126 bpm. `chanson` (five airports) and `andean` (one) are almost never the main sound; `anatolian` did not come out in that draw.
