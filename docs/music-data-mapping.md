@@ -36,7 +36,7 @@ Existing share links sound different after the music phase A series (pan, humani
 | longitude of a route's middle, relative to the start of the first route (the home airport when the trip starts at home) | **stereo position** | east is right, west is left, like the map (when the first route starts at home) | `space.ts` |
 | route distance | **reverb amount** | far = distant = more room | `space.ts` |
 | time zones spanned by the trip | **how loose the timing is** (jet lag) | the further, the more it drifts | `humanize.ts` |
-| number of routes per destination region (card) | **which regions get an episode** (the three with the most routes) and their order | the places you went most are told first | `episodes.ts`, `compose.ts` |
+| number of routes per destination region (card) | **which regions get an episode** (up to six, the ones with the most routes; with 1-3 they get four-bar blocks, with 4-6 two-bar blocks) and their order | the places you went most are told first | `episodes.ts`, `compose.ts` |
 | region (card) of a route | **the rhythm figure of its episode block and the spotlight** (×1.15 for its voices, ×0.85 for the others) | where you go sounds like there, and has its moment | `episodes.ts`, `compose.ts` |
 
 ### Formulas and constants
@@ -81,9 +81,9 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 
 **Region episodes** (`episodes.ts`, `compose.ts`)
 
-- The verse (bars 8-23) is four blocks of four bars. `A` is the main card (the destinations' sound); `B`, `C`, `D` are the first, second and third episode card.
+- The verse (bars 8-23) is four blocks of four bars with up to three episode cards (below); with four to six episode cards it is eight blocks of two bars (see the end of this list). `A` is the main card (the destinations' sound); `B`, `C`, `D` are the first, second and third episode card.
   Episode cards are the cards of the coloured routes (a route is coloured when its card is not the main card), the card with the most routes first,
-  ties by `routeHash` of the card id, at most three (`episodeCards`). A coloured route can be in the same country as home: a country has several cards.
+  ties by `routeHash` of the card id, at most six (`episodeCards`, `EPISODE_CAP`). A coloured route can be in the same country as home: a country has several cards.
   The cards are written to `style.episodes` (only when there are any: a piece without episodes has no `episodes` in its style).
 
 | episode cards | bars 8-11 | 12-15 | 16-19 | 20-23 |
@@ -92,6 +92,9 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 | 1 | A | B | A | B |
 | 2 | A | B | A | C |
 | 3 | A | B | C | D |
+
+  With **4, 5 or 6** episode cards (many destinations) the verse is eight blocks of two bars (bars 8-9, 10-11, ... 22-23; `VERSE_SHORT_BLOCK = 2`), `0..5` being the episode cards in order:
+  4 cards: A 0 1 2 3 0 1 A; 5 cards: A 0 1 2 3 4 0 A; 6 cards: A 0 1 2 3 4 5 A. The bridge fill closes every two-bar block (bars 9, 11, 13, ... 23), and everything else about an episode (groove, spotlight, tune spotlight) works per block as before.
 
 - Beats are counted from 0: beat 0 is the first beat of the bar, beat 3 the fourth, 3.5 the last half beat.
 - Inside an episode block the figure of the episode card (stretched to four beats, same tempo) drives: the **bass** (its strong beats), the **hook's rhythm**

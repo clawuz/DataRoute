@@ -1,10 +1,12 @@
 import { routeHash } from "../audio/theory";
 import type { CardPlan, GenreCard } from "./genres";
 
-/** a verse of 16 bars cannot tell more than three regions without turning into a list */
-export const EPISODE_CAP = 3;
-/** bars of one block of the verse */
+/** the verse tells up to six regions: three in four-bar blocks, four to six in two-bar blocks */
+export const EPISODE_CAP = 6;
+/** bars of one block of the verse when it tells up to three regions */
 export const VERSE_BLOCK = 4;
+/** bars of one block of the verse when it tells four to six regions (eight blocks) */
+export const VERSE_SHORT_BLOCK = 2;
 
 /** which block (A = home, B, C, D = the first, second, third episode card) plays in each of the four verse blocks */
 const PATTERN: Record<number, (number | null)[]> = {
@@ -32,6 +34,16 @@ export function episodeCards(plan: CardPlan): GenreCard[] {
     .map((e) => e.card);
 }
 
+/** the eight blocks of a verse with n (4-6) episode cards: [home, c0, c1, ...] cycled, ending with home when it fits */
+function shortPattern(n: number): (number | null)[] {
+  const out: (number | null)[] = [null];
+  for (let k = 0; k < n; k++) out.push(k);
+  for (let k = 0; out.length < 7; k++) out.push(k % n);
+  out.length = Math.min(out.length, 7);
+  out.push(null);
+  return out;
+}
+
 /**
  * What a bar of the verse plays: `card` is the episode card (null = the home card), `blockEnd` marks the last bar of a block (the bridge
  * fill), `block` is 0-3 inside the verse and -1 outside it. `verseFirst` is the first bar of the verse in the form.
@@ -39,7 +51,13 @@ export function episodeCards(plan: CardPlan): GenreCard[] {
 export function episodeAt(bar: number, verseFirst: number, cards: GenreCard[]): { card: GenreCard | null; blockEnd: boolean; block: number } {
   const rel = bar - verseFirst;
   if (rel < 0 || rel >= 4 * VERSE_BLOCK) return { card: null, blockEnd: false, block: -1 };
+  if (cards.length >= 4) {
+    const n = Math.min(cards.length, EPISODE_CAP);
+    const block = Math.floor(rel / VERSE_SHORT_BLOCK);
+    const pick = shortPattern(n)[block];
+    return { card: pick === null ? null : cards[pick] ?? null, blockEnd: rel % VERSE_SHORT_BLOCK === VERSE_SHORT_BLOCK - 1, block };
+  }
   const block = Math.floor(rel / VERSE_BLOCK);
-  const pick = PATTERN[Math.min(cards.length, EPISODE_CAP)][block];
+  const pick = PATTERN[cards.length][block];
   return { card: pick === null ? null : cards[pick] ?? null, blockEnd: rel % VERSE_BLOCK === VERSE_BLOCK - 1, block };
 }

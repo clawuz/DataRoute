@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CARDS, planCards, type CardPlan, type GenreCard } from "../src/personal/genres";
-import { EPISODE_CAP, episodeAt, episodeCards } from "../src/personal/episodes";
+import { EPISODE_CAP, VERSE_SHORT_BLOCK, episodeAt, episodeCards } from "../src/personal/episodes";
 import { buildRoutes } from "../src/personal/routes";
 import { composePiece } from "../src/personal/compose";
 import { routeHash } from "../src/audio/theory";
@@ -17,11 +17,41 @@ describe("episodeCards", () => {
     const got = episodeCards(plan("anatolian", ["eastasia", "westafrica", "eastasia", "anatolian", "eastasia", "westafrica"]));
     expect(got.map((c) => c.id)).toEqual(["eastasia", "westafrica"]);
   });
-  it("keeps at most three colours and breaks ties by the hash of the card id the same way every time", () => {
-    const per = ["eastasia", "westafrica", "persian", "tango", "salsa"];
+  it("keeps at most six colours and breaks ties by the hash of the card id the same way every time", () => {
+    // (the input has eight different coloured cards: the cap is what the property is about)
+    const per = ["eastasia", "westafrica", "persian", "tango", "salsa", "greek", "nordic", "celtic"];
     const a = episodeCards(plan("anatolian", per)).map((c) => c.id);
     expect(a.length).toBe(EPISODE_CAP);
+    expect(EPISODE_CAP).toBe(6);
     expect(episodeCards(plan("anatolian", [...per].reverse())).map((c) => c.id)).toEqual(a);
+  });
+});
+
+describe("episodeAt with 4-6 cards: two-bar blocks", () => {
+  const E6 = ["eastasia", "westafrica", "persian", "tango", "salsa", "greek"].map(card);
+  const pattern = (n: number): (string | null)[] => {
+    const cards = E6.slice(0, n);
+    return [0, 1, 2, 3, 4, 5, 6, 7].map((blk) => episodeAt(8 + blk * VERSE_SHORT_BLOCK, 8, cards).card?.id ?? null);
+  };
+  it("plays eight blocks: [home, c0..cN-1] filled by cycling and ending with home when it fits", () => {
+    expect(VERSE_SHORT_BLOCK).toBe(2);
+    expect(pattern(4)).toEqual([null, "eastasia", "westafrica", "persian", "tango", "eastasia", "westafrica", null]);
+    expect(pattern(5)).toEqual([null, "eastasia", "westafrica", "persian", "tango", "salsa", "eastasia", null]);
+    expect(pattern(6)).toEqual([null, "eastasia", "westafrica", "persian", "tango", "salsa", "greek", null]);
+  });
+  it("holds a card for both bars of its block, numbers the blocks 0-7 and marks the last bar of every block", () => {
+    for (const n of [4, 5, 6]) {
+      const cards = E6.slice(0, n);
+      for (let rel = 0; rel < 16; rel++) {
+        const e = episodeAt(8 + rel, 8, cards);
+        expect(e.block, `${n} cards, bar ${rel}`).toBe(Math.floor(rel / 2));
+        expect(e.blockEnd).toBe(rel % 2 === 1);
+        expect(e.card?.id ?? null).toBe(pattern(n)[Math.floor(rel / 2)]);
+      }
+    }
+  });
+  it("is home with no block outside the verse", () => {
+    for (const n of [4, 6]) for (const b of [0, 7, 24, 40, 63]) expect(episodeAt(b, 8, E6.slice(0, n))).toEqual({ card: null, blockEnd: false, block: -1 });
   });
 });
 
@@ -77,7 +107,7 @@ const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
   ["ALA,CIT,GUW,HSA,KGF", "", "visited", 725636473], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
-  // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has 3 episode cards
+  // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
   ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 3692813082],
   ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 303426884],
   ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3817177084],
@@ -118,7 +148,7 @@ describe("episodes in a piece: what must not change", () => {
 });
 
 describe("episodes in a piece: what changes in the verse", () => {
-  const places = "NRT,LOS,GRU,LHR,DEL,CAI";
+  const places = "BOM,CMN,GRU,LHR,DEL,CAI";
   const routes = routesOf(places);
   const p = composePiece("visited", routes);
   const bar = 240 / p.bpm;
@@ -204,7 +234,7 @@ const checkKick = (places: string, mode: "visited" | "wish"): void => {
 };
 
 describe("episodes in a piece: the voices and the groove follow the episode card", () => {
-  const places = "NRT,LOS,GRU,CDG,DEL,CAI,SYD,JFK";
+  const places = "ADD,AMM,BEY,ALP,AQJ,CAI,HEL,KUL";
   const rs = routesOf(places);
   const pl = planCards("visited", rs);
   const p = composePiece("visited", rs);
@@ -267,7 +297,7 @@ describe("episodes in a piece: the voices and the groove follow the episode card
 });
 
 describe("episodes in a piece: a tune that runs on from a home block into an episode block", () => {
-  const rs = routesOf("NRT,LOS,GRU,LHR,DEL,CAI");
+  const rs = routesOf("BOM,CMN,GRU,LHR,DEL,CAI");
   const pl = planCards("visited", rs);
   const p = composePiece("visited", rs, { tunes: true });
   const role = rolesOf(rs);
@@ -287,7 +317,7 @@ describe("episodes in a piece: a tune that runs on from a home block into an epi
 });
 
 describe("episodes in a piece: the kick plays with the bass on a card whose strong places are off the sixteenth grid", () => {
-  const places = "ABV,SVQ,ATH,SKG,TZX,RZV,MEX";
+  const places = "ABV,SVQ,ATH,SKG,TZX,RZV,LOS";
   it("has the West African bell and the flamenco compás among the episodes (their strong beats sit at 1.667 and 3.333)", () => {
     const { eps } = pieceOf(places, "wish");
     expect(eps.map((c) => c.id)).toEqual(expect.arrayContaining(["westafrica", "flamenco"]));
@@ -313,7 +343,7 @@ const swungHits = (c: GenreCard, swing: number): number[] => {
 
 describe("episodes in a piece: a card with rests in its figure, with swing, and a hook without a tune", () => {
   // the gamelan cycle (1, rest, 1, 1) is the second episode card here: block 2 of the verse, bars 16-19; the hook plays bars 16 and 17
-  const places = "KUL,CGK,ICN,ROB,FCO,SYD,ATH";
+  const places = "KUL,CGK,ICN,CDG,FCO,SYD,ATH";
   const { p, eps, role, onsets, blockCard } = pieceOf(places, "wish");
   const gam = eps.find((c) => c.id === "gamelan")!;
   const swing = gam?.swing ?? p.style.swing;
