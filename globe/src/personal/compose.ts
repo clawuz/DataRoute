@@ -460,6 +460,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
   const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);
+  // call and response: in the chorus the pluck route (if the piece has one) answers the hook in the second half of every second bar,
+  // with the hook's own motif turned upside down; the hook rests there
+  const answerer = role.indexOf("pluck");
+  const callerIdx = role.findIndex((q, i) => q === "hook" && occ[i] === 0);
+  const answering = (section: string, b: number): boolean => answerer >= 0 && callerIdx >= 0 && section === "chorus" && b % 2 === 1;
 
   const ACTIVE: Record<Section, PopRole[]> = {
     intro: ["pad", "bass", "pluck", "hat"],
@@ -551,8 +556,20 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         if (section === "verse" && b % 4 >= 2) continue;
         const m = motifs[i]![b % 4];
         let hi = 0;
+        const reply = answering(section, b) && occ[i] === 0 && i === callerIdx;
         g.slots.forEach((sl, k) => {
           if (!sl.hit) return;
+          if (reply && sl.start >= 2) {
+            // the answer: the motif upside down around its first note, in the answerer's voice, on the same figure
+            const ai = answerer;
+            const lift = Math.round((altitudeFt(phaseAt(ai, b, sl.start / 4), routes[ai].distKm) / 39000) * arcOf[i]);
+            const sc = scaleOf[i];
+            const total = 2 * m[0] - m[hi % m.length] + lift + sc.length;
+            hi++;
+            const semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
+            push(ai, t0 + sl.start * beat, sl.len * beat * 0.9, voiceOf[ai], hz(semis), vs(0.55), phaseAt(ai, b, sl.start / 4));
+            return;
+          }
           const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * arcOf[i]);
           const sc = scaleOf[i];
           const total = m[hi % m.length] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
@@ -575,6 +592,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       } else if (rl === "pluck") {
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
         for (let e = 0; e < 8; e++) {
+          if (i === answerer && answering(section, b) && e >= 4) continue; // it answers instead
           const p = phaseAt(i, b, e / 8);
           const tone = tones[seqTones[(e + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
           push(i, t0 + e * 0.5 * beat + (e % 2 ? g.swing * beat * 0.33 : 0), beat * 0.48, inst, hz(tone), vs(e % 4 === 0 ? 0.42 : 0.3), p);

@@ -149,3 +149,9 @@ kept for a possible later exact quotation). The hook of a hook route is built in
 | Data | Decision | Why it is heard that way | Where |
 |---|---|---|---|
 | rank of the route's distance within the selection (1 = longest) | pad ×0.7–1.3, bass and hook ×0.8–1.2 held longer for longer routes (drums unchanged) | a longer flight is a longer breath; the shortest routes stay clipped | `compose.ts` (pad, bass, hook) |
+
+## Call and response (experiment, B2 first step)
+
+| Data | Decision | Why it is heard that way | Where |
+|---|---|---|---|
+| the pluck route of the selection (from 4 routes) | in the odd bars of the chorus it answers in the second half of the bar with the hook's motif turned upside down around its first note; the hook rests there and the pluck's own eighths rest too | a phrase and its reply: the melody breathes instead of running on | `compose.ts` (`answerer`, hook branch) |
