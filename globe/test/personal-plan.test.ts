@@ -1,19 +1,29 @@
 import { describe, expect, it } from "vitest";
 import { routeHash } from "../src/audio/theory";
-import { cardsOfAirport, colourCardOf, planCards } from "../src/personal/genres";
+import { cardsOfAirport, clusterOf, colourCardOf, planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
 
-/** the expectation, written out: most routes per far-end card; ties by the larger sum of distKm, then the smaller routeHash(card.id) */
+/** the expectation, written out: the cluster with most routes (ties: the larger sum of distKm, then the smaller routeHash(cluster id)), inside it the card with most routes (same ties, by card id) */
 function expectedMain(routes: ReturnType<typeof buildRoutes>) {
-  const tally = new Map<string, { card: ReturnType<typeof colourCardOf>; n: number; km: number }>();
+  type T = { card: ReturnType<typeof colourCardOf>; n: number; km: number };
+  const byCard = new Map<string, T>();
+  const byCluster = new Map<string, { id: string; n: number; km: number }>();
   routes.forEach((r, i) => {
     const c = colourCardOf(r, i);
-    const t = tally.get(c.id) ?? { card: c, n: 0, km: 0 };
+    const t = byCard.get(c.id) ?? { card: c, n: 0, km: 0 };
     t.n++;
     t.km += r.distKm;
-    tally.set(c.id, t);
+    byCard.set(c.id, t);
+    const k = clusterOf(c);
+    const u = byCluster.get(k) ?? { id: k, n: 0, km: 0 };
+    u.n++;
+    u.km += r.distKm;
+    byCluster.set(k, u);
   });
-  return [...tally.values()].sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.card.id) - routeHash(b.card.id))[0].card;
+  const lead = [...byCluster.values()].sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.id) - routeHash(b.id))[0].id;
+  return [...byCard.values()]
+    .filter((t) => clusterOf(t.card) === lead)
+    .sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.card.id) - routeHash(b.card.id))[0].card;
 }
 
 describe("the main card follows the destinations", () => {

@@ -306,4 +306,4 @@ The main card is chosen in two steps: first the cluster with the most routes (fa
 
 ## Variety (2026-10-26, audit by a probe over random selections; `globe/test/personal-variety.test.ts` keeps a light version)
 
-Over 1000 random selections of 3-8 places (half with home Istanbul), after the 51 cards: 49 of the 51 cards come out as the main card at least once; the most frequent are `eastafrica` 10.4%, `arabic` 9.7%, `pop` 7.0%, `westafrica` 6.9%, `centralasia` 6.7%; the tempo spans 78-126 bpm. `chanson` (five airports) and `andean` (one) are almost never the main sound; `anatolian` did not come out in that draw.
+Over 1000 random selections of 3-8 places (half with home Istanbul), with the dominant region leading: all 51 cards come out as the main card at least once; the most frequent are `eastafrica` 9.6%, `arabic` 9.0%, `dogu` 8.5% (many Turkish airports), `pop` 6.6%, `westafrica` 6.2%; the tempo spans 78-126 bpm; the verse tells 1 region in 2% of the pieces, 2 in 15%, 3 in 16%, 4 in 17%, 5 in 19% and 6 in 32%.
