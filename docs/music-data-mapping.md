@@ -29,7 +29,8 @@ Existing share links sound different after the music phase A series (pan, humani
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
 | destination airport | the card list of the airport (airport table, then country, then region), the hash of the route picks one | the voices, scale, figure and tempo of the piece: Trabzon sounds of the Black Sea, Seville of flamenco, Dallas of country | `genres.ts` (`BY_AIRPORT`) |
 | share of routes per region | how many routes take that region's colour | busy regions weigh more | `compose.ts` |
-| main card of the piece (usually a card of the starting country; sometimes a lively generic one when the trip has many routes) | tempo, scale, progression, **home drone** | home sets the key of the story | `genres.ts`, `world-voices.ts` |
+| the card most routes go to (the main card; ties: the larger total distance, then the smaller hash of the card id) | tempo, scale, progression, groove | the piece plays the sound of where the trip goes |
+| home card (`plan.home`: a card of the starting airport; sometimes a lively generic one when the trip has many routes) | the intro, the outro and the **home drone** | home opens and closes the story | `genres.ts`, `world-voices.ts` |
 | mode (been / want to go) | minor or major; **size of the key lift** | wistful vs hopeful | `compose.ts`, `lift.ts` |
 | regions crossed | **whether there is a key lift** | a trip inside one region has no journey | `lift.ts` |
 | longitude of a route's middle, relative to the start of the first route (the home airport when the trip starts at home) | **stereo position** | east is right, west is left, like the map (when the first route starts at home) | `space.ts` |
@@ -70,7 +71,7 @@ A piece of one route (`composeSolo`) gets none of the following: no pan, wet, li
 
 **Home drone** (`world-voices.ts`, `compose.ts`)
 
-- Instrument from the main card of the piece (usually a card of the starting country; with about 10% probability for fewer than 6 routes, 20% from 6 routes and 40% from 10 routes it is a lively generic card instead, `takeGeneric` in `planCards`): `hindustani` → `TANPURA`; `celtic`, `karsilama` → `BAGPIPE_DRONE`; `baroque` → `RENORGAN`; every other card → `CELLO` (`DRONE_BY_CARD`, `droneVoice`). The family is resolved by `routeHash` of the first route like any other voice.
+- Instrument from the home card of the piece (`plan.home`, usually a card of the starting country; with about 10% probability for fewer than 6 routes, 20% from 6 routes and 40% from 10 routes it is a lively generic card instead, `takeGeneric` in `planCards`): `hindustani` → `TANPURA`; `celtic`, `karsilama` → `BAGPIPE_DRONE`; `baroque` → `RENORGAN`; every other card → `CELLO` (`DRONE_BY_CARD`, `droneVoice`). The family is resolved by `routeHash` of the first route like any other voice.
 - Notes: the tonic and the fifth above it (+7 semitones) of the home key, one octave below the key root, folded into the range of the instrument (`fit`). The key is the piece's own, **not** the lifted one.
 - Re-struck every 2 bars for the plucked tanpura, every 4 bars for the other instruments; a note ends before the next silent bar.
 - Level: tonic `0.22`, fifth `0.15`, times the section level and the outro fade.
@@ -162,7 +163,7 @@ kept for a possible later exact quotation). The hook of a hook route is built in
 | Data | Decision | Why it is heard that way | Where |
 |---|---|---|---|
 | the trip changes planes at Istanbul away from home | the verse and the break play the Turkish card's rhythm (episodes.ts is replaced in the verse by blocks of the Turkish figure) | the middle of the trip sounds like Turkey | `journey.ts`, `compose.ts` (`stageAt`) |
-| the destination (last leg's far end with a transit; the card with the most routes otherwise) | the build and the chorus play the destination card's rhythm figure, and its routes come forward (x1.15, the others x0.85) | the song arrives where the trip goes | same |
-| the home card (where the trip leaves) | the intro and the outro stay home | the piece starts and ends at its own sound | same |
+| the main card (the card most routes go to) | the build and the chorus play it (it is the main card of the piece: tempo, scale, chords and groove) | the song arrives where the trip goes | `genres.ts` (`planCards`), `journey.ts` |
+| the home card (`plan.home`, when it is not the main card) | the intro and the outro play the home groove | the piece starts and ends at the sound of where it leaves | `journey.ts`, `compose.ts` |
 
 A trip with one sound (same card all through) has no journey and is unchanged. The key, the chords and the instruments of each route stay as they are; the stage changes the rhythm figure and who is spotlit (a card that no route plays only changes the figure).

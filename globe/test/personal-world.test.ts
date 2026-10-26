@@ -107,7 +107,7 @@ describe("world voices", () => {
     expect(CARDS.find((c) => c.id === "jazz")!.bass).toContain("UPRIGHTBASS");
   });
   it("lets a piece to Iran and Japan use their instruments, and only real instrument names reach the notes", () => {
-    const routes = buildRoutes(["IKA", "NRT", "JFK", "LOS"], "IST");
+    const routes = buildRoutes(["IKA", "NRT", "LAX", "SFO", "LOS"], "IST");
     const plan = planCards("visited", routes);
     const piece = composePiece("visited", routes);
     for (const n of piece.notes) {

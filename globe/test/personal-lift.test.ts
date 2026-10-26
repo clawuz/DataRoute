@@ -49,10 +49,10 @@ describe("lift in a piece", () => {
   it("records the lift in the style: 3 across regions, 0 in one region", () => {
     expect(composePiece("visited", buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST")).style.lift).toBe(3);
     expect(composePiece("wish", buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST")).style.lift).toBe(2);
-    expect(composePiece("visited", buildRoutes(["ESB", "ASR", "KYA", "NAV"], "IST")).style.lift).toBe(0);
+    expect(composePiece("visited", buildRoutes(["ADA", "ESB", "DIY", "AYT"], "IST")).style.lift).toBe(0);
   });
   it("sounds the same chord a step higher, then goes home", () => {
-    const routes = buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST");
+    const routes = buildRoutes(["DEL", "NRT", "CAI", "GRU"], "IST");
     const p = composePiece("visited", routes);
     expect(pc(lowest(p, 44) - lowest(p, 40))).toBe(3);
     expect(pc(lowest(p, 56) - lowest(p, 40))).toBe(0);
@@ -63,8 +63,8 @@ describe("lift in a piece", () => {
     // stretched to the bar, and a major one in 4/4). The tunes start at bars 32, 40, 48: the one of bar 40 runs into the
     // lifted bars 44-51, the one of bar 48 runs into the break (52-55), which is home again.
     const cases: [Parameters<typeof composePiece>[0], string[], string | undefined, string][] = [
-      ["visited", ["ADF", "OHD", "BJV", "MRU"], "IST", "uskudar"],
-      ["wish", ["BHK", "BGG", "LYS", "MSQ"], undefined, "twinkle"],
+      ["visited", ["JFK", "OHD", "ADA"], "IST", "uskudar"],
+      ["wish", ["EWR", "MSQ", "NAV", "LOS"], undefined, "twinkle"],
     ];
     for (const [mode, places, home, id] of cases) {
       const routes = buildRoutes(places, home);
@@ -109,7 +109,7 @@ describe("lift in a piece", () => {
     }
   });
   it("does not lift a trip inside one region", () => {
-    const p = composePiece("visited", buildRoutes(["ESB", "ASR", "KYA", "NAV"], "IST"));
+    const p = composePiece("visited", buildRoutes(["ADA", "ESB", "DIY", "AYT"], "IST"));
     // bar 40 holds a passing bass note in this piece, so the lifted bars are compared with the home-key bars 56 and 40/48
     expect(pc(lowest(p, 44) - lowest(p, 56))).toBe(0);
     expect(pc(lowest(p, 48) - lowest(p, 40))).toBe(0);

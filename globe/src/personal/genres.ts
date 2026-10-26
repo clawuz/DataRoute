@@ -173,8 +173,10 @@ function generic(n: number): GenreCard[] {
 }
 
 export interface CardPlan {
-  /** the card of the place the trip starts from: tempo, scale, progression */
+  /** the card of the place the trip is heading to (the one most routes go to): tempo, scale, progression, groove */
   main: GenreCard;
+  /** the card of the place the trip starts from: the intro, the outro and the drone */
+  home: GenreCard;
   /** the card each route plays (its own figure and instruments): the main one, or the one of its destination */
   perRoute: GenreCard[];
 }
@@ -230,7 +232,7 @@ export function colourCardOf(r: PersonalRoute, i: number): GenreCard {
 
 export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan {
   const n = routes.length;
-  if (n === 0) return { main: CARDS[0], perRoute: [] };
+  if (n === 0) return { main: CARDS[0], home: CARDS[0], perRoute: [] };
   const first = routes[0];
   const home = destinationOf(first.from);
   const seed = routeHash(`${mode}|${routes.map((r) => r.key).join(">")}`);
@@ -238,12 +240,21 @@ export function planCards(mode: PersonalMode, routes: PersonalRoute[]): CardPlan
   const pool = generic(n);
   // the further from a calm start, the more a lively generic card is in play for the main voice
   const takeGeneric = n >= 10 ? seed % 10 < 4 : n >= 6 ? seed % 10 < 2 : seed % 10 < 1;
-  const main = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
+  const homeCard = takeGeneric ? pool[(seed >>> 4) % pool.length] : homeCards[(seed >>> 4) % homeCards.length];
   const colourOf = routes.map((r, i) => colourCardOf(r, i));
+  // the main card is the one most routes go to; ties: the larger total distance, then the smaller hash of the id
+  const tally = new Map<string, { card: GenreCard; n: number; km: number }>();
+  colourOf.forEach((c, i) => {
+    const t = tally.get(c.id) ?? { card: c, n: 0, km: 0 };
+    t.n++;
+    t.km += routes[i].distKm;
+    tally.set(c.id, t);
+  });
+  const main = [...tally.values()].sort((a, b) => b.n - a.n || b.km - a.km || routeHash(a.card.id) - routeHash(b.card.id))[0].card;
   const budget = n >= 2 ? Math.max(1, Math.round(COLOUR_SHARE * n)) : 0;
   const chosen = new Set(
     allocateColour(colourOf.map((c) => c.id), colourOf.map((c) => c.id !== main.id), routes.map((r) => r.distKm), routes.map((r) => r.key), budget),
   );
   const perRoute = routes.map((_, i) => (chosen.has(i) ? colourOf[i] : main));
-  return { main, perRoute };
+  return { main, home: homeCard, perRoute };
 }

@@ -440,8 +440,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const verseFirst = FORM.slice(0, FORM.findIndex(([name]) => name === "verse")).reduce((s, [, m]) => s + m, 0);
   // the trip told in order: the sound of where it leaves, of Istanbul, of where it arrives (journey.ts)
   const journey = journeyOf(routes, plan);
-  if (journey) style.journey = [journey.transit?.id, journey.dest?.id].filter((x): x is string => !!x);
-  const grooves = new Map<string, ReturnType<typeof grooveOf>>([...eps, ...(journey?.transit ? [journey.transit] : []), ...(journey?.dest ? [journey.dest] : [])].map((c) => [c.id, grooveOf(c)]));
+  if (journey) style.journey = [journey.home?.id, journey.transit?.id].filter((x): x is string => !!x);
+  const grooves = new Map<string, ReturnType<typeof grooveOf>>([...eps, ...(journey?.home ? [journey.home] : []), ...(journey?.transit ? [journey.transit] : [])].map((c) => [c.id, grooveOf(c)]));
   // a bar's stage: the journey's card when it has one for the section, else the episode of the verse
   const stageAt = (bar: number, section: Section): ReturnType<typeof episodeAt> => {
     const e = episodeAt(bar, verseFirst, eps);
@@ -505,7 +505,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const chorusLen = FORM.find(([name]) => name === "chorus")![1];
   // home: the tonic and its fifth hum under the trip, played by the first route (nothing is added that is not a route).
   // A plucked drone is struck every two bars, a held one every four; it is silent in the break and in the lifted bars.
-  const droneInst = resolveVoice(droneVoice(plan.main.id), routeHash(routes[0].key));
+  const droneInst = resolveVoice(droneVoice(plan.home.id), routeHash(routes[0].key));
   const droneEvery = droneInst === "TANPURA" ? 2 : 4;
   const silentBar = (b: number): boolean => sectionOf(b).section === "break" || liftAt(b, chorusFirst, chorusLen, keyLift) !== 0;
 

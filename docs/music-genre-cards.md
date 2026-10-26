@@ -71,7 +71,7 @@ Her kart `style.ts` benzeri bir ayar nesnesine dönüşür:
 
 ## 5. Uygulama durumu (2026-10-16)
 
-- Kartlar `globe/src/personal/genres.ts` içinde (24 kart), seçim `planCards(mode, routes)`.
+- Kartlar `globe/src/personal/genres.ts` içinde (24 kart), seçim `planCards(mode, routes)`. Ana kart (`plan.main`) artık varış yerlerinin kartıdır (en çok rotanın gittiği kart); kalkış yerinin kartı `plan.home` olarak kalır (giriş, çıkış ve drone).
 - Ana kart: yolculuğun başladığı yerin (from) ülkesine göre; rota sayısı arttıkça canlı genel kartlar (dance / epic / cinematic) pay alır.
 - Her üçüncü rota kendi varış ülkesinin kartından figür ve enstrüman alır.
 - Kartın tempo, ölçek, ilerleme, ritim figürü (usul), vurgu ve enstrümanları `compose.ts` içinde kullanılıyor.
