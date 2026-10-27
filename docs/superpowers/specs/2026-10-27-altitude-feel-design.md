@@ -18,11 +18,22 @@ The altitude of the flight sets the pitch of the hook (scale degrees), the octav
 
 All three are small on purpose; they sit under the section levels (the section curve stays the big shape). Constants live in one place (`altitude-feel.ts`) so that they can be tuned by ear.
 
+## The flight runs (nağme): a rising run on the climb, a falling run on the descent
+
+The user: "can a nağme (a little tune) be added going up and going down?" Yes: the hook voice plays a short **run** that is the flight itself.
+
+- A bar of a hook route where the climb is happening (the phase of the route at the start of the bar is below 0.18: `phaseAt(i, b, 0) < 0.18`) ends with a **rising run** in the last beat: four sixteenth notes on the scale, from the last degree of the bar's hook line upward by 1, 2, 3, 4 degrees.
+- A bar where the descent is happening (the phase at the END of the bar is above 0.82: `phaseAt(i, b, 1) > 0.82`) ends with a **falling run**: four sixteenth notes, from the last degree downward by 1, 2, 3, 4 degrees.
+- Only when the bar has no hook hit that starts at beat 3 or later (nothing to collide with), not in a call-and-response bar where the hook rests (`reply`), and only in bars where the hook plays (in the verse: `b % 4 < 2`).
+- Velocity ×0.8 of the hook's, the run is drawn (they are real notes of the route, the ribbon shows the run climbing or falling), on the scale of the route's card (so a makam run is a makam run), folded into the instrument's range as every note.
+- Perceptual reason: the music-box shows a plane climbing; the ear hears it climb, and come down, at every take-off and landing of a phrase.
+
 ## Code
 
 - `globe/src/personal/altitude-feel.ts` (pure): `heightOf(alt, distKm): number` (0..1), `velScale(h)`, `cutoffOf(h)`, `wetShift(h)`.
 - `compose.ts` `push`: vel scaled by `velScale(h)`, wet shifted; `PersonalNote.bright?: number` (the cutoff in Hz) set on drawn notes. Hidden gesture notes copy `wet` from their source (and no `bright`: they are short; they use the sampler's own filter).
 - `player.ts` → `playNote` → `sampler.play`: an optional `cutoffHz` parameter: when present and the instrument is sampled, a `BiquadFilterNode` (lowpass, Q 0.6) is inserted before the gain, `frequency` = the cutoff (follow how the instrument's own `filter` is created; if the instrument already has a filter, use the lower cutoff of the two, or chain the new one after it: keep the cheaper). No change for notes without it. Node budget: the filter is created only for notes with `bright`; measure the extra nodes (the review's estimate: voices ringing ≈ 42 median) and report.
+- The runs: in the hook branch of `compose.ts` after the slot loop; a pure helper `flightRun(direction: 1 | -1, lastTotal: number): number[]` in `altitude-feel.ts` returns the four degrees; the loop pushes them as four sixteenth notes at beat 3, 3.25, 3.5, 3.75.
 - Not for percussion roles (`kick`, `backbeat`, `hat`) and not for the drone (they keep `vel` and no filter).
 
 ## Not in this step
@@ -34,4 +45,5 @@ Altitude → tempo or key; per-route filters with automation.
 - `altitude-feel.ts` unit tests: `heightOf(0) = 0`, `heightOf(cruise) = 1`, monotone; the three mappings at 0, 0.5, 1; clamps.
 - Composed pieces: for a 3-route piece the mean `vel` of the drawn notes of a route in the climb (alt < 30% of cruise) is lower than in the cruise for the same role (compare same instrument and role); `bright` present only on drawn non-percussion non-drone notes; `wet` within 0…0.5; determinism; no NaN.
 - Sampler: a note with `cutoffHz` creates a lowpass with that frequency; without it nothing changes (the existing tests).
+- Runs: a piece with a hook route has runs in its first bars (climb) and last bars of a phrase (descent): assert the first run in a known selection rises (each note a higher scale degree/pitch than the one before) and a descent run falls; no run in a bar that has a hook hit at beat 3+; no run in the chorus bars where the hook rests (`reply`); counts bounded (a run is 4 notes per climbing/descending bar).
 - Goldens re-captured (reason in the comment).
