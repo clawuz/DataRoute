@@ -160,7 +160,7 @@ function group(airports: string, cards: string[]): void {
 }
 group("TZX RZV OGU SZF NOP KFS ONQ MZH TJK", ["karadeniz"]);
 group("ESB ASR NAV VAS AOE ISE KZR", ["icanadolu"]);
-group("KYA", ["mevlevi", "icanadolu"]);
+group("KYA", ["mevlevi"]); // Konya is the Mevlevi city: always the ney and the kudüm
 group("AYT GZP DLM ADA COV HTY KCM", ["akdeniz"]);
 group("ADB BJV DNZ USQ EDO CKZ", ["zeybek"]);
 group("VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF", ["dogu"]);

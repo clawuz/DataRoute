@@ -75,7 +75,7 @@ describe("the Mevlevi card", () => {
     expect(CLUSTER_OF.mevlevi).toBe("turkish");
   });
   it("is the first card of Konya, then icanadolu", () => {
-    expect(cardsOfAirport("KYA", "EUR").map((x) => x.id)).toEqual(["mevlevi", "icanadolu"]);
+    expect(cardsOfAirport("KYA", "EUR").map((x) => x.id)).toEqual(["mevlevi"]);
   });
   it("gives icanadolu the ney after the saz voices", () => {
     expect(CARDS.find((x) => x.id === "icanadolu")!.melody).toEqual(["SAZ", "BAGLAMA_MAKAM", "NEY_MAKAM"]);

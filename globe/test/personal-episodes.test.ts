@@ -87,10 +87,10 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["~ESB,ASR,KYA", "visited", 2460335051],
+  ["~ESB,ASR,NAV", "visited", 1018592815],
   ["~TZX,RZV,OGU", "wish", 921627897],
   ["~VAN,ERZ,ERC", "wish", 3300151599],
   ["~AYT,GZP,ADA", "visited", 3242087402],
@@ -164,7 +164,7 @@ describe("episodes in a piece: what changes in the verse", () => {
   });
   it("records nothing in the style of a piece without episodes (its style is the style of before)", () => {
     for (const [places, home, mode] of GOLDEN_NO_COLOUR_DRUMS) expect("episodes" in composePiece(mode, routesOf(places, home)).style, places).toBe(false);
-    expect("episodes" in composePiece("visited", routesOf("~ESB,ASR,KYA")).style).toBe(false);
+    expect("episodes" in composePiece("visited", routesOf("~ESB,ASR,NAV")).style).toBe(false);
   });
   it("ends every verse block with a drum fill: a kick on beat 3 and a backbeat on beat 3.5", () => {
     const beat = bar / 4;
