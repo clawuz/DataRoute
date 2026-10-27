@@ -16,3 +16,6 @@ tmp-music/
 globe/public/music-demo/
 globe/dist-personal/
 docs/ui-preview/assets/fonts/
+
+# the melody bank trained with NC data (SymbTr): local listening only, never committed
+globe/src/personal/melody-bank.local.json
