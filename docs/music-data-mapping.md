@@ -146,6 +146,16 @@ After the notes are made and humanized, `applyGestures` (`personal/gestures.ts`,
 | upright bass | in a jazz card a walking line of four quarter notes a bar (root, fifth, third, an approach to the next root); in country, bossa, samba, salsa and tango the second bass note of a bar is the fifth | jazz bass walks the chord; folk and Latin bass alternates root and fifth | `gestures.ts` |
 | tanpura (the drone) | a cycle of strokes every beat: Pa, high Sa, high Sa, low Sa | the four strings are plucked one after another, never struck together | `gestures.ts` |
 | ney | notes slide up from a little below, deeper (two semitones) at the start of a phrase after a breath | the breath finds the pitch, it does not start on it | `gestures.ts` |
+| saz, bağlama (widened) | the strum also on every plucked-role note that starts on a beat, whatever its velocity (hook notes still need `vel >= 0.5`) | the plectrum sweeps the strings on every beat of the accompaniment | `gestures.ts` |
+| kanun, santur (widened) | plucked role: a roll of two hidden notes (+12 and +19 st at 35 and 70 ms) on each beat; hook notes of 0.3 s or more get the tremolo | the plectra run up the strings | `gestures.ts` |
+| harp, folk harp | plucked role, first note of a bar: a hidden rising glissando of four chord tones every 45 ms | the hand sweeps up the chord | `gestures.ts` |
+| piano family (PNO, STEINWAY, KAWAI, KNIGHTPNO, UPRIGHTPNO, EKEYS, RHODES, KEYS_AC, NS_EKEYS_*) | hook notes on a beat get a hidden octave below; the first plucked note of a bar gets a hidden left-hand bass (chord root, an octave down, 1.5 beats) | two hands | `gestures.ts` |
+| accordion | oom-pah: bass note on beats 0 and 2, a two-note chord stab on beats 1 and 3 (one set per route, bar and beat) | the left-hand bass and chord buttons | `gestures.ts` |
+| violin | hook: glide into the first note after a gap of 0.3 s; a hidden fifth below on notes of 0.5 s or more | the finger slides into a phrase; the bow touches two strings | `gestures.ts` |
+| koto, kayageum, dan tranh, psaltery | plucked role: a hidden repeat 60 ms later; hook notes of 0.35 s or more get the tremolo | a plucked string dies fast, so it is plucked again | `gestures.ts` |
+| tenor sax, clarinet, flute, oboe, duduk, shakuhachi, erhu | hook notes of 0.3 s or more slide up from below on a third of them | the breath or finger finds the pitch | `gestures.ts` |
+| steel / electric guitars (GUITAR_AC, GUITAR_EL, NS_GUITAR_AC_*, NS_GUITAR_EL_*) | plucked role: the same strum as the nylon guitar; in the country card boom-chick: bass on beats 0 and 2, strum on 1 and 3 | the thumb plays the bass, the fingers the chord | `gestures.ts` |
+| bagpipe | a hidden grace note a tone above, 40 ms before a note that repeats the previous pitch | the chanter has no tongue, a grace note separates equal notes | `gestures.ts` |
 
 Notes a gesture adds are brought into the instrument's range by octaves (`compose.ts`), take the role of their source note, and are left out of the `drawDur` pass. The sampler and the player glide a note that carries `glide` (semitones below its pitch).
 

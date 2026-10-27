@@ -127,3 +127,20 @@ Eight selections (home Istanbul, visited). `hidden` = notes that sound but are n
 | Nijerya | westafrica | 764 | 30 | CELLO 30 | 21 |
 
 Reading: the first slice changes the sound **only where its instruments play the roles the gestures look at**: the Karadeniz piece (kemençe: double stops, grace notes, drone: 220 hidden notes of 828) and the home drone of a few cards. The saz strum did not fire (its threshold `vel >= 0.5` is above the velocity of the pluck role, 0.3-0.42), the kanun/santur tremolo did not fire (they play the short pluck notes, not long hook notes), and the other instruments of the table (violin, harp, piano, accordion, koto, sax, guitars) have no gesture yet. Next: widen the gestures to the roles and instruments that are really used (see the status line below).
+
+## Measured after the wider coverage (2026-10-27)
+
+Same method, with the selections written out (home Istanbul, visited): Karadeniz TZX RZV OGU; Hindistan DEL BOM BLR; Brezilya GRU GIG BSB; Magrip CMN ALG TUN; Japonya NRT KIX FUK; Italya FCO MXP VCE; ABD JFK LAX ORD; Nijerya LOS ABV PHC. (The 8 selections of the first table were not written down; this set reproduces the Karadeniz row exactly and is measured before and after on the same code base. `share` = hidden / all notes.)
+
+| selection | main card | notes before | hidden before (share) | notes after | hidden after (share) | hidden by instrument after |
+|---|---|---|---|---|---|---|
+| Karadeniz | karadeniz | 828 | 220 (27%) | 1220 | 612 (50%) | SAZ 392, KEMENCE_MAKAM 190, CELLO 30 |
+| Hindistan | hindustani | 606 | 30 (5%) | 1050 | 474 (45%) | NS_GUITAR_AC_015 392, PNO 52, CELLO 30 |
+| Brezilya | samba | 276 | 0 (0%) | 276 | 0 (0%) | (a horn alone) |
+| Magrip | maghrebi | 638 | 30 (5%) | 1100 | 492 (45%) | SANTUR 392, VIOLIN 70, CELLO 30 |
+| Japonya | pop | 410 | 30 (7%) | 570 | 190 (33%) | PNO 160, CELLO 30 |
+| Italya | romantic | 590 | 30 (5%) | 646 | 86 (13%) | PNO 56, CELLO 30 |
+| ABD | rnb | 642 | 30 (5%) | 1128 | 516 (46%) | NS_GUITAR_EL_028 412, NS_EKEYS_098 74, CELLO 30 |
+| Nijerya | afrobeat | 762 | 30 (4%) | 762 | 30 (4%) | CELLO 30 |
+
+Reading: six of eight selections now have 10% or more hidden notes (the coverage test asserts this). Brazil plays a single horn and Nigeria plays kalimba, tenor sax (only a glide, which adds no notes) and bassoon: no gesture adds notes there, so they stay at 0% and 4%. The saz/guitar/santur strum or roll on every plucked beat is the bulk (about 390 hidden notes each); the piano share is small because its hook and plucked notes are few. The glides (violin, winds) change the sound without adding notes and are not in these numbers.

@@ -99,3 +99,27 @@ describe("the gestures are heard in composed pieces", () => {
     expect(found).toBe(true);
   });
 });
+
+describe("coverage: the gestures reach the instruments that are really played", () => {
+  // eight selections from different musical regions (home Istanbul, visited); measured 2026-10-27 (docs/music-instrument-idioms.md):
+  // six reach 10% hidden notes (13% to 50%); Brazil (a horn alone) and Nigeria (kalimba, tenor sax, bassoon) do not, because
+  // their instruments have no gesture that adds notes
+  const SELECTIONS: Record<string, string[]> = {
+    Karadeniz: ["TZX", "RZV", "OGU"],
+    Hindistan: ["DEL", "BOM", "BLR"],
+    Brezilya: ["GRU", "GIG", "BSB"],
+    Magrip: ["CMN", "ALG", "TUN"],
+    Japonya: ["NRT", "KIX", "FUK"],
+    Italya: ["FCO", "MXP", "VCE"],
+    ABD: ["JFK", "LAX", "ORD"],
+    Nijerya: ["LOS", "ABV", "PHC"],
+  };
+  const share = (places: string[]): number => {
+    const notes = composePiece("visited", buildRoutes(places, "IST")).notes;
+    return notes.filter((n) => n.show === false).length / notes.length;
+  };
+  it("at least 6 of the 8 selections have 10% or more hidden (gesture) notes", () => {
+    const shares = Object.entries(SELECTIONS).map(([name, places]) => [name, share(places)] as const);
+    expect(shares.filter(([, s]) => s >= 0.1).length, JSON.stringify(shares)).toBeGreaterThanOrEqual(6);
+  });
+});

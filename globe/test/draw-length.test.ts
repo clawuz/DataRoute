@@ -95,7 +95,7 @@ describe("well-known melodies in the hook", () => {
       const first = p.hook;
       // the notes of any route that begin at the first chorus bar, in order, with the tune's intervals
       const byRoute = new Map<number, typeof p.notes>();
-      for (const n of p.notes) if (n.t >= first - 1e-6 && n.t < first + 30) byRoute.set(n.route, [...(byRoute.get(n.route) ?? []), n]);
+      for (const n of p.notes) if (n.show !== false && n.t >= first - 1e-6 && n.t < first + 30) byRoute.set(n.route, [...(byRoute.get(n.route) ?? []), n]);
       const want = tune.notes.slice(0, 6).map(([s]) => s - tune.notes[0][0]);
       const ok = [...byRoute.values()].some((ns) => {
         const s = [...ns].sort((a, b) => a.t - b.t);
