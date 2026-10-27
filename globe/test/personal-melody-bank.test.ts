@@ -1,0 +1,189 @@
+import { describe, expect, it } from "vitest";
+import { composePiece } from "../src/personal/compose";
+import { CARDS } from "../src/personal/genres";
+import { LOW, idiomOf, phraseMotifs } from "../src/personal/idiom";
+import { BANK, decodePhrase, entryOf, pickPhrase } from "../src/personal/melody-bank";
+import { buildRoutes } from "../src/personal/routes";
+import { destinationOf } from "../src/personal/destinations";
+
+const lcg = (seed: number) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+
+describe("the bank file", () => {
+  it("has the compact schema, every card and every number of hits", () => {
+    expect(BANK.version).toBe(2);
+    expect(Object.keys(BANK.cards).sort()).toEqual(CARDS.map((c) => c.id).sort());
+    for (const c of CARDS) {
+      expect(Object.keys(BANK.cards[c.id]).sort(), c.id).toEqual(["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+      for (const h of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        const list = BANK.cards[c.id][String(h)];
+        expect(list.length, `${c.id}/${h}`).toBeGreaterThan(0);
+        expect(list.length).toBeLessThanOrEqual(64);
+      }
+    }
+  });
+  it("keeps every invariant of every phrase", () => {
+    const bad: string[] = [];
+    for (const c of CARDS) {
+      const idiom = idiomOf(c);
+      for (let h = 1; h <= 9; h++) {
+        for (const str of BANK.cards[c.id][String(h)]) {
+          const tag = `${c.id}/${h} ${str}`;
+          if (!/^[0-9ab.]+(\|[0-9ab.]+){3}$/.test(str)) bad.push(`format ${tag}`);
+          const bars = str.split("|");
+          bars.forEach((bar, k) => {
+            if (bar.length !== h) bad.push(`length ${tag}`);
+            const last = bar[bar.length - 1];
+            if (last === "." || parseInt(last, 36) - 2 !== idiom.cadence[k]) bad.push(`cadence ${tag}`);
+          });
+          if (bars[0][0] === ".") bad.push(`slot0 ${tag}`);
+          const p = decodePhrase(str);
+          if (p.bars.flat().some((d) => d !== null && d < LOW)) bad.push(`low ${tag}`);
+          if (p.span > idiom.span) bad.push(`span ${tag}`);
+        }
+      }
+    }
+    expect(bad.slice(0, 5)).toEqual([]);
+  }, 60000);
+  it("has phrases with rests", () => {
+    expect(BANK.cards.funk["8"].some((s) => s.includes("."))).toBe(true);
+  });
+});
+
+describe("pickPhrase", () => {
+  const sample = (id: string, hits: number, seed: number, dir: 1 | -1 = 1) => {
+    const idiom = idiomOf({ id });
+    const rnd = lcg(seed);
+    const start = idiom.start[Math.floor(rnd() * idiom.start.length)];
+    return { idiom, start, phrase: pickPhrase(id, hits, idiom, dir, rnd, start) };
+  };
+  it("is deterministic", () => {
+    expect(sample("anatolian", 6, 5).phrase).toEqual(sample("anatolian", 6, 5).phrase);
+  });
+  it("returns null for an unknown card or hits", () => {
+    const idiom = idiomOf({ id: "pop" });
+    expect(pickPhrase("no-such", 6, idiom, 1, lcg(1), 0)).toBeNull();
+    expect(pickPhrase("pop", 12, idiom, 1, lcg(1), 0)).toBeNull();
+    expect(entryOf("pop", 0)).toBeNull();
+  });
+  it("respects span, cadence, bounds and the start", () => {
+    for (const c of CARDS) {
+      for (let h = 1; h <= 9; h++) {
+        for (let seed = 1; seed <= 6; seed++) {
+          const { idiom, phrase } = sample(c.id, h, seed * 31 + h, seed % 2 ? 1 : -1);
+          expect(phrase, c.id).not.toBeNull();
+          expect(phrase!.length).toBe(4);
+          phrase!.forEach((bar, k) => {
+            expect(bar.length).toBe(h);
+            expect(bar[h - 1], `${c.id}/${h} bar ${k}`).toBe(idiom.cadence[k]);
+            for (const d of bar) if (d !== null) {
+              expect(d).toBeGreaterThanOrEqual(LOW);
+              expect(d).toBeLessThanOrEqual(idiom.span);
+            }
+          });
+        }
+      }
+    }
+  }, 60000);
+  it("starts on the asked degree when the bank has one", () => {
+    let exact = 0;
+    let total = 0;
+    for (const c of CARDS) {
+      const idiom = idiomOf(c);
+      for (const start of idiom.start) {
+        total++;
+        const p = pickPhrase(c.id, 8, idiom, 1, lcg(9), start)!;
+        if (p[0][0] === start) exact++;
+      }
+    }
+    expect(exact / total).toBeGreaterThan(0.9);
+  });
+  it("gives a card with a direction the phrases of that direction", () => {
+    for (const id of ["anatolian", "mevlevi", "persian"]) {
+      const idiom = idiomOf({ id });
+      for (let seed = 1; seed <= 20; seed++) {
+        const rnd = lcg(seed);
+        const p = pickPhrase(id, 8, idiom, 1, rnd, idiom.start[0])!;
+        const mean = (b: (number | null)[]) => b.filter((d): d is number => d !== null).reduce((a, d) => a + d, 0) / b.filter((d) => d !== null).length;
+        expect(mean(p[3]) - mean(p[0]), id).toBeLessThan(2.5);
+      }
+    }
+  });
+});
+
+describe("phraseMotifs with the bank", () => {
+  it("is the walk without the option and deterministic with it", () => {
+    const idiom = idiomOf({ id: "classical" });
+    const walk = (o?: { melody?: "walk" | "bank"; card?: string }) => phraseMotifs(idiom, 6, 1, lcg(3), () => 2, o as never);
+    expect(walk({ melody: "walk", card: "classical" })).toEqual(walk());
+    expect(walk({ melody: "bank", card: "classical" })).toEqual(walk({ melody: "bank", card: "classical" }));
+    expect(walk({ melody: "bank", card: "classical" })).not.toEqual(walk());
+  });
+  it("falls back to the walk for a card the bank does not know", () => {
+    const idiom = idiomOf({ id: "no-such" });
+    const a = phraseMotifs(idiom, 6, 1, lcg(3), () => 2, { melody: "bank", card: "no-such" });
+    expect(a.flat().every((d) => d !== null)).toBe(true);
+  });
+  it("keeps the properties of the walk: bounds, cadence ends, determinism", () => {
+    for (const c of CARDS) {
+      const idiom = idiomOf(c);
+      for (const hits of [2, 4, 6, 8]) {
+        const mk = () => phraseMotifs(idiom, hits, -1, lcg(hits * 7), () => idiom.start[0], { melody: "bank", card: c.id });
+        const m = mk();
+        expect(m).toEqual(mk());
+        expect(m.length).toBe(4);
+        m.forEach((bar, k) => {
+          expect(bar.length).toBe(hits);
+          expect(bar[hits - 1]).toBe(idiom.cadence[k]);
+          for (const d of bar) if (d !== null) {
+            expect(d).toBeGreaterThanOrEqual(LOW);
+            expect(d).toBeLessThanOrEqual(idiom.span);
+          }
+        });
+      }
+    }
+  });
+});
+
+describe("composePiece with the bank", () => {
+  const pool = ["IST", "ESB", "NAV", "DEL", "BOM", "DXB", "CAI", "LOS", "JFK", "MAD", "FCO", "NRT", "PEK", "GRU", "SIN", "ATH", "VIE", "LHR", "CDG", "MEX"].filter((a) => destinationOf(a));
+  const selections = () => {
+    const r = lcg(2710);
+    const out: ReturnType<typeof buildRoutes>[] = [];
+    while (out.length < 100) {
+      const n = 3 + Math.floor(r() * 6);
+      const set = new Set<string>();
+      while (set.size < n) set.add(pool[Math.floor(r() * pool.length)]);
+      const rs = buildRoutes([...set], ["IST", "ESB", "DEL"][Math.floor(r() * 3)]);
+      if (rs.length) out.push(rs);
+    }
+    return out;
+  };
+  it("makes finite, valid notes in 100 selections, with hook notes, and rests make no note", () => {
+    let differs = 0;
+    let fewer = 0;
+    for (const rs of selections()) {
+      for (const mode of ["visited", "wish"] as const) {
+        const bank = composePiece(mode, rs, { melody: "bank" });
+        const walk = composePiece(mode, rs);
+        expect(bank.notes.length).toBeGreaterThan(0);
+        for (const n of bank.notes) {
+          expect(Number.isFinite(n.t) && n.t >= 0).toBe(true);
+          expect(Number.isFinite(n.d) && n.d > 0).toBe(true);
+          expect(Number.isFinite(n.freq) && n.freq > 0).toBe(true);
+          expect(Number.isFinite(n.vel) && n.vel >= 0).toBe(true);
+          expect(n.route).toBeGreaterThanOrEqual(0);
+          expect(n.route).toBeLessThan(rs.length);
+        }
+        if (JSON.stringify(bank.notes) !== JSON.stringify(walk.notes)) differs++;
+        if (bank.notes.length < walk.notes.length) fewer++;
+      }
+    }
+    expect(differs).toBeGreaterThan(50);
+    expect(fewer).toBeGreaterThan(0); // the rests of the phrases take notes away
+  }, 120000);
+  it("defaults to the walk (no option equals melody: walk)", () => {
+    for (const rs of selections().slice(0, 15)) {
+      expect(JSON.stringify(composePiece("visited", rs))).toBe(JSON.stringify(composePiece("visited", rs, { melody: "walk" })));
+    }
+  });
+});

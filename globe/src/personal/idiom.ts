@@ -1,3 +1,5 @@
+import { pickPhrase } from "./melody-bank";
+
 /**
  * How a melody of a tradition moves, as a few numbers per genre card. These are HAND-SET judgements of the known character
  * of each tradition, written down as a table so that they can be tuned by listening: they are not measurements (the reference
@@ -130,11 +132,22 @@ export function walkMotif(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => nu
   return out;
 }
 
+/** which source of hook melodies: the seeded walk (default) or the baked bank of grammar-made phrases */
+export type MelodySource = "walk" | "bank";
+
 /**
  * The four bars of a phrase: each bar is a walk of the idiom that ends on its cadence degree; the third bar repeats the first exactly
  * (the return) when they end on the same degree. `startOf` draws the start degree of a bar.
+ * With `opts.melody === "bank"` (and `opts.card`, the card id) the phrase comes from the melody bank (`pickPhrase`) when the bank has
+ * an entry for the card and the number of hits: then a degree may be `null` (a rest); otherwise it is the walk.
  */
-export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number): number[][] {
+export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number, opts?: { melody?: "walk"; card?: string }): number[][];
+export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number, opts: { melody?: MelodySource; card?: string }): (number | null)[][];
+export function phraseMotifs(idiom: Idiom, hits: number, dir: 1 | -1, rnd: () => number, startOf: () => number, opts?: { melody?: MelodySource; card?: string }): (number | null)[][] {
+  if (opts?.melody === "bank" && opts.card) {
+    const bank = pickPhrase(opts.card, hits, idiom, dir, rnd, startOf());
+    if (bank) return bank;
+  }
   const make = (end: number): number[] => walkMotif(idiom, hits, dir, rnd, startOf(), end);
   const [c0, c1, c2, c3] = idiom.cadence;
   const A = make(c0);

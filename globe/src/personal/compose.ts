@@ -9,7 +9,7 @@ import { episodeAt, episodeCards } from "./episodes";
 import { journeyCard, journeyOf } from "./journey";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
 import { tuneFor, varyTune } from "./melodies";
-import { idiomOf, phraseMotifs } from "./idiom";
+import { idiomOf, phraseMotifs, type MelodySource } from "./idiom";
 import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
@@ -287,7 +287,7 @@ export function clipNotes(notes: PersonalNote[], from: number): PersonalNote[] {
  * `opts.tunes` (off by default) brings back the relatives of public-domain tunes for the hook: a nearly-known tune makes the ear
  * search for the original, so by default every hook is an original melody walked in the idiom of its route's own card.
  */
-export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: { tunes?: boolean } = {}): PersonalPiece {
+export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: { tunes?: boolean; melody?: MelodySource } = {}): PersonalPiece {
   const st = styleFor(mode, routes);
   const bpm = st.bpm;
   const style: PersonalStyle = { groove: st.groove, arp: st.arp, perc: st.perc, ensemble: st.ensemble, progression: st.progression, shift: st.shift, swing: st.swing, genre: st.genre, cards: [...new Set([planCards(mode, routes).main.id, ...planCards(mode, routes).perRoute.map((c) => c.id)])] };
@@ -501,7 +501,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
     // four bars: each a walk of the idiom of the route's own card, pulled by its direction, coming home on the idiom's cadence;
     // bar 3 repeats bar 1 only when the idiom's cadence gives them the same end degree (otherwise it is its own walk)
-    return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2);
+    return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "walk", card: plan.perRoute[i].id });
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
   const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);
@@ -600,6 +600,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         // in the verse the hook only answers (two bars of four); in the chorus it is there all the time
         if (section === "verse" && b % 4 >= 2) continue;
         const m = motifs[i]![b % 4];
+        const firstDegree = m.find((d): d is number => d !== null) ?? 0; // the answer turns the motif around its first note that sounds
         let hi = 0;
         let lastBase = Number.NaN; // the last degree of the bar's hook line, without the lift of the altitude
         const reply = answering(section, b) && occ[i] === 0 && i === callerIdx;
@@ -610,16 +611,20 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
             const ai = answerer;
             const lift = Math.round((altitudeFt(phaseAt(ai, b, sl.start / 4), routes[ai].distKm) / 39000) * arcOf[i]);
             const sc = scaleOf[i];
-            const total = 2 * m[0] - m[hi % m.length] + lift + sc.length;
+            const src = m[hi % m.length];
             hi++;
+            if (src === null) return; // a rest of the hook is a rest of the answer
+            const total = 2 * (m[0] ?? firstDegree) - src + lift + sc.length;
             const semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
             push(ai, t0 + sl.start * beat, sl.len * beat * 0.9, voiceOf[ai], hz(semis), vs(0.55), phaseAt(ai, b, sl.start / 4));
             return;
           }
           const lift = Math.round((altitudeFt(phaseAt(i, b, sl.start / 4), r.distKm) / 39000) * arcOf[i]);
           const sc = scaleOf[i];
-          const total = m[hi % m.length] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
-          hi++;
+          const deg = m[hi % m.length];
+          hi++; // a rest (null) has no note, but the index keeps stepping through the motif
+          if (deg === null) return;
+          const total = deg + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           lastBase = total - lift;
           let semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
           // the strong places of the groove rest on a chord tone
