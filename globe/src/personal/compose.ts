@@ -14,6 +14,7 @@ import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
 import { applyGestures } from "./gestures";
+import { cutoffOf, heightOf, velScale, wetShift } from "./altitude-feel";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -43,6 +44,8 @@ export interface PersonalNote {
   glide?: number;
   /** a hidden gesture note of 0.2 s or less: the sampler lets it ring out for 0.25 s only (many of them sound together on a phone) */
   short?: boolean;
+  /** the cutoff (Hz) of a low-pass on this note, from the altitude of the flight (altitude-feel.ts); absent: the instrument's own filter. Drawn melodic notes only */
+  bright?: number;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -337,7 +340,15 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     return x;
   };
   const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5): void => {
-    const note: PersonalNote = { t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt: altitudeFt(p, routes[i].distKm), pan: panFor[i], wet: wetFor[i] };
+    const alt = altitudeFt(p, routes[i].distKm);
+    const note: PersonalNote = { t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt, pan: panFor[i], wet: wetFor[i] };
+    // the altitude of the flight: louder, brighter and roomier up high (small; the percussion keeps its level and its room)
+    if (!["kick", "backbeat", "hat"].includes(role[i])) {
+      const h = heightOf(alt, routes[i].distKm);
+      note.vel = clamp(vel * velScale(h), 0.05, 1);
+      note.wet = clamp(wetFor[i] + wetShift(h), 0, 0.5);
+      note.bright = Math.round(cutoffOf(h));
+    }
     notes.push(note);
     roleOfNote.set(note, role[i]);
   };

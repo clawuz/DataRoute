@@ -57,6 +57,8 @@ export interface SampleManifest {
 /** the ramp of a per-note glide (s) */
 const NOTE_GLIDE_SEC = 0.08;
 
+/** the Q of the altitude low-pass of a note (altitude-feel.ts) */
+const BRIGHT_Q = 0.6;
 /** how long a short gesture note rings after its end (s) */
 const SHORT_TAIL_SEC = 0.25;
 
@@ -99,7 +101,7 @@ export interface Sampler {
   ensure(names: string[], timeoutMs?: number): Promise<void>;
   has(instrument: string): boolean;
   /** schedules a note; false when the instrument is not loaded (play the synth instead) */
-  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void, glide?: number, short?: boolean): boolean;
+  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void, glide?: number, short?: boolean, cutoffHz?: number): boolean;
   dispose(): void;
 }
 
@@ -250,7 +252,7 @@ export function createSampler(ctx: AudioContext): Sampler {
       }
     },
     has: (instrument) => defs.has(instrument),
-    play(dest, instrument, freq, vel, when, durSec, onEnd, glide, short) {
+    play(dest, instrument, freq, vel, when, durSec, onEnd, glide, short, cutoffHz) {
       const inst = defs.get(instrument);
       if (!inst) return false;
       let f = freq;
@@ -280,6 +282,7 @@ export function createSampler(ctx: AudioContext): Sampler {
       }
       let out: AudioNode = g;
       let filt: BiquadFilterNode | null = null;
+      let bright: BiquadFilterNode | null = null;
       if (inst.filter) {
         filt = ctx.createBiquadFilter();
         filt.type = inst.filter.type;
@@ -289,6 +292,20 @@ export function createSampler(ctx: AudioContext): Sampler {
         filt.connect(g);
         out = filt;
       }
+      if (cutoffHz !== undefined && !short) {
+        // the brightness of the altitude (altitude-feel.ts): an instrument's own low-pass takes the lower cutoff of the two,
+        // else a low-pass of its own is added before the gain
+        if (filt && inst.filter?.type === "lowpass") filt.frequency.value = Math.min(inst.filter.freq, cutoffHz);
+        else {
+          const lp = ctx.createBiquadFilter();
+          lp.type = "lowpass";
+          lp.frequency.value = cutoffHz;
+          lp.Q.value = BRIGHT_Q;
+          lp.connect(out);
+          bright = lp;
+          out = lp;
+        }
+      }
       g.connect(dest);
       const layers = inst.layers ?? [{ detune: 0, gain: 1 }];
       const stopAt = hold + tail + 0.1;
@@ -297,6 +314,7 @@ export function createSampler(ctx: AudioContext): Sampler {
         if (--live > 0) return;
         g.disconnect();
         filt?.disconnect();
+        bright?.disconnect();
         onEnd?.();
       };
       for (const L of layers) {

@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import { CARDS, planCards, type CardPlan, type GenreCard } from "../src/personal/genres";
 import { EPISODE_CAP, VERSE_SHORT_BLOCK, episodeAt, episodeCards } from "../src/personal/episodes";
 import { buildRoutes } from "../src/personal/routes";
-import { composePiece } from "../src/personal/compose";
+import { composePiece, type PersonalNote } from "../src/personal/compose";
+import { heightOf, velScale } from "../src/personal/altitude-feel";
 import { routeHash } from "../src/audio/theory";
 import destinations from "../src/personal/destinations.json";
+
+// the altitude of the flight scales the loudness of a note (altitude-feel.ts): the spotlight tests compare the velocity without it
+const plain = (n: PersonalNote, distKm: number): number => n.vel / velScale(heightOf(n.alt, distKm));
 
 const card = (id: string): GenreCard => CARDS.find((c) => c.id === id)!;
 const plan = (main: string, per: string[]): CardPlan => ({ main: card(main), home: card(main), perRoute: per.map(card) });
@@ -83,34 +87,34 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["~ESB,ASR,KYA", "visited", 249820972],
-  ["~TZX,RZV,OGU", "wish", 2949638967],
-  ["~VAN,ERZ,ERC", "wish", 4087635096],
-  ["~AYT,GZP,ADA", "visited", 1185520849],
+  ["~ESB,ASR,KYA", "visited", 581039481],
+  ["~TZX,RZV,OGU", "wish", 2362204215],
+  ["~VAN,ERZ,ERC", "wish", 1141213681],
+  ["~AYT,GZP,ADA", "visited", 2433053863],
   ["ESB", "visited", 2163962449],
   ["LHR", "wish", 469582247],
-  ["~ADB,BJV,DNZ", "wish", 1388097089],
+  ["~ADB,BJV,DNZ", "wish", 545711903],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 2167843785], // 5 routes
-  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 3884413850], // 5 routes
-  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 4178238282], // 5 routes
-  ["ALA,CIT,GUW,HSA", "", "visited", 1474250778], // 6 routes
-  ["IKA,MHD,OMH,SYZ", "", "wish", 3848817211], // 6 routes
-  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3002349332], // 7 routes
-  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 2612362439], // 8 routes
-  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 4024964243], // 8 routes
+  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 1011714705], // 5 routes
+  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 3258374653], // 5 routes
+  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 2068425685], // 5 routes
+  ["ALA,CIT,GUW,HSA", "", "visited", 419198511], // 6 routes
+  ["IKA,MHD,OMH,SYZ", "", "wish", 936396775], // 6 routes
+  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3374166971], // 7 routes
+  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 4055747788], // 8 routes
+  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 1789287089], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 1574566325],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 4290603462],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 2065709369],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 975746057],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 1357018070],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3314495757],
 ];
 // a leading "~" in places: a journey without home (the first place is where the trip starts)
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> =>
@@ -281,11 +285,11 @@ describe("episodes in a piece: the voices and the groove follow the episode card
     let checked = 0;
     for (const role2 of ["pad", "pluck"] as Role[]) {
       const r = first(role2);
-      const home = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + k)).map((n) => n.vel));
+      const home = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + k)).map((n) => plain(n, rs[r].distKm)));
       for (let blk = 1; blk < 4; blk++) {
         const c = blockCard(8 + blk * 4);
         if (!c) continue;
-        const mean = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + blk * 4 + k)).map((n) => n.vel));
+        const mean = meanOf([0, 1, 2, 3].flatMap((k) => barNotes(r, 8 + blk * 4 + k)).map((n) => plain(n, rs[r].distKm)));
         const want = pl.perRoute[r] === c ? SPOT_ON : SPOT_OFF;
         expect(mean / home, `${role2} in block ${blk}`).toBeGreaterThan(want - 0.06);
         expect(mean / home, `${role2} in block ${blk}`).toBeLessThan(want + 0.06);
@@ -303,7 +307,7 @@ describe("episodes in a piece: a tune that runs on from a home block into an epi
   const role = rolesOf(rs);
   const bar = 240 / p.bpm;
   const r = role.indexOf("hook");
-  const mean = (a: number, b: number): number => meanOf(p.notes.filter((n) => n.route === r && n.show !== false && n.t >= a * bar - 0.05 && n.t < b * bar - 0.05).map((n) => n.vel));
+  const mean = (a: number, b: number): number => meanOf(p.notes.filter((n) => n.route === r && n.show !== false && n.t >= a * bar - 0.05 && n.t < b * bar - 0.05).map((n) => plain(n, rs[r].distKm)));
   it("has a tune and an episode in the second block of the verse", () => {
     expect(p.style.tune).toBeTruthy();
     expect(episodeAt(12, 8, episodeCards(pl)).card).toBeTruthy();

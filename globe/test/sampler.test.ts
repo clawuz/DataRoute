@@ -128,7 +128,8 @@ describe("sampler: use and ensure", () => {
 
 describe("sampler: a per-note glide", () => {
   type Ev = [string, number, number?];
-  const setup = async (glide?: { semitones: number; sec: number }) => {
+  const setup = async (glide?: { semitones: number; sec: number }, filter?: { type: string; freq: number; q?: number }) => {
+    const filters: { type: string; frequency: { value: number }; Q: { value: number } }[] = [];
     const detunes: Ev[][] = [];
     const param = (log: Ev[]) => ({
       value: 0,
@@ -145,6 +146,11 @@ describe("sampler: a per-note glide", () => {
     const ctx = {
       decodeAudioData: async () => ({ duration: 2 }) as unknown as AudioBuffer,
       createGain: gain,
+      createBiquadFilter: () => {
+        const f = { type: "", frequency: { value: 0 }, Q: { value: 0 }, gain: { value: 0 }, connect() {}, disconnect() {} };
+        filters.push(f);
+        return f;
+      },
       createBufferSource: () => {
         const log: Ev[] = [];
         detunes.push(log);
@@ -153,12 +159,12 @@ describe("sampler: a per-note glide", () => {
     } as unknown as AudioContext;
     vi.stubGlobal("fetch", async (url: string) =>
       url.endsWith("manifest.json")
-        ? { ok: true, json: async () => ({ name: "t", instruments: { G: { zones: [{ root: 60, lo: 0, hi: 127, file: "g.mp3" }], layers: [{ detune: 7, gain: 1 }], glide } } }) }
+        ? { ok: true, json: async () => ({ name: "t", instruments: { G: { zones: [{ root: 60, lo: 0, hi: 127, file: "g.mp3" }], layers: [{ detune: 7, gain: 1 }], glide, filter } } }) }
         : { ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
     const s = createSampler(ctx);
     await s.use(["/x/manifest.json"]);
     await s.ensure(["G"]);
-    return { s, detunes, gainLogs };
+    return { s, detunes, gainLogs, filters };
   };
   afterEach(() => vi.unstubAllGlobals());
 
@@ -180,6 +186,34 @@ describe("sampler: a per-note glide", () => {
     expect(detunes[0]).toEqual([["set", 7 - 300, 1], ["ramp", 7, 1.2]]);
     s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
     expect(detunes[1]).toEqual([["set", 7 - 100, 1], ["ramp", 7, 1.2]]);
+  });
+  it("a note with a cutoff gets a low-pass of that frequency; without it no filter is made", async () => {
+    const { s, filters } = await setup();
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
+    expect(filters.length).toBe(0);
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, undefined, undefined, 3000);
+    expect(filters.length).toBe(1);
+    expect(filters[0].type).toBe("lowpass");
+    expect(filters[0].frequency.value).toBe(3000);
+    expect(filters[0].Q.value).toBeCloseTo(0.6, 9);
+  });
+  it("an instrument with its own low-pass takes the lower cutoff and gets no second filter", async () => {
+    const { s, filters } = await setup(undefined, { type: "lowpass", freq: 2000 });
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, undefined, undefined, 5000);
+    expect(filters.length).toBe(1);
+    expect(filters[0].frequency.value).toBe(2000);
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, undefined, undefined, 1500);
+    expect(filters[1].frequency.value).toBe(1500);
+  });
+  it("an instrument with another kind of filter keeps it and gets the low-pass besides", async () => {
+    const { s, filters } = await setup(undefined, { type: "peaking", freq: 900 });
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, undefined, undefined, 4000);
+    expect(filters.map((f) => f.type).sort()).toEqual(["lowpass", "peaking"]);
+  });
+  it("a short note never gets the filter", async () => {
+    const { s, filters } = await setup();
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 0.1, undefined, undefined, true, 3000);
+    expect(filters.length).toBe(0);
   });
   it("a short (hidden gesture) note releases in 0.25 s; others keep the recorded tail", async () => {
     const { s, gainLogs } = await setup();

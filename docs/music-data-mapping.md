@@ -24,6 +24,9 @@ Existing share links sound different after the music phase A series (pan, humani
 | altitude along the flight | pitch of the line | a climb rises, a descent falls | `compose.ts`, `flight.ts` |
 | east / west direction | direction of the melody's walk | travelling east rises | `compose.ts` |
 | altitude along the flight | the large contour of the hook: it rises on take-off, plateaus in the cruise, falls on landing; the size is `round(altitude / 39000 × arc)` scale degrees, `arc` being the card's | the melody is the flight | `compose.ts`, `idiom.ts` |
+| altitude along the flight (height `h` = altitude / the route's cruise) | loudness: `vel × (0.88 + 0.24 h)`, 12% softer on the ground, 12% louder at cruise (drums and drone keep their level) | take-off swells, cruise is full, landing settles: the breath of the flight | `altitude-feel.ts`, `compose.ts` |
+| altitude along the flight | brightness: a per-note low-pass at `1400 + 7600 h^1.2` Hz (Q 0.6) on drawn melodic notes of the sampled instruments | close to the ground the sound is warm and near, up high it is open and airy | `altitude-feel.ts`, `compose.ts`, `sampler.ts` |
+| altitude along the flight | room: the reverb send of a note moves by `0.10 (h − 0.5)` (clamped to 0…0.5; hidden gesture notes copy their source) | high up it is wider, the ground is close | `altitude-feel.ts`, `compose.ts`, `space.ts` |
 | east / west direction of the hook route | which way the motif's walk tends to go (a weaker pull than the tradition's own direction) | travelling east rises | `compose.ts`, `idiom.ts` |
 | destination region (the card of the hook route) | the idiom: stepwise or leaping, how much it repeats, the direction of the line (seyir), range, start degrees, the degrees the bars end on | the melody sounds like where it goes | `idiom.ts`, `genres.ts` |
 | destination region | instrument, rhythm figure, melody scale | where you go sounds like there | `genres.ts`, `world-voices.ts` |
