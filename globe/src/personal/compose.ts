@@ -13,6 +13,7 @@ import { idiomOf, phraseMotifs } from "./idiom";
 import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
+import { applyGestures } from "./gestures";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -656,10 +657,42 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     tight: (x) => ["kick", "backbeat", "hat"].includes(roleOfNote.get(x) ?? ""),
     skip: (x) => roleOfNote.get(x) === "drone",
   });
-  // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins
+  // each instrument is played with its own gestures (a strum, a tremolo, a double stop, a walking bass, a tanpura cycle, a glide):
+  // after humanize, so the spacing of a strum is not disturbed. The notes it adds are hidden (show: false), like the drone.
+  const sources = new Set(notes);
+  const gestured = applyGestures(notes, {
+    bar,
+    beat,
+    cardOf: (route) => plan.perRoute[route].id,
+    roleOf: (x) => roleOfNote.get(x) ?? "",
+    // the chord of a bar, as semitones above the key root (the key's lift in the chorus included)
+    chordAt: (b) => {
+      const c = popProg[b % popProg.length];
+      return { root: c.root - KEY_ROOT + liftAt(b, chorusFirst, chorusLen, keyLift), third: c.third };
+    },
+    keyRoot: KEY_ROOT + st.shift,
+    hz,
+  });
+  // roles of the notes it made: a patched copy of a drawn note (a glide) has its source's role; an added (hidden) note takes the
+  // role of the note it follows in the result, which is its source
+  const keyOf = (x: PersonalNote): string => `${x.route}|${x.t}|${String(x.instrument)}`;
+  const drawnRole = new Map<string, string>();
+  for (const x of sources) if (x.show !== false) drawnRole.set(keyOf(x), roleOfNote.get(x) ?? "");
+  let srcRole = "";
+  for (const x of gestured) {
+    if (sources.has(x)) srcRole = roleOfNote.get(x) ?? "";
+    else {
+      if (x.show !== false) srcRole = drawnRole.get(keyOf(x)) ?? srcRole;
+      roleOfNote.set(x, srcRole);
+    }
+    x.freq = fitPitch(x.freq, x.instrument); // a gesture may reach past the instrument's range: back in by octaves
+  }
+  notes.splice(0, notes.length, ...gestured.filter((x) => x.show !== false || sources.has(x) || x.t < END_T + 1.5));
+  notes.sort((a, b) => a.t - b.t);
+  // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins (hidden notes are not drawn)
   const byRoute = new Map<number, PersonalNote[]>();
-  for (const x of notes) if (roleOfNote.get(x) !== "drone") byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
-  for (const x of notes) if (roleOfNote.get(x) === "drone") x.drawDur = x.d;
+  for (const x of notes) if (roleOfNote.get(x) !== "drone" && x.show !== false) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
+  for (const x of notes) if (roleOfNote.get(x) === "drone" || x.show === false) x.drawDur = x.d;
   for (const list of byRoute.values()) {
     list.sort((a, b) => a.t - b.t);
     list.forEach((x, k) => {

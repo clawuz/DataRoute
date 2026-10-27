@@ -133,6 +133,22 @@ kept for a possible later exact quotation). The hook of a hook route is built in
 - **The numbers of the idioms are hand-set judgements** of the known character of each tradition, not measurements (the reference
   statistics hold scales and rhythms, not melodic intervals). They are meant to be tuned by listening: the table is the one place to do it.
 
+## Gestures
+
+After the notes are made and humanized, `applyGestures` (`personal/gestures.ts`, wired at the end of `composePiece`) plays each instrument the way it is played. The notes it adds are hidden (`show: false`): they sound but are not drawn on the globe or in the music box, and they do not change how long a drawn note is drawn. Every number is a hand-set judgement to tune by ear.
+
+| Instrument | Gesture | Why it is heard that way | Where |
+|---|---|---|---|
+| kemençe (hook / melody notes of 0.2 s or more) | a second string a fourth below (double stop), a grace note a tone above on each beat, a held open tonic at the start of each bar | the bow touches two strings, and the open string drones under the horon | `gestures.ts` |
+| saz, bağlama | on strong beats two open strings struck just after the note (şelpe); a long hook note slides up from a semitone low on a third of the notes | the plectrum sweeps across strings; the left hand slides into notes | `gestures.ts` |
+| kanun, santur (long hook / melody notes) | a tremolo of quick repeated hits over the note, the first hit with an octave above | two plectra on a plucked string cannot sustain, so they repeat | `gestures.ts` |
+| nylon guitar (plucked role) | a chord strum on the beat (spread by card: flamenco 55 ms with five notes, bossa and samba 18 ms, others 25 ms), down on beats 1 and 3, up on 2 and 4 | the right hand brushes the strings, it does not hit them at once | `gestures.ts` |
+| upright bass | in a jazz card a walking line of four quarter notes a bar (root, fifth, third, an approach to the next root); in country, bossa, samba, salsa and tango the second bass note of a bar is the fifth | jazz bass walks the chord; folk and Latin bass alternates root and fifth | `gestures.ts` |
+| tanpura (the drone) | a cycle of strokes every beat: Pa, high Sa, high Sa, low Sa | the four strings are plucked one after another, never struck together | `gestures.ts` |
+| ney | notes slide up from a little below, deeper (two semitones) at the start of a phrase after a breath | the breath finds the pitch, it does not start on it | `gestures.ts` |
+
+Notes a gesture adds are brought into the instrument's range by octaves (`compose.ts`), take the role of their source note, and are left out of the `drawDur` pass. The sampler and the player glide a note that carries `glide` (semitones below its pitch).
+
 ## How to add a mapping
 
 1. **Data**: name the field the site already has (a route field, the mode, the home, the places). If it is not there, it does not go in yet.

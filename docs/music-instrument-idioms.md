@@ -50,6 +50,19 @@ quieter grace note.
 | **Accordion** (ACCORDION) | Musette waltz: bass note on 1, chord on 2 and 3 ○; tango: marcato ○ | Oom-pah-pah (bass, chord, chord) |
 | **Bagpipe / tulum** (BAGPIPE, BAGPIPE_DRONE) | A continuous drone under a chanter that never stops; grace-note ornaments separate repeated notes ○ | Constant drone, melody with a grace note before every repeated note |
 
+## 1b. Status (2026-10-27): the first gestures are built
+
+`personal/gestures.ts`, applied at the end of `composePiece`. Added notes are hidden (`show: false`); see "Gestures" in `music-data-mapping.md`.
+
+- **Kemençe**: built: double stop a fourth below, grace note a tone above on the beat, held open tonic each bar. Not built: the fast horon bow articulation.
+- **Bağlama / saz**: built: şelpe on strong beats, glide into long hook notes. Not built: the regional stroke direction.
+- **Kanun, santur**: built: tremolo on long notes with an octave on the first hit. Not built: maqam-specific fast passages.
+- **Nylon guitar (ud, flamenco, bossa, samba)**: built: a card-spread strum on the beat (down on 1 and 3, up on 2 and 4). Not built: rasgueado patterns, picado, golpe, the p-i-m-a arpeggio.
+- **Upright bass**: built: the jazz walking line, the root-fifth alternation in country, bossa, samba, salsa and tango. Not built: the tango marcato and arrastre.
+- **Tanpura**: built: the four-stroke cycle (Pa, Sa, Sa, low Sa). Not built: the jawari buzz.
+- **Ney**: built: slides into notes, deeper at phrase starts. Not built: delayed vibrato.
+- Not started: fiddle double stops, tabla theka, gamelan colotomic cycle, mbira, accordion, string trills, form templates.
+
 ## 2. Forms: what a piece of each tradition is shaped like
 
 | Tradition | Form | What changes in the composer |
