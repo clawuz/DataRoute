@@ -91,7 +91,8 @@ GAPS = {
 FIELDS = "id,name,username,license,duration,avg_rating,num_ratings,tags,description,previews,url"
 
 def search(q, ln):
-    p = {"query": q, "filter": f'license:("Creative Commons 0" OR "Attribution") duration:[0.2 TO {ln}]',
+    lic = "" if "all" in sys.argv else 'license:("Creative Commons 0" OR "Attribution") '  # `all`: every licence (NC and unclear ones are flagged in the output)
+    p = {"query": q, "filter": f'{lic}duration:[0.2 TO {ln}]',
          "sort": "rating_desc", "page_size": 30, "fields": FIELDS, "token": TOKEN}
     u = "https://freesound.org/apiv2/search/text/?" + urllib.parse.urlencode(p)
     for wait in (0, 20, 40, 60):  # Freesound allows ~60 requests a minute: pace, and back off on 429
@@ -111,12 +112,13 @@ def main():
             for r in search(q, 12):
                 seen.setdefault(r["id"], r)
         out[inst] = sorted(seen.values(), key=lambda r: (-(r.get("avg_rating") or 0), -(r.get("num_ratings") or 0)))
-    path = next((a for a in sys.argv[1:] if a not in ("world", "west", "gaps")), None) or "freesound_candidates.json"
+    path = next((a for a in sys.argv[1:] if a not in ("world", "west", "gaps", "all")), None) or "freesound_candidates.json"
     json.dump(out, open(path, "w"), indent=1)
     for inst, rs in out.items():
         print(f"\n## {inst}: {len(rs)} candidates")
         for r in rs[:12]:
-            lic = "CC0" if "Zero" in r["license"] or "publicdomain" in r["license"] or r["license"].endswith("/zero/1.0/") else "CC-BY"
-            print(f"  {r['id']:>8} {lic:5} {r['duration']:5.1f}s ★{(r.get('avg_rating') or 0):.1f}({r.get('num_ratings')}) {r['username'][:18]:18} {r['name'][:46]:46} [{', '.join(r['tags'][:5])}]")
+            L = r["license"]
+            lic = "CC0" if "Zero" in L or "publicdomain" in L or L.endswith("/zero/1.0/") else "CC-BY" if "/by/" in L else "NC" if "/by-nc/" in L or "nc" in L.split("/")[-3:-2] else "SAMPLING+" if "sampling" in L else "OTHER"
+            print(f"  {r['id']:>8} {lic:9} {r['duration']:5.1f}s ★{(r.get('avg_rating') or 0):.1f}({r.get('num_ratings')}) {r['username'][:18]:18} {r['name'][:46]:46} [{', '.join(r['tags'][:5])}]")
 
 main()
