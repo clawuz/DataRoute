@@ -87,16 +87,16 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
   ["~ESB,ASR,KYA", "visited", 581039481],
-  ["~TZX,RZV,OGU", "wish", 2362204215],
+  ["~TZX,RZV,OGU", "wish", 1153205930],
   ["~VAN,ERZ,ERC", "wish", 1141213681],
-  ["~AYT,GZP,ADA", "visited", 2433053863],
+  ["~AYT,GZP,ADA", "visited", 248061658],
   ["ESB", "visited", 2163962449],
   ["LHR", "wish", 469582247],
-  ["~ADB,BJV,DNZ", "wish", 545711903],
+  ["~ADB,BJV,DNZ", "wish", 4267309798],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
@@ -104,11 +104,11 @@ const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
   ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 1011714705], // 5 routes
   ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 3258374653], // 5 routes
   ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 2068425685], // 5 routes
-  ["ALA,CIT,GUW,HSA", "", "visited", 419198511], // 6 routes
+  ["ALA,CIT,GUW,HSA", "", "visited", 2450411524], // 6 routes
   ["IKA,MHD,OMH,SYZ", "", "wish", 936396775], // 6 routes
-  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3374166971], // 7 routes
+  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3171253556], // 7 routes
   ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 4055747788], // 8 routes
-  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 1789287089], // 8 routes
+  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 1565536338], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
@@ -168,7 +168,9 @@ describe("episodes in a piece: what changes in the verse", () => {
   });
   it("ends every verse block with a drum fill: a kick on beat 3 and a backbeat on beat 3.5", () => {
     const beat = bar / 4;
-    const fill = (b: number): number => inBars(b, b + 1).filter((n) => Math.abs(((n.t - b * bar) / beat) - 3.5) < 0.05 && n.d < beat * 0.3).length;
+    // the drum fill is played by the drums: a flight run of the hook (altitude-feel.ts) also has a short note at beat 3.5
+    const hooks = rolesOf(routes);
+    const fill = (b: number): number => inBars(b, b + 1).filter((n) => hooks[n.route] !== "hook" && Math.abs(((n.t - b * bar) / beat) - 3.5) < 0.05 && n.d < beat * 0.3).length;
     expect([11, 15, 19, 23].filter((b) => fill(b) > 0).length).toBeGreaterThanOrEqual(2);
     expect(fill(9) + fill(10)).toBe(0);
   });

@@ -14,7 +14,7 @@ import { panOf, wetOf } from "./space";
 import { liftAt, liftFor } from "./lift";
 import { humanize, looseness, timeZonesSpanned } from "./humanize";
 import { applyGestures } from "./gestures";
-import { cutoffOf, heightOf, velScale, wetShift } from "./altitude-feel";
+import { RUN_CLIMB_BELOW, RUN_FALL_ABOVE, RUN_VEL, cutoffOf, flightRun, heightOf, velScale, wetShift } from "./altitude-feel";
 export { altitudeFt, cruiseFt };
 
 /** one note of a personal piece; `t` is seconds from the start of the piece */
@@ -589,6 +589,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         if (section === "verse" && b % 4 >= 2) continue;
         const m = motifs[i]![b % 4];
         let hi = 0;
+        let lastBase = Number.NaN; // the last degree of the bar's hook line, without the lift of the altitude
         const reply = answering(section, b) && occ[i] === 0 && i === callerIdx;
         g.slots.forEach((sl, k) => {
           if (!sl.hit) return;
@@ -607,6 +608,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
           const sc = scaleOf[i];
           const total = m[hi % m.length] + lift + (section === "chorus" ? sc.length : 0) + (occ[i] > 0 ? 2 : 0);
           hi++;
+          lastBase = total - lift;
           let semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
           // the strong places of the groove rest on a chord tone
           if (sl.accent >= 1.1 || hi === 1) {
@@ -622,6 +624,15 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
           const nextRest = g.slots[k + 1] && !g.slots[k + 1].hit ? g.slots[k + 1].len : 0;
           push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95 * (0.8 + 0.4 * rk), inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
         });
+        // the flight runs (nağme): the last beat of a bar in the climb rises, one in the descent falls, when nothing else sounds there
+        const dir: 1 | -1 | 0 = phaseAt(i, b, 0) < RUN_CLIMB_BELOW ? 1 : phaseAt(i, b, 1) > RUN_FALL_ABOVE ? -1 : 0;
+        if (dir !== 0 && Number.isFinite(lastBase) && !reply && !g.slots.some((sl) => sl.hit && sl.start >= 3)) {
+          const sc = scaleOf[i];
+          flightRun(dir, lastBase + Math.round((altitudeFt(phaseAt(i, b, 0.75), r.distKm) / 39000) * arcOf[i])).forEach((total, k) => {
+            const semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
+            push(i, t0 + (3 + k * 0.25) * beat, beat * 0.25 * 0.95, inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * RUN_VEL), phaseAt(i, b, (3 + k * 0.25) / 4));
+          });
+        }
       } else if (rl === "pluck") {
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
         for (let e = 0; e < 8; e++) {

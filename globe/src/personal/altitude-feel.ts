@@ -28,3 +28,16 @@ export const cutoffOf = (h: number): number => CUT_LOW + CUT_SPAN * clamp(h, 0, 
 
 /** how much the reverb of a note moves at height `h` (−0.05 … +0.05) */
 export const wetShift = (h: number): number => WET_SPAN * (clamp(h, 0, 1) - 0.5);
+
+/**
+ * The flight run (nağme): four scale degrees that climb (`direction` 1) or fall (−1) from the last degree of a bar's hook line,
+ * by 1, 2, 3, 4 degrees: a take-off and a landing the ear can follow.
+ */
+export const flightRun = (direction: 1 | -1, lastTotal: number): number[] => [1, 2, 3, 4].map((k) => lastTotal + direction * k);
+
+/** the run climbs while the phrase of the route begins its climb (phase at the start of the bar below this) */
+export const RUN_CLIMB_BELOW = 0.18;
+/** the run falls while the phrase ends its descent (phase at the end of the bar above this) */
+export const RUN_FALL_ABOVE = 0.82;
+/** the velocity of a run note against the hook's */
+export const RUN_VEL = 0.8;

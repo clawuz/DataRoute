@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cutoffOf, heightOf, velScale, wetShift } from "../src/personal/altitude-feel";
+import { cutoffOf, flightRun, heightOf, velScale, wetShift } from "../src/personal/altitude-feel";
 import { composePiece, type PersonalNote } from "../src/personal/compose";
 import { cruiseFt } from "../src/personal/flight";
 import { buildRoutes } from "../src/personal/routes";
@@ -126,5 +126,80 @@ describe("altitude feel: composed pieces", { timeout: 60000 }, () => {
         if (x.show === false) expect(x.bright).toBeUndefined();
       }
     }
+  });
+});
+
+describe("the flight runs (nağme)", { timeout: 60000 }, () => {
+  it("flightRun: four degrees, 1…4 away from the last one, in the direction of the flight", () => {
+    expect(flightRun(1, 3)).toEqual([4, 5, 6, 7]);
+    expect(flightRun(-1, 3)).toEqual([2, 1, 0, -1]);
+  });
+
+  /** the runs of a piece: four drawn notes of a route, a sixteenth apart, filling the last beat of a bar */
+  const runsOf = (places: string[], mode: "visited" | "wish" = "visited", home = "IST") => {
+    const rs = buildRoutes(places, home);
+    const p = composePiece(mode, rs);
+    const bar = 240 / p.bpm;
+    const beat = bar / 4;
+    const n = rs.length;
+    const order = rs.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
+    const phraseBars = rs.map((_, i) => Math.min(16, Math.max(4, Math.round(4 + 12 * (n < 2 ? 0.5 : 1 - order.findIndex((o) => o.i === i) / (n - 1))))));
+    const runs: { route: number; bar: number; notes: PersonalNote[]; start: number; end: number }[] = [];
+    const sectionOf = (t: number): string => p.sections.find((s) => t >= s.start - 1e-6 && t < s.end)?.name ?? "";
+    const lastBeat = new Map<string, PersonalNote[]>();
+    for (const x of p.notes) {
+      if (x.show === false) continue;
+      const b = Math.floor((x.t + 0.05) / bar);
+      if (x.t < b * bar + 3 * beat - 0.05) continue;
+      const k = `${x.route}|${b}`;
+      (lastBeat.get(k) ?? lastBeat.set(k, []).get(k)!).push(x);
+    }
+    for (const [k, list] of lastBeat) {
+      const [route, b] = k.split("|").map(Number);
+      list.sort((x, y) => x.t - y.t);
+      const run = list.length === 4 && list.every((x, j) => j === 0 || Math.abs(x.t - list[j - 1].t - beat / 4) < 0.05) && list.every((x) => x.d < beat * 0.3);
+      if (!run) continue;
+      runs.push({ route, bar: b, notes: list, start: (b % phraseBars[route]) / phraseBars[route], end: ((b % phraseBars[route]) + 1) / phraseBars[route] });
+    }
+    runs.sort((x, y) => x.bar - y.bar || x.route - y.route);
+    return { p, rs, runs, bar, sectionOf };
+  };
+
+  it("a piece with a hook route has rising runs in climbing bars and falling runs in descending bars", () => {
+    const { runs } = runsOf(["TZX", "RZV", "OGU"]);
+    expect(runs.length).toBeGreaterThan(0);
+    const rising = runs.filter((r) => r.start < 0.18);
+    const falling = runs.filter((r) => r.end > 0.82);
+    expect(rising.length).toBeGreaterThan(0);
+    expect(falling.length).toBeGreaterThan(0);
+    expect(rising.length + falling.length).toBe(runs.length);
+    // each step goes the right way up to an octave: the fold into the range of the instrument (`fit`) may move a note by octaves
+    const step = (a: PersonalNote, b: PersonalNote): number => (((12 * Math.log2(b.freq / a.freq)) % 12) + 12) % 12;
+    for (const r of rising) for (let j = 1; j < 4; j++) expect(step(r.notes[j - 1], r.notes[j]), `rising bar ${r.bar}`).toBeLessThan(6);
+    for (const r of falling) for (let j = 1; j < 4; j++) expect(step(r.notes[j - 1], r.notes[j]), `falling bar ${r.bar}`).toBeGreaterThan(6);
+    // and most runs are plain monotone (no fold)
+    const plain = (r: (typeof runs)[number], up: boolean): boolean => r.notes.every((x, j) => j === 0 || (up ? x.freq > r.notes[j - 1].freq : x.freq < r.notes[j - 1].freq));
+    expect(rising.filter((r) => plain(r, true)).length).toBeGreaterThan(rising.length / 2);
+    expect(falling.filter((r) => plain(r, false)).length).toBeGreaterThan(falling.length / 2);
+  });
+  it("a run is drawn and comes from one route", () => {
+    const { runs, p } = runsOf(["TZX", "RZV", "OGU"]);
+    for (const r of runs) for (const x of r.notes) {
+      expect(x.show).not.toBe(false);
+      expect(x.route).toBe(r.route);
+      expect(x.drawDur!).toBeGreaterThan(0);
+    }
+    expect(p.notes.length).toBeLessThanOrEqual(6000);
+  });
+  it("no run in the bars where the hook answers (call and response): the odd bars of the chorus", () => {
+    const { runs, p, sectionOf, bar } = runsOf(["TZX", "RZV", "OGU"]);
+    const first = Math.round(p.sections.find((s) => s.name === "chorus")!.start / bar);
+    for (const r of runs) {
+      if (sectionOf(r.bar * bar + 0.01) !== "chorus") continue;
+      expect((r.bar - first) % 2, `bar ${r.bar}`).toBe(0);
+    }
+  });
+  it("is deterministic", () => {
+    expect(JSON.stringify(runsOf(["TZX", "RZV", "OGU"]).runs)).toBe(JSON.stringify(runsOf(["TZX", "RZV", "OGU"]).runs));
   });
 });
