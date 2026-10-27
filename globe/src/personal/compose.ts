@@ -38,6 +38,8 @@ export interface PersonalNote {
   pan?: number;
   /** how much reverb the note gets 0…0.5, from the length of the route (space.ts); absent: the middle send */
   wet?: number;
+  /** semitones below the target at which the note starts, rising to the target in about 0.08 s (a slide into the note); absent: no glide */
+  glide?: number;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
