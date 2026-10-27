@@ -221,16 +221,32 @@ class TestBankFile(unittest.TestCase):
     def test_bank_file(self):
         if not os.path.exists(BANK):
             self.skipTest("bank not exported yet")
-        self.assertLess(os.path.getsize(BANK), 400 * 1024)
+        self.assertLess(os.path.getsize(BANK), 1024 * 1024)
         bank = json.load(open(BANK, encoding="utf-8"))
-        self.assertEqual(bank["version"], 1)
+        self.assertEqual(bank["version"], 2)
         self.assertEqual(set(bank["cards"]), set(grammar.FORM_OF))
         for cid, by in bank["cards"].items():
             self.assertEqual(sorted(by, key=int), [str(h) for h in range(1, 10)], cid)
+            cad = grammar.idiom_of(cid)["cadence"]
             for h, ps in by.items():
                 self.assertGreater(len(ps), 0)
-                for p in ps:
-                    self.assertEqual([len(bar) for bar in p["b"]], [int(h)] * 4)
+                self.assertLessEqual(len(ps), 64)
+                self.assertEqual(len(set(ps)), len(ps), (cid, h))
+                for s in ps:
+                    bars = s.split("|")
+                    self.assertEqual([len(b) for b in bars], [int(h)] * 4, s)
+                    for k, bar in enumerate(bars):
+                        self.assertRegex(bar, r"^[0-9ab.]+$")
+                        self.assertNotEqual(bar[-1], ".")
+                        self.assertEqual(int(bar[-1], 36), cad[k] + 2, (cid, s))
+                    self.assertNotEqual(bars[0][0], ".")
+
+    def test_encode_roundtrip(self):
+        import export_bank
+        p = grammar.bank_entry("anatolian", 6, keep=3, make=50)[0]
+        s = export_bank.encode(p)
+        back = [[None if ch == "." else int(ch, 36) - 2 for ch in bar] for bar in s.split("|")]
+        self.assertEqual(back, p["b"])
 
 
 if __name__ == "__main__":

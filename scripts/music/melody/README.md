@@ -9,7 +9,7 @@ default stays the walk).
 |---|---|
 | `idioms.json` | the idiom of every card (`idiomOf` over `DEFAULT_IDIOM`: span, bias, start, cadence, step, repeat, leaps), dumped from TS |
 | `grammar.py` | the eight forms, the operators, `generate(card_id, hits, n, seed)`, `bank_entry` (the diverse selection), `FORM_OF` (all 52 cards) |
-| `export_bank.py` | all 52 cards x hits 1-9 -> minified JSON (`null` = rest); `--examples` prints two phrases of every form |
+| `export_bank.py` | all 52 cards x hits 1-9 -> minified JSON, version 2 (strings, `.` = rest); `--examples` prints two phrases of every form |
 | `test_grammar.py` | unittest: determinism, bounds, cadences, rests, the signature of every form, the bank file |
 
 ## Regenerate
@@ -48,11 +48,10 @@ Fields: `s` = `b[0][0]`; `span` = highest degree used; `bias` = sign(mean of bar
 (rests ignored). Cards with a direction draw phrases in that direction (the selection keeps those first); bias-0 cards draw rising,
 level and falling ones.
 
-## Size: 8 phrases per entry, not 96
+## Size: version 2, compact, 64 phrases per entry
 
-The bank format repeats `c`, `f`, `s`, `span` and `bias` in every phrase, so a phrase costs about 120 bytes minified. With 52 cards x
-9 hits: 96 per entry = 3.8 MB (325 KB gzipped), 64 = 2.6 MB (236 KB gzipped), and only **8 per entry fit under 400 KB (368 KB raw,
-39 KB gzipped)**. The exporter therefore writes 8 (it prints this). The list of an entry is ordered so that any prefix is the most
-diverse choice (round robin over start degree and direction, then over contour), so the 8 kept cover the starts and directions.
-`--per-entry 96` writes the full bank (the size test then fails by design: change the limit or the format first). hits = 1 has a
-single possible phrase (every bar is just its cadence) and hits = 2 only a handful, so those entries are shorter.
+A phrase is one string of four bars joined by `|`, a bar = `hits` characters: the base-36 digit of `degree + 2` (`0`..`9`, `a`, `b`) or
+`.` for a rest. Start, span and bias are derived by the selector, the cadence by the card's idiom. With 52 cards x 9 hits x 64 the file
+is about 667 KB minified (166 KB gzipped); `--per-entry 48` is the fallback if it ever goes over 1 MB. The list of an entry is ordered so
+that any prefix is the most diverse choice (round robin over start degree and direction, then over contour). hits = 1 has a single
+possible phrase (every bar is just its cadence) and hits = 2 only a handful, so those entries are shorter.
