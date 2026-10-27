@@ -19,6 +19,8 @@ export interface SynthNote {
   graceFreq?: number;
   /** v5: the note's real length (s): sustained instruments hold it, plucked ones ring longer; absent → `DEFAULT_DUR_SEC` */
   durSec?: number;
+  /** semitones below the pitch at which the note starts, rising to it in 0.08 s (sampled instruments only) */
+  glide?: number;
 }
 
 /** What `playNote` returns: `cut(at)` ends the held part of a sustained note early (the monophonic ney). */
@@ -243,7 +245,7 @@ export function playNote(ctx: AudioContext, dest: AudioNode, n: SynthNote, o: No
     const sam = activeSampler();
     if (sam?.has(n.instrument)) {
       live++;
-      const played = sam.play(pan, n.instrument, n.freq, Math.min(1, n.vel * o.gainScale * 1.1), n.when, n.durSec ?? DEFAULT_DUR_SEC, release);
+      const played = sam.play(pan, n.instrument, n.freq, Math.min(1, n.vel * o.gainScale * 1.1), n.when, n.durSec ?? DEFAULT_DUR_SEC, release, n.glide);
       if (played) return { cut() {} };
       live--;
     }

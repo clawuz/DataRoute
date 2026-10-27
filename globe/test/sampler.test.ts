@@ -125,3 +125,55 @@ describe("sampler: use and ensure", () => {
     expect(s.has("S")).toBe(false);
   });
 });
+
+describe("sampler: a per-note glide", () => {
+  type Ev = [string, number, number?];
+  const setup = async (glide?: { semitones: number; sec: number }) => {
+    const detunes: Ev[][] = [];
+    const param = (log: Ev[]) => ({
+      value: 0,
+      setValueAtTime: (v: number, t: number) => void log.push(["set", v, t]),
+      linearRampToValueAtTime: (v: number, t: number) => void log.push(["ramp", v, t]),
+      exponentialRampToValueAtTime() {},
+    });
+    const gain = () => ({ gain: param([]), connect() {}, disconnect() {} });
+    const ctx = {
+      decodeAudioData: async () => ({ duration: 2 }) as unknown as AudioBuffer,
+      createGain: gain,
+      createBufferSource: () => {
+        const log: Ev[] = [];
+        detunes.push(log);
+        return { buffer: null, playbackRate: param([]), detune: param(log), connect() {}, disconnect() {}, start() {}, stop() {}, onended: null };
+      },
+    } as unknown as AudioContext;
+    vi.stubGlobal("fetch", async (url: string) =>
+      url.endsWith("manifest.json")
+        ? { ok: true, json: async () => ({ name: "t", instruments: { G: { zones: [{ root: 60, lo: 0, hi: 127, file: "g.mp3" }], layers: [{ detune: 7, gain: 1 }], glide } } }) }
+        : { ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+    const s = createSampler(ctx);
+    await s.use(["/x/manifest.json"]);
+    await s.ensure(["G"]);
+    return { s, detunes };
+  };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("starts a glided note below its pitch and ramps up in 0.08 s", async () => {
+    const { s, detunes } = await setup();
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, 2);
+    expect(detunes[0]).toEqual([["set", 7 - 200, 1], ["ramp", 7, 1.08]]);
+  });
+  it("leaves a note without glide exactly as before", async () => {
+    const { s, detunes } = await setup();
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
+    expect(detunes[0]).toEqual([["set", 7, 1]]);
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, 0);
+    expect(detunes[1]).toEqual([["set", 7, 1]]);
+  });
+  it("adds to the instrument's own glide and takes the longer ramp", async () => {
+    const { s, detunes } = await setup({ semitones: 1, sec: 0.2 });
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, 2);
+    expect(detunes[0]).toEqual([["set", 7 - 300, 1], ["ramp", 7, 1.2]]);
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
+    expect(detunes[1]).toEqual([["set", 7 - 100, 1], ["ramp", 7, 1.2]]);
+  });
+});

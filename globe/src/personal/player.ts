@@ -97,7 +97,7 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
     while (next < sorted.length && loopStart + sorted[next].t <= horizon) {
       const n = sorted[next++];
       const when = Math.max(ctx.currentTime, loopStart + n.t);
-      playNote(ctx, noteBus[sendOf(n.wet ?? 0.3)], { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d }, { gainScale: 1, cutoffScale: 1, pan: n.pan ?? 0 });
+      playNote(ctx, noteBus[sendOf(n.wet ?? 0.3)], { when, instrument: n.instrument, freq: n.freq, vel: n.vel, kind: "arr", durSec: n.d, glide: n.glide }, { gainScale: 1, cutoffScale: 1, pan: n.pan ?? 0 });
       const cb = onNote;
       const inSec = Math.max(0, when - ctx.currentTime);
       setTimeout(() => cb(n), inSec * 1000);

@@ -54,6 +54,9 @@ export interface SampleManifest {
   instruments: Record<string, SampleInstrument>;
 }
 
+/** the ramp of a per-note glide (s) */
+const NOTE_GLIDE_SEC = 0.08;
+
 /** how long one manifest may take before the sampler goes on without it (the synth plays its instruments) */
 const MANIFEST_TIMEOUT_MS = 10000;
 
@@ -93,7 +96,7 @@ export interface Sampler {
   ensure(names: string[], timeoutMs?: number): Promise<void>;
   has(instrument: string): boolean;
   /** schedules a note; false when the instrument is not loaded (play the synth instead) */
-  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void): boolean;
+  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void, glide?: number): boolean;
   dispose(): void;
 }
 
@@ -244,7 +247,7 @@ export function createSampler(ctx: AudioContext): Sampler {
       }
     },
     has: (instrument) => defs.has(instrument),
-    play(dest, instrument, freq, vel, when, durSec, onEnd) {
+    play(dest, instrument, freq, vel, when, durSec, onEnd, glide) {
       const inst = defs.get(instrument);
       if (!inst) return false;
       let f = freq;
@@ -296,9 +299,11 @@ export function createSampler(ctx: AudioContext): Sampler {
         const src = ctx.createBufferSource();
         src.buffer = buf;
         src.playbackRate.setValueAtTime(rate, when);
-        const cents = L.detune + (inst.glide ? -inst.glide.semitones * 100 : 0);
+        // the per-note glide (a slide into the note) adds to the instrument's own; the longer ramp wins
+        const noteGlide = glide && glide > 0 ? glide : 0;
+        const cents = L.detune - (inst.glide ? inst.glide.semitones * 100 : 0) - noteGlide * 100;
         src.detune.setValueAtTime(cents, when);
-        if (inst.glide) src.detune.linearRampToValueAtTime(L.detune, when + inst.glide.sec);
+        if (inst.glide || noteGlide) src.detune.linearRampToValueAtTime(L.detune, when + Math.max(inst.glide?.sec ?? 0, noteGlide ? NOTE_GLIDE_SEC : 0));
         if (inst.vibrato) {
           const lfo = ctx.createOscillator();
           const depth = ctx.createGain();

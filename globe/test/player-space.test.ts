@@ -38,3 +38,16 @@ describe("player: space", () => {
     pl.dispose();
   });
 });
+
+describe("player: glide", () => {
+  beforeEach(() => { spy.calls.length = 0; vi.useFakeTimers(); });
+  afterEach(() => vi.useRealTimers());
+  it("hands a note's glide to playNote, and none when the note has none", async () => {
+    const pl = createPersonalPlayer(ctx());
+    pl.play({ notes: [{ ...note(0, 0, 0.2), glide: 1 }, note(0.1, 0, 0.2)], duration: 4 } as never, () => {});
+    await vi.advanceTimersByTimeAsync(200);
+    expect((spy.calls[0][2] as { glide?: number }).glide).toBe(1);
+    expect((spy.calls[1][2] as { glide?: number }).glide).toBeUndefined();
+    pl.dispose();
+  });
+});
