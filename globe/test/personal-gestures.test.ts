@@ -602,3 +602,39 @@ describe("mordent: one quick tone above and back on a third of the short kemenç
     }
   });
 });
+
+describe("the Black Sea kemençe and the tulum (Turkish Music Portal recordings)", () => {
+  it("the Black Sea kemençe slides, trills and takes the mordent like the makam kemençe, but adds no double stop or drone", () => {
+    expect(GESTURES.KEMENCE_KARADENIZ).toEqual(GESTURES.KEMENCE_MAKAM.filter((g) => g.name !== "doubleStop" && g.name !== "drone"));
+    const out = run([mk("KEMENCE_KARADENIZ", 1, { d: 0.3 })]);
+    // no hidden fourth below: the recording already sounds its parallel fourths
+    expect(out.some((n) => n.show === false && Math.abs(st(n.freq, hz(12)) + 5) < 1e-6)).toBe(false);
+    expect(out.some((n) => n.show === false && n.d > 0.5)).toBe(false);
+    // portamento
+    const pair = run([mk("KEMENCE_KARADENIZ", 0.13, { d: 0.2, freq: hz(12) }), mk("KEMENCE_KARADENIZ", 0.43, { d: 0.2, freq: hz(14), key: "R0b" })]).filter((n) => n.show !== false);
+    expect(pair[1].glide).toBeCloseTo(2, 9);
+    // titreme over the second half of a long note
+    const src = mk("KEMENCE_KARADENIZ", 0, { d: 1 });
+    expect(hidden(run([src])).filter((n) => n.short === true && n.t >= 0.5 - 1e-9)).toHaveLength(6);
+    // the mordent on about a third of the short notes on a beat
+    let hit = 0;
+    for (let k = 0; k < 300; k++) {
+      const m = mk("KEMENCE_KARADENIZ", k * 0.5, { key: `K${k}`, d: 0.18 });
+      if (hidden(run([m])).some((n) => Math.abs(n.t - (m.t + 0.04)) < 1e-9 && Math.abs(st(n.freq, m.freq) - 2) < 1e-6)) hit++;
+    }
+    expect(hit / 300).toBeGreaterThan(0.2);
+    expect(hit / 300).toBeLessThan(0.45);
+  });
+  it("the tulum takes the bagpipe's grace note +2 st, 40 ms before a repeated pitch of its route", () => {
+    expect(GESTURES.TULUM).toEqual(GESTURES.BAGPIPE);
+    const out = run([mk("TULUM", 0), mk("TULUM", 0.5), mk("TULUM", 1, { freq: hz(14) }), mk("TULUM", 1.5, { route: 1, via: 1 })], "hook");
+    const h = hidden(out);
+    expect(h).toHaveLength(1);
+    expect(h[0].t).toBeCloseTo(0.46, 9);
+    expect(st(h[0].freq, hz(12))).toBeCloseTo(2, 6);
+    expect(h[0].vel).toBeCloseTo(0.24, 9);
+  });
+  it("a bagpipe and a tulum on one route do not count each other's pitches as repeats", () => {
+    expect(hidden(run([mk("BAGPIPE", 0), mk("TULUM", 0.5)], "hook"))).toHaveLength(0);
+  });
+});

@@ -7,7 +7,7 @@ const pub = (p: string): string => fileURLToPath(new URL(`../public/samples/${p}
 const world = JSON.parse(readFileSync(pub("world/manifest.json"), "utf8")) as {
   instruments: Record<string, { zones: { root: number; lo: number; hi: number; file: string; loop?: [number, number] }[]; unpitched?: boolean; sustained?: boolean }>;
 };
-const ledger = JSON.parse(readFileSync(fileURLToPath(new URL("../../docs/music-pack-world-ledger.json", import.meta.url)), "utf8")) as { instrument: string; file: string; licence: string; licence_url: string; nc?: boolean }[];
+const ledger = JSON.parse(readFileSync(fileURLToPath(new URL("../../docs/music-pack-world-ledger.json", import.meta.url)), "utf8")) as { instrument: string; file: string; licence: string; licence_url: string; nc?: boolean; restricted?: boolean; terms?: string; source: string; author: string }[];
 const lite = JSON.parse(readFileSync(pub("lite/manifest.json"), "utf8")) as { instruments: Record<string, unknown> };
 
 describe("world pack", () => {
@@ -69,8 +69,37 @@ describe("world pack", () => {
     expect(WORLD_STAND_IN.SARANGI).toBe("VIOLIN");
     expect(WORLD_STAND_IN.BANSURI).toBe("FLUTE");
   });
-  it("flags every non-commercial file of the ledger with nc: true, and nothing else", () => {
-    for (const r of ledger) expect(Boolean(r.nc), `${r.instrument} ${r.file}`).toBe(r.licence === "CC BY-NC" || r.licence_url.includes("/by-nc/"));
+  it("flags every non-commercial file of the ledger with nc: true, and nothing else (a restricted file is non-commercial too)", () => {
+    for (const r of ledger) expect(Boolean(r.nc), `${r.instrument} ${r.file}`).toBe(r.licence === "CC BY-NC" || r.licence_url.includes("/by-nc/") || r.restricted === true);
+  });
+  it("has the Black Sea kemençe and the tulum from the Turkish Music Portal: held voices of at least 4 zones, every file flagged RESTRICTED", () => {
+    for (const name of ["KEMENCE_KARADENIZ", "TULUM"] as const) {
+      const inst = world.instruments[name];
+      expect(inst, name).toBeTruthy();
+      expect(inst.zones.length, name).toBeGreaterThanOrEqual(4);
+      expect(inst.sustained, name).toBe(true);
+      const roots = inst.zones.map((z) => z.root);
+      expect(new Set(roots.map(Math.round)).size, name).toBe(roots.length); // distinct notes, not one note cut several times
+      for (const z of inst.zones) {
+        if (z.loop) expect(z.loop[1] - z.loop[0], `${name} ${z.file}`).toBeGreaterThanOrEqual(0.4);
+        const rows = ledger.filter((r) => r.file === z.file);
+        expect(rows.length, `${name} ${z.file}`).toBe(1);
+        const r = rows[0];
+        expect(r.instrument).toBe(name);
+        expect(r.restricted, z.file).toBe(true);
+        expect(r.nc, z.file).toBe(true);
+        expect(r.terms, z.file).toContain("Türk Kültür Vakfı");
+        expect(r.terms, z.file).toContain("must not be modified");
+        expect(r.licence, z.file).toMatch(/^Restricted/);
+        expect(r.source, z.file).toMatch(/^http:\/\/www\.turkishmusicportal\.org\/tr\/calgilar\//);
+        expect(r.licence_url, z.file).toBe("http://www.turkishmusicportal.org/tr/sayfa/telif-hakki-ve-gizlilik");
+      }
+    }
+    // only these two instruments carry the restricted flag
+    expect([...new Set(ledger.filter((r) => r.restricted).map((r) => r.instrument))].sort()).toEqual(["KEMENCE_KARADENIZ", "TULUM"]);
+    expect(WORLD_STAND_IN.KEMENCE_KARADENIZ).toBe("VIOLIN");
+    expect(WORLD_STAND_IN.TULUM).toBe("CLA"); // declared like the recorded bagpipe
+    expect(WORLD_STAND_IN.TULUM).toBe(WORLD_STAND_IN.BAGPIPE);
   });
   it("groups the NSynth variants into families of real instruments", () => {
     expect(Object.keys(WORLD_FAMILIES).sort()).toEqual(["BASS_EL", "EKEYS", "GUITAR_AC", "GUITAR_EL", "KEYS_AC", "ORGAN_EL"]);

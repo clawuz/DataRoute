@@ -23,6 +23,8 @@ def by_author(rows):
 def deed(r):
     """the licence of one sound, linked to its deed (CC BY sounds only: each keeps the version it was published under)"""
     u = r.get("licence_url", "")
+    if r.get("restricted"):
+        return f' <a class="l" href="{e(u)}" rel="noopener">terms of use</a> <span class="nc">restricted: Türk Kültür Vakfı terms</span>'
     m = re.search(r"/licenses/by(-nc)?/([0-9.]+)/", u)
     if not m:
         return ""
@@ -39,8 +41,12 @@ def author_block(rows, open_=False):
 
 cc_by = [r for r in world if r["licence"] == "CC BY" and r["author"].startswith("Google") is False]
 # non-commercial sounds: every one carries `nc: true` in the ledger and a visible mark here; a deploy with them needs the owner's yes
-nc = [r for r in world if r.get("nc")]
+nc = [r for r in world if r.get("nc") and not r.get("restricted")]
 assert all(r["licence"] == "CC BY-NC" for r in nc) and all(r.get("nc") for r in world if "NC" in r["licence"]), "an NC sound without its flag"
+# the Turkish Music Portal recordings (add_portal_recordings.py): owned by Türk Kültür Vakfı, personal non-commercial use only, the
+# content must not be modified; flagged restricted AND nc, never deployed without the foundation's written permission
+restricted = [r for r in world if r.get("restricted")]
+assert all(r.get("nc") and r.get("terms") and r["licence"].startswith("Restricted") for r in restricted), "a restricted sound without its flags"
 nsynth = [r for r in world if r["author"].startswith("Google")]
 nsynth_author = nsynth[0]["author"] if nsynth else "Google Magenta"
 vcsl = [r for r in world if r["author"].startswith("Versilian")]
@@ -52,6 +58,11 @@ nc_section = (f"""<h2>Sounds from Freesound — non-commercial licence (CC BY-NC
 <p class="mute">These sounds may be used for non-commercial purposes only (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener license">CC BY-NC 4.0</a> or 3.0, as each was published); each one is marked <span class="nc">non-commercial licence</span>.</p>
 {author_block(nc)}
 """ if nc else "")
+
+restricted_section = (f"""<h2>Recordings from the Turkish Music Portal — restricted terms</h2>
+<p class="mute">The Black Sea kemençe and the tulum are cut from the sound samples of the <a href="http://www.turkishmusicportal.org" rel="noopener">Turkish Music Portal</a>, © Türk Kültür Vakfı. Their terms allow personal, non-commercial, educational or research use only, do not allow the content to be modified, and ask for written permission for any other use. They are used here locally and are not published without that permission; each one is marked <span class="nc">restricted: Türk Kültür Vakfı terms</span>.</p>
+{author_block(restricted)}
+""" if restricted else "")
 
 PAGE = f"""<!doctype html>
 <html lang="en">
@@ -93,6 +104,7 @@ PAGE = f"""<!doctype html>
 {author_block(cc_by, True)}
 
 {nc_section}
+{restricted_section}
 <h2>Sounds from Freesound — CC0 (with thanks)</h2>
 <p class="mute">Public domain; no credit is required, and we are glad to give it.</p>
 {author_block(cc0_fs)}
@@ -111,4 +123,4 @@ PAGE = f"""<!doctype html>
 </html>
 """
 open(os.path.join(ROOT, "docs", "credits.html"), "w").write(PAGE)
-print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by}), "CC BY authors,", len({r['author'] for r in cc0_fs}), "CC0 authors,", len(nc), "non-commercial sounds")
+print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by}), "CC BY authors,", len({r['author'] for r in cc0_fs}), "CC0 authors,", len(nc), "non-commercial sounds,", len(restricted), "restricted (Turkish Music Portal)")

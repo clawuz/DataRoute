@@ -1,5 +1,5 @@
 {
- "name": "World pack (CC0, CC BY and CC BY-NC: non-commercial, flagged in the ledger)",
+ "name": "World pack (CC0, CC BY and CC BY-NC: non-commercial, flagged in the ledger; RESTRICTED T\u00fcrk K\u00fclt\u00fcr Vakf\u0131 recordings, flagged in the ledger)",
  "instruments": {
   "SANTUR": {
    "zones": [
@@ -3923,6 +3923,96 @@
       1.05
      ],
      "lo": 66,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "KEMENCE_KARADENIZ": {
+   "zones": [
+    {
+     "root": 67.11,
+     "file": "kemence_karadeniz/portal_00993.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 0,
+     "hi": 68
+    },
+    {
+     "root": 69.2,
+     "file": "kemence_karadeniz/portal_00289.mp3",
+     "loop": [
+      0.2,
+      2.16
+     ],
+     "lo": 69,
+     "hi": 70
+    },
+    {
+     "root": 72.31,
+     "file": "kemence_karadeniz/portal_03260.mp3",
+     "lo": 71,
+     "hi": 73
+    },
+    {
+     "root": 74.21,
+     "file": "kemence_karadeniz/portal_01599.mp3",
+     "loop": [
+      0.2,
+      1.29
+     ],
+     "lo": 74,
+     "hi": 75
+    },
+    {
+     "root": 76.21,
+     "file": "kemence_karadeniz/portal_01378.mp3",
+     "lo": 76,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "TULUM": {
+   "zones": [
+    {
+     "root": 69.01,
+     "file": "tulum/portal_17721.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 0,
+     "hi": 70
+    },
+    {
+     "root": 71.91,
+     "file": "tulum/portal_01973.mp3",
+     "lo": 71,
+     "hi": 72
+    },
+    {
+     "root": 74.06,
+     "file": "tulum/portal_03251.mp3",
+     "loop": [
+      0.2,
+      0.85
+     ],
+     "lo": 73,
+     "hi": 75
+    },
+    {
+     "root": 76.15,
+     "file": "tulum/portal_01418.mp3",
+     "loop": [
+      0.2,
+      1.75
+     ],
+     "lo": 76,
      "hi": 127
     }
    ],

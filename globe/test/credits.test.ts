@@ -50,10 +50,10 @@ describe("credits page", () => {
   });
   it("lists the non-commercial (CC BY-NC) sounds in their own section, each marked, and flags them in the ledger", () => {
     const rows = world as { author: string; licence: string; source: string; licence_url?: string; nc?: boolean; title?: string; instrument: string }[];
-    const nc = rows.filter((r) => r.nc);
+    const nc = rows.filter((r) => r.nc && !(r as { restricted?: boolean }).restricted);
     expect(nc.length).toBeGreaterThan(0);
     for (const r of rows) {
-      const restricted = r.licence.includes("NC") || (r.licence_url ?? "").includes("/by-nc/");
+      const restricted = r.licence.includes("NC") || (r.licence_url ?? "").includes("/by-nc/") || (r as { restricted?: boolean }).restricted === true;
       expect(Boolean(r.nc), `${r.instrument} ${r.source}`).toBe(restricted);
     }
     const start = html.search(/<h2>[^<]*non-commercial licence \(CC BY-NC\)/);
@@ -71,6 +71,25 @@ describe("credits page", () => {
       // never listed as a CC BY or a CC0 sound
       expect(section(html), r.source).not.toContain(r.source);
     }
+  });
+  it("lists the Turkish Music Portal recordings in their own section, each marked restricted, never as CC BY, CC0 or CC BY-NC", () => {
+    const rows = (world as { author: string; licence: string; source: string; title?: string; restricted?: boolean; nc?: boolean }[]).filter((r) => r.restricted);
+    expect(rows.length).toBeGreaterThanOrEqual(8);
+    const start = html.search(/<h2>Recordings from the Turkish Music Portal — restricted terms/);
+    expect(start).toBeGreaterThan(0);
+    const next = html.indexOf("<h2>", start + 4);
+    const sec = html.slice(start, next);
+    expect(sec).toContain("Türk Kültür Vakfı");
+    expect(sec).toContain("not published without that permission");
+    for (const r of rows) {
+      expect(r.nc, r.title).toBe(true);
+      const items = sec.split("<li>").filter((li) => li.includes((r.title ?? "").replace(/&/g, "&amp;")));
+      expect(items.length, r.title).toBeGreaterThan(0);
+      for (const li of items) expect(li, r.title).toContain("restricted: Türk Kültür Vakfı terms");
+    }
+    const ncStart = html.search(/<h2>[^<]*non-commercial licence \(CC BY-NC\)/);
+    const ncSec = html.slice(ncStart, html.indexOf("<h2>", ncStart + 4));
+    for (const s of [section(html), ncSec]) expect(s).not.toContain("turkishmusicportal");
   });
   it("credits the sources that need it", () => {
     for (const s of ["VSCO 2 Community Edition", "VCSL", "NSynth", "CC BY 4.0", "adsb.fi", "NASA", "Julien Sulpis", "Freesound"]) expect(html, s).toContain(s);

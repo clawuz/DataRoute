@@ -121,7 +121,7 @@ Eleven cards added so that a destination can sound like where it goes (spec `doc
 
 | id | name | family | bpm | scale / wish | cell (accent) | melody | pluck | held | perc |
 |---|---|---|---|---|---|---|---|---|---|
-| karadeniz | Black Sea horon (fast) | folk | 112-126 | USSAK / HICAZ | 2,2,3 (1.3, 0.9, 1.1) | KEMENCE_REAL, KEMENCE_MAKAM, BAGPIPE (tulum) | BAGLAMA_EXTRA, SAZ | BAGPIPE_DRONE, CELLO | FRAMEDRUM |
+| karadeniz | Black Sea horon (fast) | folk | 112-126 | USSAK / HICAZ | 2,2,3 (1.3, 0.9, 1.1) | KEMENCE_KARADENIZ, TULUM, BAGPIPE (RESTRICTED recordings, see below) | BAGLAMA_EXTRA, SAZ | TULUM, BAGPIPE_DRONE, CELLO | FRAMEDRUM |
 | icanadolu | Central Anatolian bağlama | folk | 88-108 | USSAK / HICAZ | 2,1,1,2,2 (1.25, 0.85, 0.85, 1.1, 0.9) | SAZ, BAGLAMA_MAKAM, NEY_MAKAM | BAGLAMA_EXTRA, SAZ | CELLO, VIOLA | BENDIR |
 | mevlevi | Mevlevi (ney and kudüm) | folk | 76-88 | RAST / SEGAH | 3,3 (1.3, 0.9); a static chord `[[0,4]]` x4: the drone | NEY_REAL, NEY_MAKAM | KANUN, SANTUR | NEY_MAKAM, CELLO | FRAMEDRUM (kudüm) |
 | akdeniz | Turkish Mediterranean (ud, tambur, kanun) | folk | 96-114 | HICAZ / NIHAVENT | 3,2,2,3 (1.25, 0.9, 0.9, 1.1) | KANUN, OUD | OUD, SAZ (tambur) | CELLO, VIOLA | DARBUKA |
@@ -318,6 +318,8 @@ Over 1000 random selections of 3-8 places (half with home Istanbul), with the do
 Voices pass (2026-10-27), hand-set: hindustani melody FLUTE (bansuri), VIOLIN (sarangi), SANTUR; pluck SANTUR, HARP; held ACCORDION (harmonium), CELLO; no Turkish or Arabic instruments, TANPURA only as the drone.
 
 Real recordings (2026-10-28, `scripts/samples/add_real_recordings.py`): hindustani melody BANSURI, SARANGI, FLUTE (pluck stays SANTUR, HARP: the sitar files gave no usable note; held ACCORDION, CELLO; TANPURA drone); bollywood melody VIOLIN, SARANGI, BANSURI, SANTUR, FLUTE; dogu melody ZURNA, DUDUK, NEY_MAKAM; mevlevi melody NEY_REAL, NEY_MAKAM; karadeniz melody KEMENCE_REAL, KEMENCE_MAKAM, BAGPIPE. NEY_REAL is not added to anatolian or icanadolu: their ney notes (5th-95th percentile MIDI 48-72) reach below its range (MIDI 53-76). NEY_REAL and KEMENCE_REAL are CC BY-NC (flagged in the ledger and on the credits page; a deploy with them needs the owner's yes). Gestures: SARANGI and KEMENCE_REAL a double stop and a grace note like KEMENCE_MAKAM (no drone); BANSURI, NEY_REAL and ZURNA the ney glide. Akdeniz uses the lite OUD (strummed like the nylon guitar on pluck). Missing instruments are listed in `docs/music-missing-instruments.md`.
+
+The Black Sea kemençe and the tulum (2026-10-28, `scripts/samples/add_portal_recordings.py`): karadeniz melody KEMENCE_KARADENIZ, TULUM, BAGPIPE; held TULUM, BAGPIPE_DRONE, CELLO; pluck unchanged. Both are cut from the Turkish Music Portal sound samples of Türk Kültür Vakfı under **RESTRICTED terms** (personal non-commercial use, no modification, written permission for anything else): flagged `restricted: true, nc: true` in the ledger and on the credits page, not to be deployed without the foundation's written permission. Gestures: KEMENCE_KARADENIZ a grace note, the slide, the titreme and the mordent like KEMENCE_MAKAM but no added double stop (the recording already sounds its parallel fourths) and no drone; TULUM the bagpipe's grace note before a repeated pitch.
 
 ## Metre variants: `cells` (2026-10-28, spec `docs/superpowers/specs/2026-10-28-regional-forms-design.md`)
 

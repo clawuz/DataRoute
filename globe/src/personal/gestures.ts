@@ -378,6 +378,9 @@ const repeatPluck: Gesture = (n, e) => (e.ctx.roleOf(n) === "pluck" ? { extra: [
 
 const pipeGrace: Gesture = (n, e) => (e.repeated.has(n) ? { extra: [added(n, n.t - 0.04, 0.04, semis(n.freq, 2), n.vel * 0.4)] } : null);
 
+/** the bagpipes: a repeated pitch takes a grace note (`pipeGrace`) */
+const PIPES = new Set(["BAGPIPE", "TULUM"]);
+
 /** the winds whose phrases open with the ney's long glide (`phraseStart`) */
 const NEY_LIKE = new Set(["NEY_MAKAM", "NEY_REAL", "BANSURI", "ZURNA"]);
 
@@ -388,6 +391,9 @@ export const GESTURES: Record<string, Gesture[]> = {
   // stays the makam kemençe's; the titreme and the mordent are the kemençe's)
   KEMENCE_REAL: [doubleStop, graceIn, slide, titreme, mordent],
   SARANGI: [doubleStop, graceIn, slide],
+  // the Black Sea kemençe (the Turkish Music Portal recording) slides, trills and takes the mordent like the makam kemençe, but has no
+  // added double stop: the recording already sounds its parallel fourths
+  KEMENCE_KARADENIZ: [graceIn, slide, titreme, mordent],
   SAZ: [sazStrum, glideNote(3)],
   BAGLAMA_MAKAM: [sazStrum, glideNote(3)],
   BAGLAMA_EXTRA: [sazStrum, glideNote(3)],
@@ -416,6 +422,8 @@ export const GESTURES: Record<string, Gesture[]> = {
   SHAKUHACHI: [glideNote(3)],
   ERHU: [glideNote(3)],
   BAGPIPE: [pipeGrace],
+  // the tulum is a bagpipe: a grace note before a repeated pitch
+  TULUM: [pipeGrace],
   NYLONGUITAR: [guitarStrum],
   OUD: [guitarStrum],
   UPRIGHTBASS: [bassWalk, bassAlternate],
@@ -526,7 +534,7 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
   const seenBarKey = new Set<string>();
   const seenBeatKey = new Set<string>();
   const lastEndV = new Map<number, number>();
-  const lastPipe = new Map<number, number>();
+  const lastPipe = new Map<string, number>();
   for (const n of [...notes].sort(byTime)) {
     const name = String(n.instrument);
     const role = ctx.roleOf(n);
@@ -551,10 +559,11 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
       if (prev === undefined || n.t - prev >= 0.3) afterGap.add(n);
       lastEndV.set(n.route, Math.max(prev ?? -Infinity, n.t + n.d));
     }
-    if (name === "BAGPIPE" && role !== "drone") {
-      const prev = lastPipe.get(n.route);
+    if (PIPES.has(name) && role !== "drone") {
+      const k = `${n.route}|${name}`;
+      const prev = lastPipe.get(k);
       if (prev !== undefined && Math.abs(prev - n.freq) <= 1e-9 * n.freq) repeated.add(n);
-      lastPipe.set(n.route, n.freq);
+      lastPipe.set(k, n.freq);
     }
   }
 

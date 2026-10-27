@@ -21,8 +21,8 @@ STAND_IN = [
     (r"^(RHODES|NS_EKEYS_\d+)$", "EP"),
     (r"^(STEINWAY|KAWAI|UPRIGHTPNO|KNIGHTPNO|HARPSICHORD|NS_KEYS_AC_\d+)$", "PNO"),
     (r"^(NYLONGUITAR|EGUITAR|NS_GUITAR_(AC|EL)_\d+)$", "GUITAR"),
-    (r"^(ACCORDION|HARMONICA|TENORSAX|BAGPIPE)$", "CLA"),
-    (r"^(ERHU|KEMENCE_MAKAM|KEMENCE_REAL|SARANGI)$", "VIOLIN"),
+    (r"^(ACCORDION|HARMONICA|TENORSAX|BAGPIPE|TULUM)$", "CLA"),  # the tulum is declared like the recorded bagpipe
+    (r"^(ERHU|KEMENCE_MAKAM|KEMENCE_REAL|KEMENCE_KARADENIZ|SARANGI)$", "VIOLIN"),
     (r"^(SHAKUHACHI|TINWHISTLE|PANPIPE|BANSURI|NEY_REAL)$", "FLUTE"),
     (r"^ZURNA$", "OBOE"),  # a recorded orchestra voice: its own stand-in (CLA) plays while neither has arrived, see baseOf
     (r"^SITAR$", "KANUN"),
@@ -95,8 +95,12 @@ def main():
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
             files.add(z["file"])
-    nc = any(l.get("nc") for l in ledger if l["file"] in files)
-    json.dump({"name": "World pack (CC0, CC BY" + (" and CC BY-NC: non-commercial, flagged in the ledger" if nc else "") + ")", "instruments": insts}, open(os.path.join(PUB, "manifest.json"), "w"), indent=1)
+    nc = any(l.get("nc") and not l.get("restricted") for l in ledger if l["file"] in files)
+    restricted = any(l.get("restricted") for l in ledger if l["file"] in files)
+    licences = "CC0, CC BY" + (" and CC BY-NC: non-commercial, flagged in the ledger" if nc else "")
+    if restricted:  # the Turkish Music Portal recordings (add_portal_recordings.py): not to be deployed without written permission
+        licences += "; RESTRICTED Türk Kültür Vakfı recordings, flagged in the ledger"
+    json.dump({"name": f"World pack ({licences})", "instruments": insts}, open(os.path.join(PUB, "manifest.json"), "w"), indent=1)
     renamed_from = {v: k for k, v in RENAME.items()}
     urls = licence_urls()
     rows = []
