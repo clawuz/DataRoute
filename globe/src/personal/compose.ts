@@ -4,7 +4,7 @@ import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
-import { NO_PIANO_CARDS, planCards, type GenreCard } from "./genres";
+import { NO_PIANO_CARDS, cellOf, cellSeedOf, planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
 import { journeyCard, journeyOf } from "./journey";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
@@ -450,14 +450,15 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   }
 
   // the groove of one bar: the figure of a card, stretched to four beats (the main card's, or an episode card's in the verse)
+  const cellSeed = cellSeedOf(plan.main, routes);
   const grooveOf = (card: GenreCard) => {
-    const fig = card.cell;
+    const { cell: fig, accent } = cellOf(card, cellSeed);
     const figTotal = fig.reduce((x, y) => x + Math.abs(y), 0);
     const gs: { start: number; len: number; hit: boolean; accent: number }[] = [];
     let at = 0;
     fig.forEach((c, k) => {
       const len = (Math.abs(c) / figTotal) * 4;
-      gs.push({ start: at, len, hit: c > 0, accent: card.accent?.[k] || 1 });
+      gs.push({ start: at, len, hit: c > 0, accent: accent?.[k] || 1 });
       at += len;
     });
     const gh = gs.filter((x) => x.hit);

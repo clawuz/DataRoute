@@ -318,3 +318,13 @@ Over 1000 random selections of 3-8 places (half with home Istanbul), with the do
 Voices pass (2026-10-27), hand-set: hindustani melody FLUTE (bansuri), VIOLIN (sarangi), SANTUR; pluck SANTUR, HARP; held ACCORDION (harmonium), CELLO; no Turkish or Arabic instruments, TANPURA only as the drone.
 
 Real recordings (2026-10-28, `scripts/samples/add_real_recordings.py`): hindustani melody BANSURI, SARANGI, FLUTE (pluck stays SANTUR, HARP: the sitar files gave no usable note; held ACCORDION, CELLO; TANPURA drone); bollywood melody VIOLIN, SARANGI, BANSURI, SANTUR, FLUTE; dogu melody ZURNA, DUDUK, NEY_MAKAM; mevlevi melody NEY_REAL, NEY_MAKAM; karadeniz melody KEMENCE_REAL, KEMENCE_MAKAM, BAGPIPE. NEY_REAL is not added to anatolian or icanadolu: their ney notes (5th-95th percentile MIDI 48-72) reach below its range (MIDI 53-76). NEY_REAL and KEMENCE_REAL are CC BY-NC (flagged in the ledger and on the credits page; a deploy with them needs the owner's yes). Gestures: SARANGI and KEMENCE_REAL a double stop and a grace note like KEMENCE_MAKAM (no drone); BANSURI, NEY_REAL and ZURNA the ney glide. Akdeniz uses the lite OUD (strummed like the nylon guitar on pluck). Missing instruments are listed in `docs/music-missing-instruments.md`.
+
+## Metre variants: `cells` (2026-10-28, spec `docs/superpowers/specs/2026-10-28-regional-forms-design.md`)
+
+`GenreCard.cells?: { cell; accent? }[]`: a card may list alternative figures; a piece plays `cellOf(card, seed)` = `cells[seed % cells.length]` instead of `cell`, with one seed per piece (`cellSeedOf` = `routeHash(main card id + first route key)`), so every bar of a piece (the main groove, the episode grooves, the journey's cards) plays the same choice for a card. A card without `cells` plays its `cell` exactly as before. The card's own figure is always one of the entries.
+
+| card | cells (accent) |
+|---|---|
+| karadeniz | 2,2,3 (1.3, 0.9, 1.1) 7/8 · 2,2,2,3 (1.3, 0.9, 0.95, 1.1) 9/8 · 1,1,1,1 (1.3, 0.85, 1.1, 0.85) the 4/4 dik horon · 3,2,2 (1.3, 0.9, 1.1) 7/8 alt |
+| dogu | 1,1,1,1 (1.35, 0.8, 1.1, 0.8) 4/4 · 1,1 (1.35, 1.1) 2/4 · 2,2,2,3 (1.35, 0.85, 0.9, 1.15) 9/8 · 2,2,1 (1.35, 0.9, 1.1) 5/8 |
+| zeybek | 3,2,2,2 (1.3, 0.9, 0.9, 0.9) · 2,2,2,3 (1.3, 0.9, 0.9, 1.1) · 2,2,3,2 (1.3, 0.9, 1.1, 0.9): the three groupings of the 9-beat zeybek |

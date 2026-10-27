@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CARDS, planCards, type CardPlan, type GenreCard } from "../src/personal/genres";
+import { CARDS, cellOf, cellSeedOf, planCards, type CardPlan, type GenreCard } from "../src/personal/genres";
 import { EPISODE_CAP, VERSE_SHORT_BLOCK, episodeAt, episodeCards } from "../src/personal/episodes";
 import { buildRoutes } from "../src/personal/routes";
 import { composePiece, type PersonalNote } from "../src/personal/compose";
@@ -87,11 +87,11 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at zeybek: rast/segah, 3+2+2+2 (regional research); earlier at new real recordings: bansuri, sarangi, zurna, sitar, ney, kemence; earlier at voices pass: no piano in world cards, jazz horns, oud, italian strings, hindustani; earlier at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at metre variants per card (the Black Sea row now plays a chosen figure); earlier at zeybek: rast/segah, 3+2+2+2 (regional research); earlier at new real recordings: bansuri, sarangi, zurna, sitar, ney, kemence; earlier at voices pass: no piano in world cards, jazz horns, oud, italian strings, hindustani; earlier at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
   ["~ESB,ASR,NAV", "visited", 1018592815],
-  ["~TZX,RZV,OGU", "wish", 1047087279],
+  ["~TZX,RZV,OGU", "wish", 705748172],
   ["~VAN,ERZ,ERC", "wish", 727181273],
   ["~AYT,GZP,ADA", "visited", 3242087402],
   ["ESB", "visited", 2232014653],
@@ -194,13 +194,15 @@ const rolesOf = (routes: ReturnType<typeof buildRoutes>): Role[] => {
   order.forEach((x, k) => (role[x.i] = n <= 6 ? SMALL[n][k] : BASE[Math.floor((k * 7) / n)]));
   return role;
 };
-/** the groove of a card as composePiece builds it: the hit places and the strong ones (first, or accent >= 1.1; at most four), in beats */
-const grooveStarts = (c: GenreCard): { hits: number[]; strong: number[] } => {
-  const total = c.cell.reduce((x, y) => x + Math.abs(y), 0);
+/** the groove of a card as composePiece builds it: the hit places and the strong ones (first, or accent >= 1.1; at most four), in beats;
+ * `seed` (the piece's `cellSeedOf`) picks the card's metre variant when it has some */
+const grooveStartsOf = (c: GenreCard, seed = 0): { hits: number[]; strong: number[] } => {
+  const { cell, accent } = cellOf(c, seed);
+  const total = cell.reduce((x, y) => x + Math.abs(y), 0);
   let at = 0;
   const hits: { start: number; accent: number }[] = [];
-  c.cell.forEach((u, k) => {
-    if (u > 0) hits.push({ start: (at / total) * 4, accent: c.accent?.[k] || 1 });
+  cell.forEach((u, k) => {
+    if (u > 0) hits.push({ start: (at / total) * 4, accent: accent?.[k] || 1 });
     at += Math.abs(u);
   });
   return { hits: hits.map((h) => h.start), strong: hits.filter((h, k) => k === 0 || h.accent >= 1.1).slice(0, 4).map((h) => h.start) };
@@ -220,16 +222,16 @@ const pieceOf = (places: string, mode: "visited" | "wish") => {
   const beat = bar / 4;
   const barNotes = (route: number, b: number) => p.notes.filter((n) => n.route === route && n.show !== false && n.t >= b * bar - 0.05 && n.t < (b + 1) * bar - 0.05);
   const onsets = (route: number, b: number): number[] => barNotes(route, b).map((n) => (n.t - b * bar) / beat).sort((x, y) => x - y);
-  return { rs, pl, p, eps, role: rolesOf(rs), barNotes, onsets, blockCard: (b: number): GenreCard | null => episodeAt(b, 8, eps).card };
+  return { rs, pl, p, eps, role: rolesOf(rs), barNotes, onsets, blockCard: (b: number): GenreCard | null => episodeAt(b, 8, eps).card, seed: cellSeedOf(pl.main, rs) };
 };
 /** the kick: beat 1 and the exact strong places of the card in an episode block (the bass plays them too), beats 1 and 3 at home, beat 4 in a fill bar */
 const checkKick = (places: string, mode: "visited" | "wish"): void => {
-  const { role, onsets, blockCard } = pieceOf(places, mode);
+  const { role, onsets, blockCard, seed } = pieceOf(places, mode);
   const r = role.indexOf("kick");
   expect(r).toBeGreaterThanOrEqual(0);
   for (let blk = 0; blk < 4; blk++) for (const b of [0, 1, 2, 3].map((k) => 8 + blk * 4 + k)) {
     const c = blockCard(b);
-    const want = c ? [...new Set([0, ...grooveStarts(c).strong])] : [0, 2];
+    const want = c ? [...new Set([0, ...grooveStartsOf(c, seed).strong])] : [0, 2];
     if (b % 4 === 3) { if (!want.includes(3)) want.push(3); }
     want.sort((x, y) => x - y);
     const got = onsets(r, b);
@@ -246,6 +248,8 @@ describe("episodes in a piece: the voices and the groove follow the episode card
   const p = composePiece("visited", rs);
   const role = rolesOf(rs);
   const eps = episodeCards(pl);
+  const seed = cellSeedOf(pl.main, rs);
+  const grooveStarts = (c: GenreCard): ReturnType<typeof grooveStartsOf> => grooveStartsOf(c, seed);
   const bar = 240 / p.bpm;
   const beat = bar / 4;
   const blockCard = (b: number): GenreCard | null => episodeAt(b, 8, eps).card;
@@ -325,9 +329,9 @@ describe("episodes in a piece: a tune that runs on from a home block into an epi
 describe("episodes in a piece: the kick plays with the bass on a card whose strong places are off the sixteenth grid", () => {
   const places = "ABV,SVQ,ATH,SKG,TZX,RZV,LOS";
   it("has the West African bell and the flamenco compás among the episodes (their strong beats sit at 1.667 and 3.333)", () => {
-    const { eps } = pieceOf(places, "wish");
+    const { eps, seed } = pieceOf(places, "wish");
     expect(eps.map((c) => c.id)).toEqual(expect.arrayContaining(["westafrica", "flamenco"]));
-    expect(eps.some((c) => grooveStarts(c).strong.some((x) => Math.abs(quarter(x) - x) > 0.05))).toBe(true);
+    expect(eps.some((c) => grooveStartsOf(c, seed).strong.some((x) => Math.abs(quarter(x) - x) > 0.05))).toBe(true);
   });
   it("the kick hits the exact strong places, not the nearest sixteenth", () => {
     checkKick(places, "wish");

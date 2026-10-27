@@ -39,6 +39,11 @@ export interface GenreCard {
   bass?: Voice[];
   /** how late the off-eighths lean (fraction of a beat); omitted: the piece's own swing */
   swing?: number;
+  /** the shape of a piece of this card (compose.ts `formAt`): the horon and the halay thicken from slow to fast, the long air
+   * (uzun hava) starts and ends in free time; omitted: the common form */
+  form?: "horon" | "halay" | "uzunhava";
+  /** metre variants: a piece takes one of these figures instead of `cell` (`cellOf`); the card's own figure is one of them. Omitted: `cell` */
+  cells?: { cell: number[]; accent?: number[] }[];
 }
 
 const MINOR = [0, 2, 3, 5, 7, 8, 10];
@@ -91,12 +96,12 @@ const BASE_CARDS: GenreCard[] = [
   { id: "pop", name: "Electro pop", family: "pulse", fast: true, bpm: [104, 124], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1, 1, 1, 1, 1], accent: [1.15, 0.8, 1, 0.8, 1.05, 0.8, 1, 0.8], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["CELLO", "VIOLA", "HORN"], melody: ["PNO", "FLUTE", "XYLO", "VIOLIN"], pluck: ["PNO", "GLOCK", "MARIMBA"], perc: "TAMB" },
   // the destination cards: Turkish regions, Greece, Italy, Vienna, R&B, country, Spanish guitar. Hand-set judgements (tune by ear); the instruments
   // that the pack lacks are approximated (the zurna is a real recording now, ZURNA, backed by DUDUK / NEY_MAKAM): tulum = BAGPIPE, ud = NYLONGUITAR / KANUN, tambur = SAZ, davul = FRAMEDRUM, mandolin = HARP / PSALTERY
-  { id: "karadeniz", fast: true, name: "Black Sea horon", family: "folk", bpm: [112, 126], scale: USSAK, scaleWish: HICAZ, cell: [2, 2, 3], accent: [1.3, 0.9, 1.1], held: ["BAGPIPE_DRONE", "CELLO"], melody: ["KEMENCE_REAL", "KEMENCE_MAKAM", "BAGPIPE"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "FRAMEDRUM" },
+  { id: "karadeniz", fast: true, name: "Black Sea horon", family: "folk", bpm: [112, 126], scale: USSAK, scaleWish: HICAZ, cell: [2, 2, 3], accent: [1.3, 0.9, 1.1], cells: [{ cell: [2, 2, 3], accent: [1.3, 0.9, 1.1] }, { cell: [2, 2, 2, 3], accent: [1.3, 0.9, 0.95, 1.1] }, { cell: [1, 1, 1, 1], accent: [1.3, 0.85, 1.1, 0.85] }, { cell: [3, 2, 2], accent: [1.3, 0.9, 1.1] }], held: ["BAGPIPE_DRONE", "CELLO"], melody: ["KEMENCE_REAL", "KEMENCE_MAKAM", "BAGPIPE"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "FRAMEDRUM" },
   { id: "icanadolu", name: "Central Anatolian bağlama", family: "folk", bpm: [88, 108], scale: USSAK, scaleWish: HICAZ, cell: [2, 1, 1, 2, 2], accent: [1.25, 0.85, 0.85, 1.1, 0.9], held: ["CELLO", "VIOLA"], melody: ["SAZ", "BAGLAMA_MAKAM", "NEY_MAKAM"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "BENDIR" },
   { id: "mevlevi", name: "Mevlevi (ney and kudüm)", family: "folk", bpm: [76, 88], scale: RAST, scaleWish: SEGAH, cell: [3, 3], accent: [1.3, 0.9], prog: [[0, 4], [0, 4], [0, 4], [0, 4]], held: ["NEY_MAKAM", "CELLO"], melody: ["NEY_REAL", "NEY_MAKAM"], pluck: ["KANUN", "SANTUR"], perc: "FRAMEDRUM" },
   { id: "akdeniz", name: "Turkish Mediterranean (ud, tambur, kanun)", family: "folk", bpm: [96, 114], scale: HICAZ, scaleWish: NIHAVENT, cell: [3, 2, 2, 3], accent: [1.25, 0.9, 0.9, 1.1], held: ["CELLO", "VIOLA"], melody: ["KANUN", "OUD"], pluck: ["OUD", "SAZ"], perc: "DARBUKA" },
-  { id: "dogu", fast: true, name: "East Anatolian davul-zurna halay", family: "folk", bpm: [104, 124], scale: HICAZ, scaleWish: SEGAH, cell: [1, 1, 1, 1], accent: [1.35, 0.8, 1.1, 0.8], held: ["DUDUK", "CELLO"], melody: ["ZURNA", "DUDUK", "NEY_MAKAM"], pluck: ["SAZ", "BAGLAMA_EXTRA"], perc: "FRAMEDRUM" },
-  { id: "zeybek", name: "Aegean zeybek", family: "folk", bpm: [78, 96], scale: RAST, scaleWish: SEGAH, cell: [3, 2, 2, 2], accent: [1.3, 0.9, 0.9, 0.9], held: ["CELLO", "VIOLA"], melody: ["CLA", "VIOLIN", "SAZ"], pluck: ["SAZ", "NYLONGUITAR"], perc: "DARBUKA" },
+  { id: "dogu", fast: true, name: "East Anatolian davul-zurna halay", family: "folk", bpm: [104, 124], scale: HICAZ, scaleWish: SEGAH, cell: [1, 1, 1, 1], accent: [1.35, 0.8, 1.1, 0.8], cells: [{ cell: [1, 1, 1, 1], accent: [1.35, 0.8, 1.1, 0.8] }, { cell: [1, 1], accent: [1.35, 1.1] }, { cell: [2, 2, 2, 3], accent: [1.35, 0.85, 0.9, 1.15] }, { cell: [2, 2, 1], accent: [1.35, 0.9, 1.1] }], held: ["DUDUK", "CELLO"], melody: ["ZURNA", "DUDUK", "NEY_MAKAM"], pluck: ["SAZ", "BAGLAMA_EXTRA"], perc: "FRAMEDRUM" },
+  { id: "zeybek", name: "Aegean zeybek", family: "folk", bpm: [78, 96], scale: RAST, scaleWish: SEGAH, cell: [3, 2, 2, 2], accent: [1.3, 0.9, 0.9, 0.9], cells: [{ cell: [3, 2, 2, 2], accent: [1.3, 0.9, 0.9, 0.9] }, { cell: [2, 2, 2, 3], accent: [1.3, 0.9, 0.9, 1.1] }, { cell: [2, 2, 3, 2], accent: [1.3, 0.9, 1.1, 0.9] }], held: ["CELLO", "VIOLA"], melody: ["CLA", "VIOLIN", "SAZ"], pluck: ["SAZ", "NYLONGUITAR"], perc: "DARBUKA" },
   { id: "greek", name: "Greek syrtos & kalamatianos", family: "folk", bpm: [100, 120], scale: HICAZ, scaleWish: DORIAN, cell: [3, 2, 2], accent: [1.3, 0.9, 1], held: ["ACCORDION", "CELLO"], melody: ["SAZ", "CLA", "NYLONGUITAR"], pluck: ["NYLONGUITAR", "SAZ"], perc: "BENDIR" },
   { id: "italian", name: "Italian symphonic & tarantella", family: "symphonic", bpm: [84, 110], scale: MINOR, scaleWish: MAJOR, cell: [3, 3], accent: [1.2, 0.9], prog: [[0, 3], [8, 4], [3, 4], [7, 4]], held: ["CELLO", "VIOLA", "VIOLIN", "HORN"], melody: ["VIOLIN", "FLUTE", "OBOE", "CLA"], pluck: ["HARP", "VIOLA_PIZZ", "PSALTERY"], perc: "TIMP" },
   { id: "classical", name: "Classical (Vienna)", family: "chamber", bpm: [92, 116], scale: MAJOR, scaleWish: LYDIAN, cell: [1, 1, 1, 1], accent: [1.15, 0.85, 1, 0.85], prog: [[0, 4], [5, 4], [7, 4], [0, 4]], held: ["CELLO", "VIOLA", "BSN"], melody: ["VIOLIN", "FLUTE", "OBOE", "PNO"], pluck: ["PNO", "HARP"], perc: "TRI" },
@@ -133,6 +138,20 @@ export const CARDS: GenreCard[] = BASE_CARDS.map((c) => {
     ...(w.bass ? { bass: w.bass } : {}),
   };
 });
+
+/**
+ * The figure a piece plays for a card: one of its metre variants (`cells`) chosen by `seed`, else its own figure. One piece passes one
+ * seed (`cellSeedOf`), so every bar of a piece plays the same choice for a card.
+ */
+export function cellOf(card: GenreCard, seed: number): { cell: number[]; accent?: number[] } {
+  if (!card.cells?.length) return { cell: card.cell, accent: card.accent };
+  return card.cells[(seed >>> 0) % card.cells.length];
+}
+
+/** the seed of a piece's metre variants: the hash of its main card and its first route */
+export function cellSeedOf(main: GenreCard, routes: PersonalRoute[]): number {
+  return routeHash(main.id + (routes[0]?.key ?? ""));
+}
 
 const byId = (id: string): GenreCard => CARDS.find((c) => c.id === id) ?? CARDS[0];
 
