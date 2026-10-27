@@ -7,16 +7,16 @@ This spec covers the first listenable step: **the grammar corpora exported as th
 
 `phraseMotifs` (idiom.ts) is a seeded random walk: no motif that comes back, no seyir, no breath. The bank replaces it with phrases made by **form grammars** (one form per tradition) from which many phrases are generated offline and stored in `globe/src/personal/melody-bank.json`.
 
-## The bank format
+## The bank format (version 2: compact; replaces the first format)
 
 ```json
-{ "version": 1, "cards": { "<card id>": { "<hits>": [ { "b": [[0,2,1,null],[...],[...],[...]], "c": [2,0,2,4], "f": "seyir", "s": 3, "span": 6, "bias": -1 } ] } } }
+{ "version": 2, "cards": { "<card id>": { "<hits>": ["5342|4531|5342|2224", "..."] } } }
 ```
-- `<hits>`: the number of hit slots in the bar (the groove's hits), 1–9; for every card all nine are present (phrases are made for each).
-- `b`: four bars of `hits` entries each: a scale degree (integer in `[-2, span]`, index into the card's scale, as the walk does today) or `null` (a rest: the hit does not sound). The last entry of every bar is a number (a bar never ends on a rest) and equals the cadence of that bar `c[bar]`.
-- `c`: the cadence degrees the phrase ends its bars on (taken from the card's idiom: `idiomOf`'s cadence rule: default `[2,0,2,4]`, bias −1 `[2,0,2,0]`, bias +1 `[2,2,4,4]`, an explicit entry wins).
-- `f`: the form id; `s`: the start degree (`b[0][0]`); `span`: the highest degree used; `bias`: the net direction of the phrase (−1 falling, 0 arch/level, +1 rising: sign of last-minus-first of the mid-bars).
-- 96 phrases per (card, hits) (the generator makes 400 and keeps the 96 with the most distinct (form, start, contour) combinations). Total size under 400 KB (the JSON is minified; if it is bigger, reduce to 64 per entry).
+- `<hits>` 1–9 (all nine for every card). A phrase is a string of four bars joined by `|`; each bar has exactly `<hits>` characters: a scale degree `d ∈ [-2, 9]` as the base-36 digit of `d + 2` (`0`…`9`, `a`, `b`) or `.` for a rest.
+- The last character of every bar is a digit (never a rest) and equals the card's cadence degree + 2 for that bar. Slot 0 of bar 1 is never a rest.
+- Start degree, span, bias and the cadence are derived from the string by the selector; nothing else is stored.
+- 64 phrases per (card, hits) (the generator keeps the most distinct by (form, start, contour)); target < 1 MB minified, < 200 KB gzipped; `scripts/music/melody/export_bank.py --per-entry N` sets N (reduce to 48 if over).
+- hits = 1 and 2 have few distinct phrases: store what exists.
 
 ## The forms (generator in `scripts/music/melody/grammar.py`, deterministic: seed = hash of card id, hits, index)
 
