@@ -1,8 +1,9 @@
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { composePiece } from "../src/personal/compose";
 import { CARDS } from "../src/personal/genres";
 import { LOW, idiomOf, phraseMotifs } from "../src/personal/idiom";
-import { BANK, decodePhrase, entryOf, pickPhrase } from "../src/personal/melody-bank";
+import { BANK, SHIP_BANK, bankOf, chooseBank, decodePhrase, entryOf, pickPhrase, selectBank } from "../src/personal/melody-bank";
 import { buildRoutes } from "../src/personal/routes";
 import { destinationOf } from "../src/personal/destinations";
 
@@ -21,12 +22,12 @@ describe("the bank file", () => {
       }
     }
   });
-  it("keeps every invariant of every phrase", () => {
+  it("keeps every invariant of every phrase (the selected bank and the shippable one)", () => {
     const bad: string[] = [];
-    for (const c of CARDS) {
+    for (const [bank, c] of [BANK, SHIP_BANK].flatMap((b) => CARDS.map((c) => [b, c] as const))) {
       const idiom = idiomOf(c);
       for (let h = 1; h <= 9; h++) {
-        for (const str of BANK.cards[c.id][String(h)]) {
+        for (const str of bank.cards[c.id][String(h)]) {
           const tag = `${c.id}/${h} ${str}`;
           if (!/^[0-9ab.]+(\|[0-9ab.]+){3}$/.test(str)) bad.push(`format ${tag}`);
           const bars = str.split("|");
@@ -46,6 +47,50 @@ describe("the bank file", () => {
   }, 60000);
   it("has phrases with rests", () => {
     expect(BANK.cards.funk["8"].some((s) => s.includes("."))).toBe(true);
+  });
+});
+
+const LOCAL_PATH = new URL("../src/personal/melody-bank.local.json", import.meta.url);
+const fakeLocal = { version: 2, cards: { pop: { "1": ["4|2|4|6"] } }, sources: { pop: ["symbtr", "grammar"] } };
+
+describe("the shippable bank and the local bank", () => {
+  it("ships nothing derived from SymbTr (no card with symbtr among its sources, no 'symbtr' in the file)", () => {
+    const text = readFileSync(new URL("../src/personal/melody-bank.json", import.meta.url), "utf8");
+    expect(text.toLowerCase()).not.toContain("symbtr");
+    const bank = JSON.parse(text) as { sources: Record<string, string[]> };
+    expect(Object.keys(bank.sources).sort()).toEqual(CARDS.map((c) => c.id).sort());
+    for (const [id, src] of Object.entries(bank.sources)) expect(src, id).not.toContain("symbtr");
+  });
+  it("prefers the local file when its module is present, else the shippable one", () => {
+    expect(chooseBank({ "./melody-bank.local.json": { default: fakeLocal } }, SHIP_BANK)).toBe(fakeLocal);
+    expect(chooseBank({ "./melody-bank.local.json": fakeLocal }, SHIP_BANK)).toBe(fakeLocal);
+    expect(chooseBank({}, SHIP_BANK)).toBe(SHIP_BANK);
+  });
+  it("bank uses that choice; bank-shippable never reads the local file", () => {
+    const local = { "./melody-bank.local.json": { default: fakeLocal } };
+    expect(selectBank("bank", local, SHIP_BANK)).toBe(fakeLocal);
+    expect(selectBank("bank-shippable", local, SHIP_BANK)).toBe(SHIP_BANK);
+    expect(selectBank("bank-shippable", {}, SHIP_BANK)).toBe(SHIP_BANK);
+    expect(bankOf("bank-shippable")).toBe(SHIP_BANK);
+    expect(bankOf("bank")).toBe(BANK);
+  });
+  it("BANK is the local file in a checkout that has one, else the shippable file", () => {
+    if (existsSync(LOCAL_PATH)) {
+      expect(BANK).not.toBe(SHIP_BANK);
+      expect(BANK.sources?.mevlevi).toContain("symbtr");
+    } else {
+      expect(BANK).toBe(SHIP_BANK);
+    }
+  });
+  it("entryOf and pickPhrase read the asked bank", () => {
+    const ship = entryOf("mevlevi", 8, "bank-shippable")!;
+    expect(ship.map((p) => p.bars)).toEqual(SHIP_BANK.cards.mevlevi["8"].map((s) => decodePhrase(s).bars));
+    const sel = entryOf("mevlevi", 8, "bank")!;
+    expect(sel.map((p) => p.bars)).toEqual(BANK.cards.mevlevi["8"].map((s) => decodePhrase(s).bars));
+    const idiom = idiomOf({ id: "mevlevi" });
+    const a = pickPhrase("mevlevi", 8, idiom, 1, lcg(4), idiom.start[0], "bank-shippable");
+    expect(a).toEqual(pickPhrase("mevlevi", 8, idiom, 1, lcg(4), idiom.start[0], "bank-shippable"));
+    expect(pickPhrase("mevlevi", 8, idiom, 1, lcg(4), idiom.start[0])).toEqual(pickPhrase("mevlevi", 8, idiom, 1, lcg(4), idiom.start[0], "bank"));
   });
 });
 
@@ -113,10 +158,12 @@ describe("pickPhrase", () => {
 describe("phraseMotifs with the bank", () => {
   it("is the walk without the option and deterministic with it", () => {
     const idiom = idiomOf({ id: "classical" });
-    const walk = (o?: { melody?: "walk" | "bank"; card?: string }) => phraseMotifs(idiom, 6, 1, lcg(3), () => 2, o as never);
+    const walk = (o?: { melody?: "walk" | "bank" | "bank-shippable"; card?: string }) => phraseMotifs(idiom, 6, 1, lcg(3), () => 2, o as never);
     expect(walk({ melody: "walk", card: "classical" })).toEqual(walk());
     expect(walk({ melody: "bank", card: "classical" })).toEqual(walk({ melody: "bank", card: "classical" }));
     expect(walk({ melody: "bank", card: "classical" })).not.toEqual(walk());
+    expect(walk({ melody: "bank-shippable", card: "classical" })).toEqual(walk({ melody: "bank-shippable", card: "classical" }));
+    expect(walk({ melody: "bank-shippable", card: "classical" })).not.toEqual(walk());
   });
   it("falls back to the walk for a card the bank does not know", () => {
     const idiom = idiomOf({ id: "no-such" });
@@ -181,6 +228,13 @@ describe("composePiece with the bank", () => {
     expect(differs).toBeGreaterThan(50);
     expect(fewer).toBeGreaterThan(0); // the rests of the phrases take notes away
   }, 120000);
+  it("bank-shippable composes deterministically", () => {
+    for (const rs of selections().slice(0, 10)) {
+      const a = composePiece("visited", rs, { melody: "bank-shippable" });
+      expect(a.notes.length).toBeGreaterThan(0);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(composePiece("visited", rs, { melody: "bank-shippable" })));
+    }
+  });
   it("defaults to the walk (no option equals melody: walk)", () => {
     for (const rs of selections().slice(0, 15)) {
       expect(JSON.stringify(composePiece("visited", rs))).toBe(JSON.stringify(composePiece("visited", rs, { melody: "walk" })));

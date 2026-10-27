@@ -79,7 +79,10 @@ export function Experience({ selection, onBack }: Props) {
   const [scope, setScope] = useState<{ pos: number; section: string }>({ pos: 0, section: "" });
 
   const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
-  const melody = useMemo(() => (new URLSearchParams(window.location.search).get("melody") === "bank" ? "bank" : "walk"), []);
+  const melody = useMemo(() => {
+    const m = new URLSearchParams(window.location.search).get("melody");
+    return m === "bank" || m === "bank-shippable" ? m : "walk";
+  }, []);
   const piece = useMemo(() => composePiece(selection.mode, routes, { melody }), [selection.mode, routes, melody]);
   /** a studio piece that is like these picks (a finished file on the site: no request is made) */
   const studio = useMemo(() => (!STUDIO_ON || routes.length < 2 ? null : pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length)), [selection, routes]);

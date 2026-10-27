@@ -9,7 +9,10 @@ default stays the walk).
 |---|---|
 | `idioms.json` | the idiom of every card (`idiomOf` over `DEFAULT_IDIOM`: span, bias, start, cadence, step, repeat, leaps), dumped from TS |
 | `grammar.py` | the eight forms, the operators, `generate(card_id, hits, n, seed)`, `bank_entry` (the diverse selection), `FORM_OF` (all 52 cards) |
-| `train.py` | the trained model (spec `2026-10-27-melody-trained-design.md`): `clamp_phrase` (into [-2, span]: octave shift, fold, clamp), `reduce_bar` (h slots; padding repeats marked and left out of the move table), `Model` (moves given previous interval / bar role / slot class, bar operators, rests, start degree; smoothing 0.1, back-off card -> cluster -> all), `generate` / `select` (600 per (card, hits), rerank by mean log-likelihood + structure, 64 most distinct), `mix` (70% trained / 30% grammar), `eligible` (>= 400 phrases from >= 40 pieces) |
+| `train.py` | the trained model (spec `2026-10-27-melody-trained-design.md`): `clamp_phrase` (into [-2, span]: octave shift, fold, clamp), `reduce_bar` (h slots; padding repeats marked and left out of the move table), `Model` (moves given previous interval / bar role / slot class, bar operators, rests, start degree; smoothing 0.1, back-off card -> cluster -> all), `generate` / `select` (600 per (card, hits); the slot before each cadence weighed by the move into it; rerank by mean log-likelihood + penalties, with the held-bar penalty and the share of recurring phrases calibrated to the corpus's; 64 sampled from the pool, spread over distinct groups), `mix` (70% trained / 30% grammar), `eligible` (>= 400 phrases from >= 40 pieces) |
+| `evaluate.py` | the evaluation (spec section "Evaluation"): per card with a corpus, corpus vs bank vs the old walk at hits 6 / 8: step / leap / repeat / rest shares, interval KL (bank vs corpus, walk vs corpus), recurrence (share of phrases with a repeated / sequenced bar, distinct bar-motifs per phrase), cadence hit rate, the five most common 4-note patterns; exit code 1 when an acceptance rule fails; `--write` rewrites the "Evaluation" section of `docs/music-melody-model-report.md` |
+| `walk-samples.json` | 200 phrases of the old walk per card at hits 6 and 8, dumped by `globe/scripts/dump-walk-phrases.ts` (input of `evaluate.py`) |
+| `test_evaluate.py` | unittest of the measures and acceptance rules of `evaluate.py` |
 | `test_train.py` | unittest of `train.py` on toy corpora, plus the schema of both exported banks (no `symbtr` in the shippable one) |
 | `export_bank.py` | all 52 cards x hits 1-9 -> minified JSON, version 2 (strings, `.` = rest), field `sources` per card: `melody-bank.json` (shippable: trained on PDMX / Nottingham only, grammar elsewhere) and `melody-bank.local.json` (git-ignored: plus the SymbTr-trained makam cards); `--grammar-only` writes the grammar bank; `--show` prints trained phrases next to the grammar's; `--examples` prints two phrases of every form |
 | `test_grammar.py` | unittest: determinism, bounds, cadences, rests, the signature of every form, the bank file |
@@ -23,6 +26,8 @@ cd globe && npx --yes vite-node scripts/dump-idioms.ts && cd ..   # after changi
 python3 -m unittest discover -s scripts/music/melody            # tests
 python3 scripts/music/melody/build_corpus.py                    # .corpora/phrases (needs the downloaded corpora)
 python3 scripts/music/melody/export_bank.py --show              # trains (~3 min) and writes melody-bank.json + melody-bank.local.json
+cd globe && npx --yes vite-node scripts/dump-walk-phrases.ts && cd ..   # after changing the walk: rewrites walk-samples.json
+python3 scripts/music/melody/evaluate.py --write                 # corpus vs bank vs walk; exit 1 when an acceptance rule fails
 ```
 
 The exporter is deterministic: phrase *i* of (card, hits) draws from `random.Random(seed)` with `seed` = the first 8 bytes of

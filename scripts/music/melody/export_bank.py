@@ -37,6 +37,10 @@ SHOW_CARDS = ("anatolian", "mevlevi", "jazz", "classical", "celtic", "hindustani
 encode = train.encode
 
 
+def decode(s: str):
+    return [[None if c == "." else int(c, 36) - 2 for c in b] for b in s.split("|")]
+
+
 def grammar_entry(cid: str, h: int, keep: int) -> list:
     return [encode(p) for p in grammar.bank_entry(cid, h, keep=keep, make=400)]
 
@@ -80,7 +84,10 @@ def trained_card(models: dict, cid: str, keep: int, gram: dict) -> dict:
         if h == 1:
             out[str(h)] = g
             continue
-        t = [encode(p) for p in train.select(models[h], cid, h, keep=keep, make=train.MAKE)]
+        mixed_g = g[:round(keep * (1 - train.TRAINED_SHARE))]
+        g_rate = sum(train.recurring(decode(s)) for s in mixed_g) / max(1, len(mixed_g))
+        target = train.reuse_target(models[h].p_recur(cid), g_rate)
+        t = [encode(p) for p in train.select(models[h], cid, h, keep=keep, make=train.MAKE, target=target)]
         out[str(h)] = train.mix(t, g, keep)
     return out
 

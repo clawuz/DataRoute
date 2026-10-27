@@ -241,3 +241,185 @@ Rows of `subset:no_license_conflict` with licence `publicdomain` or `cc-zero` on
 - Western degrees: a pitch is read as a degree of its own key's 7-note mode (chromatic notes by their usual function: the leading tone in minor and the flat 7th in major are both the 7th), then kept as the same index on a 7-note card (a major tune on a minor card becomes its parallel-minor line; the site renders `scale` and `scaleWish` from the same degrees) or moved to the nearest note on a pentatonic card. SymbTr pitches go to the nearest comma degree of the card's scale (card semitones x 53/12). The octave of the tonic is the one that puts the most notes into [-2, 9].
 - PDMX melody = the top line of the highest part among those with >= 30% of the busiest part's notes (not the busiest part: a cello or a left hand can be busier); key = the first key signature's major / relative-minor pair, chosen by the Krumhansl-Kessler profile; a key change ends the piece; time-signature events are bar lines (the PDMX MIDI writes a pickup or another irregular measure as its own short time signature: such a measure is not a bar, so pickups do not shift the grid).
 - Nottingham tunes are read from the ABC (written bars, so pickups are exact); repeats are not expanded; a K: change starts a new piece; the Christmas book is not used.
+
+## Evaluation
+
+Written by `scripts/music/melody/evaluate.py --write` (exit code 1 when an acceptance rule fails). The corpus of a card is the sources its bank was trained on (`sources`; a grammar-only card is compared with every shippable source, plus SymbTr for the makam cards when the local bank exists), an evenly spaced sample of at most 2000 phrases. The bank is `melody-bank.local.json` for the cards it trains on SymbTr ("local"), else `melody-bank.json`. The walk is the old hook melody (`phraseMotifs` without a bank), 200 phrases per card dumped by `globe/scripts/dump-walk-phrases.ts` into `scripts/music/melody/walk-samples.json`. Moves are intervals between consecutive sounding notes in scale degrees (rests skipped, clipped to +-5): step = 1, leap >= 2, repeat = 0; rest = the share of slots that are rests (the corpus reduced to h slots). KL = D(x || corpus) of the 11-bin interval distribution, add-0.5 smoothing. Recurrence = the share of phrases with a bar that repeats or sequences an earlier bar (the model's bar similarity: at least 75% of the slots before the cadence agree, transposed by 0, +-1 or +-2), "motifs" = the mean number of distinct bar-motifs per phrase (4 = every bar new); for a trained card the bank's recurrence is given for the whole entry and for its trained part (without the 30% grammar phrases).
+
+### Acceptance
+
+- `melody-bank.json`: cadence hit 96736/96736 bars (100.0%), 0 bars end on a rest.
+- `melody-bank.local.json`: cadence hit 100612/100612 bars (100.0%), 0 bars end on a rest.
+- KL(bank, corpus) < KL(walk, corpus) for 72 of 72 (card, hits) pairs of the 36 trained cards (smallest margin 0.015, pop hits 6).
+- Recurrence of the bank at most 15 points above the corpus's for every trained card and hits (largest excess +13 points, karadeniz hits 6).
+- Result: PASS
+
+### Averages
+
+| group | hits | cards | KL bank | KL walk | recurrence corpus / bank / trained part / walk | motifs corpus / bank / trained part / walk |
+|---|---|---|---|---|---|---|
+| trained | 6 | 36 | 0.051 | 0.122 | 57% / 65% / 56% / 100% | 3.17 / 3.06 / 3.24 / 2.84 |
+| trained | 8 | 36 | 0.041 | 0.121 | 45% / 50% / 42% / 100% | 3.36 / 3.30 / 3.48 / 2.99 |
+| trained (shippable) | 6 | 23 | 0.047 | 0.110 | 62% / 70% / 61% / 100% | 3.04 / 2.97 / 3.14 / 2.89 |
+| trained (shippable) | 8 | 23 | 0.045 | 0.111 | 54% / 58% / 52% / 100% | 3.21 / 3.21 / 3.35 / 2.99 |
+| trained (local, SymbTr) | 6 | 13 | 0.056 | 0.143 | 47% / 55% / 46% / 100% | 3.39 / 3.22 / 3.43 / 2.75 |
+| trained (local, SymbTr) | 8 | 13 | 0.034 | 0.140 | 29% / 36% / 25% / 100% | 3.64 / 3.46 / 3.71 / 2.98 |
+| grammar-only with a corpus | 6 | 16 | 0.214 | 0.127 | 62% / 87% / - / 96% | 3.09 / 2.17 / - / 2.91 |
+| grammar-only with a corpus | 8 | 16 | 0.230 | 0.127 | 51% / 79% / - / 94% | 3.28 / 2.35 / - / 3.04 |
+
+### Per card (hits 8; hits 6 in the KL column after the slash)
+
+Shares in %, step / leap / repeat / rest.
+
+| card | bank | sources | corpus (s / p / n) | corpus | bank | walk | KL bank (8 / 6) | KL walk (8 / 6) | recurrence corpus / bank / trained / walk | motifs corpus / bank / walk |
+|---|---|---|---|---|---|---|---|---|---|---|
+| afrobeat | shippable (grammar) | grammar | 0 / 17 / 0 | 58 / 32 / 10 / 4 | 37 / 40 / 23 / 16 | 40 / 28 / 32 / 0 | 0.138 / 0.144 | 0.231 / 0.204 | 47 / 100 / - / 100 | 3.41 / 2.00 / 3.00 |
+| akdeniz | local | symbtr+grammar | 5909 / 0 / 0 | 59 / 11 / 30 / 2 | 61 / 12 / 27 / 3 | 53 / 24 / 23 / 0 | 0.011 / 0.043 | 0.155 / 0.152 | 26 / 30 / 27 / 100 | 3.68 / 3.67 / 2.98 |
+| anatolian | local | symbtr+pdmx+grammar | 13566 / 174 / 0 | 55 / 10 / 35 / 2 | 60 / 10 / 30 / 3 | 53 / 19 / 28 / 0 | 0.020 / 0.046 | 0.090 / 0.084 | 32 / 42 / 33 / 100 | 3.59 / 3.52 / 2.96 |
+| andean | shippable (grammar) | grammar | 0 / 381 / 0 | 49 / 15 / 36 / 6 | 44 / 46 / 10 / 6 | 50 / 23 / 28 / 0 | 0.397 / 0.341 | 0.060 / 0.070 | 49 / 34 / - / 100 | 3.33 / 3.66 / 2.98 |
+| arabic | local | symbtr+pdmx+grammar | 5831 / 147 / 0 | 59 / 11 / 30 / 2 | 60 / 13 / 27 / 3 | 55 / 20 / 24 / 0 | 0.013 / 0.039 | 0.070 / 0.061 | 27 / 28 / 29 / 100 | 3.66 / 3.69 / 2.97 |
+| baroque | shippable | pdmx+grammar | 0 / 13975 / 0 | 50 / 32 / 18 / 2 | 57 / 23 / 19 / 2 | 58 / 30 / 12 / 0 | 0.030 / 0.035 | 0.095 / 0.098 | 37 / 41 / 38 / 100 | 3.51 / 3.53 / 2.96 |
+| bollywood | shippable (grammar) | grammar | 0 / 121 / 0 | 45 / 21 / 34 / 4 | 44 / 38 / 18 / 8 | 53 / 27 / 20 / 0 | 0.120 / 0.234 | 0.083 / 0.069 | 37 / 100 / - / 100 | 3.50 / 2.41 / 2.98 |
+| bossa | shippable | pdmx+grammar | 0 / 532 / 0 | 33 / 24 / 43 / 7 | 39 / 31 / 30 / 6 | 47 / 33 / 21 / 0 | 0.057 / 0.068 | 0.194 / 0.190 | 62 / 73 / 62 / 100 | 3.03 / 3.03 / 3.00 |
+| calm | shippable | pdmx+grammar | 0 / 2696 / 0 | 40 / 34 / 27 / 4 | 51 / 23 / 27 / 3 | 50 / 20 / 31 / 0 | 0.062 / 0.062 | 0.122 / 0.114 | 58 / 52 / 58 / 100 | 3.09 / 3.41 / 2.99 |
+| caucasus | shippable (grammar) | grammar | 0 / 255 / 0 | 50 / 24 / 26 / 3 | 45 / 33 / 21 / 4 | 54 / 22 / 24 / 0 | 0.138 / 0.157 | 0.086 / 0.086 | 57 / 100 / - / 100 | 3.24 / 1.52 / 2.99 |
+| celtic | shippable | pdmx+nottingham+grammar | 0 / 3349 / 5493 | 46 / 34 / 19 / 1 | 50 / 27 / 23 / 1 | 45 / 37 / 18 / 0 | 0.031 / 0.024 | 0.052 / 0.054 | 49 / 59 / 42 / 100 | 3.36 / 2.91 / 3.00 |
+| centralasia | shippable (grammar) | grammar | 0 / 59 / 0 | 24 / 15 / 61 / 2 | 48 / 32 / 19 / 5 | 43 / 25 / 32 / 0 | 0.444 / 0.335 | 0.247 / 0.262 | 73 / 100 / - / 100 | 2.80 / 1.52 / 2.98 |
+| chanson | shippable | pdmx+grammar | 0 / 3701 / 0 | 40 / 30 / 29 / 4 | 53 / 22 / 26 / 3 | 52 / 30 / 18 / 0 | 0.046 / 0.055 | 0.137 / 0.130 | 63 / 53 / 62 / 100 | 3.05 / 3.34 / 2.99 |
+| chinese | shippable (grammar) | grammar | 0 / 285 / 0 | 43 / 21 / 36 / 3 | 47 / 44 / 10 / 6 | 49 / 33 / 19 / 0 | 0.279 / 0.237 | 0.129 / 0.139 | 59 / 48 / - / 100 | 3.25 / 3.45 / 2.99 |
+| cinematic | shippable | pdmx+grammar | 0 / 5367 / 0 | 36 / 35 / 28 / 4 | 50 / 25 / 25 / 3 | 50 / 33 / 17 / 0 | 0.066 / 0.058 | 0.115 / 0.107 | 57 / 55 / 58 / 100 | 3.10 / 3.34 / 2.99 |
+| classical | shippable | pdmx+grammar | 0 / 10001 / 0 | 45 / 31 / 24 / 5 | 58 / 21 / 22 / 4 | 55 / 32 / 13 / 0 | 0.054 / 0.041 | 0.122 / 0.113 | 53 / 50 / 51 / 100 | 3.29 / 3.42 / 3.00 |
+| country | shippable | pdmx+nottingham+grammar | 0 / 4215 / 3632 | 43 / 33 / 24 / 2 | 46 / 34 / 20 / 4 | 49 / 30 / 21 / 0 | 0.030 / 0.008 | 0.066 / 0.060 | 53 / 66 / 51 / 100 | 3.22 / 3.11 / 2.99 |
+| cumbia | shippable (grammar) | grammar | 0 / 126 / 0 | 40 / 24 / 37 / 8 | 45 / 35 / 20 / 9 | 41 / 27 / 32 / 0 | 0.153 / 0.195 | 0.103 / 0.105 | 61 / 100 / - / 100 | 3.17 / 2.45 / 3.00 |
+| dance | shippable | pdmx+grammar | 0 / 5609 / 0 | 36 / 28 / 36 / 5 | 39 / 30 / 31 / 4 | 37 / 32 / 30 / 0 | 0.020 / 0.030 | 0.073 / 0.093 | 57 / 69 / 56 / 100 | 3.12 / 3.06 / 3.00 |
+| dogu | local | symbtr+grammar | 6564 / 0 / 0 | 57 / 10 / 33 / 2 | 50 / 17 / 33 / 2 | 37 / 27 / 36 / 0 | 0.071 / 0.074 | 0.256 / 0.279 | 31 / 44 / 20 / 100 | 3.60 / 3.11 / 2.98 |
+| eastafrica | shippable (grammar) | grammar | 0 / 118 / 0 | 31 / 24 / 45 / 4 | 24 / 47 / 29 / 12 | 39 / 29 / 32 / 0 | 0.159 / 0.141 | 0.072 / 0.081 | 71 / 100 / - / 100 | 2.81 / 1.00 / 3.00 |
+| eastasia | shippable | pdmx+grammar | 0 / 674 / 0 | 45 / 19 / 36 / 5 | 47 / 24 / 29 / 5 | 39 / 40 / 21 / 0 | 0.051 / 0.039 | 0.179 / 0.193 | 49 / 45 / 49 / 100 | 3.32 / 3.41 / 3.00 |
+| epic | shippable | pdmx+grammar | 0 / 4773 / 0 | 37 / 34 / 29 / 4 | 39 / 34 / 28 / 4 | 42 / 41 / 17 / 0 | 0.018 / 0.023 | 0.082 / 0.075 | 60 / 70 / 58 / 100 | 3.04 / 2.97 / 2.99 |
+| fado | shippable (grammar) | grammar | 0 / 355 / 0 | 40 / 33 / 27 / 6 | 66 / 19 / 15 / 2 | 60 / 23 / 17 / 0 | 0.182 / 0.111 | 0.136 / 0.101 | 36 / 72 / - / 100 | 3.52 / 3.22 / 2.96 |
+| flamenco | shippable (grammar) | grammar | 0 / 146 / 0 | 38 / 32 / 30 / 3 | 67 / 11 / 21 / 5 | 51 / 18 / 31 / 0 | 0.301 / 0.281 | 0.190 / 0.184 | 43 / 47 / - / 100 | 3.47 / 3.39 / 2.97 |
+| funk | shippable | pdmx+grammar | 0 / 3866 / 0 | 33 / 24 / 43 / 6 | 37 / 23 / 40 / 8 | 30 / 32 / 38 / 0 | 0.022 / 0.051 | 0.069 / 0.073 | 56 / 67 / 53 / 100 | 3.14 / 2.94 / 2.98 |
+| gamelan | shippable (grammar) | grammar | 0 / 20 / 0 | 17 / 30 / 53 / 8 | 33 / 34 / 34 / 10 | 34 / 29 / 37 / 0 | 0.174 / 0.137 | 0.139 / 0.149 | 55 / 100 / - / 100 | 3.40 / 1.00 / 3.00 |
+| greek | local | symbtr+pdmx+grammar | 5932 / 197 / 0 | 59 / 11 / 30 / 2 | 53 / 20 / 27 / 2 | 45 / 29 / 26 / 0 | 0.058 / 0.057 | 0.193 / 0.211 | 29 / 41 / 16 / 100 | 3.63 / 3.17 / 3.00 |
+| hindustani | shippable (grammar) | grammar | 0 / 14 / 0 | 49 / 24 / 27 / 0 | 58 / 7 / 36 / 3 | 50 / 21 / 29 / 0 | 0.170 / 0.130 | 0.055 / 0.061 | 21 / 0 / - / 10 | 3.79 / 4.00 / 3.90 |
+| icanadolu | local | symbtr+grammar | 9221 / 0 / 0 | 57 / 9 / 34 / 2 | 59 / 9 / 32 / 3 | 53 / 19 / 28 / 0 | 0.018 / 0.048 | 0.101 / 0.094 | 29 / 34 / 31 / 100 | 3.63 / 3.59 / 2.96 |
+| italian | shippable | pdmx+grammar | 0 / 7129 / 0 | 45 / 32 / 24 / 4 | 53 / 23 / 24 / 2 | 45 / 37 / 18 / 0 | 0.037 / 0.043 | 0.083 / 0.101 | 51 / 56 / 51 / 100 | 3.25 / 3.30 / 3.00 |
+| jazz | shippable | pdmx+grammar | 0 / 5788 / 0 | 37 / 35 / 28 / 6 | 41 / 32 / 27 / 9 | 42 / 40 / 18 / 0 | 0.020 / 0.027 | 0.082 / 0.088 | 44 / 55 / 36 / 100 | 3.37 / 3.12 / 3.00 |
+| karadeniz | local | symbtr+pdmx+grammar | 8592 / 8 / 0 | 57 / 10 / 33 / 3 | 51 / 18 / 31 / 2 | 47 / 22 / 30 / 0 | 0.090 / 0.093 | 0.149 / 0.146 | 29 / 41 / 16 / 100 | 3.63 / 3.19 / 2.98 |
+| karsilama | local | symbtr+grammar | 6470 / 0 / 0 | 58 / 9 / 33 / 2 | 56 / 16 / 28 / 2 | 48 / 27 / 25 / 0 | 0.064 / 0.120 | 0.239 / 0.253 | 31 / 42 / 18 / 100 | 3.61 / 3.12 / 3.00 |
+| khaleeji | local | symbtr+pdmx+grammar | 5831 / 21 / 0 | 57 / 9 / 33 / 2 | 62 / 9 / 29 / 2 | 52 / 21 / 28 / 0 | 0.025 / 0.060 | 0.150 / 0.158 | 29 / 38 / 29 / 100 | 3.64 / 3.53 / 2.98 |
+| maghrebi | local | symbtr+pdmx+grammar | 5831 / 14 / 0 | 57 / 9 / 33 / 2 | 61 / 10 / 30 / 2 | 51 / 23 / 27 / 0 | 0.023 / 0.054 | 0.198 / 0.205 | 30 / 36 / 29 / 100 | 3.63 / 3.50 / 2.99 |
+| mariachi | shippable (grammar) | grammar | 0 / 350 / 0 | 34 / 30 / 36 / 6 | 49 / 28 / 22 / 3 | 43 / 33 / 24 / 0 | 0.127 / 0.130 | 0.087 / 0.088 | 57 / 100 / - / 100 | 3.05 / 1.61 / 3.00 |
+| mevlevi | local | symbtr+grammar | 17332 / 0 / 0 | 50 / 15 / 34 / 2 | 54 / 15 / 30 / 3 | 58 / 18 / 24 / 0 | 0.012 / 0.019 | 0.049 / 0.040 | 25 / 30 / 24 / 100 | 3.68 / 3.61 / 2.96 |
+| nordic | shippable | pdmx+nottingham+grammar | 0 / 1555 / 295 | 41 / 32 / 27 / 3 | 54 / 20 / 26 / 2 | 50 / 20 / 31 / 0 | 0.065 / 0.053 | 0.109 / 0.104 | 61 / 53 / 60 / 100 | 3.06 / 3.25 / 2.99 |
+| persian | local | symbtr+pdmx+grammar | 14560 / 85 / 0 | 60 / 12 / 29 / 3 | 64 / 11 / 25 / 3 | 53 / 20 / 27 / 0 | 0.016 / 0.028 | 0.059 / 0.057 | 26 / 33 / 27 / 100 | 3.68 / 3.66 / 2.96 |
+| pop | shippable | pdmx+grammar | 0 / 8428 / 0 | 34 / 29 / 37 / 6 | 37 / 33 / 30 / 5 | 37 / 32 / 30 / 0 | 0.042 / 0.066 | 0.074 / 0.081 | 54 / 64 / 49 / 100 | 3.18 / 3.12 / 3.00 |
+| rnb | shippable | pdmx+grammar | 0 / 4588 / 0 | 37 / 28 / 35 / 5 | 42 / 28 / 31 / 7 | 45 / 32 / 24 / 0 | 0.034 / 0.038 | 0.080 / 0.082 | 54 / 66 / 51 / 100 | 3.18 / 2.94 / 3.00 |
+| romantic | shippable | pdmx+grammar | 0 / 7485 / 0 | 39 / 35 / 26 / 4 | 53 / 24 / 23 / 3 | 53 / 33 / 14 / 0 | 0.076 / 0.079 | 0.184 / 0.183 | 54 / 52 / 53 / 100 | 3.19 / 3.38 / 3.00 |
+| russian | shippable | pdmx+grammar | 0 / 3469 / 0 | 41 / 32 / 26 / 4 | 55 / 21 / 24 / 3 | 57 / 26 / 18 / 0 | 0.071 / 0.067 | 0.130 / 0.116 | 57 / 58 / 56 / 100 | 3.16 / 3.34 / 2.98 |
+| salsa | shippable (grammar) | grammar | 0 / 291 / 0 | 35 / 32 / 33 / 7 | 38 / 41 / 21 / 16 | 41 / 32 / 27 / 0 | 0.094 / 0.125 | 0.076 / 0.081 | 53 / 100 / - / 100 | 3.16 / 2.00 / 3.00 |
+| samba | shippable | pdmx+grammar | 0 / 846 / 0 | 37 / 30 / 33 / 5 | 39 / 30 / 31 / 6 | 43 / 30 / 27 / 0 | 0.008 / 0.032 | 0.077 / 0.081 | 47 / 59 / 42 / 100 | 3.31 / 3.25 / 3.00 |
+| slavic | shippable | pdmx+grammar | 0 / 4096 / 0 | 45 / 29 / 26 / 3 | 52 / 24 / 24 / 2 | 55 / 24 / 21 / 0 | 0.043 / 0.035 | 0.065 / 0.057 | 59 / 72 / 60 / 100 | 3.14 / 2.75 / 2.98 |
+| spguitar | shippable | pdmx+grammar | 0 / 3095 / 0 | 30 / 44 / 26 / 2 | 48 / 29 / 23 / 1 | 57 / 25 / 18 / 0 | 0.125 / 0.130 | 0.262 / 0.231 | 49 / 55 / 49 / 100 | 3.30 / 3.36 / 2.98 |
+| tango | shippable | pdmx+grammar | 0 / 928 / 0 | 43 / 27 / 30 / 5 | 51 / 21 / 29 / 3 | 49 / 29 / 23 / 0 | 0.032 / 0.025 | 0.095 / 0.097 | 49 / 52 / 49 / 100 | 3.33 / 3.45 / 2.98 |
+| thai | shippable (grammar) | grammar | 0 / 48 / 0 | 28 / 21 / 51 / 3 | 44 / 47 / 9 / 5 | 45 / 32 / 24 / 0 | 0.443 / 0.434 | 0.189 / 0.189 | 33 / 62 / - / 100 | 3.62 / 3.31 / 3.00 |
+| westafrica | shippable (grammar) | grammar | 0 / 86 / 0 | 40 / 11 / 49 / 4 | 27 / 43 / 29 / 13 | 39 / 29 / 32 / 0 | 0.361 / 0.301 | 0.155 / 0.166 | 60 / 100 / - / 100 | 2.93 / 1.00 / 3.00 |
+| zeybek | local | symbtr+grammar | 8661 / 0 / 0 | 57 / 10 / 34 / 2 | 61 / 9 / 30 / 3 | 56 / 20 / 25 / 0 | 0.021 / 0.053 | 0.116 / 0.114 | 28 / 34 / 29 / 100 | 3.65 / 3.58 / 2.97 |
+
+### The five most common 4-note patterns (hits 8; three intervals, share of all 4-note windows in %)
+
+| card | corpus | bank | walk |
+|---|---|---|---|
+| afrobeat | `+1-1+1` 9.6, `-1+1-1` 8.2, `-1-1+1` 4.8, `-1-1-1` 3.7, `-1+1-2` 2.8 | `+1+1+1` 5.9, `+0+1+1` 2.1, `-1-1+0` 2.0, `+0-1-1` 2.0, `+0+0-2` 1.8 | `+0+0+0` 3.4, `-1+0+0` 2.6, `+0-1+0` 2.4, `+0+0-1` 2.4, `+1+0+0` 2.0 |
+| akdeniz | `+0+0+0` 8.4, `-1-1-1` 6.2, `-1-1+1` 4.6, `-1+1+1` 4.1, `+1-1-1` 4.0 | `-1-1-1` 6.9, `+0+0+0` 6.1, `+0-1-1` 4.7, `+1-1-1` 4.5, `-1-1+1` 4.3 | `-1-1-1` 4.5, `-1-1+0` 2.9, `+0-1-1` 2.6, `-1+0-1` 2.4, `-1+0+0` 2.3 |
+| anatolian | `+0+0+0` 10.5, `-1-1-1` 4.7, `+0+0-1` 4.2, `+0-1+0` 4.2, `-1+0-1` 4.0 | `+0+0+0` 5.6, `-1-1-1` 5.3, `+0-1-1` 5.3, `+0+0-1` 4.6, `-1-1+1` 4.0 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
+| andean | `+0+0+0` 13.1, `-1+1-1` 7.4, `+1-1+1` 6.1, `+0+0-1` 2.6, `-1+0+0` 2.5 | `+1-2+1` 3.6, `+1-1+1` 3.2, `+2-2+2` 3.2, `-2+1-2` 2.8, `-2+2-2` 2.8 | `-1-1-1` 2.9, `+0-1-1` 2.9, `-1+0-1` 2.8, `+0+0-1` 2.7, `-1-1+0` 2.6 |
+| arabic | `+0+0+0` 8.1, `-1-1-1` 6.3, `-1-1+1` 4.7, `-1+1+1` 4.1, `+1-1-1` 4.1 | `-1-1-1` 4.7, `+0+0+0` 4.7, `+0+0-1` 4.2, `+0-1-1` 4.1, `-1-1+1` 4.1 | `-1-1-1` 5.4, `-1-1+0` 3.9, `-1+0-1` 3.6, `+0-1-1` 3.2, `-1+0+0` 3.1 |
+| baroque | `+0+0+0` 5.3, `-1-1-1` 5.2, `+1+1+1` 3.2, `-1+1-1` 3.1, `+1-1+1` 2.9 | `-1-1-1` 5.7, `-1-1+1` 4.2, `+0+0+0` 4.0, `-1+1+1` 3.9, `+1+1+1` 3.7 | `-1-1-1` 3.1, `-1-1+1` 2.6, `+1+1+1` 2.6, `+1-1-1` 2.5, `+1+1-1` 2.4 |
+| bollywood | `+0+0+0` 6.7, `-1-1+1` 3.4, `-1+1-1` 3.3, `+0+0-1` 3.3, `+1-1-1` 3.0 | `-1+1-1` 2.9, `+1-1+1` 2.3, `+1-1-1` 1.9, `+0-1+0` 1.7, `-1-1+1` 1.7 | `-1-1-1` 4.0, `-1-1+0` 2.2, `-1+0-1` 1.9, `-1+1+1` 1.8, `+0-1-1` 1.7 |
+| bossa | `+0+0+0` 19.3, `+0+0-1` 3.4, `-1-1-1` 2.3, `-1+0+0` 1.9, `+1+0+0` 1.7 | `+0+0+0` 8.0, `+0+0-1` 3.2, `+1+0+0` 2.5, `+1-1+1` 2.1, `-1+1+1` 2.0 | `+1+0-1` 1.5, `+1-1-1` 1.5, `+1+0+1` 1.4, `-1+1+1` 1.4, `-1-1-1` 1.4 |
+| calm | `+0+0+0` 8.8, `-1+1-1` 2.0, `+1+0+0` 1.8, `+0+0-1` 1.8, `-1-1+1` 1.8 | `+0+0+0` 5.4, `-1-1-1` 3.4, `+1+1+1` 3.2, `-1-1+1` 2.9, `+0+0-1` 2.9 | `+0+0+0` 3.3, `-1+0+0` 2.9, `+0-1+0` 2.8, `+0+0-1` 2.7, `+1+0-1` 2.6 |
+| caucasus | `+0+0+0` 6.6, `-1+1-1` 4.3, `+1-1-1` 4.0, `-1-1+1` 3.5, `-1+1+1` 2.9 | `+0-1+0` 6.3, `-1+0-1` 6.3, `+1-2+1` 4.7, `-2+1-2` 4.1, `+1-1+1` 3.8 | `-1-1-1` 5.0, `-1+0-1` 3.5, `-1-1+0` 3.4, `+0-1-1` 3.0, `-1+0+0` 2.5 |
+| celtic | `-1-1-1` 4.5, `+0+0+0` 4.3, `+1+1+1` 3.2, `+1-1-1` 2.3, `-1+1+1` 2.3 | `+0+0+0` 3.7, `+1-1+1` 3.4, `-1+1-1` 3.2, `+1+1+1` 2.9, `-1-1-1` 2.7 | `+1-1-1` 1.5, `-1+1+1` 1.2, `+1+1+0` 1.2, `+1-1+1` 1.1, `+1+1+1` 1.1 |
+| centralasia | `+0+0+0` 40.9, `+1+0+0` 3.4, `+0+0+1` 3.3, `+0+0-1` 2.1, `+0-1+1` 2.0 | `+1-1+1` 6.2, `-1+1-1` 6.0, `-1+0-1` 4.2, `-2+2-2` 3.9, `+0-1+0` 3.7 | `+0+0+0` 3.4, `-1+0+0` 3.1, `+0-1+0` 3.1, `-1+0-1` 2.8, `+0+0-1` 2.6 |
+| chanson | `+0+0+0` 10.9, `-1-1-1` 3.0, `+1+1+1` 2.5, `+1-1-1` 2.2, `-1-1+1` 2.0 | `+0+0+0` 5.4, `-1-1-1` 4.7, `+1+1+1` 4.0, `-1-1+1` 3.5, `-1+1+1` 3.0 | `-1-1-1` 2.3, `+1-1-1` 2.2, `-1-1+1` 1.8, `-1+1+1` 1.8, `+1+1-1` 1.8 |
+| chinese | `+0+0+0` 13.8, `+0+0+1` 2.3, `-1+1+1` 2.2, `+0+0-1` 2.1, `+1-1+1` 2.1 | `+1-1+1` 3.3, `-1+1-1` 2.8, `-1+2-1` 2.5, `+2-2+2` 2.1, `+1-2+1` 2.0 | `+1-1-1` 1.8, `-1+1-1` 1.8, `-1+1+1` 1.7, `-1-1-1` 1.5, `-1+0-1` 1.4 |
+| cinematic | `+0+0+0` 10.5, `-1-1-1` 1.9, `-1+1-1` 1.9, `+1-1+1` 1.9, `+1-1-1` 1.6 | `+0+0+0` 7.0, `-1+1+1` 3.6, `+1+1+1` 3.6, `-1-1+1` 3.4, `-1-1-1` 2.8 | `+1-1-1` 1.6, `-1+1+1` 1.6, `+1+0-1` 1.6, `-1-1-1` 1.6, `-1+1-1` 1.5 |
+| classical | `+0+0+0` 7.8, `-1-1-1` 4.7, `+1+1+1` 3.4, `+1-1+1` 3.0, `-1+1-1` 2.9 | `-1-1-1` 5.1, `+1+1+1` 4.4, `-1-1+1` 4.0, `+0+0+0` 3.9, `-1+1+1` 3.6 | `+1-1-1` 2.6, `+1+1+1` 2.5, `-1-1-1` 2.4, `-1-1+1` 2.2, `+1+1-1` 2.1 |
+| country | `+0+0+0` 6.2, `-1-1-1` 3.7, `+1+1+1` 2.7, `+1-1-1` 2.3, `-1+1+1` 2.3 | `-1-1-1` 3.5, `+0+0+0` 2.9, `+1+1+1` 2.8, `+1+1-1` 2.4, `-1+1+1` 2.2 | `+1-1-1` 2.0, `-1-1-1` 1.9, `+1+0+1` 1.8, `+1+0-1` 1.7, `-1-1+1` 1.5 |
+| cumbia | `+0+0+0` 13.3, `-1+1-1` 4.6, `+1-1+1` 4.1, `+1-1+0` 2.8, `-1+0+0` 2.4 | `+1+0+1` 3.4, `+0+1+0` 2.8, `+1+1+1` 2.2, `-1+2-1` 2.2, `+0+1-1` 2.0 | `+0+0+0` 3.6, `+0-1+0` 2.7, `-1+0+0` 2.3, `+0+1+0` 2.3, `+0+0-1` 2.3 |
+| dance | `+0+0+0` 13.0, `+0+0-1` 2.6, `-1+1-1` 2.2, `-1+0+0` 2.1, `+1+0+0` 2.0 | `+0+0+0` 6.4, `+0+0-1` 2.9, `+0+0+1` 2.5, `-1+0+0` 2.3, `+1+0+0` 2.3 | `+0+0+0` 3.2, `-1+0+0` 2.1, `+0+1+0` 2.0, `+1+0+0` 2.0, `+0+0-1` 1.8 |
+| dogu | `+0+0+0` 9.7, `-1-1-1` 4.9, `+0-1+0` 4.3, `-1+0-1` 4.2, `+0+0-1` 4.2 | `+0+0+0` 7.1, `+0+0-1` 4.0, `-1+1-1` 3.5, `-1+0+0` 3.3, `+1-1+1` 3.2 | `+0+0+0` 5.2, `+0-1+0` 2.9, `+0+0-1` 2.7, `-1+0+0` 2.6, `+0+0+1` 2.6 |
+| eastafrica | `+0+0+0` 11.0, `+0+0+1` 3.4, `+0+0-1` 3.3, `-1+0+0` 3.2, `+1+0+0` 2.8 | `+0-2+0` 2.6, `+0+0+0` 2.4, `-2+0+2` 2.3, `+0+2+0` 2.1, `+2+0+0` 1.8 | `+0+0+0` 4.0, `+0-1+0` 2.5, `-1+0+0` 2.4, `+1+0+0` 2.2, `+0+0+1` 2.2 |
+| eastasia | `+0+0+0` 11.2, `+1-1+1` 4.6, `-1+1-1` 4.4, `+0+0-1` 2.6, `+1+0+0` 2.5 | `+0+0+0` 5.3, `+1-1+1` 3.8, `-1+1-1` 3.0, `+0+0+1` 2.9, `+1+0+0` 2.7 | `+0+0+0` 1.4, `-1+0+1` 1.4, `+0+1+0` 1.3, `-1+0+0` 1.3, `+0-1+2` 1.3 |
+| epic | `+0+0+0` 10.6, `+0+0-1` 1.9, `+1-1-1` 1.8, `-1-1-1` 1.8, `-1-1+1` 1.7 | `+0+0+0` 5.9, `-1+0+0` 2.4, `-1-1-1` 1.9, `+1+0+0` 1.9, `+0+0-1` 1.9 | `+1+0-1` 1.3, `+1+0+1` 1.3, `-1+1+1` 1.2, `+1-1-1` 1.1, `+1+1+0` 1.1 |
+| fado | `+0+0+0` 5.9, `-1-1-1` 5.4, `+0+0-1` 2.8, `-1+0+0` 2.1, `+1-1-1` 2.0 | `-1-1-1` 11.1, `-1-1+1` 5.4, `-1+1+1` 4.5, `-1-1+0` 3.6, `+1-1-1` 3.3 | `-1-1-1` 5.2, `-1-1+1` 3.8, `-1+1-1` 3.0, `-1+1+1` 2.6, `-1+0-1` 2.2 |
+| flamenco | `+0+0+0` 8.1, `+0+0-1` 2.3, `-1+1+0` 2.2, `+1+0+0` 2.1, `-1-1-1` 1.9 | `-1-1-1` 7.9, `+0-1-1` 5.9, `+1-1-1` 5.5, `+1+0-1` 4.5, `-1+1-1` 3.9 | `-1+0-1` 4.3, `-1-1-1` 4.2, `+0-1-1` 4.0, `-1-1+0` 4.0, `-1+0+0` 3.6 |
+| funk | `+0+0+0` 16.3, `+0+0-1` 3.4, `+1+0+0` 2.5, `+0-1+0` 2.3, `+0-1+1` 2.2 | `+0+0+0` 9.9, `+0+0-1` 3.7, `+1+0+0` 3.6, `-1+0+0` 2.8, `+0+0+1` 2.5 | `+0+0+0` 7.0, `+0+0-1` 2.7, `+0+0+1` 2.4, `+0+1+0` 2.3, `+1+0+0` 2.1 |
+| gamelan | `+0+0+0` 21.8, `+0+0+2` 4.8, `+0+2+0` 3.8, `-2+0+0` 3.8, `+2-2+0` 3.5 | `+0+0+0` 4.0, `+0+1+0` 2.6, `-2+0+0` 2.4, `+1+0-2` 2.2, `+0-2+0` 2.2 | `+0+0+0` 5.8, `-1+0+0` 2.8, `+0-1+0` 2.7, `+0+0+1` 2.4, `+0+0-1` 2.4 |
+| greek | `+0+0+0` 8.3, `-1-1-1` 6.3, `-1-1+1` 4.8, `-1+1+1` 4.2, `+1-1-1` 4.1 | `+0+0+0` 4.9, `-1-1+1` 3.5, `-1+1+1` 3.5, `-1-1-1` 3.5, `-1+1-1` 3.4 | `+0+0+0` 2.3, `+1+0-1` 2.1, `+0-1+0` 2.1, `-1+0+0` 1.9, `+0+1+0` 1.8 |
+| hindustani | `+1+1+1` 6.9, `+1+0+1` 4.9, `+0+1+0` 4.2, `+0+0+0` 4.2, `+1+1-1` 3.6 | `+0+1+0` 8.8, `+1+0+1` 7.7, `+1+0+0` 6.9, `+1+1+0` 5.4, `+0+0+0` 5.0 | `+1+1+1` 4.1, `+0+1+1` 3.7, `+1+0+1` 3.7, `+1+1+0` 3.6, `+1+0+0` 3.4 |
+| icanadolu | `+0+0+0` 9.9, `-1-1-1` 4.6, `+0-1+0` 4.5, `-1+0-1` 4.4, `+0+0-1` 4.3 | `+0-1-1` 5.7, `+0+0+0` 5.5, `+0+0-1` 5.5, `-1-1-1` 4.9, `-1+0+0` 4.4 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
+| italian | `+0+0+0` 7.4, `-1-1-1` 4.4, `-1+1-1` 3.0, `+1-1+1` 3.0, `+1+1+1` 2.4 | `+0+0+0` 5.2, `-1-1-1` 5.1, `-1-1+1` 4.0, `-1+1+1` 3.4, `+1+1+1` 3.2 | `+1-1-1` 1.5, `-1+1+1` 1.2, `+1+1+0` 1.2, `+1-1+1` 1.1, `+1+1+1` 1.1 |
+| jazz | `+0+0+0` 8.9, `-1-1-1` 1.9, `+1+1+1` 1.7, `+0+0-1` 1.6, `-1+1-1` 1.6 | `+0+0+0` 5.4, `+1+1+1` 2.2, `-1-1+1` 2.0, `+0+0-1` 2.0, `+1+0+0` 1.9 | `+1+0-1` 1.3, `+1-1-1` 1.2, `+1+0+1` 1.1, `+1+1+0` 1.0, `+1+1+1` 1.0 |
+| karadeniz | `+0+0+0` 9.0, `-1-1-1` 4.8, `-1+0-1` 4.7, `+0-1+0` 4.6, `+0+0-1` 4.2 | `+0+0+0` 6.0, `+0+0-1` 4.7, `+0-1+0` 3.9, `-1+0-1` 3.9, `-1-1-1` 3.5 | `-1+0+0` 3.3, `-1+0-1` 3.2, `+0-1-1` 3.2, `+0+0+0` 3.0, `-1-1-1` 3.0 |
+| karsilama | `+0+0+0` 9.9, `-1-1-1` 5.5, `-1-1+1` 4.3, `+0+0-1` 4.1, `-1+0-1` 4.1 | `+0+0+0` 5.4, `+1-1+1` 4.4, `-1+1-1` 4.1, `+0+0-1` 3.6, `-1-1-1` 3.3 | `+1+0-1` 2.1, `+0+0+0` 2.0, `+0-1+0` 2.0, `+0-1-1` 1.9, `-1+0+0` 1.9 |
+| khaleeji | `+0+0+0` 9.8, `-1-1-1` 5.5, `-1-1+1` 4.2, `+0-1+0` 4.2, `+0+0-1` 4.2 | `-1-1-1` 7.0, `+0+0+0` 6.2, `+0+0-1` 5.4, `+1-1-1` 4.5, `-1+0+0` 4.3 | `-1-1-1` 4.4, `+0-1-1` 3.6, `-1+0-1` 3.5, `-1-1+0` 3.4, `-1+0+0` 2.8 |
+| maghrebi | `+0+0+0` 9.8, `-1-1-1` 5.5, `-1-1+1` 4.3, `+0+0-1` 4.2, `+0-1+0` 4.1 | `+0+0+0` 6.2, `-1-1-1` 5.7, `+0+0-1` 4.6, `+0-1-1` 4.4, `+1-1-1` 4.3 | `-1-1-1` 3.6, `+0-1-1` 3.0, `-1-1+0` 2.9, `-1+0-1` 2.8, `-1+0+0` 2.7 |
+| mariachi | `+0+0+0` 15.8, `-1-1-1` 2.2, `+0+0-1` 1.9, `+0+0+1` 1.5, `+0-1-1` 1.4 | `+1-1+1` 7.6, `-1+1-1` 6.7, `+0+1+0` 5.5, `+1+0+1` 5.0, `-2+2-2` 2.7 | `+0+0+0` 2.0, `+1+0-1` 1.6, `-1+0-1` 1.6, `+0+1+0` 1.5, `+1+0+1` 1.4 |
+| mevlevi | `+0+0+0` 9.1, `-1-1-1` 4.1, `+0+0-1` 3.8, `+0-1+0` 3.2, `-1-1+1` 3.2 | `+0+0+0` 5.9, `+0+0-1` 4.7, `-1-1-1` 4.6, `+0-1-1` 4.1, `+1-1-1` 3.6 | `-1-1-1` 7.0, `-1-1+0` 4.1, `-1+0-1` 3.8, `+0-1-1` 3.3, `-1+0+0` 2.9 |
+| nordic | `+0+0+0` 9.0, `-1-1-1` 2.6, `-1+1+1` 2.5, `-1-1+1` 2.3, `+1-1+1` 2.1 | `+0+0+0` 5.0, `+1+1+1` 4.4, `-1+1+1` 3.8, `-1-1-1` 3.5, `-1-1+1` 3.3 | `+0+0+0` 3.3, `-1+0+0` 2.9, `+0-1+0` 2.8, `+0+0-1` 2.7, `+1+0-1` 2.6 |
+| persian | `+0+0+0` 7.5, `-1-1-1` 6.4, `-1-1+1` 4.5, `+1-1-1` 4.4, `-1+1+1` 3.7 | `-1-1-1` 6.8, `+0+0+0` 5.0, `+0-1-1` 4.6, `+1-1-1` 4.3, `-1+1-1` 4.0 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.8, `-1+0-1` 3.7, `-1+0+0` 3.4 |
+| pop | `+0+0+0` 12.3, `+0+0-1` 2.5, `-1+1-1` 1.9, `+1+0+0` 1.8, `-1+0+0` 1.8 | `+0+0+0` 5.5, `+0+0-1` 2.8, `+1+0+0` 2.6, `+0+0+1` 2.1, `-1-1+1` 1.8 | `+0+0+0` 3.2, `-1+0+0` 2.1, `+0+1+0` 2.0, `+1+0+0` 2.0, `+0+0-1` 1.8 |
+| rnb | `+0+0+0` 10.9, `+0+0-1` 2.5, `-1+1-1` 1.8, `+1+0+0` 1.8, `+0-1-1` 1.8 | `+0+0+0` 4.9, `+1+1+1` 3.4, `+0+0-1` 2.7, `-1-1+0` 2.4, `+0+1+1` 2.3 | `+1+0-1` 1.8, `+0+0+0` 1.6, `+1+0+1` 1.6, `-1+0-1` 1.6, `-1+0+0` 1.5 |
+| romantic | `+0+0+0` 8.6, `-1+1-1` 3.3, `+1-1+1` 3.2, `-1-1-1` 2.1, `+1+1+1` 1.9 | `+1+1+1` 4.7, `+0+0+0` 4.6, `-1-1-1` 3.1, `+1+1-1` 3.1, `-1-1+1` 2.8 | `-1-1-1` 2.4, `+1+1+1` 2.2, `+1-1-1` 2.2, `-1-1+1` 2.0, `-1+1+1` 1.9 |
+| russian | `+0+0+0` 8.7, `-1-1-1` 3.1, `+1+1+1` 2.5, `-1+1-1` 2.4, `+1-1+1` 2.0 | `-1-1-1` 6.8, `+0+0+0` 4.3, `-1-1+1` 3.5, `+1-1-1` 3.3, `-1-1+0` 3.3 | `-1-1-1` 4.2, `-1-1+1` 3.4, `-1+1-1` 2.6, `-1+1+1` 2.1, `+0-1-1` 2.0 |
+| salsa | `+0+0+0` 11.8, `-1-1-1` 1.9, `+0+0-1` 1.8, `+1-1-1` 1.7, `+0-1-1` 1.6 | `+1+1+1` 5.4, `+0-1-1` 2.9, `+0+1+1` 2.5, `-2+1+1` 2.1, `-1-1+0` 2.0 | `+0+0+0` 2.4, `-1+0+0` 1.8, `+0+1+0` 1.8, `+0-1+0` 1.7, `+1+0-1` 1.6 |
+| samba | `+0+0+0` 10.1, `-1-1-1` 2.5, `+0+0-1` 2.5, `-1+0+0` 1.9, `+1+1+1` 1.8 | `+0+0+0` 6.5, `+0+0-1` 2.8, `-1+0+0` 2.3, `+1+0+0` 2.2, `+0+0+1` 2.1 | `+0+0+0` 2.0, `+0-1+0` 2.0, `+1+0-1` 2.0, `-1+0+0` 1.8, `+0+1+0` 1.7 |
+| slavic | `+0+0+0` 7.9, `-1-1-1` 3.8, `-1-1+1` 2.4, `+1+1+1` 2.4, `+1-1-1` 2.3 | `+0-1+0` 3.5, `-1-1+1` 3.4, `-1+1-1` 3.1, `-1+0-1` 3.1, `-1+1+1` 3.0 | `-1-1-1` 4.0, `-1-1+1` 2.9, `-1-1+0` 2.4, `+0-1-1` 2.3, `-1+1+1` 2.3 |
+| spguitar | `+0+0+0` 9.0, `-1-1-1` 2.0, `+1+1+1` 1.6, `+0+0-1` 1.4, `-1-1+1` 1.3 | `-1-1-1` 4.9, `+0+0+0` 4.6, `-1-1+1` 3.2, `-1+1+1` 3.1, `+1-1-1` 2.8 | `-1-1-1` 4.2, `-1-1+1` 3.4, `-1+1-1` 2.6, `-1+1+1` 2.2, `+0-1-1` 2.1 |
+| tango | `+0+0+0` 9.5, `-1-1-1` 2.7, `+0+0-1` 2.0, `+1-1-1` 2.0, `-1+1-1` 2.0 | `+0+0+0` 5.8, `-1-1-1` 3.6, `+0+0-1` 3.1, `-1+1-1` 2.8, `-1+0+0` 2.8 | `-1-1-1` 2.6, `-1+0-1` 2.0, `-1+0+0` 1.9, `-1-1+0` 1.9, `+0-1-1` 1.8 |
+| thai | `+0+0+0` 35.9, `+0+0-1` 1.9, `+1+1+1` 1.9, `-1+0+0` 1.7, `-1-1+1` 1.5 | `+1-2+1` 2.9, `+1-1+1` 2.8, `-2+1+1` 2.4, `-2+2-2` 2.2, `-1+1-1` 1.9 | `+1+0-1` 1.8, `+0+0+0` 1.6, `+1+0+1` 1.6, `-1+0-1` 1.6, `-1+0+0` 1.5 |
+| westafrica | `+0+0+0` 19.8, `+0+0-1` 3.7, `+1+0+0` 3.5, `-1+0+0` 3.5, `-1-1+0` 3.2 | `+0-2+0` 2.4, `+0+0+0` 2.2, `-2+0+2` 2.0, `+0+0-2` 1.8, `+0+0+2` 1.7 | `+0+0+0` 4.0, `+0-1+0` 2.5, `-1+0+0` 2.4, `+1+0+0` 2.2, `+0+0+1` 2.2 |
+| zeybek | `+0+0+0` 9.4, `-1-1-1` 4.9, `+0-1+0` 4.5, `-1+0-1` 4.4, `+0+0-1` 4.4 | `-1-1-1` 5.8, `+0+0+0` 5.6, `+0+0-1` 5.0, `+0-1-1` 4.0, `+1-1-1` 3.9 | `-1-1-1` 5.7, `-1-1+0` 4.0, `-1+0-1` 3.7, `+0-1-1` 3.4, `-1+0+0` 2.8 |
+
+## Evaluation: reading
+
+Written by hand. The tables above are rewritten by `evaluate.py --write`; this reading is not, so check it against the tables after a re-export.
+
+**The trained bank is much closer to the corpus than the old walk.** The mean interval KL of the 36 trained cards is 0.051 at hits 6 and 0.041 at hits 8. For the walk it is 0.122 and 0.121, so the bank is about 2.5 to 3 times closer. Every trained card beats the walk at both hits. The smallest margin is pop at hits 6: 0.066 for the bank against 0.081 for the walk.
+
+**Where the bank is close to the corpus** (KL at hits 8 of 0.025 or less):
+- samba, dance, epic, jazz, funk;
+- the SymbTr makam cards mevlevi, persian, akdeniz, arabic, icanadolu, zeybek, maghrebi, khaleeji, anatolian.
+
+In these cards the step, leap and repeat shares are within a few points of the corpus, and so is the rest share (2-9%, while the walk never rests). The most common 4-note pattern of the corpus is a repeated note (`+0+0+0`) on almost every card. The bank keeps it among its first four patterns, at about 50-65% of the corpus's rate. The walk has it only on the repeat-heavy cards (funk, pop).
+
+**Where the bank is not close:**
+- **Too stepwise:** spguitar (KL 0.125), romantic, russian, nordic, calm, cinematic, classical, chanson. Their corpora leap 31-44% of the time; the bank leaps 20-29%. Three causes:
+  - the forced cadence at the end of every bar;
+  - the rule that the note before it is at most 2 degrees away;
+  - the likelihood rerank, which favours steps.
+
+  spguitar, whose corpus is arpeggio-heavy guitar music, is furthest away. It still beats the walk (0.262).
+- **Makam cards with too many leaps:** karadeniz, dogu, karsilama, greek (KL 0.058-0.12). The bank leaps 16-20% against the corpus's 9-11%. The leaps come from the 30% grammar share (the seyir and cyclic forms), not from the trained phrases. To keep the whole entry within 15 points of the corpus's recurrence, these cards also had their trained part pushed below the corpus's recurrence (16-20% against about 30%), because their grammar phrases nearly all recur.
+
+**Structure (bar reuse).** Measured with the model's bar similarity:
+- The trained part of the bank repeats or sequences a bar about as often as the corpus: 56% against 57% at hits 6, 42% against 45% at hits 8.
+- The whole entry is 5-8 points higher because of the grammar phrases. The largest excess is +13 points (karadeniz, hits 6), within the 15-point rule.
+- Distinct bar-motifs per phrase (mean over the trained cards): 3.17 / 3.36 in the corpus at hits 6 / 8, and 3.06 / 3.30 in the bank.
+- The walk scores 100% recurrence because its bar 3 copies bar 1 whenever the cadence allows. It is the most repetitive and the least varied.
+- The Task 2 worry that trained phrases are new/new/new came from the operator tags, which count only literal copies. Measured on the notes, the reuse was already close to the corpus. It is now calibrated per card (see "Structure tuning" below).
+
+**Grammar-only cards.** These cards' banks are not trained:
+- afrobeat, andean, bollywood, caucasus, centralasia, chinese, cumbia, eastafrica, fado, flamenco, gamelan, hindustani, mariachi, salsa, thai and westafrica: their corpus is under 400 phrases or under 40 pieces;
+- the 13 makam cards, in the shippable file only.
+
+The 16 listed cards have small corpora, and against them the grammar's mean KL is 0.21-0.23, worse than the walk's 0.127. The grammar forms leap more than these small corpora: andean 46% against 15%, thai 47% against 21%. They also always reuse material. The evidence is weak (14-381 keyword-mapped PDMX phrases), but for these cards `?melody=bank` is not more corpus-like than the walk.
+
+**Structure tuning (Task 3).** Changes to `train.py`, each checked against the acceptance rules:
+- `MATCH`: 0.75 and 0.67 were swept, and 0.75 is kept. 0.67 only changes hits 4, 7 and 8; it counts a 2-in-3 agreement as a repeat and lifts the corpus's own rate at hits 8 from 45% to 66% without bringing the moves closer.
+- **Reuse:** the reuse bonus is now calibrated per (card, hits), as a quota. The rerank pool has the corpus's share of recurring phrases. That share is lowered only as far as needed to keep the mixed entry within 15 points of the corpus (`REUSE_CAP` 0.12, which leaves 3 points of margin).
+- **Pool order:** the 64 phrases are a fixed pseudo-random sample of the pool, no longer its head. The head of a likelihood ranking is mostly steps.
+- **Held bars:** the Task 2 penalty (-0.75 per bar held for more than half its slots) took the repeats out of funk and pop, whose KL was then above the walk's. With no penalty, held bars were 2-3 times the corpus's rate. The penalty is now calibrated per (card, hits) so that the share of held bars matches the corpus (padding not counted).
+- **Cadence approach:** the note before each forced cadence is drawn weighted by the model's probability of the move into the cadence (`CADENCE_AWARE`). Without it, the forced arrivals were mostly ±2 degrees; this was the last fix for funk and pop at hits 6.

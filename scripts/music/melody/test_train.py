@@ -163,7 +163,48 @@ class TestStructure(unittest.TestCase):
         moving = {"b": [[0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 0], [0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 4]], "ops": ("new", "repeat", "new")}
         held = {"b": [[0, 0, 0, 0, 1, 2], [3, 2, 1, 2, 1, 0], [0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 4]], "ops": ("new", "new", "new")}
         self.assertEqual(train.longest_run([0, 0, None, 0, 1, 2]), 3)
-        self.assertGreater(train.structure_score(moving), train.structure_score(held))
+        self.assertFalse(train.held([0, 1, 2, 1, 2, 2]))
+        self.assertTrue(train.held([0, 0, 0, 0, 1, 2]))
+        self.assertFalse(train.held([0, 0, 0]))  # under 4 slots: never held
+
+    def test_model_learns_held_bars_without_padding(self):
+        m = train.learn({"jazz": toy_corpus()}, hits=8)  # 4 notes per bar padded to 8: the padding is not a held note
+        self.assertEqual(m.p_held("jazz"), 0.0)
+        held_ph = {"src": "pdmx", "piece": "h", "bars": [bar(1, 1, 1, 1, 1, 1, 2, 0)] * 4}
+        m2 = train.learn({"jazz": [held_ph] * 40}, hits=8)
+        self.assertEqual(m2.p_held("jazz"), 1.0)
+
+    def test_one_note_bars_score_lower(self):
+        moving = {"b": [[0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 0], [0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 4]], "ops": ("new",) * 3}
+        one = {"b": [[2, 2, 2, 2, 2, 2], [3, 2, 1, 2, 1, 0], [0, 1, 2, 1, 2, 2], [3, 2, 1, 2, 1, 4]], "ops": ("new",) * 3}
+        self.assertGreater(train.structure_score(moving), train.structure_score(one))
+
+    def test_reuse_target(self):
+        self.assertEqual(train.reuse_target(0.5, 0.5), 0.5)  # the grammar recurs like the corpus: the corpus's share
+        self.assertLess(train.reuse_target(0.3, 1.0), 0.3)   # all-recurring grammar: lowered for the cap
+        self.assertLessEqual(0.7 * train.reuse_target(0.3, 1.0) + 0.3, 0.3 + train.REUSE_CAP + 1e-9)
+
+
+class TestRecurrence(unittest.TestCase):
+    def test_recurring_and_distinct_motifs(self):
+        seq = [[0, 1, 2, 1, 2, 2], [1, 2, 3, 2, 3, 0], [4, 2, 0, 3, 1, 2], [5, 3, 1, 4, 2, 4]]  # bar 2 = bar 1 + 1; bar 4 = bar 3 + 1
+        self.assertTrue(train.recurring(seq))
+        self.assertEqual(train.distinct_motifs(seq), 2)
+        new = [[0, 1, 2, 1, 2, 2], [4, 2, 0, 3, 1, 0], [1, 3, 5, 0, 2, 2], [3, 3, 0, 1, 4, 4]]
+        self.assertFalse(train.recurring(new))
+        self.assertEqual(train.distinct_motifs(new), 4)
+        self.assertEqual(train.distinct_motifs([[2], [0], [2], [4]]), 1)
+
+    def test_model_learns_the_corpus_recurrence(self):
+        m = train.learn({"jazz": toy_corpus()}, hits=4)
+        self.assertEqual(m.p_recur("jazz"), 1.0)  # every toy phrase sequences bar 1 in bar 2
+
+    def test_select_follows_the_corpus_recurrence(self):
+        """the calibrated reuse bonus brings the share of recurring phrases toward the corpus's (here: all of them)"""
+        m = train.learn({"jazz": toy_corpus()}, hits=6)
+        ps = train.select(m, "jazz", 6, keep=20, make=120, seed=0)
+        gen = train.generate(m, "jazz", 6, n=120, seed=0)
+        self.assertGreaterEqual(sum(p["rec"] for p in ps) / len(ps), sum(p["rec"] for p in gen) / len(gen))
 
 
 class TestEligibility(unittest.TestCase):

@@ -2,18 +2,47 @@
  * The melody bank (version 2, compact): phrases made offline by the form grammars of scripts/music/melody, stored as strings in
  * melody-bank.json. A phrase is four bars joined by "|"; a bar has one character per hit: the base-36 digit of (degree + 2), or "."
  * for a rest. Start, span and bias are derived here; the cadence is forced from the idiom. `pickPhrase` chooses one for a hook.
+ *
+ * Two files: melody-bank.json (shippable: trained on PDMX / Nottingham, committed) and melody-bank.local.json (git-ignored: adds the
+ * makam cards trained on SymbTr, CC BY-NC-SA, local listening only). `?melody=bank` uses the local file when this checkout has one
+ * (dev server and tests only: a production build never bundles it), `?melody=bank-shippable` always the shippable file.
  */
 import type { Idiom } from "./idiom";
-import bankJson from "./melody-bank.json";
+import shipJson from "./melody-bank.json";
 
 /** the lowest scale degree of a phrase (the same as LOW in idiom.ts; kept here so that the two modules do not import each other) */
 const FLOOR = -2;
 
-interface Bank {
+export interface Bank {
   version: number;
   cards: Record<string, Record<string, string[]>>;
+  /** the corpora each card's phrases were trained on ("grammar" = the form grammar) */
+  sources?: Record<string, string[]>;
 }
-export const BANK = bankJson as unknown as Bank;
+/** which bank a hook reads: the selected one (local when present) or always the shippable one */
+export type BankChoice = "bank" | "bank-shippable";
+
+const LOCAL_KEY = "./melody-bank.local.json";
+/** the shippable bank (melody-bank.json) */
+export const SHIP_BANK = shipJson as unknown as Bank;
+
+/** the local bank when `modules` (an eager `import.meta.glob` result) holds it, else `ship` */
+export function chooseBank(modules: Record<string, unknown>, ship: Bank): Bank {
+  const m = modules[LOCAL_KEY] as { default?: Bank } | Bank | undefined;
+  if (!m) return ship;
+  return ("default" in m && m.default ? m.default : m) as Bank;
+}
+
+/** the bank of a choice: "bank-shippable" is always `ship` (the local modules are never looked at) */
+export function selectBank(which: BankChoice, modules: Record<string, unknown>, ship: Bank): Bank {
+  return which === "bank-shippable" ? ship : chooseBank(modules, ship);
+}
+
+// the glob finds nothing (and fails nothing) when the file is missing; a production build never includes it
+const LOCAL_MODULES: Record<string, unknown> = import.meta.env.PROD ? {} : import.meta.glob("./melody-bank.local.json", { eager: true });
+/** the selected bank: melody-bank.local.json when present (outside production builds), else melody-bank.json */
+export const BANK = selectBank("bank", LOCAL_MODULES, SHIP_BANK);
+export const bankOf = (which: BankChoice = "bank"): Bank => (which === "bank-shippable" ? SHIP_BANK : BANK);
 
 export interface Decoded {
   bars: (number | null)[][];
@@ -43,11 +72,11 @@ export function decodePhrase(str: string): Decoded {
 
 const cache = new Map<string, Decoded[]>();
 /** the decoded phrases of an entry, or null when the card or the number of hits has none */
-export function entryOf(cardId: string, hits: number): Decoded[] | null {
-  const key = `${cardId}|${hits}`;
+export function entryOf(cardId: string, hits: number, which: BankChoice = "bank"): Decoded[] | null {
+  const key = `${which}|${cardId}|${hits}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const raw = BANK.cards[cardId]?.[String(hits)];
+  const raw = bankOf(which).cards[cardId]?.[String(hits)];
   if (!raw || raw.length === 0) return null;
   const dec = raw.map(decodePhrase);
   cache.set(key, dec);
@@ -59,10 +88,10 @@ export function entryOf(cardId: string, hits: number): Decoded[] | null {
  * the walk). Candidates are filtered in this order, each step relaxed when it would leave none: span <= idiom.span; start degree
  * equal to `start`, else one of idiom.start; bias equal to the idiom's (when it has one), else for a level idiom the heading `dir`
  * is preferred with probability 0.6. The phrase is shifted to `start` when that keeps it inside [LOW, span]; the last entry of each
- * bar is forced to the idiom's cadence.
+ * bar is forced to the idiom's cadence. `which` picks the bank (see `bankOf`).
  */
-export function pickPhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | -1, rnd: () => number, start: number): (number | null)[][] | null {
-  const all = entryOf(cardId, hits);
+export function pickPhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | -1, rnd: () => number, start: number, which: BankChoice = "bank"): (number | null)[][] | null {
+  const all = entryOf(cardId, hits, which);
   if (!all) return null;
   const narrow = (xs: Decoded[], keep: (p: Decoded) => boolean): Decoded[] => {
     const ys = xs.filter(keep);

@@ -38,12 +38,25 @@ MAX_IV = 5                   # intervals clipped to +-5 scale degrees
 INTERVALS = list(range(-MAX_IV, MAX_IV + 1))
 MIN_CTX = 30                 # a level of the back-off answers when its context has at least this many observations
 MIN_PHRASES, MIN_PIECES = 400, 40   # a card trains only with this much corpus, else it falls back to the grammar
-MATCH = 0.75                 # a bar reuses an earlier one when this share of its slots (before the cadence) agrees
+MATCH = 0.75                 # a bar reuses an earlier one when this share of its slots (before the cadence) agrees. Task 3 swept
+                             # 0.75 and 0.67 (which only differ at hits 4, 7 and 8): 0.67 counts 2-in-3 agreement as a repeat and raises
+                             # the corpus's own rate at hits 8 from 45% to 66% without bringing the bank's moves closer: kept 0.75
 OPS = ("repeat", "sequence", "inversion", "new")
 SEQ_SHIFTS = (1, -1, 2, -2)
 APPROACH_GAP = 2             # the slot before the cadence is at most this far from it
+CADENCE_AWARE = True         # the slot before the cadence is drawn weighted by the probability of the move into the cadence (Task 3:
+                             # without it the forced arrivals were mostly +-2, against the corpus's steps and repeats)
 TRAINED_SHARE = 0.7          # the final entry: 70% trained, 30% grammar
 MAKE, KEEP = 600, 64
+LL_WEIGHT = 1.0              # the weight of the mean log-likelihood in the rerank (Task 3 swept 1, 0.5, 0.25: no gain, kept 1)
+ONE_NOTE_PENALTY = 0.5       # per bar that is all one note
+# the held-bar penalty of the rerank (0, 0.05, ..., 2), calibrated per (card, hits): the value whose pool's share of held bars
+# (`held`) is nearest the corpus's (`Model.p_held`, padding not counted). A fixed 0.75 (Task 2) took the repeats away from
+# repeat-heavy styles (funk, pop: KL above the walk's); none at all gave 2-3 times the corpus's held bars
+HELD_GRID = tuple(k / 20 for k in range(41))
+POOL_SHARE = 1 / 3           # the rerank keeps this share of the unique phrases (at least 2 x keep)
+REUSE_CAP = 0.12             # the whole entry (trained + grammar) aims at most this much above the corpus's recurrence (the rule is
+                             # 15 points; 3 points of margin for the rounding of a 64-phrase entry)
 SHIPPABLE_SOURCES = ("pdmx", "nottingham")
 
 
@@ -226,6 +239,21 @@ def classify_bar(slots, k: int):
     return ("new", -1, 0)
 
 
+REUSE_OPS = ("repeat", "sequence")
+
+
+def recurring(slots) -> bool:
+    """some bar (2..4) repeats or sequences an earlier bar (the bar similarity of `classify_bar`, threshold MATCH)"""
+    return len(slots[0]) >= 2 and any(classify_bar(slots, k)[0] in REUSE_OPS for k in range(1, 4))
+
+
+def distinct_motifs(slots) -> int:
+    """the number of distinct bar-motifs of a phrase: 1 + the bars (2..4) that neither repeat nor sequence an earlier bar"""
+    if len(slots[0]) < 2:
+        return 1
+    return 1 + sum(classify_bar(slots, k)[0] not in REUSE_OPS for k in range(1, 4))
+
+
 def _moves(slots, filler=None):
     """(prev interval, role 1..4, slot class, interval) for every sounding slot after the first (padding slots skipped), plus the
     start degree"""
@@ -259,6 +287,8 @@ class Model:
         self.opsrc = defaultdict(lambda: defaultdict(Counter))  # card -> (role, op) -> Counter((j, t))
         self.start = defaultdict(Counter)                       # card -> Counter(degree)
         self.rest = defaultdict(lambda: defaultdict(lambda: [0, 0]))  # card -> cls -> [rests, slots]
+        self.rec = defaultdict(lambda: [0, 0])                  # card -> [phrases with a recurring bar, phrases]
+        self.held = defaultdict(lambda: [0, 0])                 # card -> [held bars (padding not counted), bars]
         self._cache: Dict[tuple, object] = {}
 
     def add(self, card: str, slots, filler=None) -> None:
@@ -274,6 +304,12 @@ class Model:
                 c = self.rest[card][slot_class(j, h)]
                 c[0] += d is None
                 c[1] += 1
+        for k, bar in enumerate(slots):
+            real = bar if filler is None else [None if filler[k][j] else d for j, d in enumerate(bar)]
+            self.held[card][0] += held(real)
+            self.held[card][1] += 1
+        self.rec[card][0] += any(classify_bar(slots, k)[0] in REUSE_OPS for k in range(1, 4))
+        self.rec[card][1] += 1
         for k in range(1, 4):
             op, j, t = classify_bar(slots, k)
             self.ops[card][k + 1][op] += 1
@@ -340,6 +376,26 @@ class Model:
             self._cache[ck] = {d: (c[d] + ALPHA) / n for d in degs}
         return self._cache[ck]
 
+    def p_recur(self, card: str) -> float:
+        """the share of corpus phrases with a recurring bar (`recurring`), by back-off"""
+        r = t = 0
+        for cards in self._levels(card):
+            r = sum(self.rec[c][0] for c in cards if c in self.rec)
+            t = sum(self.rec[c][1] for c in cards if c in self.rec)
+            if t >= MIN_CTX:
+                break
+        return r / t if t else 0.5
+
+    def p_held(self, card: str) -> float:
+        """the share of corpus bars held on one note for more than half their slots (padding slots not counted), by back-off"""
+        r = t = 0
+        for cards in self._levels(card):
+            r = sum(self.held[c][0] for c in cards if c in self.held)
+            t = sum(self.held[c][1] for c in cards if c in self.held)
+            if t >= MIN_CTX:
+                break
+        return r / t if t else 0.0
+
     def p_rest(self, card: str, cls: str) -> float:
         ck = ("r", card, cls)
         if ck not in self._cache:
@@ -402,6 +458,8 @@ def _new_bar(model, card, rng, role, h, cad, span, last, pi):
         else:
             dist = model.p_move(card, pi, role, cls)
             ok = {iv: p for iv, p in dist.items() if LOW <= last + iv <= span and (j != h - 2 or abs(last + iv - cad) <= APPROACH_GAP)}
+            if j == h - 2 and CADENCE_AWARE:  # the move into the forced cadence is a move too: weigh by the model's last-slot table
+                ok = {iv: p * model.p_move(card, iv, role, "last")[max(-MAX_IV, min(MAX_IV, cad - last - iv))] for iv, p in ok.items()}
             if not ok:  # nothing reachable: the nearest legal degree toward the cadence
                 tgt = max(LOW, min(span, cad))
                 ok = {tgt - last: 1.0} if abs(tgt - last) <= MAX_IV else {_sign(tgt - last) * MAX_IV: 1.0}
@@ -452,19 +510,21 @@ def make_phrase(model: Model, card: str, h: int, rng: random.Random) -> dict:
 
 
 def structure_score(p: dict) -> float:
+    """penalties of the rerank: too many rests, bars of one note (the held-bar penalty and the reuse bonus are calibrated in `select`)"""
     b = p["b"]
     h = len(b[0])
     s = 0.0
-    if any(op != "new" for op in p["ops"]) or (h >= 3 and grammar.reuses_material(b)):
-        s += 0.5
     slots = [d for bar in b for d in bar]
     if sum(d is None for d in slots) / len(slots) > 0.4:
         s -= 1.0
     if h >= 3:
-        s -= 0.5 * sum(1 for bar in b if len({d for d in bar if d is not None}) == 1)
-    if h >= 4:  # a bar held on one note for more than half of its slots (likelihood favours repeats: this keeps the line moving)
-        s -= 0.75 * sum(1 for bar in b if longest_run(bar) * 2 > h)
+        s -= ONE_NOTE_PENALTY * sum(1 for bar in b if len({d for d in bar if d is not None}) == 1)
     return s
+
+
+def held(bar) -> bool:
+    """a bar (of at least 4 slots) held on one note for more than half of its slots"""
+    return len(bar) >= 4 and longest_run(bar) * 2 > len(bar)
 
 
 def longest_run(bar) -> int:
@@ -485,7 +545,9 @@ def generate(model: Model, card: str, h: int, n: int = MAKE, seed: int = 0) -> L
     for i in range(n):
         p = make_phrase(model, card, h, random.Random(grammar.stable_seed("trained", card, h, i, seed)))
         p["ll"] = loglik(model, card, p["b"])
-        p["score"] = p["ll"] + structure_score(p)
+        p["score"] = LL_WEIGHT * p["ll"] + structure_score(p)
+        p["rec"] = recurring(p["b"])
+        p["held"] = sum(held(bar) for bar in p["b"])
         p["s"] = p["b"][0][0]
         p["bias"] = grammar.phrase_bias(p["b"])
         out.append(p)
@@ -497,17 +559,47 @@ def _key(p: dict):
     return (p["s"], means, p["ops"])
 
 
-def select(model: Model, card: str, h: int, keep: int = KEEP, make: int = MAKE, seed: int = 0) -> List[dict]:
-    """generate `make`, drop duplicates, keep the best third by score, then round robin over the distinct (start, bar means,
-    operator pattern) groups (best group first) so that any prefix is diverse; a card with a direction keeps that direction first"""
+def reuse_target(corpus_rate: float, grammar_rate: float, share: float = TRAINED_SHARE) -> float:
+    """the recurrence the trained part aims at: the corpus's, lowered only as far as needed for the mixed entry (share trained,
+    1 - share grammar phrases that recur at grammar_rate) to stay within REUSE_CAP of the corpus"""
+    return max(0.0, min(corpus_rate, (corpus_rate + REUSE_CAP - (1 - share) * grammar_rate) / share))
+
+
+def select(model: Model, card: str, h: int, keep: int = KEEP, make: int = MAKE, seed: int = 0, target: Optional[float] = None) -> List[dict]:
+    """generate `make`, drop duplicates, rerank, keep `keep`:
+    1. the pool: the best POOL_SHARE (at least 2 x keep) by score, with the held-bar penalty of HELD_GRID that brings the pool's share
+       of held bars nearest the corpus's (`Model.p_held`), and the reuse bonus calibrated to hit `target` (default: the
+       corpus's share of phrases with a recurring bar, `Model.p_recur`) exactly: the pool takes the best round(target x size) of the
+       recurring phrases and the best of the others;
+    2. the pool in a fixed pseudo-random order (the head of a likelihood ranking is mode-seeking, mostly steps; a sample of the pool
+       keeps the corpus's moves), each class spread by round robin over the distinct (start, bar means, operator pattern) groups so that
+       any prefix is diverse, a card with a direction keeping that direction first;
+    3. the two classes interleaved so that any prefix keeps the target share."""
     seen, uniq = set(), []
     for i, p in enumerate(generate(model, card, h, make, seed)):
         s = encode(p)
         if s not in seen:
             seen.add(s)
             uniq.append((i, p))
-    uniq.sort(key=lambda ip: (-ip[1]["score"], ip[0]))
-    pool = [p for _, p in uniq[:max(keep * 2, len(uniq) // 3)]]
+    size = max(keep * 2, int(len(uniq) * POOL_SHARE))
+    target = model.p_recur(card) if target is None else target
+    held_target = model.p_held(card)
+
+    def pool_of(w):
+        best = sorted(uniq, key=lambda ip: (-(ip[1]["score"] - w * ip[1]["held"]), ip[0]))
+        rec = [p for _, p in best if p["rec"]]
+        oth = [p for _, p in best if not p["rec"]]
+        n = min(len(rec), max(size - len(oth), round(target * size)))
+        return rec[:n], oth[:size - n]
+
+    def held_gap(w):
+        rec, oth = pool_of(w)
+        return abs(sum(p["held"] for p in rec + oth) / (4 * max(1, len(rec) + len(oth))) - held_target)
+    w = min(HELD_GRID, key=lambda x: (round(held_gap(x), 4), x))
+    rec, oth = pool_of(w)
+    n_rec = len(rec)
+    shuffle = lambda ps: sorted(ps, key=lambda p: grammar.stable_seed("pick", card, h, seed, encode(p)))  # noqa: E731
+    rec, oth = shuffle(rec), shuffle(oth)
 
     def spread(ps):
         groups: Dict[tuple, List[dict]] = {}
@@ -521,11 +613,25 @@ def select(model: Model, card: str, h: int, keep: int = KEEP, make: int = MAKE, 
         return out
 
     want = grammar.idiom_of(card)["bias"]
-    if want == 0:
-        ordered = spread(pool)
-    else:
-        ordered = spread([p for p in pool if p["bias"] == want]) + spread([p for p in pool if p["bias"] != want])
-    return ordered[:keep]
+
+    def ordered(ps):
+        if want == 0:
+            return spread(ps)
+        return spread([p for p in ps if p["bias"] == want]) + spread([p for p in ps if p["bias"] != want])
+    rec, oth = ordered(rec), ordered(oth)
+    share = n_rec / max(1, n_rec + len(oth))
+    out, ri, oi = [], 0, 0
+    while len(out) < keep and (ri < len(rec) or oi < len(oth)):
+        take_rec = ri < len(rec) and (oi >= len(oth) or ri < math.floor((len(out) + 1) * share + 0.5))
+        if take_rec:
+            out.append(rec[ri])
+            ri += 1
+        else:
+            out.append(oth[oi])
+            oi += 1
+    if want != 0:  # the direction first across both classes (stable: the interleaving order is kept inside each)
+        out.sort(key=lambda p: p["bias"] != want)
+    return out
 
 
 def mix(trained: List[str], gram: List[str], n: int = KEEP, share: float = TRAINED_SHARE) -> List[str]:
