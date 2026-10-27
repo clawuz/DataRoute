@@ -315,9 +315,15 @@ const repeatPluck: Gesture = (n, e) => (e.ctx.roleOf(n) === "pluck" ? { extra: [
 
 const pipeGrace: Gesture = (n, e) => (e.repeated.has(n) ? { extra: [added(n, n.t - 0.04, 0.04, semis(n.freq, 2), n.vel * 0.4)] } : null);
 
+/** the winds whose phrases open with the ney's long glide (`phraseStart`) */
+const NEY_LIKE = new Set(["NEY_MAKAM", "NEY_REAL", "BANSURI", "ZURNA"]);
+
 /** the gestures of each instrument, applied in this order */
 export const GESTURES: Record<string, Gesture[]> = {
   KEMENCE_MAKAM: [doubleStop, graceIn, drone],
+  // the real kemençe and the sarangi are bowed like the makam kemençe: a double stop and a grace note (the drone stays the makam kemençe's)
+  KEMENCE_REAL: [doubleStop, graceIn],
+  SARANGI: [doubleStop, graceIn],
   SAZ: [sazStrum, glideNote(3)],
   BAGLAMA_MAKAM: [sazStrum, glideNote(3)],
   BAGLAMA_EXTRA: [sazStrum, glideNote(3)],
@@ -350,6 +356,10 @@ export const GESTURES: Record<string, Gesture[]> = {
   UPRIGHTBASS: [bassWalk, bassAlternate],
   TANPURA: [tanpura],
   NEY_MAKAM: [neyGlide],
+  // the real ney, the bansuri and the zurna slide into the notes like the makam ney
+  NEY_REAL: [neyGlide],
+  BANSURI: [neyGlide],
+  ZURNA: [neyGlide],
 };
 
 /**
@@ -412,7 +422,7 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
       if (j < l.length) env.nextStart.set(n, l[j].t);
     });
   }
-  const ney = notes.filter((n) => n.instrument === "NEY_MAKAM").sort(byTime);
+  const ney = notes.filter((n) => NEY_LIKE.has(String(n.instrument))).sort(byTime);
   const lastEnd = new Map<number, number>();
   for (const n of ney) {
     const prev = lastEnd.get(n.route);

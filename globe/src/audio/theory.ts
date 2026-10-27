@@ -25,8 +25,11 @@ const STAND_IN: Partial<Record<Instrument, Instrument>> = {
   GLOCK: "EP", XYLO: "MARIMBA", TRI: "OHAT", TAMB: "SHAKER", GONG: "CRASH",
   VIOLIN_PIZZ: "HARP", VIOLA_PIZZ: "HARP", CELLO_PIZZ: "BASS", BASS_PIZZ: "BASS",
 };
-export const baseOf = (i: PlayInstrument): Instrument =>
-  i in WORLD_STAND_IN ? WORLD_STAND_IN[i as WorldInstrument] : STAND_IN[i as Instrument] ?? (i as Instrument);
+export const baseOf = (i: PlayInstrument): Instrument => {
+  // a world instrument may stand in for a recorded orchestra voice (the zurna for the oboe): that one's own stand-in is the synth
+  const w = i in WORLD_STAND_IN ? WORLD_STAND_IN[i as WorldInstrument] : (i as Instrument);
+  return STAND_IN[w] ?? w;
+};
 
 /** Bjorklund: `k` onsets spread as evenly as possible over `n` steps, starting on an onset. */
 export function euclid(k: number, n: number): boolean[] {

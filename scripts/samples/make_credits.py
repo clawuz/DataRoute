@@ -23,8 +23,12 @@ def by_author(rows):
 def deed(r):
     """the licence of one sound, linked to its deed (CC BY sounds only: each keeps the version it was published under)"""
     u = r.get("licence_url", "")
-    m = re.search(r"/licenses/by/([0-9.]+)/", u)
-    return f' <a class="l" href="{e(u)}" rel="noopener license">CC BY {m.group(1)}</a>' if m else ""
+    m = re.search(r"/licenses/by(-nc)?/([0-9.]+)/", u)
+    if not m:
+        return ""
+    if m.group(1):
+        return f' <a class="l" href="{e(u)}" rel="noopener license">CC BY-NC {m.group(2)}</a> <span class="nc">non-commercial licence</span>'
+    return f' <a class="l" href="{e(u)}" rel="noopener license">CC BY {m.group(2)}</a>'
 
 def author_block(rows, open_=False):
     parts = []
@@ -34,12 +38,20 @@ def author_block(rows, open_=False):
     return "\n".join(parts)
 
 cc_by = [r for r in world if r["licence"] == "CC BY" and r["author"].startswith("Google") is False]
+# non-commercial sounds: every one carries `nc: true` in the ledger and a visible mark here; a deploy with them needs the owner's yes
+nc = [r for r in world if r.get("nc")]
+assert all(r["licence"] == "CC BY-NC" for r in nc) and all(r.get("nc") for r in world if "NC" in r["licence"]), "an NC sound without its flag"
 nsynth = [r for r in world if r["author"].startswith("Google")]
 nsynth_author = nsynth[0]["author"] if nsynth else "Google Magenta"
 vcsl = [r for r in world if r["author"].startswith("Versilian")]
 cc0_fs = [r for r in world if r["licence"].startswith("CC0") and not r["author"].startswith("Versilian")] + fs
 n_instr = len({r["instrument"] for r in world})
 by3 = '<a href="https://creativecommons.org/licenses/by/3.0/" rel="noopener license">CC BY 3.0</a>' if any("/by/3.0/" in r.get("licence_url", "") for r in cc_by) else ""
+
+nc_section = (f"""<h2>Sounds from Freesound — non-commercial licence (CC BY-NC)</h2>
+<p class="mute">These sounds may be used for non-commercial purposes only (<a href="https://creativecommons.org/licenses/by-nc/4.0/" rel="noopener license">CC BY-NC 4.0</a> or 3.0, as each was published); each one is marked <span class="nc">non-commercial licence</span>.</p>
+{author_block(nc)}
+""" if nc else "")
 
 PAGE = f"""<!doctype html>
 <html lang="en">
@@ -62,6 +74,7 @@ PAGE = f"""<!doctype html>
   details {{ border-top: 1px solid var(--line); padding: 6px 0; }} summary {{ cursor: pointer; }}
   summary .n {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
   ul {{ margin: 6px 0 10px; padding-left: 20px; }} li .i, li .l {{ color: var(--mute); font-size: 12px; margin-left: 6px; }}
+  .nc {{ color: var(--red); font-size: 12px; margin-left: 6px; border: 1px solid var(--red); border-radius: 3px; padding: 0 4px; }}
 </style>
 </head>
 <body>
@@ -79,6 +92,7 @@ PAGE = f"""<!doctype html>
 <p class="mute">Each author below, with the sounds used and the licence each was published under: <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">CC BY 4.0</a>{" or " + by3 if by3 else ""}.</p>
 {author_block(cc_by, True)}
 
+{nc_section}
 <h2>Sounds from Freesound — CC0 (with thanks)</h2>
 <p class="mute">Public domain; no credit is required, and we are glad to give it.</p>
 {author_block(cc0_fs)}
@@ -97,4 +111,4 @@ PAGE = f"""<!doctype html>
 </html>
 """
 open(os.path.join(ROOT, "docs", "credits.html"), "w").write(PAGE)
-print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by}), "CC BY authors,", len({r['author'] for r in cc0_fs}), "CC0 authors")
+print("credits.html:", len(PAGE) // 1024, "KB;", len({r['author'] for r in cc_by}), "CC BY authors,", len({r['author'] for r in cc0_fs}), "CC0 authors,", len(nc), "non-commercial sounds")

@@ -22,8 +22,10 @@ STAND_IN = [
     (r"^(STEINWAY|KAWAI|UPRIGHTPNO|KNIGHTPNO|HARPSICHORD|NS_KEYS_AC_\d+)$", "PNO"),
     (r"^(NYLONGUITAR|EGUITAR|NS_GUITAR_(AC|EL)_\d+)$", "GUITAR"),
     (r"^(ACCORDION|HARMONICA|TENORSAX|BAGPIPE)$", "CLA"),
-    (r"^(ERHU|KEMENCE_MAKAM)$", "VIOLIN"),
-    (r"^(SHAKUHACHI|TINWHISTLE|PANPIPE)$", "FLUTE"),
+    (r"^(ERHU|KEMENCE_MAKAM|KEMENCE_REAL|SARANGI)$", "VIOLIN"),
+    (r"^(SHAKUHACHI|TINWHISTLE|PANPIPE|BANSURI|NEY_REAL)$", "FLUTE"),
+    (r"^ZURNA$", "OBOE"),  # a recorded orchestra voice: its own stand-in (CLA) plays while neither has arrived, see baseOf
+    (r"^SITAR$", "KANUN"),
     (r"^(NEY_MAKAM|KAVAL|DUDUK)$", "NEY"),
     (r"^(SANTUR|KAYAGEUM|KOTO|DANTRANH|PSALTERY)$", "KANUN"),
     (r"^(BAGLAMA_MAKAM|BAGLAMA_EXTRA|TANPURA)$", "SAZ"),
@@ -63,6 +65,8 @@ def licence_urls():
     return out
 
 def licence_url(row, urls):
+    if row.get("licence_url"):  # recorded by the script that added the file (add_real_recordings.py)
+        return row["licence_url"]
     if row["author"].startswith("Google"):
         return NSYNTH_URL
     got = urls.get(norm(row["source"])) if row["source"].startswith("http") else None
@@ -91,7 +95,8 @@ def main():
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             shutil.copyfile(src, dst)
             files.add(z["file"])
-    json.dump({"name": "World pack (CC0 and CC BY)", "instruments": insts}, open(os.path.join(PUB, "manifest.json"), "w"), indent=1)
+    nc = any(l.get("nc") for l in ledger if l["file"] in files)
+    json.dump({"name": "World pack (CC0, CC BY" + (" and CC BY-NC: non-commercial, flagged in the ledger" if nc else "") + ")", "instruments": insts}, open(os.path.join(PUB, "manifest.json"), "w"), indent=1)
     renamed_from = {v: k for k, v in RENAME.items()}
     urls = licence_urls()
     rows = []

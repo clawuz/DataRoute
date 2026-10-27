@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 import { WORLD_FAMILIES, WORLD_INSTRUMENTS, WORLD_RANGE, WORLD_STAND_IN } from "../src/audio/world-pack";
 
 const pub = (p: string): string => fileURLToPath(new URL(`../public/samples/${p}`, import.meta.url));
-const world = JSON.parse(readFileSync(pub("world/manifest.json"), "utf8")) as { instruments: Record<string, { zones: { root: number; file: string }[]; unpitched?: boolean }> };
+const world = JSON.parse(readFileSync(pub("world/manifest.json"), "utf8")) as {
+  instruments: Record<string, { zones: { root: number; lo: number; hi: number; file: string; loop?: [number, number] }[]; unpitched?: boolean; sustained?: boolean }>;
+};
+const ledger = JSON.parse(readFileSync(fileURLToPath(new URL("../../docs/music-pack-world-ledger.json", import.meta.url)), "utf8")) as { instrument: string; file: string; licence: string; licence_url: string; nc?: boolean }[];
 const lite = JSON.parse(readFileSync(pub("lite/manifest.json"), "utf8")) as { instruments: Record<string, unknown> };
 
 describe("world pack", () => {
@@ -39,6 +42,36 @@ describe("world pack", () => {
       expect(cap).toBeGreaterThan(hi);
     }
   });
+  it("has the real recordings of bansuri, sarangi, zurna, ney and kemençe as held voices, each zone credited (the NC ones flagged)", () => {
+    const real = ["BANSURI", "SARANGI", "ZURNA", "NEY_REAL", "KEMENCE_REAL"] as const;
+    for (const name of real) {
+      const inst = world.instruments[name];
+      expect(inst, name).toBeTruthy();
+      expect(inst.zones.length, name).toBeGreaterThanOrEqual(1);
+      expect(inst.sustained, name).toBe(true);
+      expect(WORLD_INSTRUMENTS, name).toContain(name);
+      for (const z of inst.zones) {
+        expect(z.lo, `${name} ${z.file}`).toBeLessThanOrEqual(z.hi);
+        if (z.loop) expect(z.loop[1] - z.loop[0], `${name} ${z.file}`).toBeGreaterThanOrEqual(0.4);
+        const rows = ledger.filter((r) => r.file === z.file);
+        expect(rows.length, `${name} ${z.file}`).toBe(1);
+        expect(rows[0].instrument).toBe(name);
+        expect(Boolean(rows[0].nc), z.file).toBe(rows[0].licence_url.includes("/by-nc/"));
+      }
+    }
+    // the ney and the kemençe recordings are non-commercial; the makam slices stay
+    for (const name of ["NEY_REAL", "KEMENCE_REAL"]) expect(ledger.filter((r) => r.instrument === name).every((r) => r.nc === true), name).toBe(true);
+    expect(world.instruments.NEY_MAKAM.zones.length).toBeGreaterThan(5);
+    expect(world.instruments.KEMENCE_MAKAM.zones.length).toBeGreaterThan(5);
+    // the sitar files are strums of the sympathetic strings and a sound effect: no zone, so no instrument
+    expect((WORLD_INSTRUMENTS as readonly string[]).includes("SITAR")).toBe(false);
+    expect(WORLD_STAND_IN.ZURNA).toBe("OBOE");
+    expect(WORLD_STAND_IN.SARANGI).toBe("VIOLIN");
+    expect(WORLD_STAND_IN.BANSURI).toBe("FLUTE");
+  });
+  it("flags every non-commercial file of the ledger with nc: true, and nothing else", () => {
+    for (const r of ledger) expect(Boolean(r.nc), `${r.instrument} ${r.file}`).toBe(r.licence === "CC BY-NC" || r.licence_url.includes("/by-nc/"));
+  });
   it("groups the NSynth variants into families of real instruments", () => {
     expect(Object.keys(WORLD_FAMILIES).sort()).toEqual(["BASS_EL", "EKEYS", "GUITAR_AC", "GUITAR_EL", "KEYS_AC", "ORGAN_EL"]);
     for (const [fam, list] of Object.entries(WORLD_FAMILIES)) {
@@ -57,5 +90,7 @@ describe("baseOf", () => {
     expect(baseOf("RENORGAN")).toBe("ORGAN");
     expect(baseOf("OUD")).toBe("MEA"); // lite stand-ins keep working
     expect(baseOf("CELLO")).toBe("CELLO");
+    expect(baseOf("ZURNA")).toBe("CLA"); // the zurna stands in for the oboe, whose own stand-in is the synthesised reed
+    expect(baseOf("NEY_REAL")).toBe("FLUTE");
   });
 });

@@ -34,9 +34,9 @@ describe("credits page", () => {
       expect(sec, r.source).toContain(r.source.replace(/&/g, "&amp;"));
     }
   });
-  it("links every CC BY sound to the licence version it was published under (six are CC BY 3.0)", () => {
+  it("links every CC BY sound to the licence version it was published under (eight are CC BY 3.0)", () => {
     const sec = section(html);
-    const v3 = ["FaireDesVagues/sounds/69732/", "FaireDesVagues/sounds/69745/", "RealRhodesSounds/sounds/4190/", "RealRhodesSounds/sounds/4191/", "RealRhodesSounds/sounds/4192/", "RealRhodesSounds/sounds/4194/"];
+    const v3 = ["FaireDesVagues/sounds/69732/", "FaireDesVagues/sounds/69745/", "RealRhodesSounds/sounds/4190/", "RealRhodesSounds/sounds/4191/", "RealRhodesSounds/sounds/4192/", "RealRhodesSounds/sounds/4194/", "Johnnydhol/sounds/170313/"];
     const by = world.filter((r) => r.licence === "CC BY");
     for (const r of by) {
       const want = v3.some((x) => r.source.endsWith(x)) ? "3.0" : "4.0";
@@ -46,7 +46,31 @@ describe("credits page", () => {
       expect(items.length, r.source).toBeGreaterThan(0);
       for (const li of items) expect(li, r.source).toContain(`href="https://creativecommons.org/licenses/by/${want}/"`);
     }
-    expect(by.filter((r) => r.licence_url?.includes("/by/3.0/")).length).toBe(6);
+    expect(by.filter((r) => r.licence_url?.includes("/by/3.0/")).length).toBe(8); // two sarangi notes cut from one CC BY 3.0 recording
+  });
+  it("lists the non-commercial (CC BY-NC) sounds in their own section, each marked, and flags them in the ledger", () => {
+    const rows = world as { author: string; licence: string; source: string; licence_url?: string; nc?: boolean; title?: string; instrument: string }[];
+    const nc = rows.filter((r) => r.nc);
+    expect(nc.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      const restricted = r.licence.includes("NC") || (r.licence_url ?? "").includes("/by-nc/");
+      expect(Boolean(r.nc), `${r.instrument} ${r.source}`).toBe(restricted);
+    }
+    const start = html.search(/<h2>[^<]*non-commercial licence \(CC BY-NC\)/);
+    expect(start).toBeGreaterThan(0);
+    const next = html.indexOf("<h2>", start + 4);
+    const sec = html.slice(start, next);
+    for (const r of nc) {
+      expect(r.licence, r.source).toBe("CC BY-NC");
+      const items = sec.split("<li>").filter((li) => li.includes(`href="${r.source}"`));
+      expect(items.length, r.source).toBeGreaterThan(0);
+      for (const li of items) {
+        expect(li, r.source).toContain("non-commercial licence");
+        expect(li, r.source).toContain(`href="${r.licence_url}"`);
+      }
+      // never listed as a CC BY or a CC0 sound
+      expect(section(html), r.source).not.toContain(r.source);
+    }
   });
   it("credits the sources that need it", () => {
     for (const s of ["VSCO 2 Community Edition", "VCSL", "NSynth", "CC BY 4.0", "adsb.fi", "NASA", "Julien Sulpis", "Freesound"]) expect(html, s).toContain(s);

@@ -184,6 +184,25 @@ describe("NEY_MAKAM", () => {
   });
 });
 
+describe("the real recordings", () => {
+  it("the real ney, the bansuri and the zurna glide 2 st on phrase starts like the makam ney", () => {
+    for (const name of ["NEY_REAL", "BANSURI", "ZURNA"]) {
+      const out = run([mk(name, 0, { d: 0.4 }), mk(name, 0.5, { d: 0.4 }), mk(name, 3, { d: 0.4 })]);
+      expect(out[0].glide, name).toBe(2);
+      expect(out[1].glide, name).not.toBe(2);
+      expect(out[2].glide, name).toBe(2);
+    }
+  });
+  it("the real kemençe and the sarangi play a hidden fourth below and a grace note on the beat, but no drone", () => {
+    for (const name of ["KEMENCE_REAL", "SARANGI"]) {
+      const out = run([mk(name, 1, { d: 0.3 })]);
+      expect(out.some((n) => n.show === false && n.t === 1 && Math.abs(st(n.freq, hz(12)) + 5) < 1e-6), name).toBe(true);
+      expect(out.some((n) => n.show === false && Math.abs(n.t - 0.945) < 1e-9 && Math.abs(st(n.freq, hz(12)) - 2) < 1e-6), name).toBe(true);
+      expect(out.some((n) => n.show === false && n.d > 0.5), name).toBe(false);
+    }
+  });
+});
+
 describe("SAZ widened", () => {
   it("strums a pluck-role note on beats 0 and 2 of the bar whatever its velocity, not on beats 1 and 3", () => {
     expect(hidden(run([mk("SAZ", 1, { vel: 0.3 })], "pluck"))).toHaveLength(2);

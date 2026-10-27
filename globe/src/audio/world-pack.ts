@@ -2,7 +2,7 @@
 import type { Instrument } from "./theory";
 
 /** the instruments of the world pack (public/samples/world/manifest.json) */
-export const WORLD_INSTRUMENTS = ["ACCORDION", "BAGLAMA_EXTRA", "BAGLAMA_MAKAM", "BAGPIPE", "BAGPIPE_DRONE", "BASSGUITAR", "BENDIR", "DANTRANH", "DARBUKA_VCSL", "DJEMBE", "DRUMKIT", "DUDUK", "EGUITAR", "ERHU", "FOLKHARP", "FRAMEDRUM", "FRAMEDRUM_FS", "HARMONICA", "HARPSICHORD", "KALIMBA", "KAVAL", "KAWAI", "KAYAGEUM", "KEMENCE_MAKAM", "KNIGHTPNO", "KOTO", "MBIRA", "NEY_MAKAM", "NS_BASS_EL_018", "NS_BASS_EL_025", "NS_BASS_EL_027", "NS_EKEYS_001", "NS_EKEYS_002", "NS_EKEYS_003", "NS_EKEYS_069", "NS_EKEYS_078", "NS_EKEYS_098", "NS_GUITAR_AC_010", "NS_GUITAR_AC_014", "NS_GUITAR_AC_015", "NS_GUITAR_AC_021", "NS_GUITAR_AC_030", "NS_GUITAR_EL_022", "NS_GUITAR_EL_028", "NS_KEYS_AC_004", "NS_ORGAN_EL_001", "NS_ORGAN_EL_007", "NS_ORGAN_EL_028", "NS_ORGAN_EL_057", "NS_ORGAN_EL_104", "NS_ORGAN_EL_113", "NYLONGUITAR", "PANPIPE", "PSALTERY", "RENORGAN", "RHODES", "SANTUR", "SHAKUHACHI", "STEELDRUM", "STEINWAY", "TABLA", "TANPURA", "TENORSAX", "TINWHISTLE", "UPRIGHTBASS", "UPRIGHTPNO", "VIBES"] as const;
+export const WORLD_INSTRUMENTS = ["ACCORDION", "BAGLAMA_EXTRA", "BAGLAMA_MAKAM", "BAGPIPE", "BAGPIPE_DRONE", "BANSURI", "BASSGUITAR", "BENDIR", "DANTRANH", "DARBUKA_VCSL", "DJEMBE", "DRUMKIT", "DUDUK", "EGUITAR", "ERHU", "FOLKHARP", "FRAMEDRUM", "FRAMEDRUM_FS", "HARMONICA", "HARPSICHORD", "KALIMBA", "KAVAL", "KAWAI", "KAYAGEUM", "KEMENCE_MAKAM", "KEMENCE_REAL", "KNIGHTPNO", "KOTO", "MBIRA", "NEY_MAKAM", "NEY_REAL", "NS_BASS_EL_018", "NS_BASS_EL_025", "NS_BASS_EL_027", "NS_EKEYS_001", "NS_EKEYS_002", "NS_EKEYS_003", "NS_EKEYS_069", "NS_EKEYS_078", "NS_EKEYS_098", "NS_GUITAR_AC_010", "NS_GUITAR_AC_014", "NS_GUITAR_AC_015", "NS_GUITAR_AC_021", "NS_GUITAR_AC_030", "NS_GUITAR_EL_022", "NS_GUITAR_EL_028", "NS_KEYS_AC_004", "NS_ORGAN_EL_001", "NS_ORGAN_EL_007", "NS_ORGAN_EL_028", "NS_ORGAN_EL_057", "NS_ORGAN_EL_104", "NS_ORGAN_EL_113", "NYLONGUITAR", "PANPIPE", "PSALTERY", "RENORGAN", "RHODES", "SANTUR", "SARANGI", "SHAKUHACHI", "STEELDRUM", "STEINWAY", "TABLA", "TANPURA", "TENORSAX", "TINWHISTLE", "UPRIGHTBASS", "UPRIGHTPNO", "VIBES", "ZURNA"] as const;
 export type WorldInstrument = (typeof WORLD_INSTRUMENTS)[number];
 
 /** the synthesised voice that plays while a recording has not arrived */
@@ -12,6 +12,7 @@ export const WORLD_STAND_IN: Record<WorldInstrument, Instrument> = {
   BAGLAMA_MAKAM: "SAZ",
   BAGPIPE: "CLA",
   BAGPIPE_DRONE: "STR",
+  BANSURI: "FLUTE",
   BASSGUITAR: "BASS",
   BENDIR: "DARBUKA",
   DANTRANH: "KANUN",
@@ -31,10 +32,12 @@ export const WORLD_STAND_IN: Record<WorldInstrument, Instrument> = {
   KAWAI: "PNO",
   KAYAGEUM: "KANUN",
   KEMENCE_MAKAM: "VIOLIN",
+  KEMENCE_REAL: "VIOLIN",
   KNIGHTPNO: "PNO",
   KOTO: "KANUN",
   MBIRA: "AFR",
   NEY_MAKAM: "NEY",
+  NEY_REAL: "FLUTE",
   NS_BASS_EL_018: "BASS",
   NS_BASS_EL_025: "BASS",
   NS_BASS_EL_027: "BASS",
@@ -64,6 +67,7 @@ export const WORLD_STAND_IN: Record<WorldInstrument, Instrument> = {
   RENORGAN: "ORGAN",
   RHODES: "EP",
   SANTUR: "KANUN",
+  SARANGI: "VIOLIN",
   SHAKUHACHI: "FLUTE",
   STEELDRUM: "EUR",
   STEINWAY: "PNO",
@@ -74,6 +78,7 @@ export const WORLD_STAND_IN: Record<WorldInstrument, Instrument> = {
   UPRIGHTBASS: "BASS",
   UPRIGHTPNO: "PNO",
   VIBES: "EUR",
+  ZURNA: "OBOE",
 };
 
 /** playable range (Hz, floor and ceiling): 6 semitones around the recorded zones; drums have none */
@@ -83,6 +88,7 @@ export const WORLD_RANGE: Partial<Record<WorldInstrument, readonly [number, numb
   BAGLAMA_MAKAM: [92.4, 405.4],
   BAGPIPE: [345.6, 1390.5],
   BAGPIPE_DRONE: [86.9, 173.7],
+  BANSURI: [221.4, 943.7],
   BASSGUITAR: [34.5, 137.9],
   DANTRANH: [43.7, 584.3],
   DUDUK: [185.1, 370.2],
@@ -96,10 +102,12 @@ export const WORLD_RANGE: Partial<Record<WorldInstrument, readonly [number, numb
   KAWAI: [46.5, 1245.2],
   KAYAGEUM: [51.9, 622.6],
   KEMENCE_MAKAM: [88.2, 714.0],
+  KEMENCE_REAL: [207.8, 526.6],
   KNIGHTPNO: [17.3, 1422.2],
   KOTO: [554.7, 1109.4],
   MBIRA: [88.9, 535.8],
   NEY_MAKAM: [55.3, 1668.9],
+  NEY_REAL: [171.7, 690.8],
   NS_BASS_EL_018: [20.6, 370.0],
   NS_BASS_EL_025: [20.6, 349.2],
   NS_BASS_EL_027: [20.6, 329.6],
@@ -129,6 +137,7 @@ export const WORLD_RANGE: Partial<Record<WorldInstrument, readonly [number, numb
   RENORGAN: [23.1, 587.7],
   RHODES: [46.3, 2350.7],
   SANTUR: [164.0, 1304.1],
+  SARANGI: [209.0, 831.1],
   SHAKUHACHI: [413.2, 826.3],
   STEELDRUM: [77.8, 831.1],
   STEINWAY: [26.1, 3753.1],
@@ -138,6 +147,7 @@ export const WORLD_RANGE: Partial<Record<WorldInstrument, readonly [number, numb
   UPRIGHTBASS: [36.7, 497.0],
   UPRIGHTPNO: [17.4, 1115.8],
   VIBES: [77.8, 932.9],
+  ZURNA: [277.3, 901.1],
 };
 
 /** NSynth variants: a card names the family, the route hash picks one of its instruments */

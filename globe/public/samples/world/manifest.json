@@ -1,5 +1,5 @@
 {
- "name": "World pack (CC0 and CC BY)",
+ "name": "World pack (CC0, CC BY and CC BY-NC: non-commercial, flagged in the ledger)",
  "instruments": {
   "SANTUR": {
    "zones": [
@@ -3768,6 +3768,166 @@
     5.5
    ],
    "maxShift": 3
+  },
+  "BANSURI": {
+   "zones": [
+    {
+     "root": 63.11,
+     "file": "bansuri/490818_0416.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 0,
+     "hi": 65
+    },
+    {
+     "root": 67.01,
+     "file": "bansuri/490818_0158.mp3",
+     "loop": [
+      0.2,
+      1.72
+     ],
+     "lo": 66,
+     "hi": 71
+    },
+    {
+     "root": 76.21,
+     "file": "bansuri/179696_0081.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 72,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "SARANGI": {
+   "zones": [
+    {
+     "root": 62.11,
+     "file": "sarangi/816125_0340.mp3",
+     "lo": 0,
+     "hi": 62
+    },
+    {
+     "root": 63.11,
+     "file": "sarangi/170313_0756.mp3",
+     "loop": [
+      0.2,
+      1.26
+     ],
+     "lo": 63,
+     "hi": 63
+    },
+    {
+     "root": 64.21,
+     "file": "sarangi/170313_0300.mp3",
+     "lo": 64,
+     "hi": 68
+    },
+    {
+     "root": 73.01,
+     "file": "sarangi/816125_0455.mp3",
+     "lo": 69,
+     "hi": 73
+    },
+    {
+     "root": 74.01,
+     "file": "sarangi/816125_0527.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 74,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "ZURNA": {
+   "zones": [
+    {
+     "root": 67.01,
+     "file": "zurna/18661_0608.mp3",
+     "loop": [
+      0.2,
+      0.83
+     ],
+     "lo": 0,
+     "hi": 71
+    },
+    {
+     "root": 75.41,
+     "file": "zurna/18661_0112.mp3",
+     "lo": 72,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "NEY_REAL": {
+   "zones": [
+    {
+     "root": 58.71,
+     "file": "ney_real/491638_0017.mp3",
+     "loop": [
+      0.2,
+      2.83
+     ],
+     "lo": 0,
+     "hi": 64
+    },
+    {
+     "root": 70.81,
+     "file": "ney_real/491640_0222.mp3",
+     "loop": [
+      0.2,
+      1.87
+     ],
+     "lo": 65,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
+  },
+  "KEMENCE_REAL": {
+   "zones": [
+    {
+     "root": 62.01,
+     "file": "kemence_real/501341_0413.mp3",
+     "lo": 0,
+     "hi": 63
+    },
+    {
+     "root": 64.31,
+     "file": "kemence_real/501341_0316.mp3",
+     "loop": [
+      0.2,
+      0.76
+     ],
+     "lo": 64,
+     "hi": 65
+    },
+    {
+     "root": 66.11,
+     "file": "kemence_real/501341_0038.mp3",
+     "loop": [
+      0.2,
+      1.05
+     ],
+     "lo": 66,
+     "hi": 127
+    }
+   ],
+   "release": 0.4,
+   "sustained": true
   }
  }
 }

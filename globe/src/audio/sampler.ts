@@ -14,6 +14,8 @@ export interface SampleZone {
   file: string;
   /** velocity range 0..1 this layer answers (omitted: all) */
   vel?: [number, number];
+  /** seconds [start, end] of this recording's own steady part (a sustained instrument whose notes differ in length); else the instrument's `loop` */
+  loop?: [number, number];
 }
 
 /** one copy of the recording in a voice (a chorus of detuned copies makes a zither or a course of strings) */
@@ -343,10 +345,11 @@ export function createSampler(ctx: AudioContext): Sampler {
           };
         }
         // held longer than the recording: loop its steady part
-        if (inst.sustained && inst.loop && durSec * rate > buf.duration - release) {
+        const loop = z.loop ?? inst.loop;
+        if (inst.sustained && loop && durSec * rate > buf.duration - release) {
           src.loop = true;
-          src.loopStart = inst.loop[0];
-          src.loopEnd = Math.min(inst.loop[1], buf.duration);
+          src.loopStart = loop[0];
+          src.loopEnd = Math.min(loop[1], buf.duration);
         }
         const lg = ctx.createGain();
         lg.gain.value = L.gain;

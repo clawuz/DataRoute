@@ -4750,5 +4750,145 @@
   "licence": "CC0 1.0",
   "title": "Bagpipe - Drones.mp3",
   "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "BANSURI",
+  "file": "bansuri/179696_0081.mp3",
+  "source": "https://freesound.org/people/sankalp/sounds/179696/",
+  "author": "sankalp",
+  "licence": "CC BY",
+  "title": "Bansuri single note middle octave (0.8s)",
+  "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ {
+  "instrument": "BANSURI",
+  "file": "bansuri/490818_0416.mp3",
+  "source": "https://freesound.org/people/PhonosUPF/sounds/490818/",
+  "author": "PhonosUPF",
+  "licence": "CC0 1.0",
+  "title": "bansuri set 7 (4.2s)",
+  "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "BANSURI",
+  "file": "bansuri/490818_0158.mp3",
+  "source": "https://freesound.org/people/PhonosUPF/sounds/490818/",
+  "author": "PhonosUPF",
+  "licence": "CC0 1.0",
+  "title": "bansuri set 7 (1.6s)",
+  "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "SARANGI",
+  "file": "sarangi/816125_0527.mp3",
+  "source": "https://freesound.org/people/sarman1234/sounds/816125/",
+  "author": "sarman1234",
+  "licence": "CC0 1.0",
+  "title": "sarangi1 (5.3s)",
+  "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "SARANGI",
+  "file": "sarangi/170313_0756.mp3",
+  "source": "https://freesound.org/people/Johnnydhol/sounds/170313/",
+  "author": "Johnnydhol",
+  "licence": "CC BY",
+  "title": "SARANGI 4.wav (7.6s)",
+  "licence_url": "https://creativecommons.org/licenses/by/3.0/"
+ },
+ {
+  "instrument": "SARANGI",
+  "file": "sarangi/816125_0340.mp3",
+  "source": "https://freesound.org/people/sarman1234/sounds/816125/",
+  "author": "sarman1234",
+  "licence": "CC0 1.0",
+  "title": "sarangi1 (3.4s)",
+  "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "SARANGI",
+  "file": "sarangi/816125_0455.mp3",
+  "source": "https://freesound.org/people/sarman1234/sounds/816125/",
+  "author": "sarman1234",
+  "licence": "CC0 1.0",
+  "title": "sarangi1 (4.6s)",
+  "licence_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+ },
+ {
+  "instrument": "SARANGI",
+  "file": "sarangi/170313_0300.mp3",
+  "source": "https://freesound.org/people/Johnnydhol/sounds/170313/",
+  "author": "Johnnydhol",
+  "licence": "CC BY",
+  "title": "SARANGI 4.wav (3.0s)",
+  "licence_url": "https://creativecommons.org/licenses/by/3.0/"
+ },
+ {
+  "instrument": "ZURNA",
+  "file": "zurna/18661_0608.mp3",
+  "source": "https://freesound.org/people/cdrk/sounds/18661/",
+  "author": "cdrk",
+  "licence": "CC BY",
+  "title": "zurna_0001_[turkish]_4_shots_mono.flac (6.1s)",
+  "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ {
+  "instrument": "ZURNA",
+  "file": "zurna/18661_0112.mp3",
+  "source": "https://freesound.org/people/cdrk/sounds/18661/",
+  "author": "cdrk",
+  "licence": "CC BY",
+  "title": "zurna_0001_[turkish]_4_shots_mono.flac (1.1s)",
+  "licence_url": "https://creativecommons.org/licenses/by/4.0/"
+ },
+ {
+  "instrument": "NEY_REAL",
+  "file": "ney_real/491638_0017.mp3",
+  "source": "https://freesound.org/people/_bliind/sounds/491638/",
+  "author": "_bliind",
+  "licence": "CC BY-NC",
+  "title": "Ney-12.wav (0.2s)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "nc": true
+ },
+ {
+  "instrument": "NEY_REAL",
+  "file": "ney_real/491640_0222.mp3",
+  "source": "https://freesound.org/people/_bliind/sounds/491640/",
+  "author": "_bliind",
+  "licence": "CC BY-NC",
+  "title": "Ney-10.wav (2.2s)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "nc": true
+ },
+ {
+  "instrument": "KEMENCE_REAL",
+  "file": "kemence_real/501341_0038.mp3",
+  "source": "https://freesound.org/people/alexanderness/sounds/501341/",
+  "author": "alexanderness",
+  "licence": "CC BY-NC",
+  "title": "195082_excerpt.wav (0.4s)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "nc": true
+ },
+ {
+  "instrument": "KEMENCE_REAL",
+  "file": "kemence_real/501341_0316.mp3",
+  "source": "https://freesound.org/people/alexanderness/sounds/501341/",
+  "author": "alexanderness",
+  "licence": "CC BY-NC",
+  "title": "195082_excerpt.wav (3.2s)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "nc": true
+ },
+ {
+  "instrument": "KEMENCE_REAL",
+  "file": "kemence_real/501341_0413.mp3",
+  "source": "https://freesound.org/people/alexanderness/sounds/501341/",
+  "author": "alexanderness",
+  "licence": "CC BY-NC",
+  "title": "195082_excerpt.wav (4.1s)",
+  "licence_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+  "nc": true
  }
 ]
