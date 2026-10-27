@@ -64,9 +64,10 @@ describe("composed pieces with gestures (300 selections)", { timeout: 60000 }, (
 
 describe("the gestures are heard in composed pieces", () => {
   it("a kemençe voice gets a hidden double stop a fourth below its drawn hook notes", () => {
-    const routes = buildRoutes(["TZX", "RZV", "OGU"], "IST");
+    // the classical kemençe plays in the Mevlevi card (Konya); the Black Sea card has the tulum, not this pear-shaped kemençe
+    const routes = buildRoutes(["KYA", "ESB", "NAV"], "IST");
     const piece = composePiece("visited", routes);
-    const kem = piece.notes.filter((n) => n.instrument === "KEMENCE_MAKAM");
+    const kem = piece.notes.filter((n) => /^KEMENCE/.test(String(n.instrument)));
     expect(kem.some((n) => n.show === false)).toBe(true);
     const drawn = kem.filter((n) => n.show !== false);
     const pairs = kem.filter((h) => h.show === false && drawn.some((d) => d.route === h.route && Math.abs(d.t - h.t) < 1e-6 && Math.abs(12 * Math.log2(d.freq / h.freq) - 5) < 1e-6));
@@ -101,11 +102,10 @@ describe("the gestures are heard in composed pieces", () => {
   });
 });
 
-describe("the Karadeniz kemençe moves between notes and slides into them", () => {
-  // TZX, RZV, OGU from Istanbul: the hook (the middle route by length) is the makam kemençe
-  const routes = buildRoutes(["TZX", "RZV", "OGU"], "IST");
-  const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
-  const hook = order[1].i;
+describe("the kemençe moves between notes and slides into them", () => {
+  // KYA, ESB, NAV from Istanbul: the Konya route (Mevlevi card) plays the classical kemençe as one of its melody voices
+  const routes = buildRoutes(["KYA", "ESB", "NAV"], "IST");
+  const hook = routes.findIndex((r) => r.to === "KYA");
   const TUNE = /^(KEMENCE|SAZ|BAGLAMA)/;
   for (const melody of ["bank", "walk"] as const) {
     it(`${melody}: at most 30% of the moves of the drawn kemençe / saz hook notes repeat the pitch; at least 40% of the kemençe hook notes glide`, () => {
