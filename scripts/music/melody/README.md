@@ -11,6 +11,8 @@ default stays the walk).
 | `grammar.py` | the eight forms, the operators, `generate(card_id, hits, n, seed)`, `bank_entry` (the diverse selection), `FORM_OF` (all 52 cards) |
 | `export_bank.py` | all 52 cards x hits 1-9 -> minified JSON, version 2 (strings, `.` = rest); `--examples` prints two phrases of every form |
 | `test_grammar.py` | unittest: determinism, bounds, cadences, rests, the signature of every form, the bank file |
+| `corpus/` | the phrase-corpus ingest (spec `2026-10-27-melody-trained-design.md`): `symbtr.py`, `pdmx.py`, `nottingham.py`, `common.py` (degrees, bars, windows, a stdlib MIDI reader), the mapping tables `makam-cards.json` and `cards-map.json`, `test_corpus.py` (`python3 -m unittest discover -s scripts/music/melody/corpus`) |
+| `build_corpus.py` | runs the three ingestors on `.corpora/` (git-excluded, never committed) -> `.corpora/phrases/<card>.jsonl` and the "Corpus" section of `docs/music-melody-model-report.md` |
 
 ## Regenerate
 
