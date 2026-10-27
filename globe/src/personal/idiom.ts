@@ -58,6 +58,7 @@ export const IDIOMS: Record<string, Partial<Idiom>> = {
   pop: { step: 0.5, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3 },
   // the destination cards (hand-set, like the rest)
   karadeniz: { step: 0.7, repeat: 0.3, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
+  mevlevi: { step: 0.85, repeat: 0.2, leaps: [2], bias: -1, span: 6, arc: 2, start: [3, 4, 2] },
   icanadolu: { step: 0.8, repeat: 0.25, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
   akdeniz: { step: 0.7, repeat: 0.2, leaps: [2, 3], bias: -1, span: 6, arc: 3, start: [3, 4, 2] },
   dogu: { step: 0.6, repeat: 0.35, leaps: [2], bias: 0, span: 5, arc: 2, start: [0, 2, 4] },

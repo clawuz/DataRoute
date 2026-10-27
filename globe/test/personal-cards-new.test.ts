@@ -18,8 +18,8 @@ const isVoice = (v: string): boolean => v in WORLD_FAMILIES || (WORLD_INSTRUMENT
 const docs = readFileSync(new URL("../../docs/music-genre-cards.md", import.meta.url), "utf8");
 
 describe("the destination cards (11 + 13)", () => {
-  it("brings the number of cards to 51 (27 + 11 + 13)", () => {
-    expect(CARDS.length).toBe(51);
+  it("brings the number of cards to 52 (27 + 11 + 13 + the Mevlevi card for Konya)", () => {
+    expect(CARDS.length).toBe(52);
   });
   for (const id of NEW) {
     describe(id, () => {

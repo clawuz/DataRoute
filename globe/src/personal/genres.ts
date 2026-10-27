@@ -92,7 +92,8 @@ const BASE_CARDS: GenreCard[] = [
   // the destination cards: Turkish regions, Greece, Italy, Vienna, R&B, country, Spanish guitar. Hand-set judgements (tune by ear); the instruments
   // that the pack lacks are approximated: zurna = DUDUK / NEY_MAKAM, tulum = BAGPIPE, ud = NYLONGUITAR / KANUN, tambur = SAZ, davul = FRAMEDRUM, mandolin = HARP / PSALTERY
   { id: "karadeniz", fast: true, name: "Black Sea horon", family: "folk", bpm: [112, 126], scale: USSAK, scaleWish: HICAZ, cell: [2, 2, 3], accent: [1.3, 0.9, 1.1], held: ["BAGPIPE_DRONE", "CELLO"], melody: ["KEMENCE_MAKAM", "BAGPIPE"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "FRAMEDRUM" },
-  { id: "icanadolu", name: "Central Anatolian bağlama", family: "folk", bpm: [88, 108], scale: USSAK, scaleWish: HICAZ, cell: [2, 1, 1, 2, 2], accent: [1.25, 0.85, 0.85, 1.1, 0.9], held: ["CELLO", "VIOLA"], melody: ["SAZ", "BAGLAMA_MAKAM"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "BENDIR" },
+  { id: "icanadolu", name: "Central Anatolian bağlama", family: "folk", bpm: [88, 108], scale: USSAK, scaleWish: HICAZ, cell: [2, 1, 1, 2, 2], accent: [1.25, 0.85, 0.85, 1.1, 0.9], held: ["CELLO", "VIOLA"], melody: ["SAZ", "BAGLAMA_MAKAM", "NEY_MAKAM"], pluck: ["BAGLAMA_EXTRA", "SAZ"], perc: "BENDIR" },
+  { id: "mevlevi", name: "Mevlevi (ney and kudüm)", family: "folk", bpm: [76, 88], scale: RAST, scaleWish: SEGAH, cell: [3, 3], accent: [1.3, 0.9], prog: [[0, 4], [0, 4], [0, 4], [0, 4]], held: ["NEY", "CELLO"], melody: ["NEY_MAKAM", "NEY"], pluck: ["KANUN", "SANTUR"], perc: "FRAMEDRUM" },
   { id: "akdeniz", name: "Turkish Mediterranean (ud, tambur, kanun)", family: "folk", bpm: [96, 114], scale: HICAZ, scaleWish: NIHAVENT, cell: [3, 2, 2, 3], accent: [1.25, 0.9, 0.9, 1.1], held: ["CELLO", "VIOLA"], melody: ["KANUN", "NYLONGUITAR"], pluck: ["NYLONGUITAR", "SAZ"], perc: "DARBUKA" },
   { id: "dogu", fast: true, name: "East Anatolian davul-zurna halay", family: "folk", bpm: [104, 124], scale: HICAZ, scaleWish: SEGAH, cell: [1, 1, 1, 1], accent: [1.35, 0.8, 1.1, 0.8], held: ["DUDUK", "CELLO"], melody: ["DUDUK", "NEY_MAKAM"], pluck: ["SAZ", "BAGLAMA_EXTRA"], perc: "FRAMEDRUM" },
   { id: "zeybek", name: "Aegean zeybek", family: "folk", bpm: [82, 98], scale: USSAK, scaleWish: HICAZ, cell: [2, 2, 2, 3], accent: [1.3, 0.85, 0.9, 1.15], held: ["CELLO", "VIOLA"], melody: ["CLA", "SAZ"], pluck: ["SAZ", "NYLONGUITAR"], perc: "DARBUKA" },
@@ -158,7 +159,8 @@ function group(airports: string, cards: string[]): void {
   for (const a of airports.split(" ")) BY_AIRPORT[a] = cards;
 }
 group("TZX RZV OGU SZF NOP KFS ONQ MZH TJK", ["karadeniz"]);
-group("ESB ASR KYA NAV VAS AOE ISE KZR", ["icanadolu"]);
+group("ESB ASR NAV VAS AOE ISE KZR", ["icanadolu"]);
+group("KYA", ["mevlevi", "icanadolu"]);
 group("AYT GZP DLM ADA COV HTY KCM", ["akdeniz"]);
 group("ADB BJV DNZ USQ EDO CKZ", ["zeybek"]);
 group("VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF", ["dogu"]);
@@ -252,10 +254,21 @@ export function colourCardOf(r: PersonalRoute, i: number): GenreCard {
   return list[(routeHash(r.key + i) >>> 3) % list.length];
 }
 
+/**
+ * Cards of folk and makam traditions (and the gamelan, Thai, Chinese, East Asian and African ones) whose music has no piano: for a route
+ * of such a card the composer neither takes the piano shortcut nor picks "PNO" from a voice list, and the "piano is always there" rule
+ * skips it. The piano may still play on routes of other cards in the same piece.
+ */
+export const NO_PIANO_CARDS: ReadonlySet<string> = new Set([
+  "anatolian", "icanadolu", "karadeniz", "akdeniz", "dogu", "zeybek", "karsilama", "mevlevi",
+  "arabic", "khaleeji", "maghrebi", "persian", "hindustani", "caucasus", "centralasia",
+  "gamelan", "thai", "chinese", "eastasia", "westafrica", "eastafrica",
+]);
+
 /** the region cluster of every card (spec 2026-10-26-many-destinations): the dominant cluster of the destinations leads the piece */
 export const CLUSTER_OF: Record<string, string> = Object.fromEntries(
   Object.entries({
-    turkish: ["anatolian", "karsilama", "karadeniz", "icanadolu", "akdeniz", "dogu", "zeybek"],
+    turkish: ["anatolian", "karsilama", "karadeniz", "icanadolu", "mevlevi", "akdeniz", "dogu", "zeybek"],
     arab: ["arabic", "khaleeji", "maghrebi"],
     "persian-central": ["persian", "centralasia", "caucasus"],
     "south-asia": ["hindustani", "bollywood"],

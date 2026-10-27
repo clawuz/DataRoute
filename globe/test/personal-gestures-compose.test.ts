@@ -168,4 +168,5 @@ describe("review fixes (composed pieces)", () => {
   });
 });
 // measured 2026-10-27 after the review fixes: 1303 (1530 before); 20% headroom
-const MAX_HIDDEN = 1570;
+// re-measured 2026-10-27 after the folk and makam cards lost the piano: 2000 (a 12-route piece of plucked santur, kanun and nylon guitar, whose tremolo hits now fill what the piano gestures were); 20% headroom
+const MAX_HIDDEN = 2400;

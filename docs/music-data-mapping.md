@@ -200,3 +200,6 @@ Notes a gesture adds are brought into the instrument's range by octaves (`compos
 | the home card (`plan.home`, when it is not the main card) | the intro and the outro play the home groove | the piece starts and ends at the sound of where it leaves | `journey.ts`, `compose.ts` |
 
 A trip with one sound (same card all through) has no journey and is unchanged. The key, the chords and the instruments of each route stay as they are; the stage changes the rhythm figure and who is spotlit (a card that no route plays only changes the figure).
+
+
+**Piyano kuralı (2026-10-27):** halk ve makam kartlarının (`NO_PIANO_CARDS`, `genres.ts`) rotalarında piyano çalmaz; "üçten fazla rotada piyano her zaman vardır" kuralı bu rotaları atlar. Ayrıntı: `docs/music-genre-cards.md`, "No piano in folk and makam cards".

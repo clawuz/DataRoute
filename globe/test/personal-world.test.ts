@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocateColour, cardsOfAirport, planCards } from "../src/personal/genres";
+import { NO_PIANO_CARDS, allocateColour, cardsOfAirport, planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
 import { composePiece, limitsOf } from "../src/personal/compose";
 
@@ -159,7 +159,7 @@ describe("world voices", () => {
       const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
       const role: string[] = [];
       order.forEach((x, k) => (role[x.i] = n <= 6 ? SMALL[n][k] : BASE[Math.floor((k * 7) / n)]));
-      const mainMelodic = routes.some((_, i) => plan.perRoute[i] === plan.main && (role[i] === "hook" || role[i] === "pluck"));
+      const mainMelodic = !NO_PIANO_CARDS.has(plan.main.id) && routes.some((_, i) => plan.perRoute[i] === plan.main && (role[i] === "hook" || role[i] === "pluck"));
       if (!mainMelodic) continue;
       checked++;
       expect(piece.notes.some((x) => x.instrument === "PNO" && plan.perRoute[x.route] === plan.main), places.join(",")).toBe(true);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { drawLength } from "../src/personal/flight";
 import { composePiece } from "../src/personal/compose";
+import { NO_PIANO_CARDS, planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
 import { selectionFromSearch } from "../src/personal/codec";
 
@@ -39,10 +40,15 @@ describe("the piano with more than three routes", () => {
     "?v=NBO,JNB,CPT,LOS,ACC",
   ];
   for (const l of links) {
-    it(`has a piano: ${l}`, () => {
+    it(`has a piano only where a card may have one: ${l}`, () => {
       const sel = selectionFromSearch(l)!;
       const p = composePiece(sel.mode, buildRoutes(sel.places, sel.home));
-      expect(p.notes.some((n) => n.instrument === "PNO")).toBe(true);
+      // folk and makam cards have no piano (2026-10-27): a piece made only of such routes has none; any other keeps the steady piano
+      const plan = planCards(sel.mode, buildRoutes(sel.places, sel.home));
+      const allFolk = plan.perRoute.every((c) => NO_PIANO_CARDS.has(c.id));
+      // (a piece that mixes in other cards may still have none when none of their routes is a hook or a pluck route)
+      if (allFolk) expect(p.notes.some((n) => n.instrument === "PNO")).toBe(false);
+      for (const n of p.notes) if (n.instrument === "PNO") expect(NO_PIANO_CARDS.has(plan.perRoute[n.route].id)).toBe(false);
     });
   }
 });

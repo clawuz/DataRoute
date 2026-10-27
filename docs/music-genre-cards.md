@@ -117,12 +117,13 @@ Kullanıcı isteği: parçalar "alışık olduğumuz popüler müzik" gibi duyul
 
 ## 8. Destination cards (2026-10-26)
 
-Eleven cards added so that a destination can sound like where it goes (spec `docs/superpowers/specs/2026-10-26-destination-styles-design.md`, section 1). They are hand-set judgements to be tuned by ear. The Turkish regional cards approximate zurna (DUDUK / NEY_MAKAM), tulum (BAGPIPE / BAGPIPE_DRONE), ud (NYLONGUITAR / KANUN), tambur (SAZ) and davul (FRAMEDRUM / BENDIR) with the pack's instruments; real recordings replace them later. Cards in `BASE_CARDS` of `genres.ts`; 51 cards in all after the next table.
+Eleven cards added so that a destination can sound like where it goes (spec `docs/superpowers/specs/2026-10-26-destination-styles-design.md`, section 1). They are hand-set judgements to be tuned by ear. The Turkish regional cards approximate zurna (DUDUK / NEY_MAKAM), tulum (BAGPIPE / BAGPIPE_DRONE), ud (NYLONGUITAR / KANUN), tambur (SAZ) and davul (FRAMEDRUM / BENDIR) with the pack's instruments; real recordings replace them later. Cards in `BASE_CARDS` of `genres.ts`; 52 cards in all after the next table (the Mevlevi card for Konya was added on 2026-10-27).
 
 | id | name | family | bpm | scale / wish | cell (accent) | melody | pluck | held | perc |
 |---|---|---|---|---|---|---|---|---|---|
 | karadeniz | Black Sea horon (fast) | folk | 112-126 | USSAK / HICAZ | 2,2,3 (1.3, 0.9, 1.1) | KEMENCE_MAKAM, BAGPIPE (tulum) | BAGLAMA_EXTRA, SAZ | BAGPIPE_DRONE, CELLO | FRAMEDRUM |
-| icanadolu | Central Anatolian bağlama | folk | 88-108 | USSAK / HICAZ | 2,1,1,2,2 (1.25, 0.85, 0.85, 1.1, 0.9) | SAZ, BAGLAMA_MAKAM | BAGLAMA_EXTRA, SAZ | CELLO, VIOLA | BENDIR |
+| icanadolu | Central Anatolian bağlama | folk | 88-108 | USSAK / HICAZ | 2,1,1,2,2 (1.25, 0.85, 0.85, 1.1, 0.9) | SAZ, BAGLAMA_MAKAM, NEY_MAKAM | BAGLAMA_EXTRA, SAZ | CELLO, VIOLA | BENDIR |
+| mevlevi | Mevlevi (ney and kudüm) | folk | 76-88 | RAST / SEGAH | 3,3 (1.3, 0.9); a static chord `[[0,4]]` x4: the drone | NEY_MAKAM, NEY | KANUN, SANTUR | NEY, CELLO | FRAMEDRUM (kudüm) |
 | akdeniz | Turkish Mediterranean (ud, tambur, kanun) | folk | 96-114 | HICAZ / NIHAVENT | 3,2,2,3 (1.25, 0.9, 0.9, 1.1) | KANUN, NYLONGUITAR (ud) | NYLONGUITAR, SAZ (tambur) | CELLO, VIOLA | DARBUKA |
 | dogu | East Anatolian davul-zurna halay (fast) | folk | 104-124 | HICAZ / SEGAH | 1,1,1,1 (1.35, 0.8, 1.1, 0.8) | DUDUK, NEY_MAKAM (zurna) | SAZ, BAGLAMA_EXTRA | DUDUK, CELLO | FRAMEDRUM (davul) |
 | zeybek | Aegean zeybek | folk | 82-98 | USSAK / HICAZ | 2,2,2,3 (1.3, 0.85, 0.9, 1.15) | CLA, SAZ | SAZ, NYLONGUITAR | CELLO, VIOLA | DARBUKA |
@@ -146,14 +147,14 @@ Eleven cards added so that a destination can sound like where it goes (spec `doc
 | fado | Fado | chamber | 76-92 | MINOR / MAJOR | 1,1,1,1 (1.15, 0.9, 1, 0.9) | NYLONGUITAR, PSALTERY, ACCORDION | PSALTERY, NYLONGUITAR | CELLO, VIOLA | TRI |
 | chanson | French chanson & musette | chamber | 92-112 | MAJOR / LYDIAN | 1,1,1 (1.2, 0.9, 0.9) | ACCORDION, VIOLIN, CLA | GUITAR_AC, HARP | ACCORDION, CELLO | TAMB (bass UPRIGHTBASS) |
 
-The 13 cards of the other countries and big cities (2026-10-26, spec `docs/superpowers/specs/2026-10-26-all-airports-design.md`; 51 cards in all) follow the table above. Missing instruments stand in with the pack: balalaika, guitarra and cavaquinho = PSALTERY, charango = NYLONGUITAR, bombo = FRAMEDRUM. Their progressions: samba I-IV-V-I (`[[0,4],[5,4],[7,4],[0,4]]`), afrobeat i-IV-i-V, bollywood i-VI-III-bVII, khaleeji I-II-I-V (`[[0,4],[1,4],[0,4],[7,4]]`), maghrebi i-bVII-i-V, russian i-VI-III-V, thai I-IV-I-V, chinese I-V-vi-IV, cumbia i-IV-V-i, andean i-VI-III-bVII, caucasus i-bVII-VI-V, fado i-bVII-VI-V, chanson I-vi-IV-V.
+The 13 cards of the other countries and big cities (2026-10-26, spec `docs/superpowers/specs/2026-10-26-all-airports-design.md`; 52 cards in all) follow the table above. Missing instruments stand in with the pack: balalaika, guitarra and cavaquinho = PSALTERY, charango = NYLONGUITAR, bombo = FRAMEDRUM. Their progressions: samba I-IV-V-I (`[[0,4],[5,4],[7,4],[0,4]]`), afrobeat i-IV-i-V, bollywood i-VI-III-bVII, khaleeji I-II-I-V (`[[0,4],[1,4],[0,4],[7,4]]`), maghrebi i-bVII-i-V, russian i-VI-III-V, thai I-IV-I-V, chinese I-V-vi-IV, cumbia i-IV-V-i, andean i-VI-III-bVII, caucasus i-bVII-VI-V, fado i-bVII-VI-V, chanson I-vi-IV-V.
 
 Progressions: italian i-VI-III-V (`[[0,3],[8,4],[3,4],[7,4]]`), classical I-IV-V-I, rnb i-iv-bVII-III (`[[0,3],[5,3],[10,4],[3,4]]`), country I-IV-V-I, spguitar i-bVII-VI-V (`[[0,3],[10,4],[8,4],[7,4]]`); the others use the default ones.
 ### Where each card plays (airport first, then country, then region; `genres.ts`: `BY_AIRPORT`, `BY_ISO`, `BY_REGION`)
 
 The first card of a list is the most likely; the hash of the route picks among them. All lists are hand-set judgements to be tuned by ear.
 
-- **Turkey**: Black Sea (TZX RZV OGU SZF NOP KFS ONQ MZH TJK) `karadeniz`; Central Anatolia (ESB ASR KYA NAV VAS AOE ISE KZR) `icanadolu`; Mediterranean (AYT GZP DLM ADA COV HTY KCM) `akdeniz`; Aegean (ADB BJV DNZ USQ EDO CKZ) `zeybek`; East and South-East Anatolia (VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF) `dogu`; Istanbul and Marmara (IST KCO TEQ YEI; SAW is not in the destination list) `anatolian`, `karsilama`, `cinematic`, `jazz`.
+- **Turkey**: Black Sea (TZX RZV OGU SZF NOP KFS ONQ MZH TJK) `karadeniz`; Central Anatolia (ESB ASR NAV VAS AOE ISE KZR) `icanadolu`; Konya (KYA) `mevlevi`, `icanadolu`; Mediterranean (AYT GZP DLM ADA COV HTY KCM) `akdeniz`; Aegean (ADB BJV DNZ USQ EDO CKZ) `zeybek`; East and South-East Anatolia (VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF) `dogu`; Istanbul and Marmara (IST KCO TEQ YEI; SAW is not in the destination list) `anatolian`, `karsilama`, `cinematic`, `jazz`.
 - **Greece** `greek`; **Cyprus** `greek`, `anatolian`; **Italy** `italian`, `romantic`.
 - **Spain**: Seville, Malaga (SVQ AGP) `flamenco`; Madrid, Barcelona, Bilbao, Valencia, Zaragoza `spguitar`, `flamenco`.
 - **Germany, Austria, Switzerland**: `classical`, `baroque` (Germany adds `pop`).
@@ -211,6 +212,7 @@ Bar 3 repeats bar 1 exactly only when `cadence[0] === cadence[2]`. The values be
 | pop | 0.5 | 0.3 | 2, 3 | 0 | 6 | 3 | 0, 2, 4 | 2, 0, 2, 4 |
 | karadeniz | 0.7 | 0.3 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
 | icanadolu | 0.8 | 0.25 | 2 | -1 | 5 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
+| mevlevi | 0.85 | 0.2 | 2 | -1 | 6 | 2 | 3, 4, 2 | 2, 0, 2, 0 |
 | akdeniz | 0.7 | 0.2 | 2, 3 | -1 | 6 | 3 | 3, 4, 2 | 2, 0, 2, 0 |
 | dogu | 0.6 | 0.35 | 2 | 0 | 5 | 2 | 0, 2, 4 | 2, 0, 2, 4 |
 | zeybek | 0.8 | 0.2 | 2 | -1 | 5 | 2 | 4, 3, 2 | 2, 0, 2, 0 |
@@ -278,6 +280,7 @@ trip and is not drawn by the music box. The instrument follows the main card of 
 | baroque | RENORGAN (held, re-struck every 4 bars) |
 | karadeniz | BAGPIPE_DRONE (held, re-struck every 4 bars) |
 | caucasus | BAGPIPE_DRONE (held, re-struck every 4 bars) |
+| mevlevi | CELLO (the default; the ney and the static chord are the drone of the card itself) |
 | every other card | CELLO (held, re-struck every 4 bars) |
 
 It is silent in the break (bars 52–55) and, when the trip crosses regions, also in the lifted bars (44–51); a one-region trip has no lift and the drone plays through bar 51. It returns in the outro. The whole rule,
@@ -290,7 +293,7 @@ The main card is chosen in two steps: first the cluster with the most routes (fa
 
 | cluster | cards |
 |---|---|
-| turkish | anatolian, karsilama, karadeniz, icanadolu, akdeniz, dogu, zeybek |
+| turkish | anatolian, karsilama, karadeniz, icanadolu, mevlevi, akdeniz, dogu, zeybek |
 | arab | arabic, khaleeji, maghrebi |
 | persian-central | persian, centralasia, caucasus |
 | south-asia | hindustani, bollywood |
@@ -306,4 +309,8 @@ The main card is chosen in two steps: first the cluster with the most routes (fa
 
 ## Variety (2026-10-26, audit by a probe over random selections; `globe/test/personal-variety.test.ts` keeps a light version)
 
-Over 1000 random selections of 3-8 places (half with home Istanbul), with the dominant region leading: all 51 cards come out as the main card at least once; the most frequent are `eastafrica` 9.6%, `arabic` 9.0%, `dogu` 8.5% (many Turkish airports), `pop` 6.6%, `westafrica` 6.2%; the tempo spans 78-126 bpm; the verse tells 1 region in 2% of the pieces, 2 in 15%, 3 in 16%, 4 in 17%, 5 in 19% and 6 in 32%.
+Over 1000 random selections of 3-8 places (half with home Istanbul), with the dominant region leading: all 51 older cards come out as the main card at least once; the most frequent are `eastafrica` 9.6%, `arabic` 9.0%, `dogu` 8.5% (many Turkish airports), `pop` 6.6%, `westafrica` 6.2%; the tempo spans 78-126 bpm; the verse tells 1 region in 2% of the pieces, 2 in 15%, 3 in 16%, 4 in 17%, 5 in 19% and 6 in 32%.
+
+## No piano in folk and makam cards (2026-10-27)
+
+`NO_PIANO_CARDS` in `genres.ts`: anatolian, icanadolu, karadeniz, akdeniz, dogu, zeybek, karsilama, mevlevi, arabic, khaleeji, maghrebi, persian, hindustani, caucasus, centralasia, gamelan, thai, chinese, eastasia, westafrica, eastafrica. A route of such a card never plays the piano: `choose()` in `compose.ts` takes neither the piano shortcut nor `PNO` from a voice list (an emptied list falls back to the card's first non-piano held voice), and the "with more than three routes the piano is always there" rule skips these routes (when every route is of such a card, there is no piano). The piano still plays on routes of other cards in the same piece. Bollywood and the pop-like cards keep it.

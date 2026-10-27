@@ -4,7 +4,7 @@ import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
 import { altitudeFt, cruiseFt, drawLength } from "./flight";
-import { planCards, type GenreCard } from "./genres";
+import { NO_PIANO_CARDS, planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
 import { journeyCard, journeyOf } from "./journey";
 import { WORLD_VOICES, droneVoice, resolveVoice, type Voice } from "./world-voices";
@@ -389,7 +389,14 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     return undefined;
   };
   const early: (PlayInstrument | undefined)[] = routes.map((_, i) => (coloured[i] ? fromWorld(i, 0) : undefined));
-  const choose = (list: Voice[], h: number, i: number, kind: "melody" | "pluck" | "other", turn = 0): PlayInstrument => {
+  const choose = (list0: Voice[], h: number, i: number, kind: "melody" | "pluck" | "other", turn = 0): PlayInstrument => {
+    // folk and makam cards have no piano: it is filtered out of the list (an empty list falls back to the card's first non-piano voice)
+    const noPiano = NO_PIANO_CARDS.has(plan.perRoute[i].id);
+    let list = list0;
+    if (noPiano && list0.includes("PNO")) {
+      list = list0.filter((c) => c !== "PNO");
+      if (!list.length) list = [plan.perRoute[i].held.find((c) => c !== "PNO") ?? plan.perRoute[i].held[0]];
+    }
     if (coloured[i]) {
       const got = early[i] ?? [1, 2].map((t) => (worldTier[i] < 0 ? fromWorld(i, t) : undefined)).find((x) => x);
       if (got) return got;
@@ -405,6 +412,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         taken.add(c);
         return resolveVoice(c, h);
       }
+    }
+    if (noPiano) {
+      const free = list.find((c) => !taken.has(c)) ?? list[(h + st.ensemble + i + turn) % list.length];
+      return resolveVoice(free, h);
     }
     return resolveVoice(list[(h + st.ensemble + i + turn) % list.length], h);
   };
@@ -426,7 +437,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   // first, else the hook); else on a pluck or hook route without a recording of its destination, else one whose
   // recording was borrowed from another list of its card
   if (n > 3 && !voiceOf.includes("PNO")) {
-    const pick = (ok: (i: number) => boolean): number => {
+    const pick = (ok0: (i: number) => boolean): number => {
+      const ok = (i: number): boolean => !NO_PIANO_CARDS.has(plan.perRoute[i].id) && ok0(i);
       for (const rl of ["pluck", "hook"] as PopRole[]) {
         const at = role.findIndex((q, i) => q === rl && ok(i));
         if (at >= 0) return at;
