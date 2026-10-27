@@ -18,6 +18,10 @@ export interface GestureContext {
   chordAt(bar: number): { root: number; third: 3 | 4 };
   keyRoot: number;
   hz(semis: number): number;
+  /** a bar in which the home drone is silent (the break, the lifted bars): the kemençe drone is not struck there; absent: none is silent */
+  silentBar?(bar: number): boolean;
+  /** called for every note a gesture made (an added note or a patched copy) with the note it came from, also when that note is dropped */
+  origin?(made: PersonalNote, source: PersonalNote): void;
 }
 
 interface Env {
@@ -36,6 +40,8 @@ interface Env {
   afterGap: Set<PersonalNote>;
   /** bagpipe notes whose pitch equals the previous note's pitch in the route */
   repeated: Set<PersonalNote>;
+  /** the start of the next drawn note of the same route and instrument (a tremolo stops before it); absent: the last one */
+  nextStart: Map<PersonalNote, number>;
 }
 
 /** what a gesture does to one note: patch it, drop it, and/or add notes */
@@ -53,6 +59,8 @@ const onBeat = (t: number, beat: number): boolean => {
   const k = Math.round(t / beat);
   return k >= 0 && Math.abs(t - k * beat) <= EPS;
 };
+/** a strong beat of the bar (0 and 2): the strum and the roll of the plucked role sound there only */
+const strong = (t: number, ctx: GestureContext): boolean => beatIn(t, ctx) % 2 === 0;
 const isTune = (n: PersonalNote, e: Env): boolean => {
   const r = e.ctx.roleOf(n);
   return r === "hook" || r === "melody";
@@ -75,6 +83,9 @@ const toneBase = (n: PersonalNote, e: Env): { base: number; third: number } => {
 };
 const hashOf = (n: PersonalNote): number => routeHash(`${n.key}|${n.t.toFixed(3)}|${String(n.instrument)}`);
 
+/** a hidden note this short (s) is marked `short`: the sampler lets it ring out only briefly */
+const SHORT = 0.2;
+
 /** a hidden note made from a source note */
 const added = (src: PersonalNote, t: number, d: number, freq: number, vel: number): PersonalNote => {
   const o: PersonalNote = {
@@ -89,6 +100,7 @@ const added = (src: PersonalNote, t: number, d: number, freq: number, vel: numbe
     show: false,
     alt: src.alt,
   };
+  if (d <= SHORT) o.short = true;
   if (src.pan !== undefined) o.pan = src.pan;
   if (src.wet !== undefined) o.wet = src.wet;
   return o;
@@ -100,7 +112,7 @@ const doubleStop: Gesture = (n, e) => (isTune(n, e) && n.d >= 0.2 ? { extra: [ad
 const graceIn: Gesture = (n, e) =>
   isTune(n, e) && n.d >= 0.2 && onBeat(n.t, e.ctx.beat) ? { extra: [added(n, n.t - 0.055, 0.05, semis(n.freq, 2), n.vel * 0.45)] } : null;
 const drone: Gesture = (n, e) => {
-  if (!e.firstOfBar.has(n)) return null;
+  if (!e.firstOfBar.has(n) || e.ctx.silentBar?.(barOf(n.t, e.ctx.bar))) return null;
   const end = (barOf(n.t, e.ctx.bar) + 1) * e.ctx.bar;
   return end > n.t
     ? {
@@ -112,7 +124,7 @@ const drone: Gesture = (n, e) => {
 // --- saz family
 
 const sazStrum: Gesture = (n, e) =>
-  (e.ctx.roleOf(n) === "pluck" || n.vel >= 0.5) && onBeat(n.t, e.ctx.beat)
+  (e.ctx.roleOf(n) === "pluck" ? onBeat(n.t, e.ctx.beat) && strong(n.t, e.ctx) : n.vel >= 0.5 && onBeat(n.t, e.ctx.beat))
     ? {
         extra: [added(n, n.t + 0.012, 0.14, semis(n.freq, -7), n.vel * 0.4), added(n, n.t + 0.024, 0.14, semis(n.freq, -12), n.vel * 0.4)],
       }
@@ -129,15 +141,20 @@ const tremoloFrom =
   (minD: number): Gesture =>
   (n, e) => {
     if (!isTune(n, e) || n.d < minD) return null;
-    const extra: PersonalNote[] = [added(n, n.t, n.d, n.freq * 2, n.vel * 0.4)];
-    for (let k = 1; k <= 13 && TREM * k < n.d; k++) extra.push(added(n, n.t + TREM * k, TREM, n.freq, n.vel * 0.55));
+    // the tremolo never runs over the next note of its route and instrument (it stops 10 ms before it)
+    const next = e.nextStart.get(n);
+    const room = next === undefined ? Infinity : next - n.t - 0.01;
+    const len = Math.min(n.d, room);
+    if (len <= TREM) return null;
+    const extra: PersonalNote[] = [added(n, n.t, len, n.freq * 2, n.vel * 0.4)];
+    for (let k = 1; k <= 13 && TREM * k < len; k++) extra.push(added(n, n.t + TREM * k, Math.min(TREM, room - TREM * k), n.freq, n.vel * 0.55));
     return { extra };
   };
 const tremolo = tremoloFrom(0.45);
 
-/** kanun, santur: a roll of two quick hidden notes (octave, then twelfth) on each beat of the pluck role */
+/** kanun, santur: a roll of two quick hidden notes (octave, then twelfth) on beats 0 and 2 of the pluck role */
 const roll: Gesture = (n, e) =>
-  e.ctx.roleOf(n) === "pluck" && onBeat(n.t, e.ctx.beat)
+  e.ctx.roleOf(n) === "pluck" && onBeat(n.t, e.ctx.beat) && strong(n.t, e.ctx)
     ? {
         extra: [added(n, n.t + 0.035, 0.15, semis(n.freq, 12), n.vel * 0.4), added(n, n.t + 0.07, 0.15, semis(n.freq, 19), n.vel * 0.4)],
       }
@@ -152,15 +169,17 @@ const strumWith =
     const { ctx } = e;
     if (ctx.roleOf(n) !== "pluck" || !onBeat(n.t, ctx.beat)) return null;
     const card = ctx.cardOf(n.route);
+    const isStrong = strong(n.t, ctx);
     if (card === "country" && opts.boomChick) {
-      const k = beatIn(n.t, ctx);
-      if (k % 2 === 0) {
+      if (isStrong) {
         const root = ctx.chordAt(barOf(n.t, ctx.bar)).root;
         return {
           extra: [added(n, n.t, ctx.beat * 0.8, ctx.hz(ctx.keyRoot + root - 12), n.vel * 0.5)],
         };
       }
     }
+    // country keeps its off-beat chick (beats 1 and 3); every other card strums on beats 0 and 2 only
+    if (!(card === "country" && opts.boomChick) && !isStrong) return null;
     const count = card === "flamenco" ? 4 : 2;
     const c = ctx.chordAt(barOf(n.t, ctx.bar));
     const tones = [c.root, c.root + c.third, c.root + 7];
@@ -203,7 +222,10 @@ const bassWalk: Gesture = (n, e) => {
     const t = start + (i + 1) * ctx.beat;
     if (t > n.t + EPS) extra.push(added(n, t, ctx.beat * 0.9, semis(n.freq, x), n.vel * 0.8));
   });
-  return { extra };
+  // the first note ends where the walk goes on: one beat at most, and before the first walked note
+  const room = extra.length > 0 ? extra[0].t - n.t : ctx.beat;
+  const d = Math.min(n.d, ctx.beat, Math.max(0.05, room));
+  return d < n.d ? { patch: { d }, extra } : { extra };
 };
 const bassAlternate: Gesture = (n, e) => {
   const b = e.bassPos.get(n);
@@ -215,6 +237,9 @@ const bassAlternate: Gesture = (n, e) => {
 const CYCLE = [7, 12, 12, 0];
 const tanpura: Gesture = (n, e) => {
   if (e.ctx.roleOf(n) !== "drone") return null;
+  // the cycle (Pa Sa Sa Sa) already holds the fifth: the drone's own fifth is dropped, the cycle runs on the tonic
+  const pc = ((Math.round(semiOf(n, e.ctx) - e.ctx.keyRoot) % 12) + 12) % 12;
+  if (pc === 7) return { drop: true };
   const { beat } = e.ctx;
   const extra: PersonalNote[] = [];
   for (let k = 0; k * beat < n.d; k++) extra.push(added(n, n.t + k * beat, 1.6 * beat, semis(n.freq, CYCLE[k % 4]), n.vel * 0.7));
@@ -305,9 +330,7 @@ export const GESTURES: Record<string, Gesture[]> = {
   KAWAI: [pianoHand],
   KNIGHTPNO: [pianoHand],
   UPRIGHTPNO: [pianoHand],
-  EKEYS: [pianoHand],
   RHODES: [pianoHand],
-  KEYS_AC: [pianoHand],
   ACCORDION: [oomPah],
   VIOLIN: [violinBow],
   KOTO: [repeatPluck, tremoloFrom(0.35)],
@@ -321,8 +344,6 @@ export const GESTURES: Record<string, Gesture[]> = {
   DUDUK: [glideNote(3)],
   SHAKUHACHI: [glideNote(3)],
   ERHU: [glideNote(3)],
-  GUITAR_AC: [folkGuitar],
-  GUITAR_EL: [folkGuitar],
   BAGPIPE: [pipeGrace],
   NYLONGUITAR: [guitarStrum],
   UPRIGHTBASS: [bassWalk, bassAlternate],
@@ -330,13 +351,17 @@ export const GESTURES: Record<string, Gesture[]> = {
   NEY_MAKAM: [neyGlide],
 };
 
-/** families of numbered instrument names are matched by prefix */
+/**
+ * Families of numbered instrument names are matched by prefix: a note carries the resolved name of its voice (NS_EKEYS_069, never the
+ * family name EKEYS, see WORLD_FAMILIES), so these are the only entries those families can have.
+ */
 const PREFIXED: [string, Gesture[]][] = [
   ["NS_EKEYS_", [pianoHand]],
+  ["NS_KEYS_AC_", [pianoHand]],
   ["NS_GUITAR_AC_", [folkGuitar]],
   ["NS_GUITAR_EL_", [folkGuitar]],
 ];
-const gesturesOf = (instrument: string): Gesture[] | undefined => GESTURES[instrument] ?? PREFIXED.find(([p]) => instrument.startsWith(p))?.[1];
+export const gesturesOf = (instrument: string): Gesture[] | undefined => GESTURES[instrument] ?? PREFIXED.find(([p]) => instrument.startsWith(p))?.[1];
 
 export function applyGestures(notes: PersonalNote[], ctx: GestureContext): PersonalNote[] {
   const firstOfBar = new Set<PersonalNote>();
@@ -355,6 +380,7 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
     firstAtBeat,
     afterGap,
     repeated,
+    nextStart: new Map(),
   };
 
   const byTime = (a: PersonalNote, b: PersonalNote): number => a.t - b.t;
@@ -366,6 +392,24 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
       seenBar.add(b);
       firstOfBar.add(n);
     }
+  }
+  // the next drawn note of the same route and instrument (the cap of a tremolo)
+  const lanes = new Map<string, PersonalNote[]>();
+  for (const n of notes) {
+    if (n.show === false || gesturesOf(String(n.instrument)) === undefined) continue;
+    const k = `${n.route}|${String(n.instrument)}`;
+    const l = lanes.get(k);
+    if (l) l.push(n);
+    else lanes.set(k, [n]);
+  }
+  for (const l of lanes.values()) {
+    l.sort(byTime);
+    let j = 0;
+    l.forEach((n, i) => {
+      j = Math.max(j, i + 1);
+      while (j < l.length && l[j].t <= n.t + 1e-6) j++;
+      if (j < l.length) env.nextStart.set(n, l[j].t);
+    });
   }
   const ney = notes.filter((n) => n.instrument === "NEY_MAKAM").sort(byTime);
   const lastEnd = new Map<number, number>();
@@ -440,7 +484,12 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
       if (r.drop) drop = true;
       if (r.extra) extra.push(...r.extra);
     }
-    if (!drop) out.push(patch ? { ...n, ...patch } : n);
+    if (!drop) {
+      const kept = patch ? { ...n, ...patch } : n;
+      if (patch) ctx.origin?.(kept, n);
+      out.push(kept);
+    }
+    for (const x of extra) ctx.origin?.(x, n);
     out.push(...extra);
   }
   return out;

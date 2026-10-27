@@ -57,6 +57,9 @@ export interface SampleManifest {
 /** the ramp of a per-note glide (s) */
 const NOTE_GLIDE_SEC = 0.08;
 
+/** how long a short gesture note rings after its end (s) */
+const SHORT_TAIL_SEC = 0.25;
+
 /** how long one manifest may take before the sampler goes on without it (the synth plays its instruments) */
 const MANIFEST_TIMEOUT_MS = 10000;
 
@@ -96,7 +99,7 @@ export interface Sampler {
   ensure(names: string[], timeoutMs?: number): Promise<void>;
   has(instrument: string): boolean;
   /** schedules a note; false when the instrument is not loaded (play the synth instead) */
-  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void, glide?: number): boolean;
+  play(dest: AudioNode, instrument: string, freq: number, vel: number, when: number, durSec: number, onEnd?: () => void, glide?: number, short?: boolean): boolean;
   dispose(): void;
 }
 
@@ -247,7 +250,7 @@ export function createSampler(ctx: AudioContext): Sampler {
       }
     },
     has: (instrument) => defs.has(instrument),
-    play(dest, instrument, freq, vel, when, durSec, onEnd, glide) {
+    play(dest, instrument, freq, vel, when, durSec, onEnd, glide, short) {
       const inst = defs.get(instrument);
       if (!inst) return false;
       let f = freq;
@@ -260,9 +263,10 @@ export function createSampler(ctx: AudioContext): Sampler {
       if (!z || !buf) return false;
       const rate = inst.unpitched ? 1 : rateFor(f, z.root);
       const peak = Math.max(0.0001, vel * (inst.gain ?? 1));
-      const release = inst.release ?? 0.35;
+      // a short (hidden gesture) note rings out only briefly: many of them sound together, and each one is a voice
+      const release = short ? Math.min(inst.release ?? 0.35, SHORT_TAIL_SEC) : (inst.release ?? 0.35);
       const hold = when + Math.max(0.05, durSec);
-      const tail = Math.max(release, inst.sustained ? release : 1.2);
+      const tail = short ? SHORT_TAIL_SEC : Math.max(release, inst.sustained ? release : 1.2);
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, when);
       g.gain.linearRampToValueAtTime(peak, when + 0.008);

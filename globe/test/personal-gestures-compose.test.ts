@@ -3,6 +3,7 @@ import { composePiece, limitsOf, type PersonalNote } from "../src/personal/compo
 import { drawLength } from "../src/personal/flight";
 import { planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
+import { gesturesOf } from "../src/personal/gestures";
 import destinations from "../src/personal/destinations.json";
 
 // a seeded generator so the audit is the same every run
@@ -123,3 +124,48 @@ describe("coverage: the gestures reach the instruments that are really played", 
     expect(shares.filter(([, s]) => s >= 0.1).length, JSON.stringify(shares)).toBeGreaterThanOrEqual(6);
   });
 });
+
+describe("review fixes (composed pieces)", () => {
+  const semi = (a: number, b: number): number => Math.abs(12 * Math.log2(a / b));
+  it("M1: no hidden note repeats the pitch of a drawn note of its route and instrument within 50 ms", () => {
+    for (const { p, piece } of pieces.slice(0, 120)) {
+      const drawn = piece.notes.filter((n) => n.show !== false);
+      const bar = 240 / piece.bpm;
+      // (the home drone, a bar long, is not a gesture note: it may share the pitch of the voice that plays it)
+      for (const h of piece.notes.filter((n) => n.show === false && n.d < 0.9 * bar)) {
+        const dup = drawn.find((d) => d.route === h.route && d.instrument === h.instrument && Math.abs(d.t - h.t) < 0.05 && semi(d.freq, h.freq) < 0.5);
+        expect(dup, `${String(h.instrument)} t=${h.t} ${JSON.stringify(p)}`).toBeUndefined();
+      }
+    }
+  });
+  it("M2: no tremolo hit (a hidden note of the pitch of its source) starts after the next drawn note of its route and instrument", () => {
+    for (const { p, piece } of pieces.slice(0, 120)) {
+      const drawn = piece.notes.filter((n) => n.show !== false);
+      for (const h of piece.notes.filter((n) => n.show === false && n.d <= 0.0751)) {
+        const src = drawn
+          .filter((d) => {
+            const k = (h.t - d.t) / 0.075;
+            return d.route === h.route && d.instrument === h.instrument && k > 0.99 && k < 14 && Math.abs(k - Math.round(k)) < 1e-6 && Math.abs(d.freq - h.freq) < 1e-6 * h.freq;
+          })
+          .pop();
+        if (!src) continue;
+        const next = drawn.filter((d) => d.route === h.route && d.instrument === h.instrument && d.t > src.t + 1e-6).sort((a, b) => a.t - b.t)[0];
+        if (next) expect(h.t, `${String(h.instrument)} ${JSON.stringify(p)}`).toBeLessThan(next.t);
+      }
+    }
+  });
+  it("M3: the most hidden notes of a piece over 50 selections stays below the measured bound", () => {
+    const most = Math.max(...pieces.slice(0, 50).map(({ piece }) => piece.notes.filter((n) => n.show === false).length));
+    expect(most).toBeLessThan(MAX_HIDDEN);
+  });
+  it("L5: every numbered family a composed piece plays that has a gesture family by prefix has its gestures", () => {
+    const names = new Set<string>();
+    for (const { piece } of pieces.slice(0, 100)) for (const n of piece.notes) names.add(String(n.instrument));
+    const fams = ["NS_EKEYS_", "NS_KEYS_AC_", "NS_GUITAR_AC_", "NS_GUITAR_EL_"];
+    const seen = [...names].filter((n) => fams.some((f) => n.startsWith(f)));
+    expect(seen.length).toBeGreaterThan(0);
+    for (const n of seen) expect(gesturesOf(n), n).toBeDefined();
+  });
+});
+// measured 2026-10-27 after the review fixes: 1303 (1530 before); 20% headroom
+const MAX_HIDDEN = 1570;

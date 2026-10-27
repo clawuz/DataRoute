@@ -41,6 +41,8 @@ export interface PersonalNote {
   wet?: number;
   /** semitones below the target at which the note starts, rising to the target in about 0.08 s (a slide into the note); absent: no glide */
   glide?: number;
+  /** a hidden gesture note of 0.2 s or less: the sampler lets it ring out for 0.25 s only (many of them sound together on a phone) */
+  short?: boolean;
 }
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
@@ -258,15 +260,19 @@ export function clipStart(piece: PersonalPiece): number {
 /** how early humanize may move a note (s): a note this much before the clip's start still belongs to it */
 const CLIP_SLACK = 0.03;
 
+/** a hidden note that began before the clip is carried into it only while more than this much of it is left (s) */
+const CLIP_CARRY_MIN = 0.2;
+
 /**
  * The notes of the shared clip, moved so that the clip starts at 0: every note from `from` on (and the ones humanize
- * moved a few ms before it), plus the home drone that is still sounding at `from`, trimmed to start with the clip.
+ * moved a few ms before it), plus the hidden notes still sounding at `from` (the home drone), trimmed to start with the clip.
+ * A hidden note with 0.2 s or less left is not carried: the rest of a tremolo or of a strum would sound without its beginning.
  */
 export function clipNotes(notes: PersonalNote[], from: number): PersonalNote[] {
   const out: PersonalNote[] = [];
   for (const n of notes) {
     if (n.t >= from - CLIP_SLACK) out.push({ ...n, t: Math.max(0, n.t - from) });
-    else if (n.show === false && n.t + n.d > from) {
+    else if (n.show === false && n.t + n.d - from > CLIP_CARRY_MIN) {
       const cut = from - n.t;
       out.push({ ...n, t: 0, d: n.d - cut, drawDur: n.drawDur === undefined ? undefined : Math.max(0, n.drawDur - cut) });
     }
@@ -665,6 +671,8 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     beat,
     cardOf: (route) => plan.perRoute[route].id,
     roleOf: (x) => roleOfNote.get(x) ?? "",
+    silentBar,
+    origin: (made, src) => void roleOfNote.set(made, roleOfNote.get(src) ?? ""),
     // the chord of a bar, as semitones above the key root (the key's lift in the chorus included)
     chordAt: (b) => {
       const c = popProg[b % popProg.length];
@@ -673,21 +681,25 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     keyRoot: KEY_ROOT + st.shift,
     hz,
   });
-  // roles of the notes it made: a patched copy of a drawn note (a glide) has its source's role; an added (hidden) note takes the
-  // role of the note it follows in the result, which is its source
-  const keyOf = (x: PersonalNote): string => `${x.route}|${x.t}|${String(x.instrument)}`;
-  const drawnRole = new Map<string, string>();
-  for (const x of sources) if (x.show !== false) drawnRole.set(keyOf(x), roleOfNote.get(x) ?? "");
-  let srcRole = "";
+  // the notes it made (an added note, a patched copy of a drawn note) have the role of the note they were made from, whether that
+  // note was kept or dropped (`origin`); each is moved back into its instrument's range by octaves
   for (const x of gestured) {
-    if (sources.has(x)) srcRole = roleOfNote.get(x) ?? "";
-    else {
-      if (x.show !== false) srcRole = drawnRole.get(keyOf(x)) ?? srcRole;
-      roleOfNote.set(x, srcRole);
-    }
-    x.freq = fitPitch(x.freq, x.instrument); // a gesture may reach past the instrument's range: back in by octaves
+    if (!sources.has(x)) x.freq = fitPitch(x.freq, x.instrument);
   }
-  notes.splice(0, notes.length, ...gestured.filter((x) => x.show !== false || sources.has(x) || x.t < END_T + 1.5));
+  // an octave fold can turn an added note into a unison with a drawn note of its route and instrument (a double stop, a roll, a
+  // tremolo octave folded back): such a note adds nothing but a phasing click, so it is dropped
+  const dupOf = new Map<string, PersonalNote[]>();
+  for (const x of gestured) {
+    if (x.show === false) continue;
+    const k = `${x.route}|${String(x.instrument)}`;
+    const l = dupOf.get(k);
+    if (l) l.push(x);
+    else dupOf.set(k, [x]);
+  }
+  const unison = (x: PersonalNote): boolean =>
+    (dupOf.get(`${x.route}|${String(x.instrument)}`) ?? []).some((d) => d !== x && Math.abs(d.t - x.t) < 0.05 && Math.abs(12 * Math.log2(d.freq / x.freq)) < 0.5);
+  const kept = gestured.filter((x) => sources.has(x) || x.show !== false || !unison(x));
+  notes.splice(0, notes.length, ...kept.filter((x) => x.show !== false || sources.has(x) || x.t < END_T + 1.5));
   notes.sort((a, b) => a.t - b.t);
   // the box draws a route's notes one after another: a note is drawn only until the next one of its route begins (hidden notes are not drawn)
   const byRoute = new Map<number, PersonalNote[]>();

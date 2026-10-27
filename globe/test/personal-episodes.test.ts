@@ -83,13 +83,13 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["~ESB,ASR,KYA", "visited", 1986572503],
-  ["~TZX,RZV,OGU", "wish", 1580307223],
+  ["~ESB,ASR,KYA", "visited", 249820972],
+  ["~TZX,RZV,OGU", "wish", 2949638967],
   ["~VAN,ERZ,ERC", "wish", 4087635096],
-  ["~AYT,GZP,ADA", "visited", 671897145],
+  ["~AYT,GZP,ADA", "visited", 1185520849],
   ["ESB", "visited", 2163962449],
   ["LHR", "wish", 469582247],
   ["~ADB,BJV,DNZ", "wish", 1388097089],
@@ -98,19 +98,19 @@ const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
   ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 2167843785], // 5 routes
-  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 988036702], // 5 routes
+  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 3884413850], // 5 routes
   ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 4178238282], // 5 routes
-  ["ALA,CIT,GUW,HSA", "", "visited", 4177361309], // 6 routes
-  ["IKA,MHD,OMH,SYZ", "", "wish", 518462019], // 6 routes
-  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3216614784], // 7 routes
-  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 4125736803], // 8 routes
-  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 738021072], // 8 routes
+  ["ALA,CIT,GUW,HSA", "", "visited", 1474250778], // 6 routes
+  ["IKA,MHD,OMH,SYZ", "", "wish", 3848817211], // 6 routes
+  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 3002349332], // 7 routes
+  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 2612362439], // 8 routes
+  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 4024964243], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
   ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 1574566325],
   ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 4290603462],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3479405601],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 2065709369],
 ];
 // a leading "~" in places: a journey without home (the first place is where the trip starts)
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> =>

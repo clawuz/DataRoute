@@ -54,6 +54,12 @@ describe("clipNotes", () => {
     expect(got).toHaveLength(1);
     expect(got[0]).toMatchObject({ t: 0, d: 2, drawDur: 2, show: false });
   });
+  it("carries a hidden note across the start only while it has more than 0.2 s left (not the tail of a tremolo)", () => {
+    const hid = (t: number, d: number) => ({ ...base, t, d, show: false });
+    // a clip that starts in the middle of a tremolo: the hits of 75 ms and the short end of a note are not carried
+    const got = clipNotes([hid(9.95, 0.075), hid(9.9, 0.25), hid(9.8, 0.5), hid(8, 4)], 10);
+    expect(got.map((n) => [n.t, +n.d.toFixed(3)])).toEqual([[0, 0.3], [0, 2]]);
+  });
   it("gives a real piece's clip a downbeat and the drone at once", () => {
     const from = clipStart(p);
     const clip = clipNotes(p.notes, from);

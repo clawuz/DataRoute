@@ -37,7 +37,7 @@ quieter grace note.
 | **Bossa guitar** (NYLONGUITAR) | Thumb plays bass on beats 1 and 3, fingers play the chord on the off-beats and on 16th anticipations ✔; the bass alternates root and fifth ✔; a two-bar cycle from Brazilian 2/4 thinking ✔ | A fixed 2-bar pattern: bass (root, fifth), chord on `& of 2`, `4`, `& of 1` etc. (the classical "bossa clave"), soft |
 | **Samba** (cavaquinho = PSALTERY, surdo, tamborim) | Cavaquinho: steady 16th strum ○; surdo: strong second beat ○; tamborim and pandeiro: a 16-step figure ○ | Strum 16ths with the accents of the card; bass drum on 2 |
 | **Country guitar** (GUITAR_AC) | **Boom-chick**: a bass note, then the strummed chord, alternating bass notes ✔; **Travis picking**: the thumb keeps an alternating bass, the fingers play melody ✔; chicken pickin' ✔ | Thumb = alternating root/fifth on every beat, fingers = a syncopated melody over it; chords strummed on 2 and 4 |
-| **Fiddle** (VIOLIN), pedal steel | Folk melody with double stops, slides and short bow strokes ○ | Melody notes with a grace-slide in, a drone string, double stops on the strong beats |
+| **Fiddle** (VIOLIN), pedal steel | Folk melody with double stops, slides and short bow strokes ◐ (double stop and slide built, section 1b) | Melody notes with a grace-slide in, a drone string, double stops on the strong beats |
 | **Sitar / sarod / Hindustani ney** (TANPURA drone + a melody voice) | Static drone that never changes chord ✔; instruments imitate vocal ornament ✔: **meend** (glide), **gamak** (shake), **andolan** (slow oscillation) ✔; alap has no pulse ✔ | Tanpura: four strings in a 4-note cycle (Pa-Sa-Sa-lower Sa) with 2 s between strokes; the melody glides from note to note (pitch ramp), 4 or 5 notes per breath |
 | **Tabla** (TABLA) | Fixed theka cycles (teental 16), the tabla enters at the gat ✔ | A 16-beat theka with a clap and a wave (strong/open/closed strokes) |
 | **Jazz rhythm section** (UPRIGHTBASS, EKEYS, GUITAR_EL, TENORSAX) | Walking bass: quarter notes outlining the chord, starting on the root and approaching the next root by a fifth or a half step ✔; a 2-feel on beats 1 and 3 in ballads ✔; the ride cymbal keeps the pulse, hi-hat on 2 and 4 ✔; piano/guitar **comp**: chords punctuating the rhythm, anticipations on the upbeat ✔; guitar sometimes steady quarter chords ✔ | Bass: 4 quarters per bar from chord tones + passing note; comping: chords on `& of 2` and `4`, off-beat 8ths; ride: x . x x . x (swing); solos by the sax/piano over changes |
@@ -57,11 +57,12 @@ quieter grace note.
 - **Kemençe**: built: double stop a fourth below, grace note a tone above on the beat, held open tonic each bar. Not built: the fast horon bow articulation.
 - **Bağlama / saz**: built: şelpe on strong beats, glide into long hook notes. Not built: the regional stroke direction.
 - **Kanun, santur**: built: tremolo on long notes with an octave on the first hit. Not built: maqam-specific fast passages.
-- **Nylon guitar (ud, flamenco, bossa, samba)**: built: a card-spread strum on the beat (down on 1 and 3, up on 2 and 4). Not built: rasgueado patterns, picado, golpe, the p-i-m-a arpeggio.
+- **Nylon guitar (ud, flamenco, bossa, samba)**: built: a card-spread strum on beats 0 and 2 of the bar (down strokes). Not built: rasgueado patterns, picado, golpe, the p-i-m-a arpeggio.
 - **Upright bass**: built: the jazz walking line, the root-fifth alternation in country, bossa, samba, salsa and tango. Not built: the tango marcato and arrastre.
 - **Tanpura**: built: the four-stroke cycle (Pa, Sa, Sa, low Sa). Not built: the jawari buzz.
 - **Ney**: built: slides into notes, deeper at phrase starts. Not built: delayed vibrato.
-- Not started: fiddle double stops, tabla theka, gamelan colotomic cycle, mbira, accordion, string trills, form templates.
+- **Accordion**: built: oom-pah (bass on beats 0 and 2, a two-note chord stab on beats 1 and 3). **Fiddle (violin)**: built: a hidden fifth below on hook notes of 0.5 s or more (the double stop) and a glide into the first note after a gap. Not built: the drone string and double stops on the strong beats only.
+- Not started: tabla theka, gamelan colotomic cycle, mbira, string trills, form templates.
 
 ## 2. Forms: what a piece of each tradition is shaped like
 
@@ -144,3 +145,22 @@ Same method, with the selections written out (home Istanbul, visited): Karadeniz
 | Nijerya | afrobeat | 762 | 30 (4%) | 762 | 30 (4%) | CELLO 30 |
 
 Reading: six of eight selections now have 10% or more hidden notes (the coverage test asserts this). Brazil plays a single horn and Nigeria plays kalimba, tenor sax (only a glide, which adds no notes) and bassoon: no gesture adds notes there, so they stay at 0% and 4%. The saz/guitar/santur strum or roll on every plucked beat is the bulk (about 390 hidden notes each); the piano share is small because its hook and plucked notes are few. The glides (violin, winds) change the sound without adding notes and are not in these numbers.
+
+## Measured after the review fixes (2026-10-27)
+
+A whole-slice review found: octave folding turned some gesture notes into unisons with the drawn note, a tremolo ran over the next note, too many hidden notes for a phone, the kemençe drone ignored the key lift, the tanpura had two cycles (tonic and fifth), the shared clip carried the tail of a tremolo, and gesture entries for family names (EKEYS, KEYS_AC, GUITAR_AC, GUITAR_EL) could never match because a note carries the resolved name (NS_*). The fixes: an added note that folds into a unison with a drawn note of its route and instrument within 50 ms is dropped; a tremolo stops 10 ms before the next note of its route and instrument; the saz/guitar strum and the kanun/santur roll of the plucked role sound on beats 0 and 2 only (country keeps its off-beat chick); a hidden note of 0.2 s or less (`short`) rings out for 0.25 s in the sampler instead of 1.2 s; the kemençe drone is silent in the break and the lifted bars like the home drone; the tanpura cycle runs on the tonic drone note only; `clipNotes` carries a hidden note only while it has more than 0.2 s left; the walking bass cuts its first note to one beat; NS_KEYS_AC_* joins the piano family.
+
+Same eight selections (home Istanbul, visited), measured with a scratch probe. `voices` = the most notes sounding at once, a note sounding from its start to its end plus the sampler tail (1.2 s for a plucked note; 0.25 s for a `short` one after the fixes).
+
+| selection | notes before | hidden before (share) | voices before | notes after | hidden after (share) | voices after |
+|---|---|---|---|---|---|---|
+| Karadeniz | 1220 | 612 (50%) | 28 | 1028 | 420 (41%) | 24 |
+| Hindistan | 1050 | 474 (45%) | 22 | 862 | 286 (33%) | 19 |
+| Brezilya | 276 | 0 (0%) | 6 | 276 | 0 (0%) | 6 |
+| Magrip | 1100 | 492 (45%) | 23 | 866 | 258 (30%) | 19 |
+| Japonya | 570 | 190 (33%) | 14 | 570 | 190 (33%) | 12 |
+| Italya | 646 | 86 (13%) | 14 | 646 | 86 (13%) | 14 |
+| ABD | 1128 | 516 (46%) | 22 | 920 | 308 (34%) | 20 |
+| Nijerya | 762 | 30 (4%) | 17 | 762 | 30 (4%) | 17 |
+
+Over 50 seeded selections the largest number of hidden notes in one piece fell from 1530 to 1303 (mean 305); the largest piece has 2815 notes. The test bound is 1570 (1303 plus 20%). Six of the eight selections still have 10% or more hidden notes.

@@ -134,9 +134,14 @@ describe("sampler: a per-note glide", () => {
       value: 0,
       setValueAtTime: (v: number, t: number) => void log.push(["set", v, t]),
       linearRampToValueAtTime: (v: number, t: number) => void log.push(["ramp", v, t]),
-      exponentialRampToValueAtTime() {},
+      exponentialRampToValueAtTime: (v: number, t: number) => void log.push(["exp", v, t]),
     });
-    const gain = () => ({ gain: param([]), connect() {}, disconnect() {} });
+    const gainLogs: Ev[][] = [];
+    const gain = () => {
+      const log: Ev[] = [];
+      gainLogs.push(log);
+      return { gain: param(log), connect() {}, disconnect() {} };
+    };
     const ctx = {
       decodeAudioData: async () => ({ duration: 2 }) as unknown as AudioBuffer,
       createGain: gain,
@@ -153,7 +158,7 @@ describe("sampler: a per-note glide", () => {
     const s = createSampler(ctx);
     await s.use(["/x/manifest.json"]);
     await s.ensure(["G"]);
-    return { s, detunes };
+    return { s, detunes, gainLogs };
   };
   afterEach(() => vi.unstubAllGlobals());
 
@@ -176,4 +181,13 @@ describe("sampler: a per-note glide", () => {
     s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
     expect(detunes[1]).toEqual([["set", 7 - 100, 1], ["ramp", 7, 1.2]]);
   });
+  it("a short (hidden gesture) note releases in 0.25 s; others keep the recorded tail", async () => {
+    const { s, gainLogs } = await setup();
+    const expAt = (): number => gainLogs.flat().filter((e) => e[0] === "exp").map((e) => e[2]).pop()!;
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 0.1);
+    expect(expAt()).toBeCloseTo(1.1 + 1.2, 9);
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 0.1, undefined, undefined, true);
+    expect(expAt()).toBeCloseTo(1.1 + 0.25, 9);
+  });
 });
+

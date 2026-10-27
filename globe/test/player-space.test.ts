@@ -51,3 +51,16 @@ describe("player: glide", () => {
     pl.dispose();
   });
 });
+
+describe("player: short", () => {
+  beforeEach(() => { spy.calls.length = 0; vi.useFakeTimers(); });
+  afterEach(() => vi.useRealTimers());
+  it("hands a note's short flag to playNote, and none when the note has none", async () => {
+    const pl = createPersonalPlayer(ctx());
+    pl.play({ notes: [{ ...note(0, 0, 0.2), short: true }, note(0.1, 0, 0.2)], duration: 4 } as never, () => {});
+    await vi.advanceTimersByTimeAsync(200);
+    expect((spy.calls[0][2] as { short?: boolean }).short).toBe(true);
+    expect((spy.calls[1][2] as { short?: boolean }).short).toBeUndefined();
+    pl.dispose();
+  });
+});

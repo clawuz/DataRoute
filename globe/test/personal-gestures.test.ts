@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PersonalNote } from "../src/personal/compose";
-import { applyGestures, type GestureContext } from "../src/personal/gestures";
+import { applyGestures, GESTURES, gesturesOf, type GestureContext } from "../src/personal/gestures";
 
 const hz = (s: number): number => 110 * 2 ** (s / 12);
 const st = (a: number, b: number): number => 12 * Math.log2(a / b);
@@ -115,15 +115,13 @@ describe("NYLONGUITAR", () => {
     });
     expect(out[0].show).toBeUndefined();
   });
-  it("down on beats 0 and 2, up on 1 and 3", () => {
+  it("strums down on beats 0 and 2 only: beats 1 and 3 and off-beat notes are left alone", () => {
     const down = one(0, "pop").slice(1).map((n) => n.t - 0);
     expect(down[0]).toBeLessThan(down[1]);
-    const up = one(0.5, "pop").slice(1).map((n) => n.t - 0.5);
-    expect(up[0]).toBeGreaterThan(up[1]);
     const down2 = one(1, "pop").slice(1);
     expect(down2[0].t).toBeLessThan(down2[1].t);
-    const up3 = one(1.5, "pop").slice(1);
-    expect(up3[0].t).toBeGreaterThan(up3[1].t);
+    expect(one(0.5, "pop")).toHaveLength(1);
+    expect(one(1.5, "pop")).toHaveLength(1);
   });
   it("off-beat notes untouched", () => {
     expect(one(0.2, "pop")).toHaveLength(1);
@@ -187,9 +185,11 @@ describe("NEY_MAKAM", () => {
 });
 
 describe("SAZ widened", () => {
-  it("strums every pluck-role note on a beat whatever its velocity", () => {
+  it("strums a pluck-role note on beats 0 and 2 of the bar whatever its velocity, not on beats 1 and 3", () => {
     expect(hidden(run([mk("SAZ", 1, { vel: 0.3 })], "pluck"))).toHaveLength(2);
-    expect(hidden(run([mk("BAGLAMA_MAKAM", 1.5, { vel: 0.3 })], "pluck"))).toHaveLength(2);
+    expect(hidden(run([mk("BAGLAMA_MAKAM", 0, { vel: 0.3 })], "pluck"))).toHaveLength(2);
+    expect(hidden(run([mk("BAGLAMA_MAKAM", 1.5, { vel: 0.3 })], "pluck"))).toHaveLength(0);
+    expect(hidden(run([mk("SAZ", 0.5, { vel: 0.3 })], "pluck"))).toHaveLength(0);
     expect(hidden(run([mk("BAGLAMA_EXTRA", 1.2, { vel: 0.3 })], "pluck"))).toHaveLength(0);
   });
   it("a hook note still needs vel >= 0.5", () => {
@@ -199,7 +199,10 @@ describe("SAZ widened", () => {
 });
 
 describe("KANUN / SANTUR widened", () => {
-  it("pluck role: a roll of two hidden notes (+12 st at 35 ms, +19 st at 70 ms, vel x0.4) on a beat", () => {
+  it("pluck role: a roll of two hidden notes (+12 st at 35 ms, +19 st at 70 ms, vel x0.4) on beats 0 and 2 only", () => {
+    expect(hidden(run([mk("KANUN", 0.5, { d: 0.2 })], "pluck"))).toHaveLength(0);
+    expect(hidden(run([mk("SANTUR", 1.5, { d: 0.2 })], "pluck"))).toHaveLength(0);
+    expect(hidden(run([mk("SANTUR", 2, { d: 0.2 })], "pluck"))).toHaveLength(2);
     const out = hidden(run([mk("KANUN", 1, { d: 0.2 })], "pluck"));
     expect(out.map((n) => Math.round(st(n.freq, hz(12))))).toEqual([12, 19]);
     expect(out.map((n) => n.t)).toEqual([1.035, 1.07]);
@@ -228,7 +231,7 @@ describe("HARP / FOLKHARP", () => {
 
 describe("piano family", () => {
   it("hook role: octave below on a beat, same t and d, vel x0.35", () => {
-    for (const name of ["PNO", "STEINWAY", "KAWAI", "KNIGHTPNO", "UPRIGHTPNO", "EKEYS", "RHODES", "KEYS_AC", "NS_EKEYS_098"]) {
+    for (const name of ["PNO", "STEINWAY", "KAWAI", "KNIGHTPNO", "UPRIGHTPNO", "RHODES", "NS_EKEYS_098", "NS_KEYS_AC_004"]) {
       const h = hidden(run([mk(name, 1, { d: 0.4 })]));
       expect(h, name).toHaveLength(1);
       expect(st(h[0].freq, hz(12))).toBeCloseTo(-12, 6);
@@ -310,15 +313,15 @@ describe("winds: glide on a third of the long hook notes", () => {
 });
 
 describe("steel / electric guitars", () => {
-  it("strum in the pluck role like the nylon guitar, for the exact names and the numbered families", () => {
-    for (const name of ["GUITAR_AC", "GUITAR_EL", "NS_GUITAR_AC_015", "NS_GUITAR_EL_028"]) {
+  it("strum in the pluck role like the nylon guitar, for the numbered families", () => {
+    for (const name of ["NS_GUITAR_AC_015", "NS_GUITAR_EL_028"]) {
       const out = run([mk(name, 0, { freq: hz(14) })], "pluck", "pop");
       expect(out, name).toHaveLength(3);
       expect(out[1].t).toBeCloseTo(0.025, 9);
     }
   });
   it("country: boom-chick: bass (root - 12, vel x0.5) on beats 0 and 2 without a strum, the strum on beats 1 and 3", () => {
-    const at = (t: number) => run([mk("GUITAR_AC", t, { freq: hz(14) })], "pluck", "country");
+    const at = (t: number) => run([mk("NS_GUITAR_AC_015", t, { freq: hz(14) })], "pluck", "country");
     for (const t of [0, 1]) {
       const h = hidden(at(t));
       expect(h).toHaveLength(1);
@@ -367,5 +370,92 @@ describe("general", () => {
       expect(n.wet).toBe(0.1);
     }
     expect(out[0]).toBe(src);
+  });
+});
+
+
+describe("review fixes", () => {
+  const ctxWith = (o: Partial<GestureContext> = {}, role = "hook", card = "x"): GestureContext => ({ ...mkctx(role, card), cardOf: () => card, roleOf: () => role, ...o });
+
+  it("M2: a tremolo stops at the next note of its route and instrument; the octave note ends before it", () => {
+    const a = mk("KANUN", 1, { d: 2 });
+    const b = mk("KANUN", 1.6, { d: 0.2 });
+    const other = mk("KANUN", 1.3, { d: 0.5, route: 1, via: 1 }); // another route: no limit
+    const out = hidden(applyGestures([a, b, other], ctxWith()));
+    const mine = out.filter((x) => x.route === 0 && x.t < 1.6 + 1e-9);
+    expect(mine.length).toBeGreaterThan(3);
+    for (const x of mine) expect(x.t + x.d).toBeLessThanOrEqual(1.6 - 0.01 + 1e-9);
+    expect(out.filter((x) => x.route === 0 && x.t >= 1.6 - 0.01 && x.t < 2.5 && x.freq === a.freq)).toHaveLength(0);
+    const oct = out.find((x) => x.freq === a.freq * 2 && x.t === 1)!;
+    expect(oct.d).toBeCloseTo(0.59, 9);
+    // the other route's note is free to ring
+    const free = out.filter((x) => x.route === 1);
+    expect(free.length).toBeGreaterThan(0);
+  });
+
+  it("M2: a tremolo with no later note keeps its full length", () => {
+    const hits = hidden(run([mk("KANUN", 1, { d: 2 })])).filter((x) => x.freq === hz(12));
+    expect(hits).toHaveLength(13);
+  });
+
+  it("M3: every added note of 0.2 s or less is marked short; longer ones and drawn notes are not", () => {
+    const out = [
+      ...run([mk("SAZ", 1, { vel: 0.6 })]),
+      ...run([mk("NYLONGUITAR", 0, { freq: hz(14) })], "pluck", "pop"),
+      ...run([mk("KEMENCE_MAKAM", 1)]),
+      ...run([mk("KANUN", 1, { d: 1 })]),
+    ];
+    const add = hidden(out);
+    expect(add.length).toBeGreaterThan(8);
+    for (const x of add) expect(x.short === true, `${String(x.instrument)} d=${x.d}`).toBe(x.d <= 0.2);
+    expect(add.some((x) => x.short)).toBe(true);
+    expect(add.some((x) => !x.short)).toBe(true);
+    for (const x of out.filter((y) => y.show !== false)) expect(x.short).toBeUndefined();
+  });
+
+  it("L1: the kemençe drone is not struck in a silent bar", () => {
+    const ctx = ctxWith({ silentBar: (b: number) => b === 1 });
+    const droneAt = (t: number, c: GestureContext) =>
+      hidden(applyGestures([mk("KEMENCE_MAKAM", t)], c)).filter((x) => Math.abs(x.freq - hz(2 - 12)) < 1e-9);
+    expect(droneAt(2.25, ctx)).toHaveLength(0); // bar 1
+    expect(droneAt(4.25, ctx)).toHaveLength(1); // bar 2
+    expect(droneAt(2.25, ctxWith())).toHaveLength(1); // no silentBar given: as before
+  });
+
+  it("L2: the tanpura cycle runs on the tonic drone note only; the fifth is dropped", () => {
+    const tonic = mk("TANPURA", 0, { d: 2, show: false, vel: 0.5, freq: hz(2 - 12) });
+    const fifth = mk("TANPURA", 0, { d: 2, show: false, vel: 0.5, freq: hz(2 - 12 + 7) });
+    const out = run([tonic, fifth], "drone");
+    expect(out).toHaveLength(4);
+    expect(out.map((n) => Math.round(st(n.freq, tonic.freq)))).toEqual([7, 12, 12, 0]);
+  });
+
+  it("L4: origin(added, source) is reported for every added note, also when the source is dropped", () => {
+    const seen: [PersonalNote, PersonalNote][] = [];
+    const tonic = mk("TANPURA", 0, { d: 2, show: false, freq: hz(2 - 12) });
+    const saz = mk("SAZ", 1, { vel: 0.6 });
+    const out = applyGestures([tonic, saz], ctxWith({ origin: (a: PersonalNote, s: PersonalNote) => void seen.push([a, s]) }, "drone"));
+    const added = out.filter((x) => x !== saz);
+    expect(added).toHaveLength(4 + 2);
+    for (const a of added) expect(seen.some(([x, s]) => x === a && (s === tonic || s === saz))).toBe(true);
+    expect(seen.filter(([, s]) => s === tonic)).toHaveLength(4);
+  });
+
+  it("L5: no gesture entry is a family name that a note can never carry; every numbered family and key keys matches", () => {
+    for (const fam of ["BASS_EL", "EKEYS", "GUITAR_AC", "GUITAR_EL", "KEYS_AC", "ORGAN_EL"]) expect(Object.keys(GESTURES), fam).not.toContain(fam);
+    expect(gesturesOf("NS_KEYS_AC_004")).toBeDefined();
+    expect(gesturesOf("NS_EKEYS_069")).toBeDefined();
+    expect(gesturesOf("NS_GUITAR_AC_021")).toBeDefined();
+    expect(gesturesOf("NS_GUITAR_EL_022")).toBeDefined();
+    expect(gesturesOf("NS_ORGAN_EL_001")).toBeUndefined();
+  });
+
+  it("L6: a walking bass cuts the first note to one beat so that it does not overlap the walk", () => {
+    const root = hz(0);
+    const out = run([mk("UPRIGHTBASS", 2, { freq: root, d: 1.9 }), mk("UPRIGHTBASS", 3, { freq: root, d: 0.4 })], "bass", "jazz");
+    expect(out[0].d).toBeLessThanOrEqual(0.5 + 1e-9);
+    expect(out[0].t + out[0].d).toBeLessThanOrEqual(out[1].t + 1e-9);
+    // a short note stays as it is
+    expect(run([mk("UPRIGHTBASS", 2, { freq: root, d: 0.3 })], "bass", "jazz")[0].d).toBe(0.3);
   });
 });

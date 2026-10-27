@@ -32,7 +32,7 @@ shortened or replaced by their own first hit; added notes are marked `show: fals
 - `applyGestures` runs **after** `humanize` (so the spacing of a strum is not disturbed) and before the `drawDur` computation.
 - The `drawDur` loop (`byRoute`) must skip notes with `show === false` (as the drone is skipped) so that hidden grace notes do not shorten the drawn notes.
 - Every added note gets `roleOfNote` of its source (or the role "gesture").
-- `PersonalPiece.notes` grows; `clipNotes` and the player do not care.
+- `PersonalPiece.notes` grows. The player passes `glide` and `short` on; `clipNotes` carries a hidden note across the clip's start only while more than 0.2 s of it is left (the home drone and the kemençe drone, the tanpura strokes), so that the tail of a tremolo or a strum is not carried into the clip.
 - Gestures never move a note earlier than 0 s (clamp), and never add a note after `END_T + 1.5 s`.
 
 ## Not in this slice
