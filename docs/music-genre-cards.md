@@ -328,3 +328,7 @@ Real recordings (2026-10-28, `scripts/samples/add_real_recordings.py`): hindusta
 | karadeniz | 2,2,3 (1.3, 0.9, 1.1) 7/8 · 2,2,2,3 (1.3, 0.9, 0.95, 1.1) 9/8 · 1,1,1,1 (1.3, 0.85, 1.1, 0.85) the 4/4 dik horon · 3,2,2 (1.3, 0.9, 1.1) 7/8 alt |
 | dogu | 1,1,1,1 (1.35, 0.8, 1.1, 0.8) 4/4 · 1,1 (1.35, 1.1) 2/4 · 2,2,2,3 (1.35, 0.85, 0.9, 1.15) 9/8 · 2,2,1 (1.35, 0.9, 1.1) 5/8 |
 | zeybek | 3,2,2,2 (1.3, 0.9, 0.9, 0.9) · 2,2,2,3 (1.3, 0.9, 0.9, 1.1) · 2,2,3,2 (1.3, 0.9, 1.1, 0.9): the three groupings of the 9-beat zeybek |
+
+## Forms: `form` (2026-10-28, same spec)
+
+`GenreCard.form?: "horon" | "halay" | "uzunhava"`: the shape of a piece of the card (`formAt` in `compose.ts`; the rules are in `docs/music-data-mapping.md`, "Regional forms"). karadeniz `horon` (düz → yayma → dik horon: slow and sparse, then the figure, then the figure twice a bar), dogu `halay` (the heavy slow davul under a long zurna call, then the fast halay), icanadolu and mevlevi `uzunhava` (a free-time long air in the intro and the outro). A card without `form` keeps the common form.

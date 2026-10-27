@@ -165,8 +165,11 @@ describe("the flight runs (nağme)", { timeout: 60000 }, () => {
     return { p, rs, runs, bar, sectionOf };
   };
 
+  // a Mediterranean piece (no form): its chorus plays the figure once a bar, so the runs sound in the verse and the chorus. (The Black Sea
+  // piece of before is a horon now: its chorus doubles the figure, which fills the last beat, so it has runs in the verse only.)
+  const RUNS_SEL = ["AYT", "GZP", "ADA"];
   it("a piece with a hook route has rising runs in climbing bars and falling runs in descending bars", () => {
-    const { runs } = runsOf(["TZX", "RZV", "OGU"]);
+    const { runs } = runsOf(RUNS_SEL);
     expect(runs.length).toBeGreaterThan(0);
     const rising = runs.filter((r) => r.start < 0.18);
     const falling = runs.filter((r) => r.end > 0.82);
@@ -183,7 +186,7 @@ describe("the flight runs (nağme)", { timeout: 60000 }, () => {
     expect(falling.filter((r) => plain(r, false)).length).toBeGreaterThan(falling.length / 2);
   });
   it("a run is drawn and comes from one route", () => {
-    const { runs, p } = runsOf(["TZX", "RZV", "OGU"]);
+    const { runs, p } = runsOf(RUNS_SEL);
     for (const r of runs) for (const x of r.notes) {
       expect(x.show).not.toBe(false);
       expect(x.route).toBe(r.route);
@@ -192,7 +195,7 @@ describe("the flight runs (nağme)", { timeout: 60000 }, () => {
     expect(p.notes.length).toBeLessThanOrEqual(6000);
   });
   it("no run in the bars where the hook answers (call and response): the odd bars of the chorus", () => {
-    const { runs, p, sectionOf, bar } = runsOf(["TZX", "RZV", "OGU"]);
+    const { runs, p, sectionOf, bar } = runsOf(RUNS_SEL);
     const first = Math.round(p.sections.find((s) => s.name === "chorus")!.start / bar);
     for (const r of runs) {
       if (sectionOf(r.bar * bar + 0.01) !== "chorus") continue;
@@ -200,6 +203,6 @@ describe("the flight runs (nağme)", { timeout: 60000 }, () => {
     }
   });
   it("is deterministic", () => {
-    expect(JSON.stringify(runsOf(["TZX", "RZV", "OGU"]).runs)).toBe(JSON.stringify(runsOf(["TZX", "RZV", "OGU"]).runs));
+    expect(JSON.stringify(runsOf(RUNS_SEL).runs)).toBe(JSON.stringify(runsOf(RUNS_SEL).runs));
   });
 });

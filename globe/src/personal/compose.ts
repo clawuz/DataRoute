@@ -126,7 +126,7 @@ const PROGS: Record<PersonalMode, Chord[][]> = {
 /** tempo ranges (bpm) keep a piece between about 2:25 and 3:15 */
 const BPM_RANGE: Record<PersonalMode, [number, number]> = { visited: [80, 88], wish: [96, 104] };
 
-type Section = "intro" | "verse" | "build" | "chorus" | "break" | "outro";
+export type Section = "intro" | "verse" | "build" | "chorus" | "break" | "outro";
 /**
  * 64 bars: 8 intro, 16 verse, 8 build, 20 chorus, 4 break, 8 outro. The AI tracks start at a quarter to a half of their
  * loudest, rise to the top at about 70–80 % of their length and end still at 55–65 %: the same shape here.
@@ -145,6 +145,53 @@ const LEVEL: Record<Section, number> = { intro: 0.45, verse: 0.72, build: 0.88, 
 
 /** what a route plays: the long routes hold the chord, the middle ones sing, the short ones pluck or drum */
 type Role = "held" | "melody" | "pluck" | "perc";
+
+/** the part a route plays in the arrangement of a piece (see composePiece) */
+type PopRole = "pad" | "bass" | "hook" | "pluck" | "backbeat" | "kick" | "hat";
+
+/**
+ * One bar of a card's form (genres.ts `form`): `speed` slow (the hook plays the first hit of the bar only, long), normal (the figure),
+ * double (every unit of the figure halved: it plays twice a bar); `mode` sparse (few voices, long notes), free (no metre: long notes off
+ * the grid, see composePiece) or normal; `roles` the roles that play (instead of the section's own); `drum` the kudüm of the horon's intro
+ * (beat one of every second bar) or the halay's davul (the strong places of the figure, heavy).
+ */
+export interface FormBar {
+  speed: "slow" | "normal" | "double";
+  mode: "sparse" | "free" | "normal";
+  roles?: PopRole[];
+  drum?: "kudum" | "davul";
+}
+const NORMAL_BAR: FormBar = { speed: "normal", mode: "normal" };
+const FORMS: Record<NonNullable<GenreCard["form"]>, Partial<Record<Section, FormBar>>> = {
+  // düz horon (slow, the drone and a long call, the kudüm) → yayma horon (the figure) → dik horon (the figure twice as fast); the break
+  // goes back to the düz horon, the outro thins the figure out
+  horon: {
+    intro: { speed: "slow", mode: "sparse", roles: ["pad", "hook"], drum: "kudum" },
+    build: { speed: "double", mode: "normal" },
+    chorus: { speed: "double", mode: "normal" },
+    break: { speed: "slow", mode: "sparse", roles: ["pad", "hook"] },
+    outro: { speed: "normal", mode: "sparse", roles: ["pad", "bass", "pluck", "hook"] },
+  },
+  // the heavy slow davul under the zurna's long call → the figure → the fast halay (the figure twice as fast, the davul on its strong places)
+  halay: {
+    intro: { speed: "slow", mode: "sparse", roles: ["hook"], drum: "davul" },
+    build: { speed: "double", mode: "normal", drum: "davul" },
+    chorus: { speed: "double", mode: "normal", drum: "davul" },
+    break: { speed: "slow", mode: "sparse", roles: ["hook"], drum: "davul" },
+    outro: { speed: "slow", mode: "sparse", roles: ["hook"], drum: "davul" },
+  },
+  // the long air: free time over the drone in the intro and the outro, the metre (kırık hava) between
+  uzunhava: {
+    intro: { speed: "slow", mode: "free", roles: ["pad", "hook"] },
+    outro: { speed: "slow", mode: "free", roles: ["pad", "hook"] },
+  },
+};
+/** the form of a bar of a section for a card: the common form (normal, normal) when the card has none */
+export function formAt(card: GenreCard, section: Section): FormBar {
+  return (card.form && FORMS[card.form][section]) || NORMAL_BAR;
+}
+/** a free-time bar: how loud it is against the metred bars */
+const FREE_VEL = 0.8;
 
 type Palette = { held: Record<string, Instrument[]>; melody: Record<string, Instrument[]>; pluck: Record<string, Instrument[]>; perc: Record<string, Instrument> };
 /** the sound of each genre: which instruments a route may take, by its region */
@@ -308,7 +355,6 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   // the shortest ones are the drums: kick, backbeat, hat. A bar of the main genre card is the groove the bass and the hook
   // ride on, the progression is four chords of one bar each, the hook is a short phrase that comes back, and the form
   // brings the voices in and takes them out (intro, verse, build, chorus, break, outro).
-  type PopRole = "pad" | "bass" | "hook" | "pluck" | "backbeat" | "kick" | "hat";
   const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i); // longest first
   const rank = new Map<number, number>(); // 1 = the longest
   order.forEach((x, k) => rank.set(x.i, n < 2 ? 0.5 : 1 - k / (n - 1)));
@@ -339,18 +385,19 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     if (floor) while (x < floor) x *= 2;
     return x;
   };
-  const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5): void => {
+  // `as`: the role the note plays when it is not the route's own (a form's kudüm or davul on the bass route)
+  const push = (i: number, t: number, d: number, instrument: PlayInstrument, f: number, vel: number, p = 0.5, as: string = role[i]): void => {
     const alt = altitudeFt(p, routes[i].distKm);
     const note: PersonalNote = { t, d, instrument, freq: fit(f, instrument), vel: clamp(vel, 0.05, 1), key: routes[i].key, route: i, via: i, alt, pan: panFor[i], wet: wetFor[i] };
     // the altitude of the flight: louder, brighter and roomier up high (small; the percussion keeps its level and its room)
-    if (!["kick", "backbeat", "hat"].includes(role[i])) {
+    if (!["kick", "backbeat", "hat"].includes(as)) {
       const h = heightOf(alt, routes[i].distKm);
       note.vel = clamp(vel * velScale(h), 0.05, 1);
       note.wet = clamp(wetFor[i] + wetShift(h), 0, 0.5);
       note.bright = Math.round(cutoffOf(h));
     }
     notes.push(note);
-    roleOfNote.set(note, role[i]);
+    roleOfNote.set(note, as);
   };
 
   // every route gets its own instrument where its card has enough of them
@@ -451,18 +498,24 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
 
   // the groove of one bar: the figure of a card, stretched to four beats (the main card's, or an episode card's in the verse)
   const cellSeed = cellSeedOf(plan.main, routes);
-  const grooveOf = (card: GenreCard) => {
+  // `double` (a form's dik horon / fast halay): every unit of the figure halved, so it plays twice a bar; the strong places of both repeats
+  const grooveOf = (card: GenreCard, speed: FormBar["speed"] = "normal") => {
     const { cell: fig, accent } = cellOf(card, cellSeed);
     const figTotal = fig.reduce((x, y) => x + Math.abs(y), 0);
-    const gs: { start: number; len: number; hit: boolean; accent: number }[] = [];
+    // `odd`: the slot swings (the odd slots of the figure; in a doubled bar, of each repeat)
+    const gs: { start: number; len: number; hit: boolean; accent: number; odd: boolean }[] = [];
     let at = 0;
     fig.forEach((c, k) => {
       const len = (Math.abs(c) / figTotal) * 4;
-      gs.push({ start: at, len, hit: c > 0, accent: accent?.[k] || 1 });
+      gs.push({ start: at, len, hit: c > 0, accent: accent?.[k] || 1, odd: k % 2 === 1 });
       at += len;
     });
     const gh = gs.filter((x) => x.hit);
-    return { slots: gs, hits: gh, strong: gh.filter((x, k) => k === 0 || x.accent >= 1.1).slice(0, 4), swing: card.swing ?? st.swing };
+    const strong = gh.filter((x, k) => k === 0 || x.accent >= 1.1).slice(0, 4);
+    if (speed !== "double") return { slots: gs, hits: gh, strong, swing: card.swing ?? st.swing };
+    const twice = <T extends { start: number; len: number }>(xs: T[]): T[] => [0, 2].flatMap((off) => xs.map((x) => ({ ...x, start: x.start / 2 + off, len: x.len / 2 })));
+    const slots2 = twice(gs);
+    return { slots: slots2, hits: slots2.filter((x) => x.hit), strong: twice(strong), swing: card.swing ?? st.swing };
   };
   const main = grooveOf(plan.main);
   const { slots, hits, strong } = main;
@@ -506,6 +559,43 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
   const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);
+  // a card's form (genres.ts `form`): the bar's stage card when it has one, else the main card. A form's own melodies come from their own
+  // generators, so the phrase of the figure (`motifs`) is the same with and without a form
+  const formCardOf = (stage: GenreCard | null): GenreCard => (stage?.form ? stage : plan.main);
+  const anyForm = !!plan.main.form || [...eps, journey?.home, journey?.transit].some((c) => !!c?.form);
+  const formMotifs = (tag: string, hitsOf: number) =>
+    routes.map((r, i) => {
+      if (!anyForm || role[i] !== "hook") return null;
+      const idiom = idiomOf(plan.perRoute[i]);
+      const rnd = rng(routeHash(r.key + tag + i));
+      const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
+      return phraseMotifs(idiom, hitsOf, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "walk", card: plan.perRoute[i].id });
+    });
+  /** the hook of a doubled bar: the phrase for twice the hits (at most nine) */
+  const motifs2 = formMotifs("hook2x", Math.min(2 * hits.length, 9));
+  /** the hook of a free-time bar: a slow line of two notes a bar */
+  const motifsFree = formMotifs("hookfree", 2);
+  /** the semitones of a degree of route i's hook at a place of bar b, with the altitude's lift; `snap` moves it onto a near chord tone */
+  const hookSemis = (i: number, b: number, d: number, at: number, sh: number, tones: number[], snap: boolean): number => {
+    const sc = scaleOf[i];
+    const lift = Math.round((altitudeFt(phaseAt(i, b, at / 4), routes[i].distKm) / 39000) * arcOf[i]);
+    const total = d + lift + (occ[i] > 0 ? 2 : 0);
+    let semis = KEY_ROOT + sh + sc[((total % sc.length) + sc.length) % sc.length] + 12 * Math.floor(total / sc.length);
+    if (snap) {
+      let best = semis;
+      let bd = Infinity;
+      for (const tn of tones) for (const o of [-12, 0, 12]) if (Math.abs(tn + o - semis) < bd) { bd = Math.abs(tn + o - semis); best = tn + o; }
+      if (bd <= 1.5) semis = best;
+    }
+    return semis;
+  };
+  /** where a free-time note sits against its grid place: within ±0.3 beat, by the hash of the route and the bar (never before the piece) */
+  const freeOffset = (i: number, b: number, k: number): number => {
+    const o = ((routeHash(`${routes[i].key}|free|${b}|${k}`) % 1000) / 1000 - 0.5) * 0.6;
+    return b === 0 && k === 0 ? Math.abs(o) : o;
+  };
+  // the kudüm or the davul of a form: the kick route, else the backbeat route, else the bass route, on the form card's drum
+  const drumRoute = ["kick", "backbeat", "bass"].map((q) => role.indexOf(q as PopRole)).find((x) => x >= 0) ?? -1;
   // call and response: in the chorus the pluck route (if the piece has one) answers the hook in the second half of every second bar,
   // with the hook's own motif turned upside down; the hook rests there
   const answerer = role.indexOf("pluck");
@@ -554,10 +644,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const tones = [0, chord.third, 7].map((x) => cr + x);
     const full = section === "chorus" || section === "build";
     const ep = stageAt(b, section);
-    const g = ep.card ? grooves.get(ep.card.id)! : main;
+    const fcard = formCardOf(ep.card);
+    const fb = formAt(fcard, section);
+    const g0 = ep.card ? grooves.get(ep.card.id)! : main;
+    const g = fb.speed === "double" ? grooveOf(ep.card ?? plan.main, "double") : g0;
+    const free = fb.mode === "free";
+    // the last bar of a free intro is the pick-up: the hook plays the figure's first hit, in time
+    const pickUp = free && section === "intro" && b === first + slen - 1;
     for (let i = 0; i < n; i++) {
       const rl = role[i];
-      if (!ACTIVE[section].includes(rl)) continue;
+      if (!(fb.roles ?? ACTIVE[section]).includes(rl)) continue;
       // a second voice of a role only joins in the chorus and the build
       if (occ[i] > 0 && !full) continue;
       const r = routes[i];
@@ -567,7 +663,33 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       const inst = voiceOf[i];
       const rk = rank.get(i) ?? 0.5;
       const p0 = phaseAt(i, b, 0);
-      if (rl === "pad") {
+      if (rl === "pad" && fb.mode !== "normal") {
+        // a form's slow or free bar: the chord tone held for the whole bar, like a drone (no re-strike on the beats)
+        push(i, t0 + (occ[i] % 3) * 0.04, bar * 0.98, inst, hz(tones[occ[i] % 3] + 12 * (occ[i] % 2)), vs(0.4 + 0.1 * rk) * (free ? FREE_VEL : 1), p0);
+      } else if (rl === "hook" && fb.mode !== "normal") {
+        const m = motifs[i]![b % 4];
+        const sl0 = g.slots.find((x) => x.hit)!;
+        if (fb.mode === "sparse" || pickUp) {
+          // the slow bar: only the first hit of the figure, as a long note (three beats); the pick-up of a long air: that hit, in time
+          const d0 = m.find((d): d is number => d !== null);
+          if (d0 === undefined) continue;
+          const len = pickUp ? sl0.len * 0.95 : 3;
+          push(i, t0 + sl0.start * beat, len * beat, inst, hz(hookSemis(i, b, d0, sl0.start, sh, tones, true)), vs((0.6 + 0.3 * (1 - rk)) * sl0.accent) * (pickUp ? FREE_VEL : 1), phaseAt(i, b, sl0.start / 4));
+          continue;
+        }
+        // free time: two long notes a bar off the grid; the second bar of a pair ends early (a breath before the next phrase)
+        const mf = motifsFree[i]![b % 4];
+        const pair = (b - first) % 2;
+        const places = pair === 0 ? [0, 2] : [0, 1.75];
+        const starts = places.map((x, k) => x + freeOffset(i, b, k));
+        starts.forEach((at, k) => {
+          const d = mf[k % mf.length];
+          if (d === null || d === undefined) return;
+          const next = k === 0 ? starts[1] : pair === 0 ? 4 + freeOffset(i, b + 1, 0) : at + 1.5 + 0.5 * ((routeHash(`${routes[i].key}|breath|${b}`) % 100) / 100) + 0.05;
+          const len = clamp(next - at - 0.05, 1.5, 3.5);
+          push(i, t0 + at * beat, len * beat, inst, hz(hookSemis(i, b, d, Math.max(0, at), sh, tones, k === 0)), vs(0.6 + 0.3 * (1 - rk)) * FREE_VEL, phaseAt(i, b, clamp(at, 0, 4) / 4));
+        });
+      } else if (rl === "pad") {
         // the chord, re-struck on beats one and three, one tone per pad route, rolled a little
         [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9 * (0.7 + 0.6 * rk), inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), vs(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
       } else if (rl === "bass") {
@@ -600,7 +722,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       } else if (rl === "hook") {
         // in the verse the hook only answers (two bars of four); in the chorus it is there all the time
         if (section === "verse" && b % 4 >= 2) continue;
-        const m = motifs[i]![b % 4];
+        const m = (fb.speed === "double" && motifs2[i] ? motifs2[i]! : motifs[i]!)[b % 4];
         const firstDegree = m.find((d): d is number => d !== null) ?? 0; // the answer turns the motif around its first note that sounds
         let hi = 0;
         let lastBase = Number.NaN; // the last degree of the bar's hook line, without the lift of the altitude
@@ -640,7 +762,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
             if (bd <= 1.5) semis = best;
           }
           const nextRest = g.slots[k + 1] && !g.slots[k + 1].hit ? g.slots[k + 1].len : 0;
-          push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95 * (0.8 + 0.4 * rk), inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
+          push(i, t0 + sl.start * beat + (sl.odd ? g.swing * beat * 0.33 * sl.len : 0), (sl.len + nextRest * 0.9) * beat * 0.95 * (0.8 + 0.4 * rk), inst, hz(semis), vs((0.6 + 0.3 * (1 - rk)) * sl.accent), phaseAt(i, b, sl.start / 4));
         });
         // the flight runs (nağme): the last beat of a bar in the climb rises, one in the descent falls, when nothing else sounds there
         const dir: 1 | -1 | 0 = phaseAt(i, b, 0) < RUN_CLIMB_BELOW ? 1 : phaseAt(i, b, 1) > RUN_FALL_ABOVE ? -1 : 0;
@@ -667,16 +789,16 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       } else if (rl === "kick") {
         // inside an episode: beat 1 and the exact strong places of the episode card, where the bass plays them (every figure starts with a hit, at 0)
         const epBeats = ep.card ? [...new Set([0, ...g.strong.map((s) => s.start)])] : null;
-        const beats = section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
+        const beats = fb.speed === "double" ? [...new Set([0, ...g.strong.map((s) => s.start)])] : section === "build" ? [0, 1, 2, 3] : epBeats ?? [0, 2];
         if (ep.blockEnd && fills && !beats.includes(3)) beats.push(3);
         beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
-        if (ep.card) {
-          // inside an episode the hat plays the hit places of the episode figure instead of straight eighths,
+        if (ep.card || fb.speed === "double") {
+          // inside an episode (and in a form's doubled bar) the hat plays the hit places of the episode figure instead of straight eighths,
           // swung on the odd slots of the figure exactly like the hook (a rest is a slot too)
-          g.slots.forEach((sl, k) => {
+          g.slots.forEach((sl) => {
             if (!sl.hit) return;
-            push(i, t0 + sl.start * beat + (k % 2 ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.2, inst, 200, vs(sl.accent >= 1.1 ? 0.3 : 0.2), phaseAt(i, b, sl.start / 4));
+            push(i, t0 + sl.start * beat + (sl.odd ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.2, inst, 200, vs(sl.accent >= 1.1 ? 0.3 : 0.2), phaseAt(i, b, sl.start / 4));
           });
         } else {
           for (let e = 0; e < 8; e++) push(i, t0 + e * 0.5 * beat + (e % 2 ? swingAmt * beat * 0.33 : 0), beat * 0.2, inst, 200, vs(e % 2 ? 0.3 : 0.2), phaseAt(i, b, e / 8));
@@ -684,6 +806,18 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       }
     }
 
+    // the form's drum: the horon's kudüm on beat one of every second bar of its intro; the halay's davul on the strong places of the
+    // figure (heavy in the slow bars; in a doubled bar on both repeats, when no kick route plays them already)
+    if (fb.drum && drumRoute >= 0 && !(fb.speed === "double" && role.includes("kick"))) {
+      const dInst = resolveVoice(fcard.perc, hashOf[drumRoute]);
+      const dk = (at: number, vel: number): void => push(drumRoute, t0 + at * beat, beat * 0.4, dInst, 200, vel, phaseAt(drumRoute, b, at / 4), "kick");
+      if (fb.drum === "kudum") {
+        if ((b - first) % 2 === 0) dk(0, v(0.75));
+      } else {
+        const fg = fb.speed === "double" ? g : grooveOf(fcard);
+        fg.strong.forEach((sl) => dk(sl.start, v((fb.speed === "double" ? 0.6 : 0.7 * 1.2) * sl.accent)));
+      }
+    }
     if (b % droneEvery === 0 && !silentBar(b)) {
       let len = 1;
       while (len < droneEvery && b + len < BARS && !silentBar(b + len)) len++;

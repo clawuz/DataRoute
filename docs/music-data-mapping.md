@@ -204,3 +204,23 @@ A trip with one sound (same card all through) has no journey and is unchanged. T
 
 
 **Piyano kuralı (2026-10-27):** halk ve makam kartlarının (`NO_PIANO_CARDS`, `genres.ts`) rotalarında piyano çalmaz; "üçten fazla rotada piyano her zaman vardır" kuralı bu rotaları atlar. Ayrıntı: `docs/music-genre-cards.md`, "No piano in folk and makam cards".
+
+## Regional forms (2026-10-28, spec `docs/superpowers/specs/2026-10-28-regional-forms-design.md`)
+
+A card may have a `form` (`genres.ts`): `horon` (karadeniz), `halay` (dogu), `uzunhava` (icanadolu, mevlevi). `formAt(card, section)` in `compose.ts` gives each bar a **speed** (slow: the hook plays only the first hit of the bar, three beats long; normal: the figure; double: every unit of the figure halved, so it plays twice a bar) and a **mode** (sparse, free, normal), the roles that play and the form's drum. The form of a bar is the stage card's when it has one, else the main card's. The tempo of a piece stays fixed: the "speed-up" is the doubled figure. Cards without a form keep the common form exactly (their pieces are byte-identical).
+
+| Data | Decision | Why it is heard that way | Where |
+|---|---|---|---|
+| the card's `form` = horon | intro: the düz horon (the pad held a bar, the hook one long note a bar, the kudüm on beat one of every second bar, nothing else); verse: the figure (yayma); build and chorus: the dik horon (the figure twice a bar: the hook's phrase is taken for `min(2 × hits, 9)` hits and its notes are half as long, the kick on the strong places of both repeats, the hat on every hit, the bass on both repeats); break: the düz horon without the kudüm; outro: the verse voices thinning, the hook one long note a bar | the horon starts slow and sparse and thickens into the fast dance | `compose.ts` (`FORMS`, `formAt`, `grooveOf(card, "double")`, `motifs2`) |
+| the card's `form` = halay | intro, break and outro: the davul alone on the strong places of the figure (vel × 1.2) under the zurna's long call (the hook one long note a bar), no bass, pluck or hat; verse: the figure; build and chorus: the figure twice a bar, the davul on the strong places of both repeats | the halay starts with a heavy slow davul and runs into the fast dance | as above |
+| the card's `form` = uzunhava | intro and outro (bars 0-7, 56-63): free time: no drums, bass or pluck; the pad holds one note a bar; the hook two long notes a bar (1.5-3.5 beats) from a two-hit phrase, each at a hashed offset within ±0.3 beat of its grid place, the second bar of each pair ending early (a breath); loudness × 0.8. Bar 7 is the pick-up: the hook plays the figure's first hit in time; bar 8 starts the metre | a long air (uzun hava) is sung in free time before the metred dance (kırık hava) | `compose.ts` (free hook, `freeOffset`) |
+| who plays the kudüm / davul | the kick route, else the backbeat route, else the bass route (on the form card's drum voice); in a doubled bar an existing kick route plays it | nothing is played that is not a route; a three-route piece still hears its davul | `compose.ts` (`drumRoute`) |
+| the metre variant of a card (`cells`) | one of the card's figures per piece (`cellOf`, seed `routeHash(main card id + first route key)`) | a horon may be 7/8, 9/8 or 4/4; a halay 4/4, 2/4, 9/8 or 5/8 | `genres.ts` (`cellOf`, `cellSeedOf`), `compose.ts` (`grooveOf`) |
+
+Measured (visited, home IST; mean notes per bar in intro 0-7 / verse 8-23 / chorus 32-51, all notes incl. hidden gesture and drone notes; drawn hook notes in brackets; before → after):
+
+| selection | before | after | notes in the piece |
+|---|---|---|---|
+| `?v=TZX,RZV,OGU&h=IST` (horon) | 4.63 / 19.50 / 19.80 (hook 0 / 2.5 / 3.3) | 5.13 / 19.50 / 27.50 (hook 1 / 2.5 / 4.5) | 1076 → 1306 |
+| `?v=VAN,ERZ,ERC&h=IST` (halay) | 4.50 / 16.50 / 16.50 (hook 0 / 2 / 3) | 3.50 / 16.50 / 26.50 (hook 1 / 2 / 6) | 902 → 1090 |
+| `?v=ESB,ASR,KYA,NAV&h=IST` (uzun hava) | 6.38 / 17.50 / 19.25 (hook 0 / 1.75 / 4) | 3.38 / 17.50 / 19.25 (hook 1.88 / 1.75 / 4) | 1036 → 918 |
