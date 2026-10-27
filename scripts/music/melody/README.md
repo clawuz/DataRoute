@@ -1,0 +1,58 @@
+# The melody bank (form grammars)
+
+Spec: `docs/superpowers/specs/2026-10-27-melody-bank-design.md`. The hook melody of the personal site was a seeded random walk
+(`globe/src/personal/idiom.ts`, `phraseMotifs`). This folder makes, offline, a bank of four-bar phrases from one **form grammar per
+tradition** and exports it to `globe/src/personal/melody-bank.json` (the site's selector reads it; until the user approves by ear the
+default stays the walk).
+
+| file | what |
+|---|---|
+| `idioms.json` | the idiom of every card (`idiomOf` over `DEFAULT_IDIOM`: span, bias, start, cadence, step, repeat, leaps), dumped from TS |
+| `grammar.py` | the eight forms, the operators, `generate(card_id, hits, n, seed)`, `bank_entry` (the diverse selection), `FORM_OF` (all 52 cards) |
+| `export_bank.py` | all 52 cards x hits 1-9 -> minified JSON (`null` = rest); `--examples` prints two phrases of every form |
+| `test_grammar.py` | unittest: determinism, bounds, cadences, rests, the signature of every form, the bank file |
+
+## Regenerate
+
+```sh
+cd globe && npx --yes vite-node scripts/dump-idioms.ts && cd ..   # after changing IDIOMS / cards in TS: rewrites idioms.json
+python3 -m unittest discover -s scripts/music/melody            # tests
+python3 scripts/music/melody/export_bank.py --examples          # writes globe/src/personal/melody-bank.json
+```
+
+The exporter is deterministic: phrase *i* of (card, hits) draws from `random.Random(seed)` with `seed` = the first 8 bytes of
+SHA-256 of `card|hits|i|0` (never Python's salted `hash()`), so the same code gives the same file.
+
+## The forms
+
+Every bar = the motif (or an operator applied to it) + a connecting line (`toward`: even steps, or a scale turn that goes away from
+the goal and comes back instead of a held note) to the bar's cadence. Operators: repeat, `seq` (sequence), `invert`, truncate (a head
+of the motif), answer (the same head, another ending), `ornament` (a neighbour note before an accent), `add_rests`.
+
+| form | shape | cards |
+|---|---|---|
+| seyir | bar 1 dwells on the dominant (3-4) with a hovering motif and a breath; bar 2 = the motif a step or two higher, peak above bar 1, then down to its cadence; bar 3 = the motif lowered or inverted, descending, a breath; bar 4 = the motif low, then step by step to the karar (approach by a step) | anatolian icanadolu mevlevi arabic khaleeji maghrebi persian zeybek akdeniz **flamenco** |
+| cyclic | a two-note cell turning over (repeated, or sequenced pair by pair, e.g. 4 4 3 3 2 2); bars 1-2 identical up to the cadence, bar 3 a step lower, bar 4 the cell from the start that leads to the cadence; range <= 5; almost no rests | karadeniz dogu karsilama greek caucasus centralasia celtic mariachi slavic |
+| period | antecedent: motif with one leap (gap-fill), then its sequence, a breath before the end of bar 2; consequent: the motif again (bar 3 starts like bar 1), bar 4 liquidates (half the motif + a scale run); tango: no rests, the note before an accent repeats it | classical baroque romantic italian russian chanson fado spguitar cinematic calm nordic tango (and any unknown card) |
+| raga | bar 1 rises slowly from the low register with held notes; bar 2 climbs to the dominant; bar 3 reaches the high tonic (5..span) and holds it; bar 4 = bar 2 upside down from below the top (aroh answered by avaroh); breaths at the ends of bars 1-3 | hindustani |
+| song | AABA: a one-bar hook (a 2-3 note cell repeated or sequenced) twice, a bridge (the hook inverted and lifted, mean higher), the hook again to the cadence; rests on weak slots | bollywood pop dance epic country cumbia samba bossa |
+| riff | a one-bar riff of chord tones 0 2 4 with one passing note and syncopating rests (sometimes the middle accent anticipated), bars 1-2 identical up to the cadence, bar 3 a step up, bar 4 a turnaround; jazz approaches every accent from a step below | funk rnb afrobeat jazz **salsa** |
+| arch | a short pentatonic-friendly cell (steps of 1, leaps of 2, a fourth at most) placed higher and higher (with breaths between the cells) to the peak in bar 2 or 3, then lower; a bar enters within a fifth of the cadence before it | eastasia chinese thai andean |
+| ostinato | one cell in every bar, each repeat changes one slot (a neighbour, a rest added or filled), range <= 4 | gamelan westafrica eastafrica |
+
+Judgements beyond the spec's table: **flamenco -> seyir** (a Phrygian line that falls home to the tonic) and **salsa -> riff** (a
+montuno is a repeated syncopated figure). Forms are generic in the cadence: every card's cadence comes from its idiom
+(`[2,0,2,4]`, bias -1 `[2,0,2,0]`, bias +1 `[2,2,4,4]`), so a form's "home" note is the cadence of the bar, not always 0.
+
+Fields: `s` = `b[0][0]`; `span` = highest degree used; `bias` = sign(mean of bar 4 - mean of bar 1) with a dead zone of half a degree
+(rests ignored). Cards with a direction draw phrases in that direction (the selection keeps those first); bias-0 cards draw rising,
+level and falling ones.
+
+## Size: 8 phrases per entry, not 96
+
+The bank format repeats `c`, `f`, `s`, `span` and `bias` in every phrase, so a phrase costs about 120 bytes minified. With 52 cards x
+9 hits: 96 per entry = 3.8 MB (325 KB gzipped), 64 = 2.6 MB (236 KB gzipped), and only **8 per entry fit under 400 KB (368 KB raw,
+39 KB gzipped)**. The exporter therefore writes 8 (it prints this). The list of an entry is ordered so that any prefix is the most
+diverse choice (round robin over start degree and direction, then over contour), so the 8 kept cover the starts and directions.
+`--per-entry 96` writes the full bank (the size test then fails by design: change the limit or the format first). hits = 1 has a
+single possible phrase (every bar is just its cadence) and hits = 2 only a handful, so those entries are shorter.

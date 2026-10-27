@@ -1,0 +1,1158 @@
+{
+ "LOW": -2,
+ "DEFAULT": {
+  "step": 0.65,
+  "repeat": 0.15,
+  "leaps": [
+   2,
+   3
+  ],
+  "bias": 0,
+  "span": 6,
+  "arc": 3,
+  "start": [
+   0,
+   2,
+   4
+  ],
+  "cadence": [
+   2,
+   0,
+   2,
+   4
+  ]
+ },
+ "cards": {
+  "cinematic": {
+   "step": 0.6,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "romantic": {
+   "step": 0.7,
+   "repeat": 0.05,
+   "leaps": [
+    2,
+    4
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "baroque": {
+   "step": 0.75,
+   "repeat": 0.05,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "anatolian": {
+   "step": 0.8,
+   "repeat": 0.25,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "karsilama": {
+   "step": 0.7,
+   "repeat": 0.2,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "arabic": {
+   "step": 0.8,
+   "repeat": 0.2,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "hindustani": {
+   "step": 0.85,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": 1,
+   "span": 7,
+   "arc": 4,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    2,
+    4,
+    4
+   ]
+  },
+  "eastasia": {
+   "step": 0.35,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 4,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "gamelan": {
+   "step": 0.5,
+   "repeat": 0.35,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 4,
+   "arc": 1,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "westafrica": {
+   "step": 0.5,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 4,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "eastafrica": {
+   "step": 0.5,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 4,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "salsa": {
+   "step": 0.55,
+   "repeat": 0.25,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "bossa": {
+   "step": 0.6,
+   "repeat": 0.15,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "tango": {
+   "step": 0.6,
+   "repeat": 0.15,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "flamenco": {
+   "step": 0.8,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    4,
+    3,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "celtic": {
+   "step": 0.55,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3,
+    4
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "nordic": {
+   "step": 0.85,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "slavic": {
+   "step": 0.7,
+   "repeat": 0.15,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "centralasia": {
+   "step": 0.6,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "dance": {
+   "step": 0.5,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "epic": {
+   "step": 0.5,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    4,
+    5
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 4,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "calm": {
+   "step": 0.85,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "mariachi": {
+   "step": 0.55,
+   "repeat": 0.2,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "persian": {
+   "step": 0.8,
+   "repeat": 0.25,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "jazz": {
+   "step": 0.5,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3,
+    4
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "funk": {
+   "step": 0.4,
+   "repeat": 0.4,
+   "leaps": [
+    3,
+    4
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "pop": {
+   "step": 0.5,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "karadeniz": {
+   "step": 0.7,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "icanadolu": {
+   "step": 0.8,
+   "repeat": 0.25,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "mevlevi": {
+   "step": 0.85,
+   "repeat": 0.2,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "akdeniz": {
+   "step": 0.7,
+   "repeat": 0.2,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "dogu": {
+   "step": 0.6,
+   "repeat": 0.35,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "zeybek": {
+   "step": 0.8,
+   "repeat": 0.2,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    4,
+    3,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "greek": {
+   "step": 0.65,
+   "repeat": 0.25,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "italian": {
+   "step": 0.55,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3,
+    4
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "classical": {
+   "step": 0.7,
+   "repeat": 0.05,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 7,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "rnb": {
+   "step": 0.6,
+   "repeat": 0.2,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "country": {
+   "step": 0.7,
+   "repeat": 0.15,
+   "leaps": [
+    2,
+    4
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "spguitar": {
+   "step": 0.7,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    4,
+    2,
+    0
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "samba": {
+   "step": 0.6,
+   "repeat": 0.25,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "afrobeat": {
+   "step": 0.55,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "bollywood": {
+   "step": 0.65,
+   "repeat": 0.15,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    4,
+    2,
+    3
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "khaleeji": {
+   "step": 0.75,
+   "repeat": 0.25,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "maghrebi": {
+   "step": 0.7,
+   "repeat": 0.25,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "russian": {
+   "step": 0.7,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 7,
+   "arc": 3,
+   "start": [
+    4,
+    2,
+    0
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "thai": {
+   "step": 0.6,
+   "repeat": 0.2,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "chinese": {
+   "step": 0.55,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "cumbia": {
+   "step": 0.65,
+   "repeat": 0.3,
+   "leaps": [
+    2
+   ],
+   "bias": 0,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
+  "andean": {
+   "step": 0.7,
+   "repeat": 0.25,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    4,
+    2,
+    0
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "caucasus": {
+   "step": 0.75,
+   "repeat": 0.2,
+   "leaps": [
+    2
+   ],
+   "bias": -1,
+   "span": 5,
+   "arc": 2,
+   "start": [
+    3,
+    4,
+    2
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "fado": {
+   "step": 0.75,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": -1,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    4,
+    2,
+    0
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    0
+   ]
+  },
+  "chanson": {
+   "step": 0.7,
+   "repeat": 0.1,
+   "leaps": [
+    2,
+    4
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 2,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  }
+ }
+}
