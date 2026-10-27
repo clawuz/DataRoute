@@ -87,23 +87,23 @@ describe("episodeAt", () => {
 });
 
 // GOLDEN: regression guard for the episodes and the fills.
-// re-captured at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
+// re-captured at voices pass: no piano in world cards, jazz horns, oud, italian strings, hindustani; earlier at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
   ["~ESB,ASR,NAV", "visited", 1018592815],
   ["~TZX,RZV,OGU", "wish", 921627897],
   ["~VAN,ERZ,ERC", "wish", 3300151599],
   ["~AYT,GZP,ADA", "visited", 3242087402],
-  ["ESB", "visited", 2163962449],
+  ["ESB", "visited", 2232014653],
   ["LHR", "wish", 469582247],
   ["~ADB,BJV,DNZ", "wish", 775709030],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 1636121598], // 5 routes
+  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 2909335515], // 5 routes
   ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 1192866027], // 5 routes
-  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 1544935274], // 5 routes
+  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 1286158634], // 5 routes
   ["ALA,CIT,GUW,HSA", "", "visited", 3862310111], // 6 routes
   ["IKA,MHD,OMH,SYZ", "", "wish", 1361373784], // 6 routes
   ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 2180553426], // 7 routes
@@ -112,8 +112,8 @@ const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 975746057],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 1357018070],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 2523572001],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 2895431810],
   ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3314495757],
 ];
 // a leading "~" in places: a journey without home (the first place is where the trip starts)

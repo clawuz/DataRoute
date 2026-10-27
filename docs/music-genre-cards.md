@@ -124,11 +124,11 @@ Eleven cards added so that a destination can sound like where it goes (spec `doc
 | karadeniz | Black Sea horon (fast) | folk | 112-126 | USSAK / HICAZ | 2,2,3 (1.3, 0.9, 1.1) | KEMENCE_MAKAM, BAGPIPE (tulum) | BAGLAMA_EXTRA, SAZ | BAGPIPE_DRONE, CELLO | FRAMEDRUM |
 | icanadolu | Central Anatolian bağlama | folk | 88-108 | USSAK / HICAZ | 2,1,1,2,2 (1.25, 0.85, 0.85, 1.1, 0.9) | SAZ, BAGLAMA_MAKAM, NEY_MAKAM | BAGLAMA_EXTRA, SAZ | CELLO, VIOLA | BENDIR |
 | mevlevi | Mevlevi (ney and kudüm) | folk | 76-88 | RAST / SEGAH | 3,3 (1.3, 0.9); a static chord `[[0,4]]` x4: the drone | NEY_MAKAM, NEY | KANUN, SANTUR | NEY, CELLO | FRAMEDRUM (kudüm) |
-| akdeniz | Turkish Mediterranean (ud, tambur, kanun) | folk | 96-114 | HICAZ / NIHAVENT | 3,2,2,3 (1.25, 0.9, 0.9, 1.1) | KANUN, NYLONGUITAR (ud) | NYLONGUITAR, SAZ (tambur) | CELLO, VIOLA | DARBUKA |
+| akdeniz | Turkish Mediterranean (ud, tambur, kanun) | folk | 96-114 | HICAZ / NIHAVENT | 3,2,2,3 (1.25, 0.9, 0.9, 1.1) | KANUN, OUD | OUD, SAZ (tambur) | CELLO, VIOLA | DARBUKA |
 | dogu | East Anatolian davul-zurna halay (fast) | folk | 104-124 | HICAZ / SEGAH | 1,1,1,1 (1.35, 0.8, 1.1, 0.8) | DUDUK, NEY_MAKAM (zurna) | SAZ, BAGLAMA_EXTRA | DUDUK, CELLO | FRAMEDRUM (davul) |
 | zeybek | Aegean zeybek | folk | 82-98 | USSAK / HICAZ | 2,2,2,3 (1.3, 0.85, 0.9, 1.15) | CLA, SAZ | SAZ, NYLONGUITAR | CELLO, VIOLA | DARBUKA |
 | greek | Greek syrtos & kalamatianos | folk | 100-120 | HICAZ / DORIAN | 3,2,2 (1.3, 0.9, 1) | SAZ (bouzouki), CLA, NYLONGUITAR | NYLONGUITAR, SAZ | ACCORDION, CELLO | BENDIR |
-| italian | Italian symphonic & tarantella | symphonic | 84-110 | MINOR / MAJOR | 3,3 (1.2, 0.9) | VIOLIN, HARP, FLUTE | HARP, PSALTERY (mandolin) | CELLO, VIOLA, HORN | TIMP |
+| italian | Italian symphonic & tarantella | symphonic | 84-110 | MINOR / MAJOR | 3,3 (1.2, 0.9) | VIOLIN, FLUTE, OBOE, CLA | HARP, VIOLA_PIZZ, PSALTERY (mandolin) | CELLO, VIOLA, VIOLIN, HORN | TIMP |
 | classical | Classical (Vienna) | chamber | 92-116 | MAJOR / LYDIAN | 1,1,1,1 (1.15, 0.85, 1, 0.85) | VIOLIN, FLUTE, OBOE, PNO | PNO, HARP | CELLO, VIOLA, BSN | TRI |
 | rnb | R&B / neo-soul (swing 0.2) | pulse | 76-96 | DORIAN / MIXO | 3,3,2 (1.2, 1, 1.1) | RHODES, EKEYS, TENORSAX | GUITAR_EL, EKEYS | RHODES, CELLO | CONGA (bass BASS_EL, UPRIGHTBASS) |
 | country | Country & Americana (swing 0.12) | folk | 92-116 | MAJOR / MIXO | 1,1,1,1 (1.2, 0.85, 1, 0.85) | VIOLIN, HARMONICA, GUITAR_AC | GUITAR_AC, FOLKHARP | HARMONICA, CELLO | TAMB (bass UPRIGHTBASS) |
@@ -246,7 +246,7 @@ The recordings of the world pack are added to the voices of the cards (`WORLD_VO
 | karsilama | BAGPIPE, KEMENCE_MAKAM | BAGLAMA_EXTRA | - | - | - |
 | arabic | NEY_MAKAM | SANTUR | - | - | DARBUKA_VCSL |
 | persian | SANTUR | SANTUR | - | - | DARBUKA_VCSL |
-| hindustani | NEY_MAKAM | TANPURA | - | - | TABLA |
+| hindustani | - | - | - | - | TABLA |
 | eastasia | SHAKUHACHI, ERHU, KOTO | KOTO, KAYAGEUM, DANTRANH | - | - | - |
 | gamelan | STEELDRUM | VIBES, STEELDRUM | - | - | - |
 | westafrica | - | KALIMBA, MBIRA | - | - | DJEMBE |
@@ -259,7 +259,7 @@ The recordings of the world pack are added to the voices of the cards (`WORLD_VO
 | celtic | TINWHISTLE, BAGPIPE | FOLKHARP | - | - | FRAMEDRUM |
 | slavic | ACCORDION | PSALTERY | ACCORDION | - | - |
 | centralasia | - | PSALTERY | - | - | BENDIR |
-| jazz | TENORSAX, EKEYS | EKEYS, GUITAR_EL | - | UPRIGHTBASS | - |
+| jazz | - | EKEYS, GUITAR_EL | - | UPRIGHTBASS | - |
 | funk | EKEYS, TENORSAX | GUITAR_EL, EKEYS | - | BASSGUITAR, BASS_EL | - |
 | pop | EKEYS, GUITAR_EL | GUITAR_EL | - | BASS_EL | - |
 | romantic | STEINWAY | STEINWAY, KAWAI | - | - | - |
@@ -313,4 +313,6 @@ Over 1000 random selections of 3-8 places (half with home Istanbul), with the do
 
 ## No piano in folk and makam cards (2026-10-27)
 
-`NO_PIANO_CARDS` in `genres.ts`: anatolian, icanadolu, karadeniz, akdeniz, dogu, zeybek, karsilama, mevlevi, arabic, khaleeji, maghrebi, persian, hindustani, caucasus, centralasia, gamelan, thai, chinese, eastasia, westafrica, eastafrica. A route of such a card never plays the piano: `choose()` in `compose.ts` takes neither the piano shortcut nor `PNO` from a voice list (an emptied list falls back to the card's first non-piano held voice), and the "with more than three routes the piano is always there" rule skips these routes (when every route is of such a card, there is no piano). The piano still plays on routes of other cards in the same piece. Bollywood and the pop-like cards keep it.
+`NO_PIANO_CARDS` in `genres.ts`: anatolian, icanadolu, karadeniz, akdeniz, dogu, zeybek, karsilama, mevlevi, arabic, khaleeji, maghrebi, persian, hindustani, caucasus, centralasia, gamelan, thai, chinese, eastasia, westafrica, eastafrica, and (voices pass, 2026-10-27) flamenco, spguitar, tango, samba, cumbia, salsa, mariachi, andean, afrobeat, fado, russian, slavic, bollywood, greek, italian, chanson. A route of such a card never plays the piano: `choose()` in `compose.ts` takes neither the piano shortcut nor `PNO` from a voice list (an emptied list falls back to the card's first non-piano held voice), and the "with more than three routes the piano is always there" rule skips these routes (when every route is of such a card, there is no piano). The piano still plays on routes of other cards in the same piece. The piano stays on romantic, classical, jazz (comping on the pluck role only; the jazz hook is TENORSAX, CLA, TPT, FLUTE), bossa, funk, pop, rnb, cinematic, epic, dance, calm, nordic, baroque, celtic and country. A single-route piece (`composeSolo`) also skips the piano when its card is listed.
+
+Voices pass (2026-10-27), hand-set: hindustani melody FLUTE (bansuri), VIOLIN (sarangi), SANTUR; pluck SANTUR, HARP; held ACCORDION (harmonium), CELLO; no Turkish or Arabic instruments, TANPURA only as the drone. Akdeniz uses the lite OUD (strummed like the nylon guitar on pluck). Missing instruments are listed in `docs/music-missing-instruments.md`.

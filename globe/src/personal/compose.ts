@@ -799,7 +799,8 @@ function composeSolo(mode: PersonalMode, route: PersonalRoute, st: PersonalStyle
   const scale = makam ? (mode === "wish" ? NIHAVEND : HICAZ) : mode === "wish" ? MAJOR : MINOR;
   const prog = PROGS[mode][st.progression];
   const pal = PALETTES.symphonic.melody;
-  const pool = (pal[route.region] ?? pal.UNK).slice(0, 3);
+  // a route of a card without a piano (folk, makam, Latin, Iberian, Slavic...) never sings on it
+  const pool = (pal[route.region] ?? pal.UNK).filter((c) => c !== "PNO" || !NO_PIANO_CARDS.has(style.cards?.[0] ?? "")).slice(0, 3);
   const inst: Instrument = pool[(h + st.ensemble) % pool.length];
   const family = FAMILIES[(h >> 3) % FAMILIES.length];
   const bright = inst === "NEY" || inst === "FLUTE" || inst === "OBOE" || inst === "CLA" || inst === "VIOLIN";

@@ -346,6 +346,7 @@ export const GESTURES: Record<string, Gesture[]> = {
   ERHU: [glideNote(3)],
   BAGPIPE: [pipeGrace],
   NYLONGUITAR: [guitarStrum],
+  OUD: [guitarStrum],
   UPRIGHTBASS: [bassWalk, bassAlternate],
   TANPURA: [tanpura],
   NEY_MAKAM: [neyGlide],
