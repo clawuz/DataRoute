@@ -109,3 +109,21 @@ progressions for jazz and country; (3) taksim/alap intros in free time (needs a 
 **Not covered / needs the user:** exact usul figures per region (the cells are my judgement), the fretless intonation of the
 pack's samples (makam intervals need a pitch-bend per note, which the sampler can do with `detune`), and real recordings of the missing
 instruments (the gestures are only as good as the samples they play).
+
+
+## Measured after the first slice (2026-10-27)
+
+Eight selections (home Istanbul, visited). `hidden` = notes that sound but are not drawn (the gesture notes).
+
+| selection | main card | drawn | hidden | hidden share by instrument | notes/bar chorus |
+|---|---|---|---|---|---|
+| Karadeniz | karadeniz | 608 | 220 | KEMENCE_MAKAM 190, CELLO 30 | 21 |
+| Hindistan | hindustani | 564 | 30 | CELLO 30 | 14 |
+| Brezilya | samba | 344 | 30 | CELLO 30 | 8 |
+| Magrip | maghrebi | 608 | 30 | CELLO 30 | 15 |
+| Japonya | pop | 744 | 30 | CELLO 30 | 18 |
+| Italya | romantic | 560 | 30 | CELLO 30 | 14 |
+| ABD | pop | 748 | 30 | BAGPIPE_DRONE 30 | 18 |
+| Nijerya | westafrica | 764 | 30 | CELLO 30 | 21 |
+
+Reading: the first slice changes the sound **only where its instruments play the roles the gestures look at**: the Karadeniz piece (kemençe: double stops, grace notes, drone: 220 hidden notes of 828) and the home drone of a few cards. The saz strum did not fire (its threshold `vel >= 0.5` is above the velocity of the pluck role, 0.3-0.42), the kanun/santur tremolo did not fire (they play the short pluck notes, not long hook notes), and the other instruments of the table (violin, harp, piano, accordion, koto, sax, guitars) have no gesture yet. Next: widen the gestures to the roles and instruments that are really used (see the status line below).
