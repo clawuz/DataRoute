@@ -59,8 +59,9 @@ export const IDIOMS: Record<string, Partial<Idiom>> = {
   funk: { step: 0.4, repeat: 0.4, leaps: [3, 4], span: 6, arc: 2 },
   pop: { step: 0.5, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3 },
   // the destination cards (hand-set, like the rest)
-  // the horon: a lively stepwise zigzag inside a tetrachord, few repeated notes (docs/music-regional-turkish.md)
-  karadeniz: { step: 0.85, repeat: 0.1, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
+  // the horon: a stepwise zigzag between two or three neighbouring degrees inside a fourth (degrees 0..4), a quarter of the notes
+  // repeated (the SymbTr horon tunes: repeat share 0.25-0.4; docs/music-melody-model-report.md, section Karadeniz)
+  karadeniz: { step: 0.85, repeat: 0.25, leaps: [2], bias: -1, span: 4, arc: 2, start: [2, 3, 1] },
   mevlevi: { step: 0.85, repeat: 0.2, leaps: [2], bias: -1, span: 6, arc: 2, start: [3, 4, 2] },
   icanadolu: { step: 0.8, repeat: 0.25, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] },
   akdeniz: { step: 0.7, repeat: 0.2, leaps: [2, 3], bias: -1, span: 6, arc: 3, start: [3, 4, 2] },

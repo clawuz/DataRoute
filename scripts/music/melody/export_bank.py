@@ -7,7 +7,9 @@ Two files (minified JSON, each < 1 MB):
   pieces) is trained on those sources only (back-off levels included) and mixed 70% trained / 30% grammar; every other card is the
   grammar's. No SymbTr-derived phrase and no "symbtr" anywhere in it.
 - globe/src/personal/melody-bank.local.json (git-ignored, local listening only): the same, plus the cards that have SymbTr material,
-  trained on all their sources (SymbTr is CC BY-NC-SA: nothing derived from it ships until the user approves the licence).
+  trained on all their sources (SymbTr is CC BY-NC-SA: nothing derived from it ships until the user approves the licence). A region
+  card (train.REGION_OF: karadeniz) trains on its region's SymbTr tunes only (>= train.REGION_MIN phrases), its shippable entry is the
+  grammar's (the horon form).
 Both carry `"sources": {card: ["pdmx", "grammar", ...]}`.
 
 Run from the repository root:  python3 scripts/music/melody/export_bank.py [--per-entry N] [--grammar-only] [--examples] [--show]
@@ -63,8 +65,9 @@ def learn_all(corpus: dict):
     """two sets of models (one per number of hits >= 2): `ship` learns from PDMX / Nottingham only, `local` from every source"""
     ship = {h: train.Model(h) for h in HITS if h > 1}
     local = {h: train.Model(h) for h in HITS if h > 1}
-    for card, phrases in corpus.items():
-        span, octave = train.span_of(card), train.OCTAVE_OF.get(card, 7)
+    for card, phrases in train.region_split(corpus).items():
+        base = card.lstrip(train.ASIDE)   # a region card's other phrases ("~card") are clamped like the card's
+        span, octave = train.span_of(base), train.OCTAVE_OF.get(base, 7)
         for ph in phrases:
             cl = train.clamp_phrase(ph["bars"], span, octave)
             shippable = ph["src"] in train.SHIPPABLE_SOURCES
@@ -106,13 +109,18 @@ def build_banks(keep: int, corpus: dict, log=print):
         gram = {h: grammar_entry(cid, h, keep) for h in HITS}
         phrases = corpus.get(cid, [])
         ship_ph = [p for p in phrases if p["src"] in train.SHIPPABLE_SOURCES]
-        if train.eligible(ship_ph):
+        region = cid in train.REGION_OF
+        if region:  # a region card trains on its region's SymbTr tunes only: nothing of it ships, the shippable bank is the grammar's
+            phrases = train.training_phrases(cid, phrases)
+            ship_ph = []
+        if not region and train.eligible(ship_ph):
             ship["cards"][cid] = trained_card(ship_m, cid, keep, gram)
             ship["sources"][cid] = sources_of(ship_ph, train.SHIPPABLE_SOURCES) + ["grammar"]
         else:
             ship["cards"][cid] = {str(h): gram[h] for h in HITS}
             ship["sources"][cid] = ["grammar"]
-        if any(p["src"] == "symbtr" for p in phrases) and train.eligible(phrases):
+        ok = len(phrases) >= train.REGION_MIN if region else train.eligible(phrases)
+        if any(p["src"] == "symbtr" for p in phrases) and ok:
             local["cards"][cid] = trained_card(local_m, cid, keep, gram)
             local["sources"][cid] = sources_of(phrases, ("symbtr", "pdmx", "nottingham")) + ["grammar"]
         else:

@@ -20,7 +20,7 @@ from typing import Dict, List, Optional
 HERE = os.path.dirname(os.path.abspath(__file__))
 IDIOMS_JSON = os.path.join(HERE, "idioms.json")
 
-FORMS = ("seyir", "cyclic", "period", "raga", "song", "riff", "arch", "ostinato")
+FORMS = ("seyir", "cyclic", "period", "raga", "song", "riff", "arch", "ostinato", "horon")
 
 # One form per card, all 52 ids of genres.ts BASE_CARDS. The table of the spec, plus two judgements for the cards the spec does not
 # name: flamenco is a descending Phrygian line that comes home on the tonic (the seyir shape: the falseta falls to the cadence), salsa is
@@ -29,8 +29,10 @@ FORM_OF: Dict[str, str] = {
     # makam and maqam: dwell on the dominant, climb, then descend to the karar
     "anatolian": "seyir", "icanadolu": "seyir", "mevlevi": "seyir", "arabic": "seyir", "khaleeji": "seyir", "maghrebi": "seyir",
     "persian": "seyir", "zeybek": "seyir", "akdeniz": "seyir", "flamenco": "seyir",
+    # the Black Sea horon: a zigzag motif repeated exactly, a tight range, a held final (the region's SymbTr tunes)
+    "karadeniz": "horon",
     # dance cycles: a two-note cell turning over and over
-    "karadeniz": "cyclic", "dogu": "cyclic", "karsilama": "cyclic", "greek": "cyclic", "caucasus": "cyclic", "centralasia": "cyclic",
+    "dogu": "cyclic", "karsilama": "cyclic", "greek": "cyclic", "caucasus": "cyclic", "centralasia": "cyclic",
     "celtic": "cyclic", "mariachi": "cyclic", "slavic": "cyclic",
     # antecedent and consequent
     "classical": "period", "baroque": "period", "romantic": "period", "italian": "period", "russian": "period", "chanson": "period",
@@ -49,11 +51,11 @@ FORM_OF: Dict[str, str] = {
 }
 
 # the forms whose range is narrower than the idiom's
-SPAN_CAP = {"cyclic": 5, "ostinato": 4}
+SPAN_CAP = {"cyclic": 5, "ostinato": 4, "horon": 4}
 # the largest move onto a bar's cadence from the note just before it (a breath before the cadence frees it)
-APPROACH = {"seyir": 1, "raga": 1, "cyclic": 2, "period": 2, "song": 2, "riff": 2, "arch": 2, "ostinato": 2}
+APPROACH = {"seyir": 1, "raga": 1, "cyclic": 2, "period": 2, "song": 2, "riff": 2, "arch": 2, "ostinato": 2, "horon": 2}
 # probability of a neighbour note before an accented slot (by form; a few cards differ)
-ORNAMENT = {"seyir": 0.2, "cyclic": 0.08, "period": 0.1, "raga": 0.25, "song": 0.05, "riff": 0.0, "arch": 0.1, "ostinato": 0.0}
+ORNAMENT = {"seyir": 0.2, "cyclic": 0.08, "period": 0.1, "raga": 0.25, "song": 0.05, "riff": 0.0, "arch": 0.1, "ostinato": 0.0, "horon": 0.0}
 ORNAMENT_OF_CARD = {"celtic": 0.18, "baroque": 0.2, "mevlevi": 0.3, "persian": 0.25, "chinese": 0.15}
 
 
@@ -726,9 +728,57 @@ def form_ostinato(c: _Ctx):
     return [bar1, bar2, bar3, bar4]
 
 
+def form_horon(c: _Ctx):
+    """the Black Sea horon (the SymbTr tunes of Trabzon, Rize, Ordu, Giresun, Artvin): bar 1 a zigzag between two or three neighbouring
+    degrees (a and a+1, sometimes a third a / a+2; at most one note doubled or one step to a third degree), no rests; bar 2 the SAME bar
+    up to its cadence; bar 3 the motif a degree lower, or its head answered with another zigzag; bar 4 the head of the motif, then a
+    stepwise descent to the cadence, which is held (the last two slots equal)"""
+    h, S, cad, rng = c.h, c.S, c.cad, c.rng
+    n = h - 1
+    pens = [p for p in c.pen_range(cad[:2], 2) if 0 <= p <= S]   # the body's last note reaches both cadences: bar 2 stays a copy
+    a = c.start(0, S - 1, 2)
+    b = a + 2 if a + 2 <= S and rng.random() < 0.25 else a + 1
+    body = [a if k % 2 == 0 else b for k in range(n + 1)]
+    r = rng.random()
+    if n >= 3 and r < 0.45:
+        k = rng.randrange(0, n - 1)        # one note doubled (4 4 3 4 3 ...): the zigzag goes on after it
+        body = body[:k + 1] + body[k:]
+    elif n >= 4 and r < 0.75 and b == a + 1:
+        k = rng.randrange(1, n - 1)        # one step out to a third neighbouring degree
+        alt = body[k] + 1 if body[k] == b else body[k] - 1
+        if 0 <= alt <= S:
+            body[k] = alt
+    body = body[:n]
+    if body[-1] not in pens:
+        prev = body[-2] if n >= 2 else body[-1]
+        body[-1] = prev - 1 if prev - 1 in pens else max(p for p in pens if p <= body[-1])
+    bar1 = body + [cad[0]]
+    bar2 = body + [cad[1]]
+    # bar 3: the motif a degree lower, or the head of the motif answered by the zigzag a step away
+    if min(body) >= 1 and rng.random() < 0.6:
+        body3 = seq(body, -1)
+    else:
+        m = max(1, (n + 1) // 2)
+        lo3 = a - 1 if a >= 1 else a + 1
+        tail = [lo3 + 1 if k % 2 == 0 else lo3 for k in range(n - m)]
+        body3 = body[:m] + tail
+        if body3 == body and n - m >= 1:
+            body3[-1] = body3[-1] - 1 if body3[-1] >= 1 else body3[-1] + 1
+    bar3 = body3 + [cad[2]]
+    # bar 4: the head of the motif, then down by steps to the cadence, held
+    c3 = cad[3]
+    line: List[int] = []
+    for k in range(min(n, h - 2), -1, -1):
+        line = body[:k] + list(range(body[k - 1] - 1, c3, -1)) if k > 0 else list(range(min(S, c3 + h - 2), c3, -1))
+        if len(line) + 2 <= h:
+            break
+    bar4 = line + [c3] * (h - len(line))
+    return [bar1, bar2, bar3, bar4]
+
+
 BUILDERS = {
     "seyir": form_seyir, "cyclic": form_cyclic, "period": form_period, "raga": form_raga,
-    "song": form_song, "riff": form_riff, "arch": form_arch, "ostinato": form_ostinato,
+    "song": form_song, "riff": form_riff, "arch": form_arch, "ostinato": form_ostinato, "horon": form_horon,
 }
 
 

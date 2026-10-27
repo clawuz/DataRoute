@@ -58,6 +58,11 @@
   "pesrev": {"cards": ["mevlevi"], "comment": "peşrev opens the Mevlevi ayin (ney + kudüm)"},
   "sazsemaisi": {"cards": ["mevlevi"], "comment": "saz semaisi closes the Mevlevi ayin"}
  },
+ "title_regions": {
+  "karadeniz": {"cards": ["karadeniz"], "comment": "a folk piece whose title names the Black Sea (Karadeniz oyun havası, Çırpınırdı Karadeniz)"},
+  "horon": {"cards": ["karadeniz"], "comment": "the Black Sea dance itself"}
+ },
+ "title_regions_comment": "a word of the TITLE (split at '_') that decides the regional card of a folk form when the composer field names no known place",
  "regions": {
   "trabzon": {"cards": ["karadeniz"], "comment": "Black Sea"},
   "macka": {"cards": ["karadeniz"], "comment": "Black Sea (Trabzon)"},

@@ -175,6 +175,30 @@ class TestFormSignatures(unittest.TestCase):
             used = [d for bar in b for d in bar if d is not None]
             self.assertLessEqual(max(used), 5)
 
+    def test_horon(self):
+        """the Black Sea horon: a zigzag motif repeated exactly (bars 1-2 differ only in the cadence), a tight range, a held final"""
+        self.assertEqual(grammar.FORM_OF["karadeniz"], "horon")
+        same = total = zig = wins = 0
+        for cid, hits, p in phrases("horon", range(4, 10), 60):
+            b = p["b"]
+            total += 1
+            same += b[0][:-1] == b[1][:-1]
+            used = [d for bar in b for d in bar if d is not None]
+            self.assertLessEqual(max(used) - min(used), 5, (hits, b))
+            self.assertEqual([bar[-1] for bar in b], p["c"])
+            self.assertEqual(b[3][-1], b[3][-2], (hits, b))      # the held final
+            for bar in b:
+                for x, y, z in zip(bar, bar[1:], bar[2:]):
+                    wins += 1
+                    zig += x is not None and x == z and x != y
+            self.assertLessEqual(sum(d is None for bar in b for d in bar), 0.05 * 4 * hits, b)
+        self.assertGreaterEqual(same / total, 0.9)
+        self.assertGreaterEqual(zig / wins, 0.4)
+
+    def test_horon_is_deterministic(self):
+        self.assertEqual(grammar.generate("karadeniz", 6, 30, 4), grammar.generate("karadeniz", 6, 30, 4))
+        self.assertNotEqual(grammar.generate("karadeniz", 6, 30, 4), grammar.generate("karadeniz", 6, 30, 5))
+
     def test_arch(self):
         for cid, hits, p in phrases("arch"):
             b = p["b"]

@@ -188,8 +188,9 @@ describe("the repeat cap of the selector", () => {
     }
     expect(capped / total).toBeGreaterThan(0.5);
   });
-  it("the Black Sea idiom moves by step in a zigzag with few repeats", () => {
-    expect(idiomOf({ id: "karadeniz" })).toMatchObject({ step: 0.85, repeat: 0.1, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] });
+  it("the Black Sea idiom moves by step in a zigzag inside a fourth", () => {
+    // was { repeat: 0.1, span: 5, start: [3, 4, 2] }: the SymbTr horon tunes repeat a quarter of their notes and stay in degrees 0..4
+    expect(idiomOf({ id: "karadeniz" })).toMatchObject({ step: 0.85, repeat: 0.25, leaps: [2], bias: -1, span: 4, arc: 2, start: [2, 3, 1] });
   });
 });
 

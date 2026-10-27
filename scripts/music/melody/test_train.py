@@ -261,15 +261,48 @@ def check_bank(tc, path, ship):
     return bank
 
 
+class TestRegionCorpus(unittest.TestCase):
+    def test_horon_pieces(self):
+        """the karadeniz card trains on the eastern Black Sea tunes only: a place of the region, or the region named in the title"""
+        yes = ["segah--turku--sofyan--oy_kemence--ordu.txt", "rast--turku--devrituran--oynayin_kiz--trabzon.txt",
+               "segah--turku--turkaksagi--terazi--macka.txt", "karcigar--mandra--devrituran--karadeniz_oyunhavasi--.txt",
+               "huzzam--turku--ikizaksak--cirpinirdi_karadeniz--uzeyir_hacibeyov.txt", "ussak--turku--yuruksemai_ii--cilveloy--artvin.txt"]
+        no = ["acemasiran--sarki--aksak--gordum_seni--irfan_dogrusoz.txt", "mahur--sarki--aksak--muptelayim_hayli--kemenceci_usta_yani.txt",
+              "ferahnak--turku--duyek--mapusane_icinde--bartin.txt", "huseyni--turku--nimsofyan--bir_of_ceksem--kayseri.txt"]
+        for n in yes:
+            self.assertTrue(train.horon_piece(n), n)
+        for n in no:
+            self.assertFalse(train.horon_piece(n), n)
+
+    def test_training_phrases(self):
+        ph = [{"src": "symbtr", "piece": "rast--turku--devrituran--oynayin_kiz--trabzon.txt", "bars": []},
+              {"src": "symbtr", "piece": "hicaz--sarki--aksak--x--y.txt", "bars": []},
+              {"src": "pdmx", "piece": "./mid/a.mid", "bars": []}]
+        self.assertEqual(train.training_phrases("karadeniz", ph), ph[:1])
+        self.assertEqual(train.training_phrases("anatolian", ph), ph)
+
+    def test_region_card_learns_only_its_region(self):
+        """the other phrases of a region card are learned under an aside key of the same cluster: the card's own counts are the
+        region's, the cluster level (the back-off of the other cards) is unchanged"""
+        corpus = {"karadeniz": [dict(toy_phrase(src="symbtr", piece="x--turku--y--z--trabzon.txt")),
+                                dict(toy_phrase(src="symbtr", piece="x--sarki--y--z--w.txt", shift=1))]}
+        keyed = train.region_split(corpus)
+        self.assertEqual([p["piece"] for p in keyed["karadeniz"]], ["x--turku--y--z--trabzon.txt"])
+        self.assertEqual([p["piece"] for p in keyed[train.ASIDE + "karadeniz"]], ["x--sarki--y--z--w.txt"])
+        self.assertEqual(train.CLUSTER_OF[train.ASIDE + "karadeniz"], train.CLUSTER_OF["karadeniz"])
+
+
 class TestBanks(unittest.TestCase):
     def test_shippable(self):
         bank = check_bank(self, SHIP, ship=True)
         for cid, src in bank["sources"].items():
             self.assertTrue(set(src) <= {"pdmx", "nottingham", "grammar"}, (cid, src))
+        self.assertEqual(bank["sources"]["karadeniz"], ["grammar"])   # the horon grammar only (no SymbTr can ship)
 
     def test_local(self):
         bank = check_bank(self, LOCAL, ship=False)
         self.assertTrue(any("symbtr" in s for s in bank["sources"].values()))
+        self.assertEqual(bank["sources"]["karadeniz"], ["symbtr", "grammar"])
 
     def test_local_is_git_ignored(self):
         with open(os.path.join(ROOT, ".gitignore"), encoding="utf-8") as f:

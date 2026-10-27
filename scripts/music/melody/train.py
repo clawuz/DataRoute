@@ -58,6 +58,13 @@ POOL_SHARE = 1 / 3           # the rerank keeps this share of the unique phrases
 REUSE_CAP = 0.12             # the whole entry (trained + grammar) aims at most this much above the corpus's recurrence (the rule is
                              # 15 points; 3 points of margin for the rounding of a 64-phrase entry)
 SHIPPABLE_SOURCES = ("pdmx", "nottingham")
+# a card that trains on its REGION's folk tunes only (local bank: SymbTr), not on its whole makam family: the karadeniz card learns the
+# horon from the eastern Black Sea tunes (a place of the region in the composer field, or the region named in the title); the
+# western Black Sea (Samsun, Sinop, Kastamonu, Bartın) does not dance the horon and is left out
+HORON_PLACES = ("trabzon", "macka", "rize", "artvin", "giresun", "ordu")
+HORON_WORDS = ("karadeniz", "horon", "kemence")
+REGION_MIN = 150             # a region card trains on at least this many regional phrases (else it is the grammar's)
+ASIDE = "~"                  # the other phrases of a region card are learned under "~card" (same cluster): the back-off is unchanged
 
 
 # ---------------------------------------------------------------- cards
@@ -74,6 +81,42 @@ def _load_clusters() -> Dict[str, str]:
 
 
 CLUSTER_OF = _load_clusters()
+
+
+def horon_piece(name: str) -> bool:
+    """a SymbTr file of the eastern Black Sea: its place (the composer field) is one of HORON_PLACES, or a word of its title names the
+    region (whole words: "gordum" is not "ordu", "kemenceci" is not "kemence")"""
+    parts = os.path.basename(name)[:-4].split("--") if name.endswith(".txt") else name.split("--")
+    place = parts[4].split("-")[0] if len(parts) > 4 else ""
+    title = parts[3].split("_") if len(parts) > 3 else []
+    return place in HORON_PLACES or any(w in HORON_WORDS for w in title)
+
+
+REGION_OF = {"karadeniz": horon_piece}
+for _c in REGION_OF:
+    CLUSTER_OF[ASIDE + _c] = CLUSTER_OF.get(_c)
+
+
+def training_phrases(card: str, phrases):
+    """the phrases a card trains on: all of them, or for a region card (REGION_OF) the SymbTr phrases its region rule accepts"""
+    rule = REGION_OF.get(card)
+    if rule is None:
+        return list(phrases)
+    return [p for p in phrases if p["src"] == "symbtr" and p.get("via", "region") == "region" and rule(p["piece"])]
+
+
+def region_split(corpus):
+    """{card: phrases} with every region card's other phrases moved to ASIDE + card (learned, but not as the card's own)"""
+    out = {}
+    for card, phrases in corpus.items():
+        if card in REGION_OF:
+            own = training_phrases(card, phrases)
+            ids = {id(p) for p in own}
+            out[card] = own
+            out[ASIDE + card] = [p for p in phrases if id(p) not in ids]
+        else:
+            out[card] = phrases
+    return out
 
 
 def _load_octaves() -> Dict[str, int]:
@@ -667,10 +710,10 @@ def eligible(phrases: Sequence[dict]) -> bool:
 # ---------------------------------------------------------------- the real corpus
 
 def read_corpus(path: str = PHRASES):
-    """{card: [phrase lines]} for every .jsonl (only `src`, `piece` and `bars` kept)"""
+    """{card: [phrase lines]} for every .jsonl (only `src`, `piece`, `via` and `bars` kept)"""
     out = {}
     for fn in sorted(os.listdir(path)):
         if fn.endswith(".jsonl"):
             with open(os.path.join(path, fn), encoding="utf-8") as f:
-                out[fn[:-6]] = [{k: v for k, v in json.loads(line).items() if k in ("src", "piece", "bars")} for line in f]
+                out[fn[:-6]] = [{k: v for k, v in json.loads(line).items() if k in ("src", "piece", "via", "bars")} for line in f]
     return out

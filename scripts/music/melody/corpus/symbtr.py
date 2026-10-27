@@ -137,6 +137,9 @@ def cards_of(filename: str, table: dict) -> List[Tuple[str, str]]:
                 out[c] = via
 
     region = table["regions"].get(place) or table["regions"].get(place.split("-")[0])
+    if not region:  # no known place: a word of the title may name the region ("karadeniz_oyunhavasi")
+        title = parts[3] if len(parts) > 3 else ""
+        region = next((table.get("title_regions", {})[w] for w in title.split("_") if w in table.get("title_regions", {})), None)
     if form in table["forms"]:
         add(table["forms"][form]["cards"], "form")
     fam = table["_makam"].get(makam)

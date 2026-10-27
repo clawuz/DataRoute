@@ -10,7 +10,7 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 
 | source | licence | shippable | phrases (all cards) | pieces used (card x piece) |
 |---|---|---|---|---|
-| symbtr | CC BY-NC-SA 4.0 | no (local listening only) | 114300 | 6685 |
+| symbtr | CC BY-NC-SA 4.0 | no (local listening only) | 114276 | 6681 |
 | pdmx | CC BY 4.0 dataset; public-domain / CC0 scores | yes | 109483 | 8516 |
 | nottingham | GPL-3.0 repo; traditional tunes, open-access data | yes | 9420 | 1723 |
 
@@ -20,7 +20,7 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 |---|---|---|---|---|---|---|---|
 | afrobeat | 0 | 17 | 0 | 17 | 17 | 0 / 3 / 0 | grammar |
 | akdeniz | 5909 | 0 | 0 | 5909 | 0 | 344 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
-| anatolian | 13566 | 174 | 0 | 13740 | 174 | 863 / 12 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| anatolian | 13558 | 174 | 0 | 13732 | 174 | 862 / 12 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | andean | 0 | 381 | 0 | 381 | 381 | 0 / 25 / 0 | trained |
 | arabic | 5831 | 147 | 0 | 5978 | 147 | 335 / 12 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | baroque | 0 | 13975 | 0 | 13975 | 13975 | 0 / 567 / 0 | trained |
@@ -47,17 +47,17 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 | gamelan | 0 | 20 | 0 | 20 | 20 | 0 / 1 / 0 | grammar |
 | greek | 5932 | 197 | 0 | 6129 | 197 | 340 / 17 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | hindustani | 0 | 14 | 0 | 14 | 14 | 0 / 2 / 0 | grammar |
-| icanadolu | 9221 | 0 | 0 | 9221 | 0 | 538 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| icanadolu | 9213 | 0 | 0 | 9213 | 0 | 537 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | italian | 0 | 7129 | 0 | 7129 | 7129 | 0 / 456 / 0 | trained |
 | jazz | 0 | 5788 | 0 | 5788 | 5788 | 0 / 518 / 0 | trained |
-| karadeniz | 8592 | 8 | 0 | 8600 | 8 | 508 / 1 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| karadeniz | 8598 | 8 | 0 | 8606 | 8 | 509 / 1 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | karsilama | 6470 | 0 | 0 | 6470 | 0 | 371 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | khaleeji | 5831 | 21 | 0 | 5852 | 21 | 335 / 2 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | maghrebi | 5831 | 14 | 0 | 5845 | 14 | 335 / 2 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | mariachi | 0 | 350 | 0 | 350 | 350 | 0 / 45 / 0 | trained |
-| mevlevi | 17332 | 0 | 0 | 17332 | 0 | 978 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| mevlevi | 17326 | 0 | 0 | 17326 | 0 | 977 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | nordic | 0 | 1555 | 295 | 1850 | 1850 | 0 / 150 / 54 | trained |
-| persian | 14560 | 85 | 0 | 14645 | 85 | 839 / 4 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| persian | 14554 | 85 | 0 | 14639 | 85 | 838 / 4 / 0 | trained (local, SymbTr) / grammar (shippable) |
 | pop | 0 | 8428 | 0 | 8428 | 8428 | 0 / 553 / 0 | trained |
 | rnb | 0 | 4588 | 0 | 4588 | 4588 | 0 / 538 / 0 | trained |
 | romantic | 0 | 7485 | 0 | 7485 | 7485 | 0 / 547 / 0 | trained |
@@ -69,7 +69,7 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 | tango | 0 | 928 | 0 | 928 | 928 | 0 / 69 / 0 | trained |
 | thai | 0 | 48 | 0 | 48 | 48 | 0 / 5 / 0 | grammar |
 | westafrica | 0 | 86 | 0 | 86 | 86 | 0 / 11 / 0 | grammar |
-| zeybek | 8661 | 0 | 0 | 8661 | 0 | 511 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
+| zeybek | 8659 | 0 | 0 | 8659 | 0 | 510 / 0 / 0 | trained (local, SymbTr) / grammar (shippable) |
 
 ### Cards with fewer than 200 phrases -> grammar fallback
 
@@ -77,7 +77,7 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 |---|---|---|---|
 | afrobeat | 17 | 17 | both banks |
 | akdeniz | 5909 | 0 | shippable bank only (the local bank trains on SymbTr) |
-| anatolian | 13740 | 174 | shippable bank only (the local bank trains on SymbTr) |
+| anatolian | 13732 | 174 | shippable bank only (the local bank trains on SymbTr) |
 | arabic | 5978 | 147 | shippable bank only (the local bank trains on SymbTr) |
 | bollywood | 121 | 121 | both banks |
 | centralasia | 59 | 59 | both banks |
@@ -88,16 +88,16 @@ Built by `scripts/music/melody/build_corpus.py` (ingestors in `scripts/music/mel
 | gamelan | 20 | 20 | both banks |
 | greek | 6129 | 197 | shippable bank only (the local bank trains on SymbTr) |
 | hindustani | 14 | 14 | both banks |
-| icanadolu | 9221 | 0 | shippable bank only (the local bank trains on SymbTr) |
-| karadeniz | 8600 | 8 | shippable bank only (the local bank trains on SymbTr) |
+| icanadolu | 9213 | 0 | shippable bank only (the local bank trains on SymbTr) |
+| karadeniz | 8606 | 8 | shippable bank only (the local bank trains on SymbTr) |
 | karsilama | 6470 | 0 | shippable bank only (the local bank trains on SymbTr) |
 | khaleeji | 5852 | 21 | shippable bank only (the local bank trains on SymbTr) |
 | maghrebi | 5845 | 14 | shippable bank only (the local bank trains on SymbTr) |
-| mevlevi | 17332 | 0 | shippable bank only (the local bank trains on SymbTr) |
-| persian | 14645 | 85 | shippable bank only (the local bank trains on SymbTr) |
+| mevlevi | 17326 | 0 | shippable bank only (the local bank trains on SymbTr) |
+| persian | 14639 | 85 | shippable bank only (the local bank trains on SymbTr) |
 | thai | 48 | 48 | both banks |
 | westafrica | 86 | 86 | both banks |
-| zeybek | 8661 | 0 | shippable bank only (the local bank trains on SymbTr) |
+| zeybek | 8659 | 0 | shippable bank only (the local bank trains on SymbTr) |
 
 ### How the phrases came to each card
 
@@ -107,7 +107,7 @@ SymbTr `via`: region = a folk piece whose place (the composer field of a türkü
 |---|---|
 | afrobeat | pdmx/tier0 17 |
 | akdeniz | symbtr/makam 5831, symbtr/region 78 |
-| anatolian | pdmx/tier0 174, symbtr/form 4326, symbtr/makam 9240 |
+| anatolian | pdmx/tier0 174, symbtr/form 4326, symbtr/makam 9232 |
 | andean | pdmx/tier0 381 |
 | arabic | pdmx/tier0 147, symbtr/makam 5831 |
 | baroque | pdmx/tier0 13975 |
@@ -134,17 +134,17 @@ SymbTr `via`: region = a folk piece whose place (the composer field of a türkü
 | gamelan | pdmx/tier0 20 |
 | greek | pdmx/tier0 197, symbtr/form 156, symbtr/makam 5776 |
 | hindustani | pdmx/tier0 14 |
-| icanadolu | symbtr/makam 8377, symbtr/region 844 |
+| icanadolu | symbtr/makam 8369, symbtr/region 844 |
 | italian | pdmx/tier0 7129 |
 | jazz | pdmx/tier0 5788 |
-| karadeniz | pdmx/tier0 8, symbtr/makam 8377, symbtr/region 215 |
+| karadeniz | pdmx/tier0 8, symbtr/makam 8369, symbtr/region 229 |
 | karsilama | symbtr/form 520, symbtr/makam 5654, symbtr/region 296 |
 | khaleeji | pdmx/tier0 21, symbtr/makam 5831 |
 | maghrebi | pdmx/tier0 14, symbtr/makam 5831 |
 | mariachi | pdmx/tier0 350 |
-| mevlevi | symbtr/form 4476, symbtr/makam 12856 |
+| mevlevi | symbtr/form 4476, symbtr/makam 12850 |
 | nordic | nottingham/playford 69, nottingham/waltzes 226, pdmx/tier0 1555 |
-| persian | pdmx/tier0 85, symbtr/makam 14560 |
+| persian | pdmx/tier0 85, symbtr/makam 14554 |
 | pop | pdmx/tier0 8428 |
 | rnb | pdmx/tier0 4588 |
 | romantic | pdmx/tier0 7485 |
@@ -156,7 +156,7 @@ SymbTr `via`: region = a folk piece whose place (the composer field of a türkü
 | tango | pdmx/tier0 928 |
 | thai | pdmx/tier0 48 |
 | westafrica | pdmx/tier0 86 |
-| zeybek | symbtr/form 146, symbtr/makam 8353, symbtr/region 162 |
+| zeybek | symbtr/form 148, symbtr/makam 8349, symbtr/region 162 |
 
 ### PDMX: genres / tags -> cards
 
@@ -248,22 +248,22 @@ Written by `scripts/music/melody/evaluate.py --write` (exit code 1 when an accep
 
 ### Acceptance
 
-- `melody-bank.json`: cadence hit 96736/96736 bars (100.0%), 0 bars end on a rest.
+- `melody-bank.json`: cadence hit 96588/96588 bars (100.0%), 0 bars end on a rest.
 - `melody-bank.local.json`: cadence hit 100612/100612 bars (100.0%), 0 bars end on a rest.
-- KL(bank, corpus) < KL(walk, corpus) for 72 of 72 (card, hits) pairs of the 36 trained cards (smallest margin 0.015, pop hits 6).
-- Recurrence of the bank at most 15 points above the corpus's for every trained card and hits (largest excess +13 points, karadeniz hits 6).
+- KL(bank, corpus) < KL(walk, corpus) for 72 of 72 (card, hits) pairs of the 36 trained cards (smallest margin 0.008, karadeniz hits 6).
+- Recurrence of the bank at most 15 points above the corpus's for every trained card and hits (largest excess +13 points, slavic hits 8).
 - Result: PASS
 
 ### Averages
 
 | group | hits | cards | KL bank | KL walk | recurrence corpus / bank / trained part / walk | motifs corpus / bank / trained part / walk |
 |---|---|---|---|---|---|---|
-| trained | 6 | 36 | 0.051 | 0.122 | 57% / 65% / 56% / 100% | 3.17 / 3.06 / 3.24 / 2.84 |
-| trained | 8 | 36 | 0.041 | 0.121 | 45% / 50% / 42% / 100% | 3.36 / 3.30 / 3.48 / 2.99 |
+| trained | 6 | 36 | 0.049 | 0.119 | 58% / 65% / 57% / 100% | 3.15 / 3.04 / 3.22 / 2.84 |
+| trained | 8 | 36 | 0.040 | 0.120 | 46% / 51% / 44% / 100% | 3.34 / 3.28 / 3.46 / 2.98 |
 | trained (shippable) | 6 | 23 | 0.047 | 0.110 | 62% / 70% / 61% / 100% | 3.04 / 2.97 / 3.14 / 2.89 |
 | trained (shippable) | 8 | 23 | 0.045 | 0.111 | 54% / 58% / 52% / 100% | 3.21 / 3.21 / 3.35 / 2.99 |
-| trained (local, SymbTr) | 6 | 13 | 0.056 | 0.143 | 47% / 55% / 46% / 100% | 3.39 / 3.22 / 3.43 / 2.75 |
-| trained (local, SymbTr) | 8 | 13 | 0.034 | 0.140 | 29% / 36% / 25% / 100% | 3.64 / 3.46 / 3.71 / 2.98 |
+| trained (local, SymbTr) | 6 | 13 | 0.051 | 0.137 | 50% / 56% / 49% / 100% | 3.34 / 3.18 / 3.36 / 2.75 |
+| trained (local, SymbTr) | 8 | 13 | 0.030 | 0.138 | 32% / 39% / 29% / 100% | 3.59 / 3.42 / 3.65 / 2.98 |
 | grammar-only with a corpus | 6 | 16 | 0.214 | 0.127 | 62% / 87% / - / 96% | 3.09 / 2.17 / - / 2.91 |
 | grammar-only with a corpus | 8 | 16 | 0.230 | 0.127 | 51% / 79% / - / 94% | 3.28 / 2.35 / - / 3.04 |
 
@@ -275,7 +275,7 @@ Shares in %, step / leap / repeat / rest.
 |---|---|---|---|---|---|---|---|---|---|---|
 | afrobeat | shippable (grammar) | grammar | 0 / 17 / 0 | 58 / 32 / 10 / 4 | 37 / 40 / 23 / 16 | 40 / 28 / 32 / 0 | 0.138 / 0.144 | 0.231 / 0.204 | 47 / 100 / - / 100 | 3.41 / 2.00 / 3.00 |
 | akdeniz | local | symbtr+grammar | 5909 / 0 / 0 | 59 / 11 / 30 / 2 | 61 / 12 / 27 / 3 | 53 / 24 / 23 / 0 | 0.011 / 0.043 | 0.155 / 0.152 | 26 / 30 / 27 / 100 | 3.68 / 3.67 / 2.98 |
-| anatolian | local | symbtr+pdmx+grammar | 13566 / 174 / 0 | 55 / 10 / 35 / 2 | 60 / 10 / 30 / 3 | 53 / 19 / 28 / 0 | 0.020 / 0.046 | 0.090 / 0.084 | 32 / 42 / 33 / 100 | 3.59 / 3.52 / 2.96 |
+| anatolian | local | symbtr+pdmx+grammar | 13558 / 174 / 0 | 56 / 10 / 34 / 2 | 60 / 10 / 30 / 3 | 53 / 19 / 28 / 0 | 0.019 / 0.044 | 0.090 / 0.084 | 32 / 42 / 33 / 100 | 3.59 / 3.52 / 2.96 |
 | andean | shippable (grammar) | grammar | 0 / 381 / 0 | 49 / 15 / 36 / 6 | 44 / 46 / 10 / 6 | 50 / 23 / 28 / 0 | 0.397 / 0.341 | 0.060 / 0.070 | 49 / 34 / - / 100 | 3.33 / 3.66 / 2.98 |
 | arabic | local | symbtr+pdmx+grammar | 5831 / 147 / 0 | 59 / 11 / 30 / 2 | 60 / 13 / 27 / 3 | 55 / 20 / 24 / 0 | 0.013 / 0.039 | 0.070 / 0.061 | 27 / 28 / 29 / 100 | 3.66 / 3.69 / 2.97 |
 | baroque | shippable | pdmx+grammar | 0 / 13975 / 0 | 50 / 32 / 18 / 2 | 57 / 23 / 19 / 2 | 58 / 30 / 12 / 0 | 0.030 / 0.035 | 0.095 / 0.098 | 37 / 41 / 38 / 100 | 3.51 / 3.53 / 2.96 |
@@ -302,17 +302,17 @@ Shares in %, step / leap / repeat / rest.
 | gamelan | shippable (grammar) | grammar | 0 / 20 / 0 | 17 / 30 / 53 / 8 | 33 / 34 / 34 / 10 | 34 / 29 / 37 / 0 | 0.174 / 0.137 | 0.139 / 0.149 | 55 / 100 / - / 100 | 3.40 / 1.00 / 3.00 |
 | greek | local | symbtr+pdmx+grammar | 5932 / 197 / 0 | 59 / 11 / 30 / 2 | 53 / 20 / 27 / 2 | 45 / 29 / 26 / 0 | 0.058 / 0.057 | 0.193 / 0.211 | 29 / 41 / 16 / 100 | 3.63 / 3.17 / 3.00 |
 | hindustani | shippable (grammar) | grammar | 0 / 14 / 0 | 49 / 24 / 27 / 0 | 58 / 7 / 36 / 3 | 50 / 21 / 29 / 0 | 0.170 / 0.130 | 0.055 / 0.061 | 21 / 0 / - / 10 | 3.79 / 4.00 / 3.90 |
-| icanadolu | local | symbtr+grammar | 9221 / 0 / 0 | 57 / 9 / 34 / 2 | 59 / 9 / 32 / 3 | 53 / 19 / 28 / 0 | 0.018 / 0.048 | 0.101 / 0.094 | 29 / 34 / 31 / 100 | 3.63 / 3.59 / 2.96 |
+| icanadolu | local | symbtr+grammar | 9213 / 0 / 0 | 56 / 10 / 34 / 2 | 59 / 9 / 32 / 3 | 53 / 19 / 28 / 0 | 0.019 / 0.049 | 0.100 / 0.093 | 31 / 34 / 31 / 100 | 3.61 / 3.59 / 2.96 |
 | italian | shippable | pdmx+grammar | 0 / 7129 / 0 | 45 / 32 / 24 / 4 | 53 / 23 / 24 / 2 | 45 / 37 / 18 / 0 | 0.037 / 0.043 | 0.083 / 0.101 | 51 / 56 / 51 / 100 | 3.25 / 3.30 / 3.00 |
 | jazz | shippable | pdmx+grammar | 0 / 5788 / 0 | 37 / 35 / 28 / 6 | 41 / 32 / 27 / 9 | 42 / 40 / 18 / 0 | 0.020 / 0.027 | 0.082 / 0.088 | 44 / 55 / 36 / 100 | 3.37 / 3.12 / 3.00 |
-| karadeniz | local | symbtr+pdmx+grammar | 8592 / 8 / 0 | 57 / 10 / 33 / 3 | 51 / 18 / 31 / 2 | 47 / 22 / 30 / 0 | 0.090 / 0.093 | 0.149 / 0.146 | 29 / 41 / 16 / 100 | 3.63 / 3.19 / 2.98 |
-| karsilama | local | symbtr+grammar | 6470 / 0 / 0 | 58 / 9 / 33 / 2 | 56 / 16 / 28 / 2 | 48 / 27 / 25 / 0 | 0.064 / 0.120 | 0.239 / 0.253 | 31 / 42 / 18 / 100 | 3.61 / 3.12 / 3.00 |
+| karadeniz | local | symbtr+grammar | 8598 / 8 / 0 | 48 / 11 / 40 / 3 | 52 / 13 / 35 / 2 | 60 / 14 / 27 / 0 | 0.021 / 0.040 | 0.067 / 0.047 | 67 / 77 / 67 / 100 | 3.02 / 2.75 / 2.96 |
+| karsilama | local | symbtr+grammar | 6470 / 0 / 0 | 58 / 9 / 33 / 2 | 56 / 16 / 29 / 2 | 48 / 27 / 25 / 0 | 0.065 / 0.120 | 0.239 / 0.253 | 31 / 42 / 18 / 100 | 3.61 / 3.11 / 3.00 |
 | khaleeji | local | symbtr+pdmx+grammar | 5831 / 21 / 0 | 57 / 9 / 33 / 2 | 62 / 9 / 29 / 2 | 52 / 21 / 28 / 0 | 0.025 / 0.060 | 0.150 / 0.158 | 29 / 38 / 29 / 100 | 3.64 / 3.53 / 2.98 |
 | maghrebi | local | symbtr+pdmx+grammar | 5831 / 14 / 0 | 57 / 9 / 33 / 2 | 61 / 10 / 30 / 2 | 51 / 23 / 27 / 0 | 0.023 / 0.054 | 0.198 / 0.205 | 30 / 36 / 29 / 100 | 3.63 / 3.50 / 2.99 |
 | mariachi | shippable (grammar) | grammar | 0 / 350 / 0 | 34 / 30 / 36 / 6 | 49 / 28 / 22 / 3 | 43 / 33 / 24 / 0 | 0.127 / 0.130 | 0.087 / 0.088 | 57 / 100 / - / 100 | 3.05 / 1.61 / 3.00 |
-| mevlevi | local | symbtr+grammar | 17332 / 0 / 0 | 50 / 15 / 34 / 2 | 54 / 15 / 30 / 3 | 58 / 18 / 24 / 0 | 0.012 / 0.019 | 0.049 / 0.040 | 25 / 30 / 24 / 100 | 3.68 / 3.61 / 2.96 |
+| mevlevi | local | symbtr+grammar | 17326 / 0 / 0 | 50 / 16 / 34 / 2 | 55 / 15 / 30 / 3 | 58 / 18 / 24 / 0 | 0.013 / 0.018 | 0.048 / 0.039 | 25 / 30 / 24 / 100 | 3.69 / 3.64 / 2.96 |
 | nordic | shippable | pdmx+nottingham+grammar | 0 / 1555 / 295 | 41 / 32 / 27 / 3 | 54 / 20 / 26 / 2 | 50 / 20 / 31 / 0 | 0.065 / 0.053 | 0.109 / 0.104 | 61 / 53 / 60 / 100 | 3.06 / 3.25 / 2.99 |
-| persian | local | symbtr+pdmx+grammar | 14560 / 85 / 0 | 60 / 12 / 29 / 3 | 64 / 11 / 25 / 3 | 53 / 20 / 27 / 0 | 0.016 / 0.028 | 0.059 / 0.057 | 26 / 33 / 27 / 100 | 3.68 / 3.66 / 2.96 |
+| persian | local | symbtr+pdmx+grammar | 14554 / 85 / 0 | 60 / 12 / 28 / 3 | 64 / 12 / 24 / 3 | 53 / 20 / 27 / 0 | 0.016 / 0.024 | 0.056 / 0.054 | 26 / 33 / 27 / 100 | 3.67 / 3.66 / 2.96 |
 | pop | shippable | pdmx+grammar | 0 / 8428 / 0 | 34 / 29 / 37 / 6 | 37 / 33 / 30 / 5 | 37 / 32 / 30 / 0 | 0.042 / 0.066 | 0.074 / 0.081 | 54 / 64 / 49 / 100 | 3.18 / 3.12 / 3.00 |
 | rnb | shippable | pdmx+grammar | 0 / 4588 / 0 | 37 / 28 / 35 / 5 | 42 / 28 / 31 / 7 | 45 / 32 / 24 / 0 | 0.034 / 0.038 | 0.080 / 0.082 | 54 / 66 / 51 / 100 | 3.18 / 2.94 / 3.00 |
 | romantic | shippable | pdmx+grammar | 0 / 7485 / 0 | 39 / 35 / 26 / 4 | 53 / 24 / 23 / 3 | 53 / 33 / 14 / 0 | 0.076 / 0.079 | 0.184 / 0.183 | 54 / 52 / 53 / 100 | 3.19 / 3.38 / 3.00 |
@@ -324,7 +324,7 @@ Shares in %, step / leap / repeat / rest.
 | tango | shippable | pdmx+grammar | 0 / 928 / 0 | 43 / 27 / 30 / 5 | 51 / 21 / 29 / 3 | 49 / 29 / 23 / 0 | 0.032 / 0.025 | 0.095 / 0.097 | 49 / 52 / 49 / 100 | 3.33 / 3.45 / 2.98 |
 | thai | shippable (grammar) | grammar | 0 / 48 / 0 | 28 / 21 / 51 / 3 | 44 / 47 / 9 / 5 | 45 / 32 / 24 / 0 | 0.443 / 0.434 | 0.189 / 0.189 | 33 / 62 / - / 100 | 3.62 / 3.31 / 3.00 |
 | westafrica | shippable (grammar) | grammar | 0 / 86 / 0 | 40 / 11 / 49 / 4 | 27 / 43 / 29 / 13 | 39 / 29 / 32 / 0 | 0.361 / 0.301 | 0.155 / 0.166 | 60 / 100 / - / 100 | 2.93 / 1.00 / 3.00 |
-| zeybek | local | symbtr+grammar | 8661 / 0 / 0 | 57 / 10 / 34 / 2 | 61 / 9 / 30 / 3 | 56 / 20 / 25 / 0 | 0.021 / 0.053 | 0.116 / 0.114 | 28 / 34 / 29 / 100 | 3.65 / 3.58 / 2.97 |
+| zeybek | local | symbtr+grammar | 8659 / 0 / 0 | 31 / 22 / 47 / 3 | 42 / 16 / 41 / 3 | 56 / 20 / 25 / 0 | 0.037 / 0.041 | 0.168 / 0.142 | 33 / 36 / 31 / 100 | 3.59 / 3.52 / 2.97 |
 
 ### The five most common 4-note patterns (hits 8; three intervals, share of all 4-note windows in %)
 
@@ -332,7 +332,7 @@ Shares in %, step / leap / repeat / rest.
 |---|---|---|---|
 | afrobeat | `+1-1+1` 9.6, `-1+1-1` 8.2, `-1-1+1` 4.8, `-1-1-1` 3.7, `-1+1-2` 2.8 | `+1+1+1` 5.9, `+0+1+1` 2.1, `-1-1+0` 2.0, `+0-1-1` 2.0, `+0+0-2` 1.8 | `+0+0+0` 3.4, `-1+0+0` 2.6, `+0-1+0` 2.4, `+0+0-1` 2.4, `+1+0+0` 2.0 |
 | akdeniz | `+0+0+0` 8.4, `-1-1-1` 6.2, `-1-1+1` 4.6, `-1+1+1` 4.1, `+1-1-1` 4.0 | `-1-1-1` 6.9, `+0+0+0` 6.1, `+0-1-1` 4.7, `+1-1-1` 4.5, `-1-1+1` 4.3 | `-1-1-1` 4.5, `-1-1+0` 2.9, `+0-1-1` 2.6, `-1+0-1` 2.4, `-1+0+0` 2.3 |
-| anatolian | `+0+0+0` 10.5, `-1-1-1` 4.7, `+0+0-1` 4.2, `+0-1+0` 4.2, `-1+0-1` 4.0 | `+0+0+0` 5.6, `-1-1-1` 5.3, `+0-1-1` 5.3, `+0+0-1` 4.6, `-1-1+1` 4.0 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
+| anatolian | `+0+0+0` 10.0, `-1-1-1` 4.6, `+0-1+0` 4.2, `+0+0-1` 4.1, `-1+0-1` 4.1 | `+0+0+0` 5.6, `-1-1-1` 5.3, `+0-1-1` 5.3, `+0+0-1` 4.6, `-1-1+1` 4.1 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
 | andean | `+0+0+0` 13.1, `-1+1-1` 7.4, `+1-1+1` 6.1, `+0+0-1` 2.6, `-1+0+0` 2.5 | `+1-2+1` 3.6, `+1-1+1` 3.2, `+2-2+2` 3.2, `-2+1-2` 2.8, `-2+2-2` 2.8 | `-1-1-1` 2.9, `+0-1-1` 2.9, `-1+0-1` 2.8, `+0+0-1` 2.7, `-1-1+0` 2.6 |
 | arabic | `+0+0+0` 8.1, `-1-1-1` 6.3, `-1-1+1` 4.7, `-1+1+1` 4.1, `+1-1-1` 4.1 | `-1-1-1` 4.7, `+0+0+0` 4.7, `+0+0-1` 4.2, `+0-1-1` 4.1, `-1-1+1` 4.1 | `-1-1-1` 5.4, `-1-1+0` 3.9, `-1+0-1` 3.6, `+0-1-1` 3.2, `-1+0+0` 3.1 |
 | baroque | `+0+0+0` 5.3, `-1-1-1` 5.2, `+1+1+1` 3.2, `-1+1-1` 3.1, `+1-1+1` 2.9 | `-1-1-1` 5.7, `-1-1+1` 4.2, `+0+0+0` 4.0, `-1+1+1` 3.9, `+1+1+1` 3.7 | `-1-1-1` 3.1, `-1-1+1` 2.6, `+1+1+1` 2.6, `+1-1-1` 2.5, `+1+1-1` 2.4 |
@@ -349,7 +349,7 @@ Shares in %, step / leap / repeat / rest.
 | country | `+0+0+0` 6.2, `-1-1-1` 3.7, `+1+1+1` 2.7, `+1-1-1` 2.3, `-1+1+1` 2.3 | `-1-1-1` 3.5, `+0+0+0` 2.9, `+1+1+1` 2.8, `+1+1-1` 2.4, `-1+1+1` 2.2 | `+1-1-1` 2.0, `-1-1-1` 1.9, `+1+0+1` 1.8, `+1+0-1` 1.7, `-1-1+1` 1.5 |
 | cumbia | `+0+0+0` 13.3, `-1+1-1` 4.6, `+1-1+1` 4.1, `+1-1+0` 2.8, `-1+0+0` 2.4 | `+1+0+1` 3.4, `+0+1+0` 2.8, `+1+1+1` 2.2, `-1+2-1` 2.2, `+0+1-1` 2.0 | `+0+0+0` 3.6, `+0-1+0` 2.7, `-1+0+0` 2.3, `+0+1+0` 2.3, `+0+0-1` 2.3 |
 | dance | `+0+0+0` 13.0, `+0+0-1` 2.6, `-1+1-1` 2.2, `-1+0+0` 2.1, `+1+0+0` 2.0 | `+0+0+0` 6.4, `+0+0-1` 2.9, `+0+0+1` 2.5, `-1+0+0` 2.3, `+1+0+0` 2.3 | `+0+0+0` 3.2, `-1+0+0` 2.1, `+0+1+0` 2.0, `+1+0+0` 2.0, `+0+0-1` 1.8 |
-| dogu | `+0+0+0` 9.7, `-1-1-1` 4.9, `+0-1+0` 4.3, `-1+0-1` 4.2, `+0+0-1` 4.2 | `+0+0+0` 7.1, `+0+0-1` 4.0, `-1+1-1` 3.5, `-1+0+0` 3.3, `+1-1+1` 3.2 | `+0+0+0` 5.2, `+0-1+0` 2.9, `+0+0-1` 2.7, `-1+0+0` 2.6, `+0+0+1` 2.6 |
+| dogu | `+0+0+0` 9.7, `-1-1-1` 4.9, `+0-1+0` 4.3, `-1+0-1` 4.2, `+0+0-1` 4.2 | `+0+0+0` 7.1, `+0+0-1` 4.1, `-1+1-1` 3.4, `-1+0+0` 3.1, `+1-1+1` 3.1 | `+0+0+0` 5.2, `+0-1+0` 2.9, `+0+0-1` 2.7, `-1+0+0` 2.6, `+0+0+1` 2.6 |
 | eastafrica | `+0+0+0` 11.0, `+0+0+1` 3.4, `+0+0-1` 3.3, `-1+0+0` 3.2, `+1+0+0` 2.8 | `+0-2+0` 2.6, `+0+0+0` 2.4, `-2+0+2` 2.3, `+0+2+0` 2.1, `+2+0+0` 1.8 | `+0+0+0` 4.0, `+0-1+0` 2.5, `-1+0+0` 2.4, `+1+0+0` 2.2, `+0+0+1` 2.2 |
 | eastasia | `+0+0+0` 11.2, `+1-1+1` 4.6, `-1+1-1` 4.4, `+0+0-1` 2.6, `+1+0+0` 2.5 | `+0+0+0` 5.3, `+1-1+1` 3.8, `-1+1-1` 3.0, `+0+0+1` 2.9, `+1+0+0` 2.7 | `+0+0+0` 1.4, `-1+0+1` 1.4, `+0+1+0` 1.3, `-1+0+0` 1.3, `+0-1+2` 1.3 |
 | epic | `+0+0+0` 10.6, `+0+0-1` 1.9, `+1-1-1` 1.8, `-1-1-1` 1.8, `-1-1+1` 1.7 | `+0+0+0` 5.9, `-1+0+0` 2.4, `-1-1-1` 1.9, `+1+0+0` 1.9, `+0+0-1` 1.9 | `+1+0-1` 1.3, `+1+0+1` 1.3, `-1+1+1` 1.2, `+1-1-1` 1.1, `+1+1+0` 1.1 |
@@ -359,17 +359,17 @@ Shares in %, step / leap / repeat / rest.
 | gamelan | `+0+0+0` 21.8, `+0+0+2` 4.8, `+0+2+0` 3.8, `-2+0+0` 3.8, `+2-2+0` 3.5 | `+0+0+0` 4.0, `+0+1+0` 2.6, `-2+0+0` 2.4, `+1+0-2` 2.2, `+0-2+0` 2.2 | `+0+0+0` 5.8, `-1+0+0` 2.8, `+0-1+0` 2.7, `+0+0+1` 2.4, `+0+0-1` 2.4 |
 | greek | `+0+0+0` 8.3, `-1-1-1` 6.3, `-1-1+1` 4.8, `-1+1+1` 4.2, `+1-1-1` 4.1 | `+0+0+0` 4.9, `-1-1+1` 3.5, `-1+1+1` 3.5, `-1-1-1` 3.5, `-1+1-1` 3.4 | `+0+0+0` 2.3, `+1+0-1` 2.1, `+0-1+0` 2.1, `-1+0+0` 1.9, `+0+1+0` 1.8 |
 | hindustani | `+1+1+1` 6.9, `+1+0+1` 4.9, `+0+1+0` 4.2, `+0+0+0` 4.2, `+1+1-1` 3.6 | `+0+1+0` 8.8, `+1+0+1` 7.7, `+1+0+0` 6.9, `+1+1+0` 5.4, `+0+0+0` 5.0 | `+1+1+1` 4.1, `+0+1+1` 3.7, `+1+0+1` 3.7, `+1+1+0` 3.6, `+1+0+0` 3.4 |
-| icanadolu | `+0+0+0` 9.9, `-1-1-1` 4.6, `+0-1+0` 4.5, `-1+0-1` 4.4, `+0+0-1` 4.3 | `+0-1-1` 5.7, `+0+0+0` 5.5, `+0+0-1` 5.5, `-1-1-1` 4.9, `-1+0+0` 4.4 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
+| icanadolu | `+0+0+0` 10.0, `-1-1-1` 4.6, `+0-1+0` 4.5, `-1+0-1` 4.3, `+0+0-1` 4.3 | `+0-1-1` 5.6, `+0+0+0` 5.5, `+0+0-1` 5.4, `-1-1-1` 4.8, `-1+0+0` 4.4 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.9, `-1+0-1` 3.9, `-1+0+0` 3.4 |
 | italian | `+0+0+0` 7.4, `-1-1-1` 4.4, `-1+1-1` 3.0, `+1-1+1` 3.0, `+1+1+1` 2.4 | `+0+0+0` 5.2, `-1-1-1` 5.1, `-1-1+1` 4.0, `-1+1+1` 3.4, `+1+1+1` 3.2 | `+1-1-1` 1.5, `-1+1+1` 1.2, `+1+1+0` 1.2, `+1-1+1` 1.1, `+1+1+1` 1.1 |
 | jazz | `+0+0+0` 8.9, `-1-1-1` 1.9, `+1+1+1` 1.7, `+0+0-1` 1.6, `-1+1-1` 1.6 | `+0+0+0` 5.4, `+1+1+1` 2.2, `-1-1+1` 2.0, `+0+0-1` 2.0, `+1+0+0` 1.9 | `+1+0-1` 1.3, `+1-1-1` 1.2, `+1+0+1` 1.1, `+1+1+0` 1.0, `+1+1+1` 1.0 |
-| karadeniz | `+0+0+0` 9.0, `-1-1-1` 4.8, `-1+0-1` 4.7, `+0-1+0` 4.6, `+0+0-1` 4.2 | `+0+0+0` 6.0, `+0+0-1` 4.7, `+0-1+0` 3.9, `-1+0-1` 3.9, `-1-1-1` 3.5 | `-1+0+0` 3.3, `-1+0-1` 3.2, `+0-1-1` 3.2, `+0+0+0` 3.0, `-1-1-1` 3.0 |
-| karsilama | `+0+0+0` 9.9, `-1-1-1` 5.5, `-1-1+1` 4.3, `+0+0-1` 4.1, `-1+0-1` 4.1 | `+0+0+0` 5.4, `+1-1+1` 4.4, `-1+1-1` 4.1, `+0+0-1` 3.6, `-1-1-1` 3.3 | `+1+0-1` 2.1, `+0+0+0` 2.0, `+0-1+0` 2.0, `+0-1-1` 1.9, `-1+0+0` 1.9 |
+| karadeniz | `+0+0+0` 16.5, `+0+0-1` 4.1, `+1+0+0` 3.4, `-1-1-1` 3.3, `+0-1-1` 3.3 | `+0+0+0` 9.5, `+0+0-1` 5.9, `+0-1-1` 4.3, `+1-1+1` 4.1, `-1+0+0` 4.1 | `-1-1-1` 5.2, `-1-1+0` 4.3, `-1+0-1` 4.0, `+0-1-1` 3.8, `+1-1-1` 3.0 |
+| karsilama | `+0+0+0` 9.9, `-1-1-1` 5.5, `-1-1+1` 4.3, `+0+0-1` 4.1, `-1+0-1` 4.1 | `+0+0+0` 5.6, `+1-1+1` 4.6, `-1+1-1` 4.0, `+0+0-1` 3.6, `-1-1-1` 3.3 | `+1+0-1` 2.1, `+0+0+0` 2.0, `+0-1+0` 2.0, `+0-1-1` 1.9, `-1+0+0` 1.9 |
 | khaleeji | `+0+0+0` 9.8, `-1-1-1` 5.5, `-1-1+1` 4.2, `+0-1+0` 4.2, `+0+0-1` 4.2 | `-1-1-1` 7.0, `+0+0+0` 6.2, `+0+0-1` 5.4, `+1-1-1` 4.5, `-1+0+0` 4.3 | `-1-1-1` 4.4, `+0-1-1` 3.6, `-1+0-1` 3.5, `-1-1+0` 3.4, `-1+0+0` 2.8 |
 | maghrebi | `+0+0+0` 9.8, `-1-1-1` 5.5, `-1-1+1` 4.3, `+0+0-1` 4.2, `+0-1+0` 4.1 | `+0+0+0` 6.2, `-1-1-1` 5.7, `+0+0-1` 4.6, `+0-1-1` 4.4, `+1-1-1` 4.3 | `-1-1-1` 3.6, `+0-1-1` 3.0, `-1-1+0` 2.9, `-1+0-1` 2.8, `-1+0+0` 2.7 |
 | mariachi | `+0+0+0` 15.8, `-1-1-1` 2.2, `+0+0-1` 1.9, `+0+0+1` 1.5, `+0-1-1` 1.4 | `+1-1+1` 7.6, `-1+1-1` 6.7, `+0+1+0` 5.5, `+1+0+1` 5.0, `-2+2-2` 2.7 | `+0+0+0` 2.0, `+1+0-1` 1.6, `-1+0-1` 1.6, `+0+1+0` 1.5, `+1+0+1` 1.4 |
-| mevlevi | `+0+0+0` 9.1, `-1-1-1` 4.1, `+0+0-1` 3.8, `+0-1+0` 3.2, `-1-1+1` 3.2 | `+0+0+0` 5.9, `+0+0-1` 4.7, `-1-1-1` 4.6, `+0-1-1` 4.1, `+1-1-1` 3.6 | `-1-1-1` 7.0, `-1-1+0` 4.1, `-1+0-1` 3.8, `+0-1-1` 3.3, `-1+0+0` 2.9 |
+| mevlevi | `+0+0+0` 8.8, `-1-1-1` 4.0, `+0+0-1` 3.7, `+0-1+0` 3.3, `-1-1+1` 3.2 | `+0+0+0` 6.3, `-1-1-1` 4.8, `+0+0-1` 4.5, `+0-1-1` 4.2, `+1-1-1` 3.6 | `-1-1-1` 7.0, `-1-1+0` 4.1, `-1+0-1` 3.8, `+0-1-1` 3.3, `-1+0+0` 2.9 |
 | nordic | `+0+0+0` 9.0, `-1-1-1` 2.6, `-1+1+1` 2.5, `-1-1+1` 2.3, `+1-1+1` 2.1 | `+0+0+0` 5.0, `+1+1+1` 4.4, `-1+1+1` 3.8, `-1-1-1` 3.5, `-1-1+1` 3.3 | `+0+0+0` 3.3, `-1+0+0` 2.9, `+0-1+0` 2.8, `+0+0-1` 2.7, `+1+0-1` 2.6 |
-| persian | `+0+0+0` 7.5, `-1-1-1` 6.4, `-1-1+1` 4.5, `+1-1-1` 4.4, `-1+1+1` 3.7 | `-1-1-1` 6.8, `+0+0+0` 5.0, `+0-1-1` 4.6, `+1-1-1` 4.3, `-1+1-1` 4.0 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.8, `-1+0-1` 3.7, `-1+0+0` 3.4 |
+| persian | `+0+0+0` 7.5, `-1-1-1` 6.5, `-1-1+1` 4.5, `+1-1-1` 4.4, `-1+1+1` 3.7 | `-1-1-1` 7.1, `+0+0+0` 4.8, `+0-1-1` 4.4, `+1-1-1` 4.3, `-1+1-1` 4.0 | `-1-1-1` 4.9, `-1-1+0` 3.9, `+0-1-1` 3.8, `-1+0-1` 3.7, `-1+0+0` 3.4 |
 | pop | `+0+0+0` 12.3, `+0+0-1` 2.5, `-1+1-1` 1.9, `+1+0+0` 1.8, `-1+0+0` 1.8 | `+0+0+0` 5.5, `+0+0-1` 2.8, `+1+0+0` 2.6, `+0+0+1` 2.1, `-1-1+1` 1.8 | `+0+0+0` 3.2, `-1+0+0` 2.1, `+0+1+0` 2.0, `+1+0+0` 2.0, `+0+0-1` 1.8 |
 | rnb | `+0+0+0` 10.9, `+0+0-1` 2.5, `-1+1-1` 1.8, `+1+0+0` 1.8, `+0-1-1` 1.8 | `+0+0+0` 4.9, `+1+1+1` 3.4, `+0+0-1` 2.7, `-1-1+0` 2.4, `+0+1+1` 2.3 | `+1+0-1` 1.8, `+0+0+0` 1.6, `+1+0+1` 1.6, `-1+0-1` 1.6, `-1+0+0` 1.5 |
 | romantic | `+0+0+0` 8.6, `-1+1-1` 3.3, `+1-1+1` 3.2, `-1-1-1` 2.1, `+1+1+1` 1.9 | `+1+1+1` 4.7, `+0+0+0` 4.6, `-1-1-1` 3.1, `+1+1-1` 3.1, `-1-1+1` 2.8 | `-1-1-1` 2.4, `+1+1+1` 2.2, `+1-1-1` 2.2, `-1-1+1` 2.0, `-1+1+1` 1.9 |
@@ -381,7 +381,7 @@ Shares in %, step / leap / repeat / rest.
 | tango | `+0+0+0` 9.5, `-1-1-1` 2.7, `+0+0-1` 2.0, `+1-1-1` 2.0, `-1+1-1` 2.0 | `+0+0+0` 5.8, `-1-1-1` 3.6, `+0+0-1` 3.1, `-1+1-1` 2.8, `-1+0+0` 2.8 | `-1-1-1` 2.6, `-1+0-1` 2.0, `-1+0+0` 1.9, `-1-1+0` 1.9, `+0-1-1` 1.8 |
 | thai | `+0+0+0` 35.9, `+0+0-1` 1.9, `+1+1+1` 1.9, `-1+0+0` 1.7, `-1-1+1` 1.5 | `+1-2+1` 2.9, `+1-1+1` 2.8, `-2+1+1` 2.4, `-2+2-2` 2.2, `-1+1-1` 1.9 | `+1+0-1` 1.8, `+0+0+0` 1.6, `+1+0+1` 1.6, `-1+0-1` 1.6, `-1+0+0` 1.5 |
 | westafrica | `+0+0+0` 19.8, `+0+0-1` 3.7, `+1+0+0` 3.5, `-1+0+0` 3.5, `-1-1+0` 3.2 | `+0-2+0` 2.4, `+0+0+0` 2.2, `-2+0+2` 2.0, `+0+0-2` 1.8, `+0+0+2` 1.7 | `+0+0+0` 4.0, `+0-1+0` 2.5, `-1+0+0` 2.4, `+1+0+0` 2.2, `+0+0+1` 2.2 |
-| zeybek | `+0+0+0` 9.4, `-1-1-1` 4.9, `+0-1+0` 4.5, `-1+0-1` 4.4, `+0+0-1` 4.4 | `-1-1-1` 5.8, `+0+0+0` 5.6, `+0+0-1` 5.0, `+0-1-1` 4.0, `+1-1-1` 3.9 | `-1-1-1` 5.7, `-1-1+0` 4.0, `-1+0-1` 3.7, `+0-1-1` 3.4, `-1+0+0` 2.8 |
+| zeybek | `+0+0+0` 15.4, `+0+0-1` 5.8, `+0-1+0` 4.3, `-2+0+0` 3.0, `+1+0+0` 2.8 | `+0+0+0` 10.1, `+0+0-1` 6.5, `+0-1+1` 3.8, `+0-1+0` 3.6, `+1+0+0` 3.2 | `-1-1-1` 5.7, `-1-1+0` 4.0, `-1+0-1` 3.7, `+0-1-1` 3.4, `-1+0+0` 2.8 |
 
 ## Evaluation: reading
 
@@ -423,3 +423,47 @@ The 16 listed cards have small corpora, and against them the grammar's mean KL i
 - **Pool order:** the 64 phrases are a fixed pseudo-random sample of the pool, no longer its head. The head of a likelihood ranking is mostly steps.
 - **Held bars:** the Task 2 penalty (-0.75 per bar held for more than half its slots) took the repeats out of funk and pop, whose KL was then above the walk's. With no penalty, held bars were 2-3 times the corpus's rate. The penalty is now calibrated per (card, hits) so that the share of held bars matches the corpus (padding not counted).
 - **Cadence approach:** the note before each forced cadence is drawn weighted by the model's probability of the move into the cadence (`CADENCE_AWARE`). Without it, the forced arrivals were mostly ±2 degrees; this was the last fix for funk and pop at hits 6.
+
+## Karadeniz
+
+The karadeniz card learns the horon from the eastern Black Sea tunes of SymbTr only (`train.horon_piece`: the place in the composer field is Trabzon, Maçka, Rize, Artvin, Giresun or Ordu, or a word of the title is karadeniz / horon / kemence; 16 pieces, 186 phrases), mixed 70% trained / 30% the `horon` grammar form in the LOCAL bank; the shippable bank is the `horon` form only. Before, it was the `cyclic` form (shippable) and the whole uşşak family of SymbTr (local). Measured at hits 8 (the bank: all 64 phrases of the entry). zigzag = share of windows of three consecutive notes of a bar that go A-B-A; repeat = share of the moves between consecutive notes that repeat the note; range = mean (highest - lowest degree) per phrase, and the share of phrases within a fifth (<= 4 degrees); bar 1 = bar 2 = the share of phrases whose bars 1 and 2 are the same up to the last slot; patterns = the five most common windows of four consecutive degrees (0 = the karar), share of all windows in %.
+
+| source | phrases | zigzag | repeat | range (<= 4) | bar 1 = bar 2 | rests |
+|---|---|---|---|---|---|---|
+| corpus: the region's tunes, notes as written | 186 | 14 | 40 | 3.9 (69) | 4 | 0 |
+| corpus: the region's tunes, reduced to 8 slots | 186 | 8 | 58 | 3.8 (75) | 10 | 3 |
+| corpus: the uşşak-family SymbTr pieces it trained on before, reduced to 8 slots | 2000 | 12 | 49 | 4.4 (50) | 3 | 3 |
+| bank (local, symbtr+grammar, the new one) | 64 | 25 | 35 | 4.2 (69) | 36 | 2 |
+| bank (shippable, grammar: the horon form) | 64 | 50 | 17 | 3.2 (100) | 100 | 0 |
+| old bank (shippable, the cyclic form) | 64 | 25 | 21 | 4.5 (55) | 100 | 4 |
+| old bank (local, symbtr+pdmx+grammar: the whole uşşak family) | 64 | 20 | 31 | 5.2 (27) | 30 | 2 |
+
+| source | the five most common 4-degree patterns |
+|---|---|
+| corpus: the region's tunes, notes as written | `4 4 4 4` 10.2, `3 3 3 3` 3.3, `4 4 4 3` 2.3, `2 1 0 0` 2.1, `3 2 1 0` 2.0 |
+| corpus: the region's tunes, reduced to 8 slots | `4 4 4 4` 12.3, `0 0 0 0` 7.6, `3 3 3 3` 6.3, `2 2 2 2` 3.1, `1 1 1 1` 3.0 |
+| corpus: the uşşak-family SymbTr pieces it trained on before, reduced to 8 slots | `4 4 4 4` 12.8, `0 0 0 0` 3.5, `4 4 4 3` 3.0, `-2 -2 -2 -2` 2.4, `3 3 3 3` 2.2 |
+| bank (local, symbtr+grammar, the new one) | `2 2 2 2` 4.9, `2 2 2 1` 2.4, `2 2 1 0` 2.0, `3 2 2 2` 1.8, `2 1 0 0` 1.8 |
+| bank (shippable, grammar: the horon form) | `1 2 1 2` 5.3, `2 1 2 1` 4.7, `2 1 0 0` 3.0, `2 3 2 3` 2.9, `2 1 2 2` 2.8 |
+| old bank (shippable, the cyclic form) | `2 1 1 0` 2.5, `1 1 0 0` 2.1, `3 1 2 0` 2.1, `2 2 1 1` 2.0, `3 2 2 1` 1.8 |
+| old bank (local, symbtr+pdmx+grammar: the whole uşşak family) | `2 2 2 2` 2.5, `2 2 2 1` 2.2, `2 2 1 0` 1.8, `3 2 2 1` 1.5, `3 2 2 2` 1.4 |
+
+## Karadeniz: reading
+
+- The generated `horon` form does what it is asked: bars 1 and 2 are the same motif up to the cadence in every phrase, half of the
+  three-note windows zigzag (A-B-A), every phrase stays within a fifth (degrees 0..4), no rests, the final is held. The old `cyclic`
+  form had the AA repeat too, but turned a two-note cell over in pairs (`2 1 1 0`, `1 1 0 0`) over a wider range (4.5 degrees,
+  45% of the phrases wider than a fifth).
+- The region's tunes are narrow (3.9 degrees, 69% within a fifth, against 4.4 / 50% for the uşşak-family pieces the card trained on
+  before) and repeat many notes (40% of the moves as written: the kemençe's repeated sixteenths). Their zigzag share, measured on
+  every window of all 186 phrases, is low (14% as written, 8% reduced to 8 slots): the zigzag is the idiom of the horon tunes'
+  motifs, but most windows of a whole tune are repeated notes and scale runs. The bars 1 = 2 measure is exact equality, which the
+  written tunes (ornaments, different note counts per bar) rarely reach.
+- The trained part of the local bank follows the corpus (repeats, narrow range, `2 1 0 0` descents to the karar); the 30% `horon`
+  grammar adds the zigzag and the exact AA. The shippable bank (no SymbTr) is the `horon` form only. Its repeat share (17%) is below
+  the corpus's: the form puts the zigzag first.
+- The region gives 186 phrases from 16 pieces (Trabzon, Maçka, Rize, Artvin, Giresun, Ordu, and two pieces that name the Black Sea in
+  the title). That is under the 400 / 40 rule of the other cards; the card trains with `train.REGION_MIN` = 150, and the move contexts
+  with fewer than 30 observations back off to the Turkish cluster (which keeps the card's other SymbTr phrases under `~karadeniz`).
+- dogu is NOT trained on its region only: Erzurum, Kars, Van, Diyarbakır, Malatya, Elazığ and Bingöl give 316 regional phrases (Van and
+  Bingöl none), under the 400 asked for; it keeps the hicaz family (and its own region's 733 phrases including Urfa, Gaziantep...).

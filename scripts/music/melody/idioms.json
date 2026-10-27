@@ -612,18 +612,18 @@
    ]
   },
   "karadeniz": {
-   "step": 0.7,
-   "repeat": 0.3,
+   "step": 0.85,
+   "repeat": 0.25,
    "leaps": [
     2
    ],
    "bias": -1,
-   "span": 5,
+   "span": 4,
    "arc": 2,
    "start": [
+    2,
     3,
-    4,
-    2
+    1
    ],
    "cadence": [
     2,

@@ -140,7 +140,7 @@ class TestCards(unittest.TestCase):
         named = set()
         for fam in mk["families"].values():
             named.update(fam["cards"])
-        for v in list(mk["forms"].values()) + list(mk["regions"].values()):
+        for v in list(mk["forms"].values()) + list(mk["regions"].values()) + list(mk["title_regions"].values()):
             named.update(v["cards"])
         for r in cm["pdmx"]["rules"]:
             named.add(r["card"])
@@ -268,6 +268,13 @@ class TestSymbTr(unittest.TestCase):
         self.assertEqual(symbtr.cards_of("acem--seyir--sofyan--1--x.txt", mk), [])   # seyir = a scale demonstration: not used
         cs = dict(symbtr.cards_of("zzunknown--sarki--aksak--x--y.txt", mk))
         self.assertEqual(cs, {"anatolian": "makam"})
+        # a folk piece whose TITLE names the region (no place in the composer field) goes to the region's card too
+        cs = dict(symbtr.cards_of("karcigar--mandra--devrituran--karadeniz_oyunhavasi--.txt", mk))
+        self.assertEqual(cs.get("karadeniz"), "region")
+        cs = dict(symbtr.cards_of("huzzam--turku--ikizaksak--cirpinirdi_karadeniz--uzeyir_hacibeyov.txt", mk))
+        self.assertEqual(cs.get("karadeniz"), "region")
+        cs = dict(symbtr.cards_of("ussak--sarki--aksak--karadeniz--y.txt", mk))   # not a folk form: the makam decides
+        self.assertNotEqual(cs.get("karadeniz"), "region")
 
     def test_repeat_bar_code_skips_the_piece(self):
         txt = SYMBTR_TXT + "16\t35\t\t\t-1\t-1\t0\t0\t0\t0\t0\t\t3.0\n"

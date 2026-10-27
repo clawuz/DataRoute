@@ -108,13 +108,15 @@ describe("the Karadeniz kemençe moves between notes and slides into them", () =
   const hook = order[1].i;
   const TUNE = /^(KEMENCE|SAZ|BAGLAMA)/;
   for (const melody of ["bank", "walk"] as const) {
-    it(`${melody}: at most 25% of the moves of the drawn kemençe / saz hook notes repeat the pitch; at least 40% of the kemençe hook notes glide`, () => {
+    it(`${melody}: at most 30% of the moves of the drawn kemençe / saz hook notes repeat the pitch; at least 40% of the kemençe hook notes glide`, () => {
       const piece = composePiece("visited", routes, { melody });
       const line = piece.notes.filter((n) => n.show !== false && n.route === hook && TUNE.test(String(n.instrument))).sort((a, b) => a.t - b.t);
       expect(line.length).toBeGreaterThan(50);
       let rep = 0;
       for (let k = 1; k < line.length; k++) if (Math.abs(12 * Math.log2(line[k].freq / line[k - 1].freq)) < 0.5) rep++;
-      expect(rep / (line.length - 1)).toBeLessThanOrEqual(0.25);
+      // was 0.25: the Black Sea walk idiom now repeats a quarter of its moves (repeat 0.25, the SymbTr horon tunes repeat 25-40% of
+      // their notes), so the drawn line sits at about 0.25; the cap still keeps lines of repeated notes away
+      expect(rep / (line.length - 1)).toBeLessThanOrEqual(0.3);
       const kem = line.filter((n) => String(n.instrument).startsWith("KEMENCE"));
       expect(kem.length).toBeGreaterThan(50);
       expect(kem.filter((n) => n.glide !== undefined && n.glide !== 0).length / kem.length).toBeGreaterThanOrEqual(0.4);

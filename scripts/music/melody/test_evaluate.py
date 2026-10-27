@@ -39,6 +39,14 @@ class TestMeasures(unittest.TestCase):
         self.assertIn("pop", f[0])
         self.assertEqual(len(ev.failures([], {"x": (4, 3, 1)})), 2)
 
+    def test_karadeniz_measures(self):
+        self.assertEqual(ev.zigzag([[1, 2, 1, 2, 0], [3, None, 3, 3]]), (2, 4))   # 1 2 1, 2 1 2 zig; 1 2 0, 3 3 3 not
+        st = ev.phrase_stats([[[1, 2, 1, 2], [1, 2, 1, 0], [0, 1, 0, 2], [1, 0, 0, 0]]])
+        self.assertEqual(st["same12"], 1.0)
+        self.assertEqual(st["range"], 2)
+        self.assertEqual(st["patterns"][0][0], "1 2 1 2")
+        self.assertAlmostEqual(st["repeat"], 3 / 15)
+
     def test_walk_samples_file(self):
         if not os.path.exists(ev.WALK):
             self.skipTest("walk samples not dumped")

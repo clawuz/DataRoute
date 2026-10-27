@@ -22,6 +22,8 @@ melody-bank.json; its corpus is the sources the bank was trained on (for a gramm
 
 Run from the repository root:  python3 scripts/music/melody/evaluate.py [--write] [--sample N]
 (--write rewrites the "## Evaluation" section of docs/music-melody-model-report.md)
+The Karadeniz evidence (the horon: zigzag, repeats, range, bar 1 = bar 2, 4-degree patterns; region corpus vs bank vs an old bank):
+                               python3 scripts/music/melody/evaluate.py --karadeniz OLD_SHIP.json [OLD_LOCAL.json] [--write]
 """
 from __future__ import annotations
 
@@ -138,7 +140,7 @@ def evaluate_card(cid, bank, which, corpus_all, walk, n_sample):
     src = [s for s in bank["sources"][cid] if s != "grammar"]
     trained = bool(src)
     use = src if trained else [s for s in SOURCES if s != "symbtr" or which == "local"]
-    ph = [p for p in corpus_all.get(cid, []) if p["src"] in use]
+    ph = [p for p in (train.training_phrases(cid, corpus_all.get(cid, [])) if trained else corpus_all.get(cid, [])) if p["src"] in use]
     sizes = {s: sum(p["src"] == s for p in corpus_all.get(cid, [])) for s in SOURCES}
     row = {"card": cid, "bank": which, "trained": trained, "sources": "+".join(bank["sources"][cid]), "sizes": sizes, "n": len(ph), "h": {}}
     if not ph:
@@ -303,9 +305,118 @@ def section(rows, checks, n_sample: int) -> str:
     return "\n".join(L)
 
 
-def write_report(sec: str) -> None:
+# ---------------------------------------------------------------- the Karadeniz evidence
+
+def zigzag(bars) -> tuple:
+    """(zigzag windows, windows): three consecutive sounding notes of a bar where the first and the third are the same and the middle
+    differs (A-B-A)"""
+    z = w = 0
+    for bar in bars:
+        line = [d for d in bar if d is not None]
+        for x, y, q in zip(line, line[1:], line[2:]):
+            w += 1
+            z += x == q != y
+    return z, w
+
+
+def degree_patterns(lines, k: int = 5):
+    """the k most common windows of four consecutive sounding degrees (absolute degrees: 0 = the karar), with their shares"""
+    c = Counter()
+    for line in lines:
+        notes = [d for d in line if d is not None]
+        for i in range(len(notes) - 3):
+            c[tuple(notes[i:i + 4])] += 1
+    tot = max(1, sum(c.values()))
+    return [(" ".join(map(str, pat)), n / tot) for pat, n in c.most_common(k)]
+
+
+def phrase_stats(phrases) -> dict:
+    """the measures of the Karadeniz section over phrases of four bars (degree lists, None = rest)"""
+    z = w = 0
+    ivs = []
+    ranges = []
+    same = 0
+    slots = rests = 0
+    lines = []
+    for b in phrases:
+        zz, ww = zigzag(b)
+        z, w = z + zz, w + ww
+        line = [d for bar in b for d in bar]
+        lines.append(line)
+        ivs += moves(line)
+        notes = [d for d in line if d is not None]
+        ranges.append(max(notes) - min(notes))
+        same += b[0][:-1] == b[1][:-1]
+        slots += len(line)
+        rests += sum(d is None for d in line)
+    n = max(1, len(phrases))
+    return {"n": len(phrases), "patterns": degree_patterns(lines), "zigzag": z / max(1, w),
+            "repeat": sum(i == 0 for i in ivs) / max(1, len(ivs)), "range": sum(ranges) / n,
+            "range4": sum(r <= 4 for r in ranges) / n, "same12": same / n, "rest": rests / max(1, slots)}
+
+
+def written_bars(ph, card):
+    """a corpus phrase as written: the clamped degrees of its notes, bar by bar"""
+    cl = train.clamp_phrase(ph["bars"], train.span_of(card), train.OCTAVE_OF.get(card, 7))
+    return [[n[1] for n in sorted(bar, key=lambda n: n[0])] for bar in cl]
+
+
+def karadeniz_rows(old_ship: str, old_local: str = None, h: int = 8):
+    corpus = train.read_corpus()["karadeniz"]
+    region = train.training_phrases("karadeniz", corpus)
+    ids = {id(p) for p in region}
+    makam = [p for p in corpus if p["src"] == "symbtr" and id(p) not in ids]
+    ship = json.load(open(SHIP, encoding="utf-8"))
+    local = json.load(open(LOCAL, encoding="utf-8")) if os.path.exists(LOCAL) else None
+    rows = [
+        ("corpus: the region's tunes, notes as written", phrase_stats([written_bars(p, "karadeniz") for p in region])),
+        (f"corpus: the region's tunes, reduced to {h} slots", phrase_stats([train.prepare(p["bars"], "karadeniz", h) for p in region])),
+        (f"corpus: the uşşak-family SymbTr pieces it trained on before, reduced to {h} slots",
+         phrase_stats([train.prepare(p["bars"], "karadeniz", h) for p in sample(makam, 2000)])),
+    ]
+    if local is not None:
+        rows.append((f"bank (local, {'+'.join(local['sources']['karadeniz'])}, the new one)",
+                     phrase_stats([decode(s) for s in local["cards"]["karadeniz"][str(h)]])))
+    rows.append((f"bank (shippable, {'+'.join(ship['sources']['karadeniz'])}: the horon form)",
+                 phrase_stats([decode(s) for s in ship["cards"]["karadeniz"][str(h)]])))
+    old = json.load(open(old_ship, encoding="utf-8"))
+    rows.append(("old bank (shippable, the cyclic form)", phrase_stats([decode(s) for s in old["cards"]["karadeniz"][str(h)]])))
+    if old_local:
+        ol = json.load(open(old_local, encoding="utf-8"))
+        rows.append((f"old bank (local, {'+'.join(ol['sources']['karadeniz'])}: the whole uşşak family)",
+                     phrase_stats([decode(s) for s in ol["cards"]["karadeniz"][str(h)]])))
+    return rows, len(region), len({p["piece"] for p in region})
+
+
+def karadeniz_section(rows, n_region: int, n_pieces: int, h: int = 8) -> str:
+    L = ["## Karadeniz", ""]
+    L.append(f"The karadeniz card learns the horon from the eastern Black Sea tunes of SymbTr only (`train.horon_piece`: the place in the "
+             f"composer field is Trabzon, Maçka, Rize, Artvin, Giresun or Ordu, or a word of the title is karadeniz / horon / kemence; "
+             f"{n_pieces} pieces, {n_region} phrases), mixed 70% trained / 30% the `horon` grammar form in the LOCAL bank; the shippable "
+             f"bank is the `horon` form only. Before, it was the `cyclic` form (shippable) and the whole uşşak family of SymbTr (local). "
+             f"Measured at hits {h} (the bank: all 64 phrases of the entry). zigzag = share of windows of three consecutive notes of a bar "
+             f"that go A-B-A; repeat = share of the moves between consecutive notes that repeat the note; range = mean (highest - lowest "
+             f"degree) per phrase, and the share of phrases within a fifth (<= 4 degrees); bar 1 = bar 2 = the share of phrases whose "
+             f"bars 1 and 2 are the same up to the last slot; patterns = the five most common windows of four consecutive degrees "
+             f"(0 = the karar), share of all windows in %.")
+    L.append("")
+    L.append("| source | phrases | zigzag | repeat | range (<= 4) | bar 1 = bar 2 | rests |")
+    L.append("|---|---|---|---|---|---|---|")
+    for name, r in rows:
+        L.append(f"| {name} | {r['n']} | {pct(r['zigzag'])} | {pct(r['repeat'])} | {r['range']:.1f} ({pct(r['range4'])}) | "
+                 f"{pct(r['same12'])} | {pct(r['rest'])} |")
+    L.append("")
+    L.append("| source | the five most common 4-degree patterns |")
+    L.append("|---|---|")
+    for name, r in rows:
+        L.append(f"| {name} | " + ", ".join(f"`{a}` {100 * s:.1f}" for a, s in r["patterns"]) + " |")
+    L.append("")
+    return "\n".join(L)
+
+
+def write_report(sec: str, heading: str = "## Evaluation") -> None:
     text = open(REPORT, encoding="utf-8").read()
-    start = text.find("## Evaluation\n")
+    start = text.find(heading + "\n")
     if start >= 0:
         nxt = text.find("\n## ", start + 10)
         text = text[:start] + sec + ("\n" + text[nxt + 1:] if nxt >= 0 else "")
@@ -319,7 +430,16 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true", help="rewrite the Evaluation section of docs/music-melody-model-report.md")
     ap.add_argument("--sample", type=int, default=2000, help="corpus phrases per card (evenly spaced), default 2000")
+    ap.add_argument("--karadeniz", nargs="+", metavar="OLD_BANK",
+                    help="print (with --write: rewrite) the Karadeniz section against the old shippable bank [and the old local bank]")
     a = ap.parse_args()
+    if a.karadeniz:
+        krows, n_region, n_pieces = karadeniz_rows(*a.karadeniz[:2])
+        sec = karadeniz_section(krows, n_region, n_pieces)
+        print(sec)
+        if a.write:
+            write_report(sec, "## Karadeniz")
+        return
     rows, checks = run(a.sample)
     sec = section(rows, checks, a.sample)
     print(sec)
