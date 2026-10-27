@@ -54,7 +54,7 @@ quieter grace note.
 
 `personal/gestures.ts`, applied at the end of `composePiece`. Added notes are hidden (`show: false`); see "Gestures" in `music-data-mapping.md`.
 
-- **Kemençe**: built: double stop a fourth below, grace note a tone above on the beat, held open tonic each bar. Not built: the fast horon bow articulation.
+- **Kemençe**: built: double stop a fourth below, grace note a tone above on the beat, held open tonic each bar; the slide between notes (portamento from the previous pitch when the rest is 0.35 s or less, up to 3 semitones either way, also on the sarangi and on the violin in the Turkish cards), the titreme (a trill to the tone above every 1/8 beat over the second half of notes of 0.6 beat or more, at most 6 hits) and a mordent on a third of the short on-beat notes. Not built: the fast horon bow articulation; a trill to a semitone where the makam has one (the gesture does not know the scale: always a whole tone).
 - **Bağlama / saz**: built: şelpe on strong beats, glide into long hook notes. Not built: the regional stroke direction.
 - **Kanun, santur**: built: tremolo on long notes with an octave on the first hit. Not built: maqam-specific fast passages.
 - **Nylon guitar (ud, flamenco, bossa, samba)**: built: a card-spread strum on beats 0 and 2 of the bar (down strokes). Not built: rasgueado patterns, picado, golpe, the p-i-m-a arpeggio.
@@ -164,3 +164,16 @@ Same eight selections (home Istanbul, visited), measured with a scratch probe. `
 | Nijerya | 762 | 30 (4%) | 17 | 762 | 30 (4%) | 17 |
 
 Over 50 seeded selections the largest number of hidden notes in one piece fell from 1530 to 1303 (mean 305); the largest piece has 2815 notes. The test bound is 1570 (1303 plus 20%). Six of the eight selections still have 10% or more hidden notes.
+
+## Kemençe: slides, titreme and no lines of repeated notes (2026-10-27)
+
+Listening to the Karadeniz piece (`?v=TZX,RZV,OGU&h=IST&melody=bank`): "the kemençe presses a single note; there should be transitions between notes". A probe showed bars like `22 22 22 21 19 19` semitones: repeated notes, no movement between pitches. Three changes: (1) the bowed portamento, titreme and mordent above (`gestures.ts`; the sampler now also plays a negative `glide`, a slide down from above); (2) `choosePhrase` (behind `pickPhrase`) prefers bank phrases whose share of repeated moves is at most the idiom's `repeat` + 0.15 (+ 0.25, then any); (3) the karadeniz idiom is a stepwise zigzag: `step 0.85, repeat 0.1` (was 0.7, 0.3; the walk draws its repeats from `repeat`).
+
+Measured on the Karadeniz selection (visited, home IST; the drawn hook notes of the kemençe, 198 of them; `repeated` = share of moves between consecutive drawn hook notes that keep the pitch; `glide` = share of drawn kemençe hook notes that carry a glide):
+
+| melody | repeated before | repeated after | glide before | glide after |
+|---|---|---|---|---|
+| bank | 29.9% | 8.6% | 0% | 87.9% |
+| walk | 17.3% | 12.2% | 0% | 85.9% |
+
+Hidden notes of the Karadeniz piece: 546 → 846 of 1306 → 1606 (the titreme and the mordents); the most voices sounding at once is unchanged (21 with a 0.35 s tail, 30 with 1.2 s). Over 50 seeded selections the largest number of hidden notes in a piece is unchanged (2000; bound 2400), so the trills were not thinned.

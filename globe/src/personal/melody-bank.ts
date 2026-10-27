@@ -52,6 +52,8 @@ export interface Decoded {
   span: number;
   /** net direction: sign of (mean of the last bar - mean of the first bar), level within half a degree */
   bias: -1 | 0 | 1;
+  /** the share of repeated moves (`repeatShare`) */
+  rep: number;
 }
 
 /** one bar string -> degrees (null = rest) */
@@ -67,7 +69,7 @@ export function decodePhrase(str: string): Decoded {
   const all = bars.flat().filter((d): d is number => d !== null);
   const diff = mean(bars[3]) - mean(bars[0]);
   const bias = Math.abs(diff) < 0.5 ? 0 : diff > 0 ? 1 : -1;
-  return { bars, s: bars[0][0] ?? all[0], span: Math.max(...all), bias };
+  return { bars, s: bars[0][0] ?? all[0], span: Math.max(...all), bias, rep: repeatShare(bars) };
 }
 
 const cache = new Map<string, Decoded[]>();
@@ -83,14 +85,26 @@ export function entryOf(cardId: string, hits: number, which: BankChoice = "bank"
   return dec;
 }
 
+/** the share of the moves between consecutive sounding degrees (rests skipped) that repeat the degree; 0 with fewer than two */
+export function repeatShare(bars: (number | null)[][]): number {
+  const xs = bars.flat().filter((d): d is number => d !== null);
+  if (xs.length < 2) return 0;
+  let r = 0;
+  for (let i = 1; i < xs.length; i++) if (xs[i] === xs[i - 1]) r++;
+  return r / (xs.length - 1);
+}
+
+/** how far above idiom.repeat the share of repeated moves of a phrase may go: the first cap, then relaxed once by 0.1, then none */
+const REPEAT_SLACK = [0.15, 0.25];
+
 /**
- * The four bars of a hook from the bank (null degree = a rest), or null when the card / hits has no entry (the caller falls back to
- * the walk). Candidates are filtered in this order, each step relaxed when it would leave none: span <= idiom.span; start degree
- * equal to `start`, else one of idiom.start; bias equal to the idiom's (when it has one), else for a level idiom the heading `dir`
- * is preferred with probability 0.6. The phrase is shifted to `start` when that keeps it inside [LOW, span]; the last entry of each
- * bar is forced to the idiom's cadence. `which` picks the bank (see `bankOf`).
+ * The phrase `pickPhrase` takes, before it is shifted and given its cadence (null when the card / hits has no entry). Candidates are
+ * filtered in this order, each step relaxed when it would leave none: span <= idiom.span; a share of repeated moves (`repeatShare`) of
+ * at most idiom.repeat + 0.15, else + 0.25, else any (no lines of the same note); start degree equal to `start`, else one of
+ * idiom.start; bias equal to the idiom's (when it has one), else for a level idiom the heading `dir` is preferred with probability
+ * 0.6. The random draws do not depend on the filters (deterministic for the same `rnd`).
  */
-export function pickPhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | -1, rnd: () => number, start: number, which: BankChoice = "bank"): (number | null)[][] | null {
+export function choosePhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | -1, rnd: () => number, start: number, which: BankChoice = "bank"): Decoded | null {
   const all = entryOf(cardId, hits, which);
   if (!all) return null;
   const narrow = (xs: Decoded[], keep: (p: Decoded) => boolean): Decoded[] => {
@@ -98,11 +112,28 @@ export function pickPhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | 
     return ys.length ? ys : xs;
   };
   let c = narrow(all, (p) => p.span <= idiom.span);
+  for (const slack of REPEAT_SLACK) {
+    const ys = c.filter((p) => p.rep <= idiom.repeat + slack + 1e-9);
+    if (ys.length) {
+      c = ys;
+      break;
+    }
+  }
   const exact = c.filter((p) => p.s === start);
   c = exact.length ? exact : narrow(c, (p) => idiom.start.includes(p.s));
   if (idiom.bias !== 0) c = narrow(c, (p) => p.bias === idiom.bias);
   else if (rnd() < 0.6) c = narrow(c, (p) => p.bias === dir);
-  const pick = c[Math.min(c.length - 1, Math.floor(rnd() * c.length))];
+  return c[Math.min(c.length - 1, Math.floor(rnd() * c.length))];
+}
+
+/**
+ * The four bars of a hook from the bank (null degree = a rest), or null when the card / hits has no entry (the caller falls back to
+ * the walk). The phrase is the one `choosePhrase` takes, shifted to `start` when that keeps it inside [LOW, span]; the last entry of
+ * each bar is forced to the idiom's cadence. `which` picks the bank (see `bankOf`).
+ */
+export function pickPhrase(cardId: string, hits: number, idiom: Idiom, dir: 1 | -1, rnd: () => number, start: number, which: BankChoice = "bank"): (number | null)[][] | null {
+  const pick = choosePhrase(cardId, hits, idiom, dir, rnd, start, which);
+  if (!pick) return null;
   const shift = start - pick.s;
   const fits = shift === 0 || pick.bars.every((bar) => bar.every((d) => d === null || (d + shift >= FLOOR && d + shift <= idiom.span)));
   const out = pick.bars.map((bar) => bar.map((d) => (d === null || !fits ? d : d + shift)));

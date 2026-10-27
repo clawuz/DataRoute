@@ -388,7 +388,9 @@ describe("general", () => {
       expect(n.pan).toBe(-0.4);
       expect(n.wet).toBe(0.1);
     }
-    expect(out[0]).toBe(src);
+    // the drawn note is a copy with the scoop of a phrase start (the bowed portamento); the source is untouched
+    expect(out[0]).toEqual({ ...src, glide: 1 });
+    expect(src.glide).toBeUndefined();
   });
 });
 
@@ -476,5 +478,127 @@ describe("review fixes", () => {
     expect(out[0].t + out[0].d).toBeLessThanOrEqual(out[1].t + 1e-9);
     // a short note stays as it is
     expect(run([mk("UPRIGHTBASS", 2, { freq: root, d: 0.3 })], "bass", "jazz")[0].d).toBe(0.3);
+  });
+});
+
+describe("bowed portamento: the kemençe, the sarangi (and the violin in the Turkish cards) slide from the previous note", () => {
+  // beat 0.5 s; d 0.2 s (0.4 beat) keeps the titreme away; notes start off the beat so that no mordent is added
+  const pair = (name: string, a: number, b: number, gap = 0.1, card = "x", role = "hook"): PersonalNote[] =>
+    run([mk(name, 0.13, { d: 0.2, freq: hz(a) }), mk(name, 0.13 + 0.2 + gap, { d: 0.2, freq: hz(b), key: "R0b" })], role, card).filter((n) => n.show !== false);
+  it("a rising step starts below at the previous pitch (positive glide), a falling one above (negative glide)", () => {
+    for (const name of ["KEMENCE_MAKAM", "KEMENCE_REAL", "SARANGI"]) {
+      expect(pair(name, 12, 14)[1].glide, name).toBeCloseTo(2, 9);
+      expect(pair(name, 14, 12)[1].glide, name).toBeCloseTo(-2, 9);
+      expect(pair(name, 12, 13)[1].glide, name).toBeCloseTo(1, 9);
+    }
+  });
+  it("the slide is at most 3 semitones either way", () => {
+    expect(pair("KEMENCE_MAKAM", 12, 19)[1].glide).toBe(3);
+    expect(pair("KEMENCE_MAKAM", 19, 12)[1].glide).toBe(-3);
+  });
+  it("the drawn note is a patched copy: the source is not changed", () => {
+    const b = mk("KEMENCE_MAKAM", 0.43, { d: 0.2, freq: hz(14), key: "R0b" });
+    const out = run([mk("KEMENCE_MAKAM", 0.13, { d: 0.2 }), b]);
+    expect(out).not.toContain(b);
+    expect(b.glide).toBeUndefined();
+  });
+  it("a gap of 0.35 s or less slides; after a longer rest (and on the first note) the old scoop of 1", () => {
+    expect(pair("KEMENCE_MAKAM", 12, 15, 0.35)[1].glide).toBe(3);
+    expect(pair("KEMENCE_MAKAM", 12, 15, 0.4)[1].glide).toBe(1);
+    expect(pair("KEMENCE_MAKAM", 12, 15)[0].glide).toBe(1);
+    expect(pair("SARANGI", 12, 15, 0.5)[1].glide).toBe(1);
+  });
+  it("a repeated pitch glides 1 on about a third of the notes", () => {
+    const notes = Array.from({ length: 300 }, (_, k) => mk("KEMENCE_MAKAM", 0.13 + k * 0.3, { key: `K${k}`, d: 0.2 }));
+    const out = run(notes).filter((n) => n.show !== false).slice(1);
+    const g = out.filter((n) => n.glide === 1).length;
+    expect(out.every((n) => n.glide === undefined || n.glide === 1)).toBe(true);
+    expect(g / out.length).toBeGreaterThan(0.2);
+    expect(g / out.length).toBeLessThan(0.45);
+  });
+  it("only the hook role and notes of 0.15 s or more", () => {
+    expect(pair("KEMENCE_MAKAM", 12, 14, 0.1, "x", "pluck")[1].glide).toBeUndefined();
+    const short = run([mk("KEMENCE_MAKAM", 0.13, { d: 0.1 }), mk("KEMENCE_MAKAM", 0.25, { d: 0.1, freq: hz(14) })]);
+    expect(short.some((n) => n.glide !== undefined)).toBe(false);
+  });
+  it("the violin slides only in the Turkish cards; elsewhere it keeps its bow (a scoop after a gap)", () => {
+    for (const card of ["karadeniz", "anatolian", "icanadolu", "dogu", "zeybek", "mevlevi"]) expect(pair("VIOLIN", 12, 14, 0.1, card)[1].glide, card).toBeCloseTo(2, 9);
+    expect(pair("VIOLIN", 12, 14, 0.1, "pop")[1].glide).toBeUndefined();
+    expect(pair("VIOLIN", 12, 14, 0.1, "romantic")[1].glide).toBeUndefined();
+  });
+  it("other instruments are untouched by the slide", () => {
+    for (const name of ["SAZ", "NEY_MAKAM", "CELLO", "KANUN"]) {
+      const g = pair(name, 12, 14)[1].glide;
+      expect(g === undefined || g === 1, name).toBe(true);
+    }
+  });
+});
+
+describe("titreme: the kemençe trills on its long notes", () => {
+  const trill = (out: PersonalNote[], src: PersonalNote): PersonalNote[] =>
+    hidden(out).filter((n) => n.t >= src.t + src.d / 2 - 1e-9 && n.short === true && n.route === src.route);
+  it("alternates a tone above and the note every 1/8 beat over the second half: hidden, short, vel x0.6, at most 6", () => {
+    for (const name of ["KEMENCE_MAKAM", "KEMENCE_REAL"]) {
+      const src = mk(name, 0, { d: 1 });
+      const h = trill(run([src]), src);
+      expect(h, name).toHaveLength(6);
+      h.forEach((n, k) => {
+        expect(n.t).toBeCloseTo(0.5 + k * 0.0625, 9);
+        expect(n.d).toBeCloseTo(0.0625, 9);
+        expect(st(n.freq, hz(12))).toBeCloseTo(k % 2 === 0 ? 2 : 0, 6);
+        expect(n.vel).toBeCloseTo(0.36, 9);
+        expect(n.show).toBe(false);
+      });
+    }
+  });
+  it("fits the second half of a shorter note (0.6 beat: 0.15 s, two hits)", () => {
+    const src = mk("KEMENCE_MAKAM", 0.13, { d: 0.3 });
+    expect(trill(run([src]), src)).toHaveLength(2);
+  });
+  it("never runs past the next note of the route (it stops 50 ms before it)", () => {
+    const src = mk("KEMENCE_MAKAM", 0, { d: 1 });
+    const next = mk("KEMENCE_MAKAM", 0.7, { d: 0.2, key: "R0n", freq: hz(14) });
+    const h = trill(run([src, next]), src).filter((n) => n.t < 0.7);
+    expect(h).toHaveLength(2);
+    for (const n of h) expect(n.t + n.d).toBeLessThanOrEqual(0.65 + 1e-9);
+  });
+  it("no trill under 0.6 beat, nor on the sarangi, nor in the pluck role", () => {
+    const a = mk("KEMENCE_MAKAM", 0.13, { d: 0.28 });
+    expect(trill(run([a]), a)).toHaveLength(0);
+    const b = mk("SARANGI", 0, { d: 1 });
+    expect(trill(run([b]), b)).toHaveLength(0);
+    const c = mk("KEMENCE_MAKAM", 0, { d: 1 });
+    expect(trill(run([c], "pluck"), c)).toHaveLength(0);
+  });
+});
+
+describe("mordent: one quick tone above and back on a third of the short kemençe notes that start on a beat", () => {
+  const mordents = (out: PersonalNote[], src: PersonalNote): PersonalNote[] =>
+    hidden(out).filter((n) => Math.abs(n.t - (src.t + 0.04)) < 1e-9 && Math.abs(st(n.freq, src.freq) - 2) < 1e-6);
+  it("on a beat, 0.3 to 0.6 beat long: a hidden 40 ms note +2 st, 40 ms in, on about a third", () => {
+    let hit = 0;
+    for (let k = 0; k < 300; k++) {
+      const src = mk("KEMENCE_MAKAM", k * 0.5, { key: `K${k}`, d: 0.18 });
+      const m = mordents(run([src]), src);
+      expect(m.length).toBeLessThanOrEqual(1);
+      if (m.length) {
+        hit++;
+        expect(m[0].d).toBeCloseTo(0.04, 9);
+        expect(m[0].short).toBe(true);
+        expect(m[0].vel).toBeCloseTo(0.36, 9);
+      }
+    }
+    expect(hit / 300).toBeGreaterThan(0.2);
+    expect(hit / 300).toBeLessThan(0.45);
+  });
+  it("never off the beat, never on a longer or shorter note, never on the sarangi", () => {
+    for (let k = 0; k < 120; k++) {
+      const off = mk("KEMENCE_MAKAM", k * 0.5 + 0.13, { key: `K${k}`, d: 0.18 });
+      expect(mordents(run([off]), off), `off ${k}`).toHaveLength(0);
+      const short = mk("KEMENCE_MAKAM", k * 0.5, { key: `K${k}`, d: 0.12 });
+      expect(mordents(run([short]), short)).toHaveLength(0);
+      const sar = mk("SARANGI", k * 0.5, { key: `K${k}`, d: 0.18 });
+      expect(mordents(run([sar]), sar)).toHaveLength(0);
+    }
   });
 });

@@ -323,8 +323,9 @@ export function createSampler(ctx: AudioContext): Sampler {
         const src = ctx.createBufferSource();
         src.buffer = buf;
         src.playbackRate.setValueAtTime(rate, when);
-        // the per-note glide (a slide into the note) adds to the instrument's own; the longer ramp wins
-        const noteGlide = glide && glide > 0 ? glide : 0;
+        // the per-note glide (a slide into the note) adds to the instrument's own; the longer ramp wins. A negative glide starts the
+        // note above its pitch (a bowed slide down from a higher note)
+        const noteGlide = glide && Number.isFinite(glide) ? glide : 0;
         const cents = L.detune - (inst.glide ? inst.glide.semitones * 100 : 0) - noteGlide * 100;
         src.detune.setValueAtTime(cents, when);
         if (inst.glide || noteGlide) src.detune.linearRampToValueAtTime(L.detune, when + Math.max(inst.glide?.sec ?? 0, noteGlide ? NOTE_GLIDE_SEC : 0));

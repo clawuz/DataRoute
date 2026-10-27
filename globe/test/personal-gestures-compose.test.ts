@@ -101,6 +101,27 @@ describe("the gestures are heard in composed pieces", () => {
   });
 });
 
+describe("the Karadeniz kemençe moves between notes and slides into them", () => {
+  // TZX, RZV, OGU from Istanbul: the hook (the middle route by length) is the makam kemençe
+  const routes = buildRoutes(["TZX", "RZV", "OGU"], "IST");
+  const order = routes.map((r, i) => ({ i, d: r.distKm })).sort((x, y) => y.d - x.d || x.i - y.i);
+  const hook = order[1].i;
+  const TUNE = /^(KEMENCE|SAZ|BAGLAMA)/;
+  for (const melody of ["bank", "walk"] as const) {
+    it(`${melody}: at most 25% of the moves of the drawn kemençe / saz hook notes repeat the pitch; at least 40% of the kemençe hook notes glide`, () => {
+      const piece = composePiece("visited", routes, { melody });
+      const line = piece.notes.filter((n) => n.show !== false && n.route === hook && TUNE.test(String(n.instrument))).sort((a, b) => a.t - b.t);
+      expect(line.length).toBeGreaterThan(50);
+      let rep = 0;
+      for (let k = 1; k < line.length; k++) if (Math.abs(12 * Math.log2(line[k].freq / line[k - 1].freq)) < 0.5) rep++;
+      expect(rep / (line.length - 1)).toBeLessThanOrEqual(0.25);
+      const kem = line.filter((n) => String(n.instrument).startsWith("KEMENCE"));
+      expect(kem.length).toBeGreaterThan(50);
+      expect(kem.filter((n) => n.glide !== undefined && n.glide !== 0).length / kem.length).toBeGreaterThanOrEqual(0.4);
+    });
+  }
+});
+
 describe("coverage: the gestures reach the instruments that are really played", () => {
   // eight selections from different musical regions (home Istanbul, visited); measured 2026-10-27 (docs/music-instrument-idioms.md):
   // six reach 10% hidden notes (13% to 50%); Brazil (a horn alone) and Nigeria (kalimba, tenor sax, bassoon) do not, because

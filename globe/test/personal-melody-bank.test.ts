@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { composePiece } from "../src/personal/compose";
 import { CARDS } from "../src/personal/genres";
 import { LOW, idiomOf, phraseMotifs } from "../src/personal/idiom";
-import { BANK, SHIP_BANK, bankOf, chooseBank, decodePhrase, entryOf, pickPhrase, selectBank } from "../src/personal/melody-bank";
+import { BANK, SHIP_BANK, bankOf, chooseBank, choosePhrase, decodePhrase, entryOf, pickPhrase, repeatShare, selectBank } from "../src/personal/melody-bank";
 import { buildRoutes } from "../src/personal/routes";
 import { destinationOf } from "../src/personal/destinations";
 
@@ -152,6 +152,44 @@ describe("pickPhrase", () => {
         expect(mean(p[3]) - mean(p[0]), id).toBeLessThan(2.5);
       }
     }
+  });
+});
+
+describe("the repeat cap of the selector", () => {
+  it("repeatShare counts equal consecutive sounding degrees (rests skipped) over the moves", () => {
+    expect(repeatShare([[1, 1, null, 1], [2]])).toBeCloseTo(2 / 3, 9);
+    expect(repeatShare([[0, 1, 2, 1]])).toBe(0);
+    expect(repeatShare([[3], [null]])).toBe(0);
+  });
+  it("picks a phrase with at most idiom.repeat + 0.15 repeated moves when the entry has one (else + 0.25, else any), deterministically", () => {
+    let capped = 0;
+    let total = 0;
+    for (const c of CARDS) {
+      const idiom = idiomOf(c);
+      for (let h = 2; h <= 9; h++) {
+        const all = entryOf(c.id, h)!;
+        const inSpan = all.filter((p) => p.span <= idiom.span);
+        const pool = inSpan.length ? inSpan : all;
+        const cap1 = idiom.repeat + 0.15;
+        const cap2 = idiom.repeat + 0.25;
+        const has1 = pool.some((p) => repeatShare(p.bars) <= cap1 + 1e-9);
+        const has2 = pool.some((p) => repeatShare(p.bars) <= cap2 + 1e-9);
+        for (let seed = 1; seed <= 4; seed++) {
+          const a = choosePhrase(c.id, h, idiom, seed % 2 ? 1 : -1, lcg(seed * 13 + h), idiom.start[seed % idiom.start.length])!;
+          expect(a).toEqual(choosePhrase(c.id, h, idiom, seed % 2 ? 1 : -1, lcg(seed * 13 + h), idiom.start[seed % idiom.start.length]));
+          const r = repeatShare(a.bars);
+          total++;
+          if (has1) {
+            capped++;
+            expect(r, `${c.id}/${h}`).toBeLessThanOrEqual(cap1 + 1e-9);
+          } else if (has2) expect(r, `${c.id}/${h}`).toBeLessThanOrEqual(cap2 + 1e-9);
+        }
+      }
+    }
+    expect(capped / total).toBeGreaterThan(0.5);
+  });
+  it("the Black Sea idiom moves by step in a zigzag with few repeats", () => {
+    expect(idiomOf({ id: "karadeniz" })).toMatchObject({ step: 0.85, repeat: 0.1, leaps: [2], bias: -1, span: 5, arc: 2, start: [3, 4, 2] });
   });
 });
 

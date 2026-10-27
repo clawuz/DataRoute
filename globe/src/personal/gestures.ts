@@ -42,6 +42,8 @@ interface Env {
   repeated: Set<PersonalNote>;
   /** the start of the next drawn note of the same route and instrument (a tremolo stops before it); absent: the last one */
   nextStart: Map<PersonalNote, number>;
+  /** the previous drawn hook note of the same route and instrument (the bowed portamento slides from it); absent: the first one */
+  prevHook: Map<PersonalNote, PersonalNote>;
 }
 
 /** what a gesture does to one note: patch it, drop it, and/or add notes */
@@ -119,6 +121,67 @@ const drone: Gesture = (n, e) => {
         extra: [added(n, n.t, end - n.t, e.ctx.hz(e.ctx.keyRoot - 12), n.vel * 0.3)],
       }
     : null;
+};
+
+// --- bowed strings: portamento, titreme (a trill) and mordent
+
+/** a rest this long (s) or shorter between two bowed notes is bridged by a slide from the previous pitch */
+const SLIDE_GAP = 0.35;
+/** the widest slide (semitones) */
+const SLIDE_MAX = 3;
+/** a note shorter than this (s) does not slide: the 0.08 s ramp would be most of it */
+const SLIDE_MIN_D = 0.15;
+/** the cards in which the violin is played like the kemençe (it slides between notes) */
+const SLIDING_VIOLIN = new Set(["karadeniz", "anatolian", "icanadolu", "dogu", "zeybek", "mevlevi"]);
+const clampSlide = (x: number): number => Math.max(-SLIDE_MAX, Math.min(SLIDE_MAX, x));
+/**
+ * Portamento: a hook note that follows the previous note of its route within 0.35 s starts at that note's pitch and slides to its
+ * own (glide = this - previous, in semitones, at most 3 either way: negative starts above); a repeated pitch takes a small scoop of 1
+ * on a third of the notes (by the hash). After a longer rest, and on the first note, the scoop of 1 of a phrase start (the violin keeps
+ * its own bow there). The violin slides only in the Turkish cards.
+ */
+const slide: Gesture = (n, e) => {
+  if (e.ctx.roleOf(n) !== "hook" || n.d < SLIDE_MIN_D) return null;
+  const violin = n.instrument === "VIOLIN";
+  if (violin && !SLIDING_VIOLIN.has(e.ctx.cardOf(n.route))) return null;
+  const prev = e.prevHook.get(n);
+  if (!prev || n.t - (prev.t + prev.d) > SLIDE_GAP + 1e-9) return violin ? null : { patch: { glide: 1 } };
+  const diff = Math.round(1200 * Math.log2(n.freq / prev.freq)) / 100;
+  if (Math.abs(diff) >= 0.05) return { patch: { glide: clampSlide(diff) } };
+  return hashOf(n) % 3 === 0 ? { patch: { glide: 1 } } : null;
+};
+/** the most trill notes on one note */
+const TRILL_MAX = 6;
+/** the trill and the mordent go to the tone above (the scale of the card is not known here: a whole tone) */
+const TRILL_UP = 2;
+/**
+ * Titreme: over the second half of a hook note of 0.6 beat or more, a quick alternation (every 1/8 beat) of the tone above and the
+ * note: hidden, short, vel x0.6, at most 6, ending 50 ms before the next drawn note of the route at the latest.
+ */
+const titreme: Gesture = (n, e) => {
+  const { beat } = e.ctx;
+  if (e.ctx.roleOf(n) !== "hook" || n.d < 0.6 * beat - 1e-9) return null;
+  const step = beat / 8;
+  const next = e.nextStart.get(n);
+  const end = Math.min(n.t + n.d, next === undefined ? Infinity : next - 0.05);
+  const extra: PersonalNote[] = [];
+  for (let k = 0; k < TRILL_MAX; k++) {
+    const s = n.t + n.d / 2 + k * step;
+    if (s + step > end + 1e-9) break;
+    const x = added(n, s, step, semis(n.freq, k % 2 === 0 ? TRILL_UP : 0), n.vel * 0.6);
+    x.short = true;
+    extra.push(x);
+  }
+  return extra.length ? { extra } : null;
+};
+/** Mordent: on a third of the hook notes of 0.3 to 0.6 beat that start on a beat, one quick hidden note a tone above, 40 ms in, 40 ms long */
+const mordent: Gesture = (n, e) => {
+  const { beat } = e.ctx;
+  if (e.ctx.roleOf(n) !== "hook" || n.d < 0.3 * beat - 1e-9 || n.d >= 0.6 * beat - 1e-9 || !onBeat(n.t, beat)) return null;
+  if (routeHash(`mordent|${n.key}|${n.t.toFixed(3)}|${String(n.instrument)}`) % 3 !== 0) return null;
+  const x = added(n, n.t + 0.04, 0.04, semis(n.freq, TRILL_UP), n.vel * 0.6);
+  x.short = true;
+  return { extra: [x] };
 };
 
 // --- saz family
@@ -320,10 +383,11 @@ const NEY_LIKE = new Set(["NEY_MAKAM", "NEY_REAL", "BANSURI", "ZURNA"]);
 
 /** the gestures of each instrument, applied in this order */
 export const GESTURES: Record<string, Gesture[]> = {
-  KEMENCE_MAKAM: [doubleStop, graceIn, drone],
-  // the real kemençe and the sarangi are bowed like the makam kemençe: a double stop and a grace note (the drone stays the makam kemençe's)
-  KEMENCE_REAL: [doubleStop, graceIn],
-  SARANGI: [doubleStop, graceIn],
+  KEMENCE_MAKAM: [doubleStop, graceIn, drone, slide, titreme, mordent],
+  // the real kemençe and the sarangi are bowed like the makam kemençe: a double stop, a grace note and the slide between notes (the drone
+  // stays the makam kemençe's; the titreme and the mordent are the kemençe's)
+  KEMENCE_REAL: [doubleStop, graceIn, slide, titreme, mordent],
+  SARANGI: [doubleStop, graceIn, slide],
   SAZ: [sazStrum, glideNote(3)],
   BAGLAMA_MAKAM: [sazStrum, glideNote(3)],
   BAGLAMA_EXTRA: [sazStrum, glideNote(3)],
@@ -338,7 +402,8 @@ export const GESTURES: Record<string, Gesture[]> = {
   UPRIGHTPNO: [pianoHand],
   RHODES: [pianoHand],
   ACCORDION: [oomPah],
-  VIOLIN: [violinBow],
+  // in the Turkish cards the violin also slides between notes like the kemençe (the slide wins over the scoop of its bow)
+  VIOLIN: [violinBow, slide],
   KOTO: [repeatPluck, tremoloFrom(0.35)],
   KAYAGEUM: [repeatPluck, tremoloFrom(0.35)],
   DANTRANH: [repeatPluck, tremoloFrom(0.35)],
@@ -392,6 +457,7 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
     afterGap,
     repeated,
     nextStart: new Map(),
+    prevHook: new Map(),
   };
 
   const byTime = (a: PersonalNote, b: PersonalNote): number => a.t - b.t;
@@ -421,6 +487,20 @@ export function applyGestures(notes: PersonalNote[], ctx: GestureContext): Perso
       while (j < l.length && l[j].t <= n.t + 1e-6) j++;
       if (j < l.length) env.nextStart.set(n, l[j].t);
     });
+    // the previous hook note (an earlier start) of the lane: the bowed portamento slides from it
+    let last: PersonalNote | undefined;
+    let pending: PersonalNote[] = [];
+    let at = -Infinity;
+    for (const n of l) {
+      if (ctx.roleOf(n) !== "hook") continue;
+      if (n.t > at + 1e-6) {
+        if (pending.length) last = pending[pending.length - 1];
+        pending = [];
+        at = n.t;
+      }
+      if (last) env.prevHook.set(n, last);
+      pending.push(n);
+    }
   }
   const ney = notes.filter((n) => NEY_LIKE.has(String(n.instrument))).sort(byTime);
   const lastEnd = new Map<number, number>();

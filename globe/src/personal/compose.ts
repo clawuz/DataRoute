@@ -40,7 +40,8 @@ export interface PersonalNote {
   pan?: number;
   /** how much reverb the note gets 0…0.5, from the length of the route (space.ts); absent: the middle send */
   wet?: number;
-  /** semitones below the target at which the note starts, rising to the target in about 0.08 s (a slide into the note); absent: no glide */
+  /** semitones below the target at which the note starts, rising to the target in about 0.08 s (a slide into the note); negative: it starts
+   * above and falls to the target (the bowed slide down from a higher note, gestures.ts); absent: no glide */
   glide?: number;
   /** a hidden gesture note of 0.2 s or less: the sampler lets it ring out for 0.25 s only (many of them sound together on a phone) */
   short?: boolean;

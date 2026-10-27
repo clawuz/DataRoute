@@ -173,6 +173,11 @@ describe("sampler: a per-note glide", () => {
     s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, 2);
     expect(detunes[0]).toEqual([["set", 7 - 200, 1], ["ramp", 7, 1.08]]);
   });
+  it("a negative glide starts the note above its pitch and ramps down in 0.08 s (a slide from a higher note)", async () => {
+    const { s, detunes } = await setup();
+    s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1, undefined, -2);
+    expect(detunes[0]).toEqual([["set", 7 + 200, 1], ["ramp", 7, 1.08]]);
+  });
   it("leaves a note without glide exactly as before", async () => {
     const { s, detunes } = await setup();
     s.play({} as AudioNode, "G", freqOf(60), 0.7, 1, 1);
