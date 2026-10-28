@@ -60,7 +60,7 @@ describe("the destination cards (11 + 13)", () => {
     const c = CARDS.find((x) => x.id === "karadeniz")!;
     expect(c.melody).toEqual(["KEMENCE_KARADENIZ", "TULUM", "BAGPIPE"]);
     expect(c.held).toEqual(["TULUM", "BAGPIPE_DRONE"]);
-    expect(c.pluck).toEqual(["BAGLAMA_EXTRA", "SAZ"]);
+    expect(c.pluck).toEqual(["ACCORDION"]);
     // the pear-shaped classical kemençe stays out of the Black Sea card
     expect([...c.melody, ...c.held, ...c.pluck]).not.toContain("KEMENCE_MAKAM");
     expect([...c.melody, ...c.held, ...c.pluck]).not.toContain("KEMENCE_REAL");
