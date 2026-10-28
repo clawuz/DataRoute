@@ -11,7 +11,7 @@ export interface TripView {
 
 const RAD = Math.PI / 180;
 const WHOLE_GLOBE = 3.2;
-const CLOSEST = 2.2;
+const CLOSEST = 2.8;
 /** half-spread (degrees) up to which the camera is at its closest, and from which it is back at the whole globe */
 const NEAR_DEG = 8;
 const FAR_DEG = 60;

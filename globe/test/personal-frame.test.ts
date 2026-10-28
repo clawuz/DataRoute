@@ -5,7 +5,7 @@ import { buildRoutes } from "../src/personal/routes";
 describe("tripView", () => {
   it("a domestic trip is framed close, at the middle of its routes, without spinning away", () => {
     const v = tripView(buildRoutes(["ESB", "ADB", "AYT"], "IST"));
-    expect(v.dist).toBeLessThan(2.6);
+    expect(v.dist).toBeLessThan(3.0);
     expect(v.lat).toBeGreaterThan(36);
     expect(v.lat).toBeLessThan(42);
     expect(v.lon).toBeGreaterThan(26);
