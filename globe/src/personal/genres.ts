@@ -125,6 +125,7 @@ const BASE_CARDS: GenreCard[] = [
   { id: "andean", name: "Andean", family: "folk", bpm: [84, 104], scale: MINOR_PENT, scaleWish: MAJOR_PENT, cell: [1, 1, 2], accent: [1.2, 0.9, 1], prog: [[0, 3], [8, 4], [3, 4], [10, 4]], held: ["PANPIPE", "CELLO"], melody: ["PANPIPE", "FLUTE", "NYLONGUITAR"], pluck: ["NYLONGUITAR", "KALIMBA"], perc: "FRAMEDRUM" },
   { id: "caucasus", name: "Caucasus (duduk)", family: "folk", bpm: [88, 108], scale: HARMONIC, scaleWish: MIXO, cell: [2, 1, 2, 1, 2], accent: [1.25, 0.85, 1, 0.85, 1.05], prog: [[0, 3], [10, 4], [8, 4], [7, 4]], held: ["DUDUK", "BAGPIPE_DRONE"], melody: ["DUDUK", "BAGPIPE", "ACCORDION"], pluck: ["PSALTERY", "SAZ"], perc: "BENDIR" },
   { id: "fado", name: "Fado", family: "chamber", bpm: [76, 92], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.15, 0.9, 1, 0.9], prog: [[0, 3], [10, 4], [8, 4], [7, 4]], held: ["CELLO", "VIOLA"], melody: ["NYLONGUITAR", "PSALTERY", "ACCORDION"], pluck: ["PSALTERY", "NYLONGUITAR"], perc: "TRI" },
+  { id: "turkpop", name: "Turkish 80s pop (Ajda, Sezen)", family: "pulse", fast: true, bpm: [100, 118], scale: HICAZ, scaleWish: RAST, cell: [2, 1, 1, 1, 1, 2], accent: [1.25, 0.85, 0.9, 0.9, 1.1, 0.9], prog: [[0, 3], [5, 3], [10, 4], [0, 3]], held: ["CELLO", "VIOLA"], bass: ["BASS_EL"], melody: ["VIOLIN", "TENORSAX", "OUD", "CLA"], pluck: ["RHODES", "OUD", "KANUN"], perc: "DARBUKA" },
   { id: "chanson", name: "French chanson & musette", family: "chamber", bpm: [92, 112], scale: MAJOR, scaleWish: LYDIAN, cell: [1, 1, 1], accent: [1.2, 0.9, 0.9], prog: [[0, 4], [9, 3], [5, 4], [7, 4]], held: ["ACCORDION", "CELLO"], melody: ["ACCORDION", "VIOLIN", "CLA"], pluck: ["GUITAR_AC", "HARP"], bass: ["UPRIGHTBASS"], perc: "TAMB" },
 ];
 
@@ -160,7 +161,7 @@ const byId = (id: string): GenreCard => CARDS.find((c) => c.id === id) ?? CARDS[
 
 /** cards of a country (ISO 3166-1 alpha-2) */
 const BY_ISO: Record<string, string[]> = {
-  TR: ["anatolian", "karsilama", "cinematic", "jazz"], GR: ["greek"], BG: ["karsilama", "slavic"], RS: ["karsilama", "slavic"], MK: ["karsilama"], AL: ["karsilama"], BA: ["karsilama", "slavic"], XK: ["karsilama"],
+  TR: ["turkpop", "anatolian", "karsilama", "cinematic", "jazz"], GR: ["greek"], BG: ["karsilama", "slavic"], RS: ["karsilama", "slavic"], MK: ["karsilama"], AL: ["karsilama"], BA: ["karsilama", "slavic"], XK: ["karsilama"],
   EG: ["arabic"], SA: ["khaleeji", "arabic"], AE: ["khaleeji", "arabic"], QA: ["khaleeji", "arabic"], KW: ["khaleeji", "arabic"], BH: ["khaleeji", "arabic"], OM: ["khaleeji", "arabic"], JO: ["arabic"], LB: ["arabic"], SY: ["arabic"], IQ: ["arabic"], YE: ["arabic"], MA: ["maghrebi", "arabic", "flamenco"], DZ: ["maghrebi", "arabic"], TN: ["maghrebi", "arabic"], LY: ["maghrebi", "arabic"], SD: ["arabic"],
   IR: ["persian"], AF: ["persian", "centralasia"], KZ: ["centralasia"], UZ: ["centralasia"], KG: ["centralasia"], TM: ["centralasia"], TJ: ["centralasia"], AZ: ["caucasus", "centralasia", "anatolian"], GE: ["caucasus", "slavic"], AM: ["caucasus", "anatolian"],
   IN: ["bollywood", "hindustani"], PK: ["hindustani", "bollywood"], BD: ["hindustani"], LK: ["hindustani"], NP: ["hindustani"], MV: ["hindustani"],
@@ -186,7 +187,7 @@ group("KYA", ["mevlevi"]); // Konya is the Mevlevi city: always the ney and the 
 group("AYT GZP DLM ADA COV HTY KCM", ["akdeniz"]);
 group("ADB BJV DNZ USQ EDO CKZ", ["zeybek"]);
 group("VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF", ["dogu"]);
-group("IST SAW KCO TEQ YEI", ["anatolian", "karsilama", "cinematic", "jazz"]);
+group("IST SAW KCO TEQ YEI", ["turkpop", "anatolian", "karsilama", "cinematic", "jazz"]);
 group("SVQ AGP", ["flamenco"]);
 group("MAD BCN BIO VLC ZAZ", ["spguitar", "flamenco"]);
 group("JFK EWR BOS IAD", ["jazz", "classical", "pop"]);
@@ -292,7 +293,7 @@ export const NO_PIANO_CARDS: ReadonlySet<string> = new Set([
 /** the region cluster of every card (spec 2026-10-26-many-destinations): the dominant cluster of the destinations leads the piece */
 export const CLUSTER_OF: Record<string, string> = Object.fromEntries(
   Object.entries({
-    turkish: ["anatolian", "karsilama", "karadeniz", "icanadolu", "mevlevi", "akdeniz", "dogu", "zeybek"],
+    turkish: ["anatolian", "turkpop", "karsilama", "karadeniz", "icanadolu", "mevlevi", "akdeniz", "dogu", "zeybek"],
     arab: ["arabic", "khaleeji", "maghrebi"],
     "persian-central": ["persian", "centralasia", "caucasus"],
     "south-asia": ["hindustani", "bollywood"],

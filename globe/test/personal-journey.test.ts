@@ -25,7 +25,7 @@ describe("journey: where it leaves, Istanbul, where it arrives", () => {
   });
 
   it("a trip with one sound has no journey", () => {
-    const routes = buildRoutes(["ABJ", "ATL"], "IST"); // two routes whose home card is the destination card
+    const routes = buildRoutes(["DEL", "ATL"], "IST"); // two routes whose home card is the destination card
     const plan = planCards("visited", routes);
     expect(routes.length).toBe(2);
     expect(plan.home).toBe(plan.main);
@@ -53,7 +53,7 @@ describe("journey: where it leaves, Istanbul, where it arrives", () => {
   it("the piece records the cards of its journey, and a trip with one sound records none", () => {
     const fan = composePiece("visited", buildRoutes(["NRT", "LOS", "GRU", "LHR", "DEL", "CAI"], "IST"));
     expect(fan.style.journey?.length).toBeGreaterThan(0);
-    const same = buildRoutes(["ABJ", "ATL"], "IST");
+    const same = buildRoutes(["DEL", "ATL"], "IST");
     const plan = planCards("visited", same);
     expect(plan.home).toBe(plan.main);
     expect(composePiece("visited", same).style.journey).toBeUndefined();

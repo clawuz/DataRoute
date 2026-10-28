@@ -40,7 +40,7 @@ FORM_OF: Dict[str, str] = {
     # alap-like ascent to the high tonic
     "hindustani": "raga",
     # AABA song
-    "bollywood": "song", "pop": "song", "dance": "song", "epic": "song", "country": "song", "cumbia": "song", "samba": "song",
+    "bollywood": "song", "pop": "song", "turkpop": "song", "dance": "song", "epic": "song", "country": "song", "cumbia": "song", "samba": "song",
     "bossa": "song",
     # chord-tone riffs
     "funk": "riff", "rnb": "riff", "afrobeat": "riff", "jazz": "riff", "salsa": "riff",
