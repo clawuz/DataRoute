@@ -59,7 +59,7 @@ describe("the destination cards (11 + 13)", () => {
   it("gives the Black Sea card the Black Sea kemençe and the tulum (Turkish Music Portal recordings), the bagpipe behind them", () => {
     const c = CARDS.find((x) => x.id === "karadeniz")!;
     expect(c.melody).toEqual(["KEMENCE_KARADENIZ", "TULUM", "BAGPIPE"]);
-    expect(c.held).toEqual(["TULUM", "BAGPIPE_DRONE", "CELLO"]);
+    expect(c.held).toEqual(["TULUM", "BAGPIPE_DRONE"]);
     expect(c.pluck).toEqual(["BAGLAMA_EXTRA", "SAZ"]);
     // the pear-shaped classical kemençe stays out of the Black Sea card
     expect([...c.melody, ...c.held, ...c.pluck]).not.toContain("KEMENCE_MAKAM");
