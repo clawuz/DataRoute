@@ -167,11 +167,12 @@ const FORMS: Record<NonNullable<GenreCard["form"]>, Partial<Record<Section, Form
   // düz horon (slow, the drone and a long call, the kudüm) → yayma horon (the figure) → dik horon (the figure twice as fast); the break
   // goes back to the düz horon, the outro thins the figure out
   horon: {
-    intro: { speed: "slow", mode: "sparse", roles: ["pad", "hook"], drum: "kudum" },
-    build: { speed: "double", mode: "normal" },
-    chorus: { speed: "double", mode: "normal" },
-    break: { speed: "slow", mode: "sparse", roles: ["pad", "hook"] },
-    outro: { speed: "normal", mode: "sparse", roles: ["pad", "bass", "pluck", "hook"] },
+    intro: { speed: "slow", mode: "sparse", roles: ["hook"], drum: "kudum" },
+    verse: { speed: "normal", mode: "normal", roles: ["hook"], drum: "davul" },
+    build: { speed: "double", mode: "normal", roles: ["hook"], drum: "davul" },
+    chorus: { speed: "double", mode: "normal", roles: ["hook"], drum: "davul" },
+    break: { speed: "slow", mode: "sparse", roles: ["hook"], drum: "kudum" },
+    outro: { speed: "normal", mode: "sparse", roles: ["hook"], drum: "davul" },
   },
   // the heavy slow davul under the zurna's long call → the figure → the fast halay (the figure twice as fast, the davul on its strong places)
   halay: {
@@ -186,6 +187,14 @@ const FORMS: Record<NonNullable<GenreCard["form"]>, Partial<Record<Section, Form
     intro: { speed: "slow", mode: "free", roles: ["pad", "hook"] },
     outro: { speed: "slow", mode: "free", roles: ["pad", "hook"] },
   },
+};
+/** the horon as one colour of a bigger band (an episode of a piece whose main card is not the horon): the full band plays, the kudüm only in the intro */
+const HORON_IN_BAND: Partial<Record<Section, FormBar>> = {
+  intro: { speed: "slow", mode: "sparse", roles: ["pad", "hook"], drum: "kudum" },
+  build: { speed: "double", mode: "normal" },
+  chorus: { speed: "double", mode: "normal" },
+  break: { speed: "slow", mode: "sparse", roles: ["pad", "hook"] },
+  outro: { speed: "normal", mode: "sparse", roles: ["pad", "bass", "pluck", "hook"] },
 };
 /** the form of a bar of a section for a card: the common form (normal, normal) when the card has none */
 export function formAt(card: GenreCard, section: Section): FormBar {
@@ -598,7 +607,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     return b === 0 && k === 0 ? Math.abs(o) : o;
   };
   // the kudüm or the davul of a form: the kick route, else the backbeat route, else the bass route, on the form card's drum
-  const drumRoute = ["kick", "backbeat", "bass"].map((q) => role.indexOf(q as PopRole)).find((x) => x >= 0) ?? -1;
+  const drumRoute = ["kick", "backbeat", "bass"].map((q) => role.indexOf(q as PopRole)).find((x) => x >= 0) ?? (role.findIndex((q) => q !== "hook") >= 0 ? role.findIndex((q) => q !== "hook") : -1);
   // call and response: in the chorus the pluck route (if the piece has one) answers the hook in the second half of every second bar,
   // with the hook's own motif turned upside down; the hook rests there
   const answerer = role.indexOf("pluck");
@@ -648,7 +657,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const full = section === "chorus" || section === "build";
     const ep = stageAt(b, section);
     const fcard = formCardOf(ep.card);
-    const fb = formAt(fcard, section);
+    const fb = fcard.form === "horon" && plan.main.form !== "horon" ? HORON_IN_BAND[section] ?? NORMAL_BAR : formAt(fcard, section);
     const g0 = ep.card ? grooves.get(ep.card.id)! : main;
     const g = fb.speed === "double" ? grooveOf(ep.card ?? plan.main, "double") : g0;
     const free = fb.mode === "free";
@@ -838,7 +847,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         fg.strong.forEach((sl) => dk(sl.start, v((fb.speed === "double" ? 0.6 : 0.7 * 1.2) * sl.accent)));
       }
     }
-    if (b % droneEvery === 0 && !silentBar(b)) {
+    if (b % droneEvery === 0 && !silentBar(b) && plan.main.form !== "horon") {
       let len = 1;
       while (len < droneEvery && b + len < BARS && !silentBar(b + len)) len++;
       [0, 7].forEach((semi, k) => {

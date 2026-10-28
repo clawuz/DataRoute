@@ -55,7 +55,7 @@ describe("formAt", () => {
       expect(formAt(c, "break")).toMatchObject({ mode: "sparse" });
     }
     expect(formAt(card("karadeniz"), "intro").drum).toBe("kudum");
-    expect(formAt(card("karadeniz"), "break").drum).toBeUndefined();
+    expect(formAt(card("karadeniz"), "break").drum).toBe("kudum");
     expect(formAt(card("dogu"), "intro").drum).toBe("davul");
   });
   it("the long air: free time in the intro and the outro, the metre between", () => {
