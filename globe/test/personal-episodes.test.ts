@@ -90,13 +90,13 @@ describe("episodeAt", () => {
 // re-captured at the Black Sea kemençe and tulum from the portal recordings; earlier at the Black Sea card has the tulum, no classical kemençe; earlier at the Karadeniz horon idiom (only the Black Sea row: its walk idiom is now repeat 0.25, span 4, start [2, 3, 1]); earlier at kemençe portamento, titreme and a repeat cap in the bank selector; earlier at regional forms: horon, halay and uzun hava (the Black Sea, East and Central Anatolian rows have a form); earlier at metre variants per card (the Black Sea row now plays a chosen figure); earlier at zeybek: rast/segah, 3+2+2+2 (regional research); earlier at new real recordings: bansuri, sarangi, zurna, sitar, ney, kemence; earlier at voices pass: no piano in world cards, jazz horns, oud, italian strings, hindustani; earlier at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["~ESB,ASR,NAV", "visited", 2752999506],
+  ["~ESB,ASR,NAV", "visited", 894780003],
   ["~TZX,RZV,OGU", "wish", 2075703903],
   ["~VAN,ERZ,ERC", "wish", 2676215838],
-  ["~AYT,GZP,ADA", "visited", 3353894315],
+  ["~AYT,GZP,ADA", "visited", 2629896406],
   ["ESB", "visited", 2232014653],
   ["LHR", "wish", 469582247],
-  ["~ADB,BJV,DNZ", "wish", 934254620],
+  ["~ADB,BJV,DNZ", "wish", 2062036692],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]

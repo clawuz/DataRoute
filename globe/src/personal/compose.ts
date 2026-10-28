@@ -553,7 +553,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const tune = opts.tunes ? tuneFor(plan.main, mode, routes) : null;
   if (tune) style.tune = tune.id;
   // a horon, halay or long air is modal over a drone: one chord, its root and fifth, no third (a major or minor triad clashes with the makam)
-  const dronal = !tune && (plan.main.form === "horon" || plan.main.form === "halay" || plan.main.form === "uzunhava");
+  const dronal = !tune && (plan.main.form === "horon" || plan.main.form === "halay" || plan.main.form === "uzunhava" || !!plan.main.drone);
   const popProg: Chord[] = (dronal ? [[0, 3]] : tune ? POP_PROGS[tune.mode === "major" ? "wish" : "visited"][st.progression % 4] : plan.main.prog ?? POP_PROGS[mode][st.progression % POP_PROGS[mode].length]).map(([off, third]) => ({ root: KEY_ROOT + off, third: (dronal ? 7 : third) as Chord["third"] }));
 
   // the hook of each hook route: four bars of scale degrees (`phraseMotifs`), walked in the idiom of the route's card and pulled by its heading
