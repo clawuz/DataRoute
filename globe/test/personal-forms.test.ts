@@ -43,7 +43,8 @@ describe("formAt", () => {
     expect(card("dogu").form).toBe("halay");
     expect(card("icanadolu").form).toBe("uzunhava");
     expect(card("mevlevi").form).toBe("uzunhava");
-    expect(CARDS.filter((c) => c.form).map((c) => c.id).sort()).toEqual(["dogu", "icanadolu", "karadeniz", "mevlevi"]);
+    expect(card("akdeniz").form).toBe("uzunhava");
+    expect(CARDS.filter((c) => c.form).map((c) => c.id).sort()).toEqual(["akdeniz", "dogu", "icanadolu", "karadeniz", "mevlevi"]);
   });
   it("the horon and the halay: slow and sparse at the start, the figure in the verse, double speed in the build and the chorus", () => {
     for (const id of ["karadeniz", "dogu"]) {

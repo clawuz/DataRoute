@@ -843,6 +843,13 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
 
     // the form's drum: the horon's kudüm on beat one of every second bar of its intro; the halay's davul on the strong places of the
     // figure (heavy in the slow bars; in a doubled bar on both repeats, when no kick route plays them already)
+    // a drone or pop card of a piece with no drum route (two or three routes) still has its percussion: the strong places of the figure
+    // on the first route that is not the hook, soft, and every hit of the figure in the chorus
+    if (!fb.drum && drumRoute >= 0 && (fcard.drone || fcard.id === "turkpop") && (fcard === plan.main || plan.perRoute.includes(fcard)) && !role.some((q) => q === "kick" || q === "backbeat") && section !== "intro" && section !== "outro" && fb.mode === "normal") {
+      const bedInst = resolveVoice(fcard.perc, hashOf[drumRoute]);
+      (section === "chorus" ? g.slots.filter((sl) => sl.hit) : g.strong).forEach((sl) =>
+        push(drumRoute, t0 + sl.start * beat + (sl.odd ? g.swing * beat * 0.33 * sl.len : 0), beat * 0.35, bedInst, 200, v((sl.accent >= 1.1 ? 0.55 : 0.32)), phaseAt(drumRoute, b, sl.start / 4), "kick"));
+    }
     if (fb.drum && drumRoute >= 0 && !(fb.speed === "double" && role.includes("kick"))) {
       const dInst = resolveVoice(fcard.perc, hashOf[drumRoute]);
       const dk = (at: number, vel: number): void => push(drumRoute, t0 + at * beat, beat * 0.4, dInst, 200, vel, phaseAt(drumRoute, b, at / 4), "kick");
