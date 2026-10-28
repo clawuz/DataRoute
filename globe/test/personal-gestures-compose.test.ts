@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { composePiece, limitsOf, type PersonalNote } from "../src/personal/compose";
-import { drawLength } from "../src/personal/flight";
+import { drawLength, lineShare } from "../src/personal/flight";
 import { planCards } from "../src/personal/genres";
 import { buildRoutes } from "../src/personal/routes";
 import { gesturesOf } from "../src/personal/gestures";
@@ -40,15 +40,16 @@ describe("composed pieces with gestures (300 selections)", { timeout: 60000 }, (
     }
   });
   it("hidden notes never change what the box draws: each drawn note is drawn until the next drawn note of its route", () => {
-    for (const { p, piece } of pieces) {
+    for (const { p, routes, piece } of pieces) {
       const drawn = piece.notes.filter((n) => n.show !== false);
+      const maxKm = Math.max(...routes.map((r) => r.distKm));
       for (const route of new Set(drawn.map((n) => n.route))) {
         const list = drawn.filter((n) => n.route === route).sort((a, b) => a.t - b.t);
-        // (a route whose role is the drone is drawn in full, as before: every one of its notes then has drawDur = d)
-        const heldRoute = list.every((x) => x.drawDur === x.d);
+        // a route's line is as long as the route is: the share of the note drawn follows the route's distance (flight.ts lineShare)
+        const share = lineShare(routes[route].distKm, maxKm);
         list.forEach((x, k) => {
           const next = list.slice(k + 1).find((y) => y.t > x.t + 1e-6);
-          if (!heldRoute) expect(x.drawDur, JSON.stringify(p)).toBeCloseTo(drawLength(x.d, next ? next.t - x.t : null), 9);
+          expect(x.drawDur, JSON.stringify(p)).toBeCloseTo(Math.max(0.05, drawLength(x.d, next ? next.t - x.t : null) * share), 9);
           expect(x.drawDur!).toBeLessThanOrEqual(x.d + 1e-9);
         });
       }
@@ -193,3 +194,26 @@ describe("review fixes (composed pieces)", () => {
 // measured 2026-10-27 after the review fixes: 1303 (1530 before); 20% headroom
 // re-measured 2026-10-27 after the folk and makam cards lost the piano: 2000 (a 12-route piece of plucked santur, kanun and nylon guitar, whose tremolo hits now fill what the piano gestures were); 20% headroom
 const MAX_HIDDEN = 2400;
+
+describe("a route's line is as long as the route is", () => {
+  it("lineShare: the shortest route draws 35% of its note, the longest all of it, in between by distance, never more than 1", async () => {
+    const { lineShare } = await import("../src/personal/flight");
+    expect(lineShare(0, 10000)).toBeCloseTo(0.35, 9);
+    expect(lineShare(10000, 10000)).toBeCloseTo(1, 9);
+    expect(lineShare(5000, 10000)).toBeCloseTo(0.675, 9);
+    expect(lineShare(20000, 10000)).toBe(1);
+  });
+  it("a long route's drawn notes are longer than a short route's of the same role in the same piece", () => {
+    // the same piece, two routes: the line of IST-JFK (about 8,000 km) against IST-AYT (about 480 km)
+    const routes = buildRoutes(["JFK", "AYT", "ESB", "NRT"], "IST");
+    const piece = composePiece("visited", routes);
+    const share = (to: string): number => {
+      const i = routes.findIndex((r) => r.to === to);
+      const max = Math.max(...routes.map((r) => r.distKm));
+      return lineShare(routes[i].distKm, max);
+    };
+    expect(share("NRT")).toBeGreaterThan(share("JFK") - 1e-9);
+    expect(share("JFK")).toBeGreaterThan(share("AYT"));
+    expect(piece.notes.every((n) => n.drawDur === undefined || n.drawDur <= n.d + 1e-9)).toBe(true);
+  });
+});

@@ -16,3 +16,11 @@ export function altitudeFt(p: number, distKm: number): number {
 export function drawLength(d: number, gap: number | null): number {
   return gap === null ? d : Math.max(0.05, Math.min(d, gap * 0.92));
 }
+
+/**
+ * The share of its note's length the music box draws on a route's line: a route's line is as long as the route is (35% of the note for
+ * the shortest route, the whole note for the longest), so a long route never looks like the shortest one.
+ */
+export function lineShare(distKm: number, maxKm: number): number {
+  return 0.35 + 0.65 * (maxKm > 0 ? Math.min(1, Math.max(0, distKm / maxKm)) : 1);
+}

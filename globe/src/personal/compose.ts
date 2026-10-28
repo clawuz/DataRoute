@@ -3,7 +3,7 @@ import { WORLD_RANGE } from "../audio/world-pack";
 import { euclid, routeHash } from "../audio/theory";
 import type { PersonalMode } from "./codec";
 import type { PersonalRoute } from "./routes";
-import { altitudeFt, cruiseFt, drawLength } from "./flight";
+import { altitudeFt, cruiseFt, drawLength, lineShare } from "./flight";
 import { NO_PIANO_CARDS, cellOf, cellSeedOf, planCards, type GenreCard } from "./genres";
 import { episodeAt, episodeCards } from "./episodes";
 import { journeyCard, journeyOf } from "./journey";
@@ -921,11 +921,12 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   const byRoute = new Map<number, PersonalNote[]>();
   for (const x of notes) if (roleOfNote.get(x) !== "drone" && x.show !== false) byRoute.set(x.route, [...(byRoute.get(x.route) ?? []), x]);
   for (const x of notes) if (roleOfNote.get(x) === "drone" || x.show === false) x.drawDur = x.d;
+  const maxKm = Math.max(...routes.map((r) => r.distKm));
   for (const list of byRoute.values()) {
     list.sort((a, b) => a.t - b.t);
     list.forEach((x, k) => {
       const next = list.slice(k + 1).find((y) => y.t > x.t + 1e-6);
-      x.drawDur = drawLength(x.d, next ? next.t - x.t : null);
+      x.drawDur = Math.max(0.05, drawLength(x.d, next ? next.t - x.t : null) * lineShare(routes[x.route]?.distKm ?? 0, maxKm));
     });
   }
   const end = Math.max(...notes.map((x) => x.t + x.d));
