@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { REGION_HEX } from "@web/data/palette";
 import type { Region } from "@collector/day-schema";
-import { MAX_DESTINATIONS, minPlaces, type PersonalMode, type PersonalSelection } from "./codec";
+import { MAX_DESTINATIONS, NEW_MIN_PLACES, type PersonalMode, type PersonalSelection } from "./codec";
 import { DESTINATIONS, NETWORK_CLAIM, NETWORK_COUNTRIES, NETWORK_DESTINATIONS, countryName, destinationOf, flagOf, labelOf, AREAS, areaOf, type AreaId, type Destination } from "./destinations";
 import { buildRoutes } from "./routes";
 import { Backdrop } from "./Backdrop";
@@ -183,7 +183,7 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
     if (code === home) return;
     setPicked((p) => (p.includes(code) ? p.filter((x) => x !== code) : p.length >= MAX_DESTINATIONS ? p : [...p, code]));
   };
-  const ready = !!home && picked.length >= minPlaces(home);
+  const ready = !!home && picked.length >= NEW_MIN_PLACES;
   const c = COPY[mode];
   const hits = needle
     ? ROWS.filter((r) => r.hay.includes(needle))
@@ -302,7 +302,7 @@ export function Landing({ onCompose, onLive, startAt }: Props) {
       </div>
       <div className="picker-bar">
         <span className="picker-count">
-          {fromOpen ? "CHOOSE WHERE YOU FLY FROM" : `${picked.length} / ${MAX_DESTINATIONS}${ready ? (via > 0 ? ` · ${via} CHANGE${via === 1 ? "" : "S"} AT ISTANBUL` : " · DIRECT") : " · ADD A PLACE"}`}
+          {fromOpen ? "CHOOSE WHERE YOU FLY FROM" : `${picked.length} / ${MAX_DESTINATIONS}${ready ? (via > 0 ? ` · ${via} CHANGE${via === 1 ? "" : "S"} AT ISTANBUL` : " · DIRECT") : picked.length < NEW_MIN_PLACES ? ` · ADD ${NEW_MIN_PLACES - picked.length} MORE (AT LEAST ${NEW_MIN_PLACES})` : " · CHOOSE WHERE YOU FLY FROM"}`}
         </span>
         <button type="button" className="compose-btn" disabled={!ready} onClick={() => onCompose({ mode, places: picked, home })}>
           <span className="ms-eq" aria-hidden="true">{Array.from({ length: 28 }, (_, i) => <i key={i} style={{ animationDelay: `${-((i * 37) % 17) / 10}s`, animationDuration: `${0.7 + ((i * 53) % 9) / 10}s` }} />)}</span>

@@ -14,6 +14,8 @@ export const MAX_DESTINATIONS = 30;
 /** a journey needs two places; with a home, one place is enough */
 export const MIN_PLACES = 2;
 export const minPlaces = (home?: string): number => (home ? 1 : MIN_PLACES);
+/** a new piece needs four places (four voices: pad, bass, hook, pluck); old links with fewer still play (selectionFromSearch uses minPlaces) */
+export const NEW_MIN_PLACES = 4;
 
 const KEY: Record<PersonalMode, string> = { visited: "v", wish: "w" };
 const CODE = /^[A-Z]{3}$/;
