@@ -49,7 +49,7 @@ describe("lift in a piece", () => {
   it("records the lift in the style: 3 across regions, 0 in one region", () => {
     expect(composePiece("visited", buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST")).style.lift).toBe(3);
     expect(composePiece("wish", buildRoutes(["JFK", "NRT", "LHR", "DEL"], "IST")).style.lift).toBe(2);
-    expect(composePiece("visited", buildRoutes(["ADA", "ESB", "DIY", "AYT"], "IST")).style.lift).toBe(0);
+    expect(composePiece("visited", buildRoutes(["JFK", "ORD", "LAX", "ATL"], "BOS")).style.lift).toBe(0);
   });
   it("sounds the same chord a step higher, then goes home", () => {
     // `lowest` measures the chord only when the lowest note of a bar is a chord voice. With DEL first (a Bollywood card) the lowest note of a bar can be a
@@ -111,8 +111,9 @@ describe("lift in a piece", () => {
     }
   });
   it("does not lift a trip inside one region", () => {
-    const p = composePiece("visited", buildRoutes(["ADA", "ESB", "DIY", "AYT"], "IST"));
-    // bar 40 holds a passing bass note in this piece, so the lifted bars are compared with the home-key bars 56 and 40/48
+    const p = composePiece("visited", buildRoutes(["JFK", "ORD", "LAX", "ATL"], "BOS"));
+    // (a drone card holds one chord, so this check uses a Western selection: the lowest drawn note is the bass root there)
+    // bar 40 may hold a passing bass note, so the lifted bars are compared with the home-key bars 56 and 40/48
     expect(pc(lowest(p, 44) - lowest(p, 56))).toBe(0);
     expect(pc(lowest(p, 48) - lowest(p, 40))).toBe(0);
   });

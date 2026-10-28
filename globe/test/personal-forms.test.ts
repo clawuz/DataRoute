@@ -166,11 +166,12 @@ describe("the long air (uzun hava): free time, then the metre", () => {
     const bad = x.drawn.filter((n) => n.t >= 56 * x.bar - 0.05 && ["kick", "backbeat", "hat", "pluck", "bass"].includes(x.role[n.route]));
     expect(bad).toEqual([]);
   });
-  it("from bar 8 the usual groove: the bass plays the strong places of the figure and the pluck plays", () => {
+  it("from bar 8 the usual groove: the bass sounds the drone root every second bar and the pluck plays", () => {
     const bass = x.role.indexOf("bass");
     const pluck = x.role.indexOf("pluck");
     for (let b = 8; b < 12; b++) {
-      expect(x.drawn.filter((n) => n.route === bass && x.inBar(n, b)).length, `bar ${b}`).toBeGreaterThan(0);
+      // (the drone cards' bass sounds the root once, long, on the first beat of every second bar: the drone already holds it)
+      if ((b - 8) % 2 === 0) expect(x.drawn.filter((n) => n.route === bass && x.inBar(n, b)).length, `bar ${b}`).toBeGreaterThan(0);
       expect(x.drawn.filter((n) => n.route === pluck && x.inBar(n, b)).length, `bar ${b}`).toBeGreaterThan(0);
     }
   });

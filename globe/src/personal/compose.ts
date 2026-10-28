@@ -675,7 +675,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       const inst = voiceOf[i];
       const rk = rank.get(i) ?? 0.5;
       const p0 = phaseAt(i, b, 0);
-      if (rl === "pad" && fb.mode !== "normal") {
+      if (rl === "pad" && (fb.mode !== "normal" || plan.perRoute[i].drone)) {
         // a form's slow or free bar: the chord tone held for the whole bar, like a drone (no re-strike on the beats)
         push(i, t0 + (occ[i] % 3) * 0.04, bar * 0.98, inst, hz(tones[occ[i] % 3] + 12 * (occ[i] % 2)), vs(0.4 + 0.1 * rk) * (free ? FREE_VEL : 1), p0);
       } else if (rl === "hook" && fb.mode !== "normal") {
@@ -704,6 +704,9 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       } else if (rl === "pad") {
         // the chord, re-struck on beats one and three, one tone per pad route, rolled a little
         [0, 2].forEach((bt, k) => push(i, t0 + bt * beat + (occ[i] % 3) * 0.04, beat * 1.9 * (0.7 + 0.6 * rk), inst, hz(tones[(occ[i] + k) % 3] + 12 * ((occ[i] + k) % 2)), vs(0.4 + 0.1 * rk), phaseAt(i, b, bt / 4)));
+      } else if (rl === "bass" && plan.perRoute[i].drone) {
+        // the drone already holds the root: the bass only sounds it, long, on the first beat of every second bar
+        if ((b - first) % 2 === 0) push(i, t0, bar * 0.9, inst, hz(tones[0] - 12), vs(0.5), phaseAt(i, b, 0));
       } else if (rl === "bass") {
         const roots = g.strong.length ? g.strong : [g.slots[0]];
         roots.forEach((sl, k) => {
@@ -790,7 +793,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         // still answers the hook in the call-and-response)
         if (plan.perRoute[i].form === "horon") continue;
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
-        if (plan.perRoute[i].form === "halay") {
+        if (plan.perRoute[i].form === "halay" || plan.perRoute[i].drone) {
           // a dance form's strum plays only the strong places of the figure, not straight eighths: the kemençe runs the whole
           // figure over it, so the two do not share one grid
           const hitsHere = g.slots.filter((sl, k0) => sl.hit && (k0 === 0 || sl.accent >= 1.1));
@@ -799,7 +802,10 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
             if (section === "intro" && k > 0) return;
             if (i === answerer && answering(section, b) && sl.start >= 2) return;
             const p = phaseAt(i, b, sl.start / 4);
-            const tone = tones[seqTones[(k + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+            const high = altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0;
+            // a drone card strums the scale (karar, dominant, fourth, dominant), a different note on every strong place, not the chord
+            const sc = scaleOf[i];
+            const tone = plan.perRoute[i].drone ? sh + KEY_ROOT + sc[[0, 4, 3, 4, 2, 4][(b + k) % 6] % sc.length] + high : tones[seqTones[(k + (occ[i] ? 1 : 0)) % 4]] + high;
             push(i, t0 + sl.start * beat + (sl.odd ? g.swing * beat * 0.33 * sl.len : 0), sl.len * beat * 0.9, inst, hz(tone), vs(sl.accent >= 1.1 ? 0.5 : 0.3), p);
           });
           continue;
@@ -822,7 +828,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         if (ep.blockEnd && fills && !beats.includes(3)) beats.push(3);
         beats.forEach((bt) => push(i, t0 + bt * beat, beat * 0.4, inst, inst === "TIMP" ? hz(cr - 12) : 200, vs(bt === 0 ? 0.8 : 0.6), phaseAt(i, b, bt / 4)));
       } else {
-        if (ep.card || fb.speed === "double") {
+        if (ep.card || fb.speed === "double" || plan.perRoute[i].drone) {
           // inside an episode (and in a form's doubled bar) the hat plays the hit places of the episode figure instead of straight eighths,
           // swung on the odd slots of the figure exactly like the hook (a rest is a slot too)
           g.slots.forEach((sl) => {
