@@ -777,8 +777,11 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
           });
         }
       } else if (rl === "pluck") {
+        // the horon has no plucked or strummed voice: the kemençe and the tulum over the drone are the whole band (a route of this role
+        // still answers the hook in the call-and-response)
+        if (plan.perRoute[i].form === "horon") continue;
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
-        if (plan.perRoute[i].form === "horon" || plan.perRoute[i].form === "halay") {
+        if (plan.perRoute[i].form === "halay") {
           // a dance form's strum plays only the strong places of the figure, not straight eighths: the kemençe runs the whole
           // figure over it, so the two do not share one grid
           const hitsHere = g.slots.filter((sl, k0) => sl.hit && (k0 === 0 || sl.accent >= 1.1));
