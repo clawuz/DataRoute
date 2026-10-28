@@ -165,9 +165,9 @@ describe("the flight runs (nağme)", { timeout: 60000 }, () => {
     return { p, rs, runs, bar, sectionOf };
   };
 
-  // a Mediterranean piece (no form): its chorus plays the figure once a bar, so the runs sound in the verse and the chorus. (The Black Sea
+  // an Italian piece (no form): its chorus plays the figure once a bar, so the runs sound in the verse and the chorus. (The Black Sea
   // piece of before is a horon now: its chorus doubles the figure, which fills the last beat, so it has runs in the verse only.)
-  const RUNS_SEL = ["AYT", "GZP", "ADA"];
+  const RUNS_SEL = ["FCO", "MXP", "NAP"];
   it("a piece with a hook route has rising runs in climbing bars and falling runs in descending bars", () => {
     const { runs } = runsOf(RUNS_SEL);
     expect(runs.length).toBeGreaterThan(0);

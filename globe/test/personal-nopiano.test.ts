@@ -96,8 +96,8 @@ describe("the voices pass", () => {
     expect(card("jazz").bass).toEqual(["UPRIGHTBASS"]);
   });
   it("gives akdeniz the oud and the kanun", () => {
-    expect(card("akdeniz").melody).toEqual(["KANUN", "OUD", "KEMENCE_REAL"]);
-    expect(card("akdeniz").pluck).toEqual(["OUD", "SAZ"]);
+    expect(card("akdeniz").melody).toEqual(["OUD", "VIOLIN", "KANUN"]);
+    expect(card("akdeniz").pluck).toEqual(["NYLONGUITAR", "OUD"]);
   });
   it("gives the Italian card its strings", () => {
     expect(card("italian").held).toEqual(["CELLO", "VIOLA", "VIOLIN", "HORN"]);
