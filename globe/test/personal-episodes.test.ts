@@ -90,31 +90,31 @@ describe("episodeAt", () => {
 // re-captured at the Black Sea kemençe and tulum from the portal recordings; earlier at the Black Sea card has the tulum, no classical kemençe; earlier at the Karadeniz horon idiom (only the Black Sea row: its walk idiom is now repeat 0.25, span 4, start [2, 3, 1]); earlier at kemençe portamento, titreme and a repeat cap in the bank selector; earlier at regional forms: horon, halay and uzun hava (the Black Sea, East and Central Anatolian rows have a form); earlier at metre variants per card (the Black Sea row now plays a chosen figure); earlier at zeybek: rast/segah, 3+2+2+2 (regional research); earlier at new real recordings: bansuri, sarangi, zurna, sitar, ney, kemence; earlier at voices pass: no piano in world cards, jazz horns, oud, italian strings, hindustani; earlier at no synthetic ney: NEY replaced by the NEY_MAKAM recordings; earlier at Konya is always the Mevlevi card (the no-colour İç Anadolu row uses NAV); earlier at mevlevi card, ney in icanadolu, no piano in folk cards; earlier at the flight runs; earlier at the altitude sets loudness, brightness and room; earlier at gestures: review fixes (no unisons, tremolo capped, lighter density); earlier at gestures: wider coverage; earlier at gestures: the instruments are played with their own gestures; earlier at all airports: a card list for every big country and city; earlier at the main card follows the destinations; earlier at airport cards (the Mediterranean golden uses ADA); earlier at destination styles: airport-level cards; earlier at the journey (the sound of Istanbul and of the destination); earlier at the quiet intro (no hat, a late soft pluck); earlier at the call-and-response step (the chorus answer), earlier at the length-by-rank step (pad, bass and hook last as long as the rank of their route says: 0.7-1.3x, 0.8-1.2x), earlier at music B0 (the hook is an original melody now, with a cadence plan, a motif return and an approach to the cadence from 4 hits); the invariant "only hook routes' notes changed" was checked against the code before
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
-  ["~ESB,ASR,NAV", "visited", 815082928],
-  ["~TZX,RZV,OGU", "wish", 4161285722],
-  ["~VAN,ERZ,ERC", "wish", 777353389],
-  ["~AYT,KCM", "visited", 415642757],
+  ["~ESB,ASR,NAV", "visited", 3294813094],
+  ["~TZX,RZV,OGU", "wish", 2198553260],
+  ["~VAN,ERZ,ERC", "wish", 304232227],
+  ["~AYT,KCM", "visited", 2732089086],
   ["ESB", "visited", 2232014653],
   ["LHR", "wish", 469582247],
-  ["~ADB,BJV,DNZ", "wish", 1282386680],
+  ["~ADB,BJV,DNZ", "wish", 2859147196],
 ];
 // pieces without colours that are big enough for drums (5-8 routes: kick and backbeat exist), so a fill that is not gated on the
 // episodes shows up; hashes re-captured at music B0 (see above). [places, home ("" = a journey without home), mode, hash]
 const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
-  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 1879961728], // 5 routes
-  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 697689326], // 5 routes
-  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 2169300058], // 5 routes
-  ["ALA,CIT,GUW,HSA", "", "visited", 1678134918], // 6 routes
-  ["IKA,MHD,OMH,SYZ", "", "wish", 1400210074], // 6 routes
-  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 445316826], // 7 routes
-  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 3040741667], // 8 routes
-  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 970586150], // 8 routes
+  ["IKA,MHD,OMH,SYZ", "TBZ", "visited", 2981438453], // 5 routes
+  ["MHD,OMH,SYZ,TBZ", "IKA", "visited", 3660709952], // 5 routes
+  ["IKA,OMH,SYZ,TBZ", "MHD", "wish", 975253256], // 5 routes
+  ["ALA,CIT,GUW,HSA", "", "visited", 1626547813], // 6 routes
+  ["IKA,MHD,OMH,SYZ", "", "wish", 3347753418], // 6 routes
+  ["ALA,CIT,GUW,HSA,KGF,NQZ", "SCO", "visited", 1948596511], // 7 routes
+  ["IKA,MHD,OMH,SYZ,TBZ", "", "wish", 1753082070], // 8 routes
+  ["ALA,CIT,GUW,HSA,KGF", "", "visited", 3379782309], // 8 routes
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 440775036],
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 213588445],
-  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 3647149763],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 2312018404],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 2452910086],
+  ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 2811190010],
 ];
 // a leading "~" in places: a journey without home (the first place is where the trip starts)
 const routesOf = (places: string, home = "IST"): ReturnType<typeof buildRoutes> =>
@@ -284,7 +284,8 @@ describe("episodes in a piece: the voices and the groove follow the episode card
     const r = first("hat");
     for (let blk = 0; blk < 4; blk++) for (const b of barsOfBlock(blk)) {
       const c = blockCard(b);
-      expect(barNotes(r, b).length, `bar ${b}`).toBe(c ? grooveStarts(c).hits.length : 8);
+      // (a drone main card keeps the hat on its own figure at home too)
+      expect(barNotes(r, b).length, `bar ${b}`).toBe(c ? grooveStarts(c).hits.length : pl.main.drone ? grooveStarts(pl.main).hits.length : 8);
     }
   });
   it("the voices of the episode card come forward (x1.15) and the others step back (x0.85) against the home block of the verse", () => {

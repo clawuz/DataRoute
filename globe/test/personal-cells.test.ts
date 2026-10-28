@@ -83,6 +83,12 @@ describe("a piece plays the figure its card chose", () => {
       const beat = bar / 4;
       const want = strongOf(ch.cell, ch.accent);
       for (const b of [8, 9, 10, 11]) {
+        // a drone card's bass sounds the root once, on the first beat of every second bar (the drone holds it)
+        if (pl.main.drone) {
+          const only = p.notes.filter((x) => x.route === bassRoute && x.show !== false && x.freq !== 200 && x.t >= b * bar - 0.05 && x.t < (b + 1) * bar - 0.05);
+          expect(only.length, `${sel} bar ${b}`).toBe((b - 8) % 2 === 0 ? 1 : 0);
+          continue;
+        }
         const got = p.notes.filter((x) => x.route === bassRoute && x.show !== false && x.t >= b * bar - 0.05 && x.t < (b + 1) * bar - 0.05).map((x) => (x.t - b * bar) / beat).sort((x, y) => x - y);
         expect(got.length, `${sel} bar ${b}`).toBe(want.length);
         got.forEach((x, k) => expect(Math.abs(x - want[k]), `${sel} bar ${b}`).toBeLessThan(0.15));

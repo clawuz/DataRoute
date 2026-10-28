@@ -14,7 +14,7 @@ describe("destination cards by airport", () => {
     expect(ids("AYT")[0]).toBe("akdeniz");
     expect(ids("ADB")[0]).toBe("zeybek");
     expect(ids("VAN")[0]).toBe("dogu");
-    expect(ids("IST")).toEqual(expect.arrayContaining(["anatolian", "jazz"]));
+    expect(ids("IST")).toEqual(expect.arrayContaining(["turkpop", "anatolian"]));
   });
   it("Greece, Italy, Spain, US, UK", () => {
     expect(ids("ATH")[0]).toBe("greek");
