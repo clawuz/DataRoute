@@ -474,7 +474,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     switch (role[i]) {
       case "pad": return choose(card.held, h, i, "other");
       case "bass": return choose(card.bass?.length ? card.bass : card.held.filter((x) => x !== "PNO"), h, i, "other", 1);
-      case "hook": return choose(card.melody, h, i, "melody");
+      case "hook": return choose(card.melody, card.lead ? 0 : h, i, "melody", card.lead ? -st.ensemble - i : 0);
       case "pluck": return choose(card.pluck, h, i, "pluck");
       case "backbeat": return resolveVoice(card.perc, h);
       case "kick": return folkish ? resolveVoice(card.perc, h) : "TIMP";
@@ -776,6 +776,20 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
         }
       } else if (rl === "pluck") {
         const seqTones = [0, 1, 2, 1].map((x) => (x + i) % 3);
+        if (plan.perRoute[i].form === "horon" || plan.perRoute[i].form === "halay") {
+          // a dance form's strum plays only the strong places of the figure, not straight eighths: the kemençe runs the whole
+          // figure over it, so the two do not share one grid
+          const hitsHere = g.slots.filter((sl, k0) => sl.hit && (k0 === 0 || sl.accent >= 1.1));
+          if (section === "intro" && b - first < 4) continue;
+          hitsHere.forEach((sl, k) => {
+            if (section === "intro" && k > 0) return;
+            if (i === answerer && answering(section, b) && sl.start >= 2) return;
+            const p = phaseAt(i, b, sl.start / 4);
+            const tone = tones[seqTones[(k + (occ[i] ? 1 : 0)) % 4]] + (altitudeFt(p, r.distKm) / cruiseFt(r.distKm) > 0.55 ? 12 : 0);
+            push(i, t0 + sl.start * beat + (sl.odd ? g.swing * beat * 0.33 * sl.len : 0), sl.len * beat * 0.9, inst, hz(tone), vs(sl.accent >= 1.1 ? 0.5 : 0.3), p);
+          });
+          continue;
+        }
         for (let e = 0; e < 8; e++) {
           if (i === answerer && answering(section, b) && e >= 4) continue; // it answers instead
           if (section === "intro" && (b - first < 4 || e % 4 !== 0)) continue; // the intro: the pluck waits four bars, then plays two soft notes a bar, not a run of eighths

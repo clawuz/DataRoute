@@ -91,8 +91,8 @@ describe("episodeAt", () => {
 const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes)]; none of these has a coloured route (episodeCards = [])
   ["~ESB,ASR,NAV", "visited", 306151847],
-  ["~TZX,RZV,OGU", "wish", 2396043849],
-  ["~VAN,ERZ,ERC", "wish", 843717749],
+  ["~TZX,RZV,OGU", "wish", 2744352812],
+  ["~VAN,ERZ,ERC", "wish", 634620039],
   ["~AYT,GZP,ADA", "visited", 86554495],
   ["ESB", "visited", 2232014653],
   ["LHR", "wish", 469582247],
