@@ -1154,6 +1154,28 @@
     4
    ]
   },
+  "akdenizpop": {
+   "step": 0.65,
+   "repeat": 0.3,
+   "leaps": [
+    2,
+    3
+   ],
+   "bias": 0,
+   "span": 6,
+   "arc": 3,
+   "start": [
+    0,
+    2,
+    4
+   ],
+   "cadence": [
+    2,
+    0,
+    2,
+    4
+   ]
+  },
   "chanson": {
    "step": 0.7,
    "repeat": 0.1,

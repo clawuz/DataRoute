@@ -128,6 +128,7 @@ const BASE_CARDS: GenreCard[] = [
   { id: "caucasus", name: "Caucasus (duduk)", family: "folk", bpm: [88, 108], scale: HARMONIC, scaleWish: MIXO, cell: [2, 1, 2, 1, 2], accent: [1.25, 0.85, 1, 0.85, 1.05], prog: [[0, 3], [10, 4], [8, 4], [7, 4]], held: ["DUDUK", "BAGPIPE_DRONE"], melody: ["DUDUK", "BAGPIPE", "ACCORDION"], pluck: ["PSALTERY", "SAZ"], perc: "BENDIR" },
   { id: "fado", name: "Fado", family: "chamber", bpm: [76, 92], scale: MINOR, scaleWish: MAJOR, cell: [1, 1, 1, 1], accent: [1.15, 0.9, 1, 0.9], prog: [[0, 3], [10, 4], [8, 4], [7, 4]], held: ["CELLO", "VIOLA"], melody: ["NYLONGUITAR", "PSALTERY", "ACCORDION"], pluck: ["PSALTERY", "NYLONGUITAR"], perc: "TRI" },
   { id: "turkpop", name: "Turkish 80s pop (Ajda, Sezen)", family: "pulse", fast: true, bpm: [100, 118], scale: HICAZ, scaleWish: RAST, cell: [2, 1, 1, 1, 1, 2], accent: [1.25, 0.85, 0.9, 0.9, 1.1, 0.9], prog: [[0, 3], [5, 3], [10, 4], [0, 3]], held: ["CELLO", "VIOLA"], bass: ["BASS_EL"], melody: ["VIOLIN", "TENORSAX", "OUD", "CLA"], pluck: ["RHODES", "OUD", "KANUN"], perc: "DARBUKA" },
+  { id: "akdenizpop", name: "Mediterranean pop (oud, darbuka, strings)", family: "pulse", fast: true, bpm: [104, 120], scale: HICAZ, scaleWish: NIHAVENT, cell: [3, 3, 2], accent: [1.25, 1, 0.9], prog: [[0, 4], [1, 4], [0, 4], [10, 4]], held: ["VIOLA", "CELLO"], bass: ["BASS_EL"], melody: ["OUD", "VIOLIN", "CLA"], pluck: ["NYLONGUITAR", "OUD"], perc: "DARBUKA" },
   { id: "chanson", name: "French chanson & musette", family: "chamber", bpm: [92, 112], scale: MAJOR, scaleWish: LYDIAN, cell: [1, 1, 1], accent: [1.2, 0.9, 0.9], prog: [[0, 4], [9, 3], [5, 4], [7, 4]], held: ["ACCORDION", "CELLO"], melody: ["ACCORDION", "VIOLIN", "CLA"], pluck: ["GUITAR_AC", "HARP"], bass: ["UPRIGHTBASS"], perc: "TAMB" },
 ];
 
@@ -186,7 +187,7 @@ function group(airports: string, cards: string[]): void {
 group("TZX RZV OGU SZF NOP KFS ONQ MZH TJK", ["karadeniz"]);
 group("ESB ASR NAV VAS AOE ISE KZR", ["icanadolu"]);
 group("KYA", ["mevlevi"]); // Konya is the Mevlevi city: always the ney and the kudüm
-group("AYT GZP DLM ADA COV HTY KCM", ["akdeniz", "turkpop"]);
+group("AYT GZP DLM ADA COV HTY KCM", ["akdeniz", "akdenizpop", "turkpop"]);
 group("ADB BJV DNZ USQ EDO CKZ", ["zeybek"]);
 group("VAN ERZ ERC KSY AJI IGD MSR BGG EZS MLX DIY BAL MQM SXZ NKT YKO GNY GZT ADF", ["dogu"]);
 group("IST SAW KCO TEQ YEI", ["turkpop", "anatolian", "karsilama", "cinematic", "jazz"]);
@@ -295,7 +296,7 @@ export const NO_PIANO_CARDS: ReadonlySet<string> = new Set([
 /** the region cluster of every card (spec 2026-10-26-many-destinations): the dominant cluster of the destinations leads the piece */
 export const CLUSTER_OF: Record<string, string> = Object.fromEntries(
   Object.entries({
-    turkish: ["anatolian", "turkpop", "karsilama", "karadeniz", "icanadolu", "mevlevi", "akdeniz", "dogu", "zeybek"],
+    turkish: ["anatolian", "turkpop", "akdenizpop", "karsilama", "karadeniz", "icanadolu", "mevlevi", "akdeniz", "dogu", "zeybek"],
     arab: ["arabic", "khaleeji", "maghrebi"],
     "persian-central": ["persian", "centralasia", "caucasus"],
     "south-asia": ["hindustani", "bollywood"],

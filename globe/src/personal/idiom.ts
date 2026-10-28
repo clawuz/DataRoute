@@ -58,6 +58,7 @@ export const IDIOMS: Record<string, Partial<Idiom>> = {
   jazz: { step: 0.5, repeat: 0.1, leaps: [2, 3, 4], span: 7, arc: 3 },
   funk: { step: 0.4, repeat: 0.4, leaps: [3, 4], span: 6, arc: 2 },
   pop: { step: 0.5, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3 },
+  akdenizpop: { step: 0.65, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3, start: [0, 2, 4] },
   turkpop: { step: 0.65, repeat: 0.3, leaps: [2, 3], span: 6, arc: 3, start: [2, 4, 0] },
   // the destination cards (hand-set, like the rest)
   // the horon: a stepwise zigzag between two or three neighbouring degrees inside a fourth (degrees 0..4), a quarter of the notes

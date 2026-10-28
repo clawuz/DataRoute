@@ -93,7 +93,7 @@ const GOLDEN_NO_COLOUR: [string, "visited" | "wish", number][] = [
   ["~ESB,ASR,NAV", "visited", 815082928],
   ["~TZX,RZV,OGU", "wish", 4161285722],
   ["~VAN,ERZ,ERC", "wish", 777353389],
-  ["~AYT,GZP", "visited", 3284437742],
+  ["~AYT,KCM", "visited", 415642757],
   ["ESB", "visited", 2232014653],
   ["LHR", "wish", 469582247],
   ["~ADB,BJV,DNZ", "wish", 1282386680],

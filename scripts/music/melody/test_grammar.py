@@ -39,9 +39,9 @@ def mean(xs):
 
 
 class TestCards(unittest.TestCase):
-    def test_all_53_cards_have_a_form(self):
+    def test_all_54_cards_have_a_form(self):
         ids = card_ids_of_genres_ts()
-        self.assertEqual(len(ids), 53)
+        self.assertEqual(len(ids), 54)
         for cid in ids:
             self.assertIn(cid, grammar.FORM_OF, cid)
             self.assertIn(grammar.FORM_OF[cid], grammar.FORMS)
