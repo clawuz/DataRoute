@@ -571,7 +571,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
     // four bars: each a walk of the idiom of the route's own card, pulled by its direction, coming home on the idiom's cadence;
     // bar 3 repeats bar 1 only when the idiom's cadence gives them the same end degree (otherwise it is its own walk)
-    return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "walk", card: plan.perRoute[i].id });
+    return phraseMotifs(idiom, hits.length, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "bank", card: plan.perRoute[i].id });
   });
   /** how many scale degrees the altitude of the flight lifts the hook of each route (the arc of its card's idiom) */
   const arcOf = routes.map((_, i) => idiomOf(plan.perRoute[i]).arc);
@@ -585,7 +585,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
       const idiom = idiomOf(plan.perRoute[i]);
       const rnd = rng(routeHash(r.key + tag + i));
       const dir: 1 | -1 = r.toLon >= r.fromLon ? 1 : -1;
-      return phraseMotifs(idiom, hitsOf, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "walk", card: plan.perRoute[i].id });
+      return phraseMotifs(idiom, hitsOf, dir, rnd, () => idiom.start[Math.floor(rnd() * idiom.start.length)] + (occ[i] % 2) * 2, { melody: opts.melody ?? "bank", card: plan.perRoute[i].id });
     });
   /** the hook of a doubled bar: the phrase for twice the hits (at most nine) */
   const motifs2 = formMotifs("hook2x", Math.min(2 * hits.length, 9));

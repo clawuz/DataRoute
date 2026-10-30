@@ -81,7 +81,7 @@ export function Experience({ selection, onBack }: Props) {
   const routes = useMemo(() => buildRoutes(selection.places, selection.home), [selection]);
   const melody = useMemo(() => {
     const m = new URLSearchParams(window.location.search).get("melody");
-    return m === "bank" || m === "bank-shippable" ? m : "walk";
+    return m === "walk" || m === "bank-shippable" ? m : "bank"; // the trained bank is the default; ?melody=walk is the old random walk
   }, []);
   const piece = useMemo(() => composePiece(selection.mode, routes, { melody }), [selection.mode, routes, melody]);
   /** a studio piece that is like these picks (a finished file on the site: no request is made) */

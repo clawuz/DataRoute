@@ -250,7 +250,7 @@ describe("composePiece with the bank", () => {
     for (const rs of selections()) {
       for (const mode of ["visited", "wish"] as const) {
         const bank = composePiece(mode, rs, { melody: "bank" });
-        const walk = composePiece(mode, rs);
+        const walk = composePiece(mode, rs, { melody: "walk" });
         expect(bank.notes.length).toBeGreaterThan(0);
         for (const n of bank.notes) {
           expect(Number.isFinite(n.t) && n.t >= 0).toBe(true);
@@ -274,9 +274,9 @@ describe("composePiece with the bank", () => {
       expect(JSON.stringify(a)).toBe(JSON.stringify(composePiece("visited", rs, { melody: "bank-shippable" })));
     }
   });
-  it("defaults to the walk (no option equals melody: walk)", () => {
+  it("defaults to the bank (no option equals melody: bank); the walk is only asked for", () => {
     for (const rs of selections().slice(0, 15)) {
-      expect(JSON.stringify(composePiece("visited", rs))).toBe(JSON.stringify(composePiece("visited", rs, { melody: "walk" })));
+      expect(JSON.stringify(composePiece("visited", rs))).toBe(JSON.stringify(composePiece("visited", rs, { melody: "bank" })));
     }
   });
 });
