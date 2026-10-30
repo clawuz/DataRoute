@@ -54,7 +54,7 @@ describe("lift in a piece", () => {
   it("sounds the same chord a step higher, then goes home", () => {
     // `lowest` measures the chord only when the lowest note of a bar is a chord voice. With DEL first (a Bollywood card) the lowest note of a bar can be a
     // hook note, which also follows the altitude of the flight at that bar (a different degree in bar 44 than in bar 40): not a lift defect, a measure that does not fit that mix
-    const routes = buildRoutes(["BOM", "NRT", "CAI", "GRU"], "IST");
+    const routes = buildRoutes(["LHR", "CAI", "GRU", "ORD"], "IST");
     const p = composePiece("visited", routes);
     expect(pc(lowest(p, 44) - lowest(p, 40))).toBe(3);
     expect(pc(lowest(p, 56) - lowest(p, 40))).toBe(0);

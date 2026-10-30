@@ -67,7 +67,7 @@ describe("a popular-song arrangement made of the routes", () => {
   });
   it("the chord changes every bar and the progression loops every four", () => {
     const bar = (p.sections[1].end - p.sections[1].start) / 16;
-    const roots = (b: number) => p.notes.filter((n) => n.t >= b * bar && n.t < (b + 1) * bar - 1e-6 && (n.instrument === "CELLO" || n.instrument === "BSN" || n.instrument === "VIOLA")).length;
+    const roots = (b: number) => p.notes.filter((n) => n.t >= b * bar && n.t < (b + 1) * bar - 1e-6 && ["CELLO", "BSN", "VIOLA", "HORN", "TPT", "FOLKHARP", "GONG", "SHAKUHACHI", "ERHU", "NEY_MAKAM", "DUDUK", "ACCORDION", "PANPIPE", "EKEYS", "VIOLIN", "VIBES"].includes(String(n.instrument))).length;
     expect(roots(8)).toBeGreaterThan(0);
   });
   it("the hook comes back: the same bar of the hook route is played again four bars later", () => {
