@@ -502,6 +502,11 @@ export function Experience({ selection, onBack }: Props) {
       return;
     }
     setBusy("VIDEO");
+    // the live music stops now, with everything it has already scheduled: while the clip is prepared nothing plays, and the clip's first
+    // note starts on a silent graph (the old piece's last three seconds no longer sound over it)
+    playerRef.current?.hush();
+    const aiBefore = aiAudioRef.current;
+    if (aiBefore && ai === "on") aiBefore.pause();
     try {
       await withStory("VIDEO", async (frame, comp) => {
         const engine = engineRef.current!;
@@ -518,6 +523,7 @@ export function Experience({ selection, onBack }: Props) {
         playerRef.current?.play(hookPiece, (n) => noteCbRef.current?.(n), (n, at) => planCbRef.current?.(n, at));
         const aiEl = aiAudioRef.current;
         if (aiEl && ai === "on" && Number.isFinite(aiEl.duration)) aiEl.currentTime = aiEl.duration * 0.5; // the AI version's chorus (half way, like ours)
+        if (aiEl && ai === "on") void aiEl.play().catch(() => {});
         const stream = comp.captureStream(30);
         audio?.getAudioTracks().forEach((t) => stream.addTrack(t));
         const blob = await recordClip(stream, REEL_SECONDS * 1000, mime);

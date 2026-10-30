@@ -7,6 +7,8 @@ export interface PersonalPlayer {
   /** begin (or restart) looping the piece; `onNote` fires when a note sounds, in time with the audio */
   play(piece: PersonalPiece, onNote: (n: PersonalNote) => void, onPlan?: (n: PersonalNote, wallAt: number) => void): void;
   stop(): void;
+  /** stops the piece AND everything it has already handed to the audio clock (up to three seconds of scheduled notes, sustaining notes, the reverb's tail): nothing of the old piece sounds after this */
+  hush(): void;
   /** browsers start a context suspended until a gesture */
   resume(): void;
   setMuted(m: boolean): void;
@@ -41,23 +43,28 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
   dry.gain.value = 0.72;
   bus.connect(dry);
   dry.connect(master);
-  const conv = ctx.createConvolver();
   const len = Math.floor(2.8 * ctx.sampleRate);
   const ir = ctx.createBuffer(2, len, ctx.sampleRate);
   for (let c = 0; c < 2; c++) {
     const d = ir.getChannelData(c);
     for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
   }
-  conv.buffer = ir;
   const wet = ctx.createGain();
   wet.gain.value = 0.45;
-  conv.connect(wet);
   wet.connect(master);
+  const busWet = ctx.createGain();
+  // the room: a convolver (its tail runs for 2.8 s after the last note, so `hush` swaps it for a fresh one)
+  const makeRoom = (): ConvolverNode => {
+    const c = ctx.createConvolver();
+    c.buffer = ir;
+    c.connect(wet);
+    busWet.connect(c);
+    return c;
+  };
+  let conv = makeRoom();
   // three reverb sends: a note goes to the one that matches its wetness (space.ts); the dry path is the same for all
   const SEND_LEVEL = [0.35, 1, 1.8]; // relative to the single send of before (the middle one is today's sound)
-  const busWet = ctx.createGain();
-  busWet.connect(conv);
-  const noteBus = SEND_LEVEL.map((level) => {
+  const makeNoteBus = (level: number): GainNode => {
     const nb = ctx.createGain();
     nb.connect(bus);
     const send = ctx.createGain();
@@ -65,7 +72,8 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
     nb.connect(send);
     send.connect(busWet);
     return nb;
-  });
+  };
+  const noteBus = SEND_LEVEL.map(makeNoteBus);
 
   // recorded instruments, when a pack is published; until it has arrived (or without one) the synthesis plays
   const sampler = createSampler(ctx);
@@ -153,6 +161,18 @@ export function createPersonalPlayer(ctx: AudioContext, onLoading?: (loading: bo
       if (timer) clearInterval(timer);
       timer = null;
       piece = null;
+    },
+    hush() {
+      this.stop();
+      // every note already scheduled (and every sustaining one) was handed to a note bus: cutting the buses silences them at once
+      noteBus.forEach((nb, i) => {
+        nb.disconnect();
+        noteBus[i] = makeNoteBus(SEND_LEVEL[i]);
+      });
+      // and the reverb's tail with a fresh room
+      busWet.disconnect(conv);
+      conv.disconnect();
+      conv = makeRoom();
     },
     attachElement(el) {
       try {
