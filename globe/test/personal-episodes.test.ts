@@ -112,7 +112,7 @@ const GOLDEN_NO_COLOUR_DRUMS: [string, string, "visited" | "wish", number][] = [
 ];
 const GOLDEN_OUTSIDE_VERSE: [string, "visited" | "wish", number][] = [
   // [places joined by ",", mode, hash of JSON.stringify(notes outside bars 8-23)]; each has episode cards (the first two have five, which now tell the verse in two-bar blocks: the bars outside the verse are the same)
-  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 2312018404],
+  ["NRT,LOS,GRU,LHR,DEL,CAI", "visited", 1463256888],
   ["NRT,LOS,GRU,LHR,DEL,CAI", "wish", 2452910086],
   ["IKA,NRT,JFK,LOS,SYD,GRU", "visited", 2811190010],
 ];
