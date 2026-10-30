@@ -216,3 +216,19 @@ describe("forms keep the invariants over 300 selections", () => {
     expect(withForm).toBeGreaterThanOrEqual(60);
   });
 });
+
+describe("the signature voice is the instrument that leads the piece", () => {
+  it("names the hook instrument of the music: the Black Sea piece is led by the kemençe, a Mediterranean one by a warm voice of its own card", async () => {
+    const { voiceName, pieceStats } = await import("../src/personal/stats");
+    expect(voiceName("KEMENCE_KARADENIZ")).toBe("Black Sea kemençe");
+    expect(voiceName("NS_EKEYS_3")).toBe("Electric keys");
+    expect(voiceName("SOME_NEW_THING")).toBe("Some new thing");
+    expect(voiceName(undefined)).toBeUndefined();
+    const rs = buildRoutes(["TZX", "RZV", "OGU", "SZF"], "IST");
+    const piece = composePiece("visited", rs);
+    expect(piece.style.lead).toBe("KEMENCE_KARADENIZ");
+    expect(pieceStats("visited", ["TZX", "RZV", "OGU", "SZF"], "IST", rs, piece.style.lead).signature).toBe("Black Sea kemençe");
+    // without the lead the region's old voice is used
+    expect(pieceStats("visited", ["TZX", "RZV", "OGU", "SZF"], "IST", rs).signature).toBe("Saz");
+  });
+});

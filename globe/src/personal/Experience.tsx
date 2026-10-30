@@ -88,7 +88,7 @@ export function Experience({ selection, onBack }: Props) {
   const studio = useMemo(() => (!STUDIO_ON || routes.length < 2 ? null : pickTrack(LIBRARY, selection.mode, characterOf(selection.mode, routes, selection.places.length).regions, selection.places.length)), [selection, routes]);
   const autoStudio = useRef(false);
   const palette = useMemo(() => routePalette(routes), [routes]);
-  const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes), [selection.mode, routes]);
+  const stats = useMemo(() => pieceStats(selection.mode, selection.places, selection.home, routes, piece.style.lead), [selection.mode, routes, piece]);
 
   useEffect(() => { // the live screen's look (the neon music box) while a piece is shown
     document.body.classList.add("personal-build");

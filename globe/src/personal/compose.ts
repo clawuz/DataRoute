@@ -51,6 +51,8 @@ export interface PersonalNote {
 
 /** the choices that make one person's piece differ from another's, beyond the notes themselves */
 export interface PersonalStyle {
+  /** the instrument that plays the hook of the main route (its recording's id): the piece's signature voice */
+  lead?: string;
   /** the cards that get a block of the verse (episodes.ts), in the order they are told; absent when there are none */
   episodes?: string[];
   /** the cards of the trip told in order after the home sound: [Istanbul's (when the trip changes planes there), the destination's]; absent when the trip has one sound */
@@ -493,6 +495,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
   // with more than three routes the piano is always there, as a steady voice: on a route of the main card (the arpeggio
   // first, else the hook); else on a pluck or hook route without a recording of its destination, else one whose
   // recording was borrowed from another list of its card
+  const leadAt = role.indexOf("hook");
   if (n > 3 && !voiceOf.includes("PNO")) {
     const pick = (ok0: (i: number) => boolean): number => {
       const ok = (i: number): boolean => !NO_PIANO_CARDS.has(plan.perRoute[i].id) && ok0(i);
@@ -506,6 +509,7 @@ export function composePiece(mode: PersonalMode, routes: PersonalRoute[], opts: 
     if (at >= 0) voiceOf[at] = "PNO";
   }
 
+  if (leadAt >= 0) style.lead = String(voiceOf[leadAt]);
   // the groove of one bar: the figure of a card, stretched to four beats (the main card's, or an episode card's in the verse)
   const cellSeed = cellSeedOf(plan.main, routes);
   // `double` (a form's dik horon / fast halay): every unit of the figure halved, so it plays twice a bar; the strong places of both repeats
