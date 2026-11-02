@@ -1,47 +1,56 @@
 import { describe, expect, it } from "vitest";
-import type { SkyFlight } from "../src/audio/lines";
 import type { TrackNote } from "../src/audio/day-track";
-import { assignDay, spearman } from "../src/audio/day-assign";
-import { routeKm } from "../src/audio/route-fit";
+import { assignDay, spearman, type DayFlight } from "../src/audio/day-assign";
 
-// a small synthetic day: 40 routes of 600 to 11000 km; at every moment of the day 13 of them are airborne, short and long ones among them
-// (a real sky has every length in the air at once); the set changes through the day
-const KM = Array.from({ length: 40 }, (_, i) => 600 + i * 270);
-const lat = (km: number): number => 41.2613 + (km / 6371) * (180 / Math.PI); // due north of Istanbul: the great-circle distance is then `km`
-const sky = (frac: number): SkyFlight[] => {
-  const shift = Math.floor(frac * 6);
-  return KM.map((km, i) => ({ km, i })).filter(({ i }) => (i + shift) % 3 === 0).map(({ km, i }) => ({ id: `f${i}`, key: `IST-${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(65 + Math.floor(i / 26))}Z`, regionIdx: 0, alt100: 300, vsFpm: 0, farLat: Math.min(89, lat(km)), farLon: 28.742 }));
-};
-const notes: TrackNote[] = Array.from({ length: 400 }, (_, i) => ({ t: i * 0.5, d: 0.2 + ((i * 37) % 100) / 40, p: 48 + ((i * 7) % 30), v: 0.6, k: "OLD-KEY", from: "OLD", to: "KEY", alt: 30000 }));
+// a day of 300 flights on 60 routes of 400 to 11000 km: they take off all through the day and stay up for a tenth of it
+const KM = Array.from({ length: 60 }, (_, i) => 400 + i * 180);
+const key = (i: number): string => `IST-${String.fromCharCode(65 + (i % 26))}${String.fromCharCode(65 + Math.floor(i / 26))}Z`;
+const flights: DayFlight[] = Array.from({ length: 300 }, (_, i) => {
+  const dep = ((i * 0.6180339887) % 1) * 1.1 - 0.05; // some started before the window
+  const r = (i * 7) % 60;
+  return { id: `f${i}`, key: key(r), dep, end: dep + 0.1, km: KM[r] };
+});
+const DUR = 180;
+const notes: TrackNote[] = Array.from({ length: 700 }, (_, i) => ({ t: (i / 700) * DUR, d: 0.2 + ((i * 37) % 100) / 40, p: 48 + ((i * 7) % 30), v: 0.6, k: "OLD-KEY", from: "OLD", to: "KEY", alt: 30000 }));
 
-describe("assignDay: the notes of the recording go to the flights of the day", () => {
-  const plan = assignDay(notes, 200, sky, { jitter: () => 0.5 });
-  it("every note gets a flight that is in the air at that moment of the replay", () => {
+describe("assignDay: the recording against the last 24 hours", () => {
+  const plan = assignDay(notes, DUR, flights);
+  const inWindow = flights.filter((f) => f.dep >= 0 && f.dep <= 1);
+  it("every flight that took off in the window gets a note of its own, near its take-off", () => {
+    const own = new Map<string, TrackNote[]>();
+    for (const [n, f] of plan) own.set(f.id, [...(own.get(f.id) ?? []), n]);
+    let missing = 0;
+    for (const f of inWindow) {
+      const ns = own.get(f.id) ?? [];
+      if (!ns.some((n) => Math.abs(n.t - f.dep * DUR) <= 4 * (DUR / flights.length) + 1e-6)) missing++;
+    }
+    expect(missing).toBeLessThanOrEqual(Math.ceil(inWindow.length * 0.02));
+  });
+  it("every note lights some flight of the day, and one that is in the air then, or that takes off then", () => {
     expect(plan.size).toBe(notes.length);
-    for (const n of notes) {
-      const f = plan.get(n)!;
-      expect(sky(n.t / 200).some((s) => s.id === f.id), `note at ${n.t}`).toBe(true);
+    const win = 4 * (DUR / flights.length) + 1e-6;
+    for (const [n, f] of plan) {
+      const frac = n.t / DUR;
+      const air = f.dep <= frac + 1 / 240 && f.end >= frac - 1 / 240; // (the sky is read in steps of 1/240 of the day)
+      const near = Math.abs(n.t - f.dep * DUR) <= win;
+      expect(air || near, `note at ${n.t}`).toBe(true);
     }
   });
-  it("a long note goes to a long route and a short note to a short one (rank correlation of note length and route length)", () => {
-    const xs = notes.map((n) => n.d);
-    const ys = notes.map((n) => routeKm(plan.get(n)!) ?? 0);
+  it("a long note goes to a long route and a short note to a short one", () => {
+    const xs = [...plan.keys()].map((n) => n.d);
+    const ys = [...plan.values()].map((f) => f.km);
     expect(spearman(xs, ys)).toBeGreaterThan(0.5);
   });
-  it("no route takes more than 12% of the notes (the lit routes change all the time)", () => {
-    const count = new Map<string, number>();
-    for (const n of notes) count.set(plan.get(n)!.key, (count.get(plan.get(n)!.key) ?? 0) + 1);
-    expect(Math.max(...count.values()) / notes.length).toBeLessThan(0.12);
-  });
-  it("the same day gives the same plan with the same jitter, another one with another jitter", () => {
-    const again = assignDay(notes, 200, sky, { jitter: () => 0.5 });
+  it("is a pure function: the same recording and day give the same plan; no route takes more than 8% of the notes", () => {
+    const again = assignDay(notes, DUR, flights);
     expect(notes.map((n) => again.get(n)!.id)).toEqual(notes.map((n) => plan.get(n)!.id));
-    let k = 0;
-    const other = assignDay(notes, 200, sky, { jitter: () => ((k = (k * 7 + 3) % 11) / 11) });
-    expect(notes.some((n) => other.get(n)!.id !== plan.get(n)!.id)).toBe(true);
+    const count = new Map<string, number>();
+    for (const f of plan.values()) count.set(f.key, (count.get(f.key) ?? 0) + 1);
+    expect(Math.max(...count.values()) / notes.length).toBeLessThan(0.08);
   });
-  it("an empty sky gives no flight for that note", () => {
-    const p = assignDay(notes.slice(0, 5), 200, () => [], { jitter: () => 0.5 });
+  it("flights without a known route are not used; an empty day gives an empty plan", () => {
+    expect(assignDay(notes, DUR, [], {}).size).toBe(0);
+    const p = assignDay(notes, DUR, [{ id: "x", key: "x1", dep: 0.5, end: 0.6, km: 1000 }], {});
     expect(p.size).toBe(0);
   });
 });
