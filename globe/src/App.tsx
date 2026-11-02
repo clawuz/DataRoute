@@ -14,6 +14,7 @@ import { setExtraColors } from "./scene/palette-ext";
 import { createNoteBus } from "./audio/notes-bus"; // art:sound
 import { createGlobeEngine, hasWebGL2, type GlobeEngine } from "./scene/engine";
 import { Experience } from "./personal/Experience";
+import { hubFlightsOnly } from "./personal/hub";
 import { Landing } from "./personal/Landing";
 import { selectionFromSearch, searchFromSelection, type PersonalSelection } from "./personal/codec";
 
@@ -94,6 +95,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         reducedMotion,
         search, // art:core
         artDefaults: params.get("personal") === "1" || import.meta.env.VITE_PERSONAL === "1" ? { aurora: true } : undefined,
+        filterDay: params.get("personal") === "1" || import.meta.env.VITE_PERSONAL === "1" ? hubFlightsOnly : undefined, // the network film and the live screen show Istanbul's flights: a flight that touches neither airport of the city (or whose route is unknown) is not drawn
         noteBus, // art:sound
         onLabels: labelBus.emit,
         nowMs: () => Date.now(),
