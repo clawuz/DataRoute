@@ -351,8 +351,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   const frame = (dt: number): GlobeFrameInput => {
     const nowSec = d.nowMs() / 1000;
     const stepped = stepCycle(cycle, dt, bounds(), cycleCfg);
-    // while following in REPLAY the displayed instant belongs to the follow clock: freeze the replay position
-    cycle = follow && mode === "REPLAY" ? { ...stepped, phase: cycle.phase, elapsed: cycle.elapsed, tRel: cycle.tRel } : stepped;
+    // while following in REPLAY the displayed instant belongs to the follow clock, but the replay position goes on with the music: the
+    // recording keeps its own clock during the follow, so a frozen position would send the music back (by the length of the follow) when the
+    // flight is left and the replay takes the audio to its own position
+    cycle = stepped;
     if (mode === "REPLAY" && cycle.phase === "LIVE") {
       if (soundOn && track.ready() && !follow) {
         cycle = { ...initCycle(bounds()), phase: "REPLAY" }; // art:track — the music is done: rewind, the replay (and the music) start over

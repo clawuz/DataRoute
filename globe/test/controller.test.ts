@@ -326,6 +326,21 @@ describe("globe controller", () => {
     });
   });
 
+  it("in REPLAY the replay position goes on while a flight is followed: leaving the flight puts the globe where the music is, the music is not sent back", async () => {
+    const h = setup();
+    await flush();
+    h.c.onKey("r");
+    h.frame(0.5);
+    const before = h.frame(1).cur;
+    h.c.onClick(10, 10); // follow a flight
+    for (let i = 0; i < 10; i++) h.frame(1); // ten seconds of following
+    h.c.onKey("Escape");
+    const after = h.frame(0.1).cur;
+    // 11 s of the replay have passed (480 s of flight time per second): the globe is well ahead of where it was, not frozen at `before`
+    expect(after).toBeGreaterThan(before + 10 * 480 * 0.5);
+    h.c.dispose();
+  });
+
   it("Escape and a blank click leave FOLLOW", async () => {
     const h = setup();
     await flush();
