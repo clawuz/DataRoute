@@ -12,6 +12,8 @@ export const DAY_PATH = "public/day.json";
 export const DAY_CACHE = "public, max-age=60";
 export const MAX_ROUTE_LOOKUPS = 40;
 export const ROUTE_BUDGET_MS = 45_000;
+/** pause between two route lookups: a burst of 40 calls in two seconds is answered with 429 by the route service */
+export const ROUTE_PACE_MS = 250;
 
 export interface CollectDeps {
   fetch: FetchFn;
@@ -25,6 +27,8 @@ export interface CollectDeps {
   log: (msg: string, extra?: Record<string, unknown>) => void;
   warn: (msg: string, extra?: Record<string, unknown>) => void;
   clock: () => number; // milliseconds
+  /** pause between two route lookups (ms); default ROUTE_PACE_MS */
+  routePaceMs?: number;
 }
 
 async function resolveRoutes(state: TrackerState, d: CollectDeps, now: number) {
@@ -42,7 +46,14 @@ async function resolveRoutes(state: TrackerState, d: CollectDeps, now: number) {
       f.route = await lookupRoute(f.cs, d.routes, d.fetch, now);
     } catch (e) {
       d.warn("route lookup failed", { cs: f.cs, error: String(e) });
+      // the service is rate-limiting us: the rest of this run would only be answered the same way, so it stops (the next run tries again)
+      if (/\b429\b/.test(String(e))) {
+        d.warn("route service rate-limited: lookups stop for this run", { remaining: state.flights.filter((x) => x.route === undefined).length });
+        break;
+      }
     }
+    const pace = d.routePaceMs ?? ROUTE_PACE_MS;
+    if (pace > 0) await new Promise((r) => setTimeout(r, pace));
   }
 }
 

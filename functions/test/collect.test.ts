@@ -174,6 +174,18 @@ describe("runCollect", () => {
     expect(warn.mock.calls.map((c) => c[0])).toContain("route lookup failed");
     expect(log.mock.calls.map((c) => c[0])).toContain("collect ok");
   });
+  it("stops the route lookups of a run at the first 429 instead of asking for every flight", async () => {
+    const warn = vi.fn();
+    const base = fakeFetch({ routeStatus: 429 });
+    let routeCalls = 0;
+    const counting = (async (input: string | URL, init?: RequestInit) => {
+      if (String(input).includes("adsbdb")) routeCalls++;
+      return base(input as never, init as never);
+    }) as unknown as typeof fetch;
+    await runCollect(deps({ fetch: counting, warn, routePaceMs: 0 }));
+    expect(routeCalls).toBeLessThanOrEqual(1);
+    expect(warn.mock.calls.map((c) => c[0])).toContain("route service rate-limited: lookups stop for this run");
+  });
   describe("two-tier polling", () => {
     const BIG = Array.from({ length: 250 }, (_, i) => `A${i.toString(16).padStart(5, "0")};TC-J${i};A321;00;;;;`).join("\n");
     const counting = (opts: { failHex?: () => boolean } = {}) => {
@@ -244,3 +256,4 @@ describe("runCollect", () => {
     expect(file.source).toEqual({ name: "OpenSky Network", url: "https://opensky-network.org" });
   });
 });
+
