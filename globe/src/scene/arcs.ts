@@ -11,6 +11,7 @@ import {
 } from "three";
 import { PALETTE_SIZE, paletteColors } from "./palette-ext";
 import { ALT_TONE_GLSL } from "./alt-tone";
+import { haversineKm, interpolateGreatCircle } from "@collector/geo";
 import { plannedArc } from "../geo3d/great";
 import { resampleRun } from "../geo3d/resample";
 import { R_EARTH_KM, altitudeRadius, latLonToVec3 } from "../geo3d/vec";
@@ -19,6 +20,12 @@ import type { GlobeFlight, GlobeModel } from "../model/globe-model";
 export const ARC_BASE_LIFT = 0.002;
 export const MAX_RUN_POINTS = 96;
 export const PLANNED_POINTS = 48;
+/** points of a bridge that closes a coverage gap or the start / end of a flight's line */
+export const BRIDGE_POINTS = 14;
+/** a bridge at the ends of a line is drawn when the observed track stops this far (km) from the airport */
+export const BRIDGE_MIN_KM = 60;
+/** the speed (km/h) a bridge's time span assumes */
+const BRIDGE_KMH = 800;
 export const BREAK_SEC = 600;
 export const ARC_WIDTH_PX = 1.9;
 /** Cruise altitude (100 ft) of the planned-route tone profile. */
@@ -40,7 +47,7 @@ export interface ArcBuffers {
   count: number;
 }
 
-export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean } = {}): ArcBuffers {
+export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean; bridge?: boolean } = {}): ArcBuffers {
   const a: number[] = [];
   const b: number[] = [];
   const t: number[] = [];
@@ -58,8 +65,48 @@ export function buildArcBuffers(m: GlobeModel, opts: { planned?: boolean } = {})
     count++;
   };
 
+  // a bridge: the great circle between two points of a flight (an estimate, drawn like the observed line so that no line is cut or missing)
+  const bridgeArc = (f: GlobeFlight, fi: number, a: { lat: number; lon: number; alt100: number; t: number }, b: { lat: number; lon: number; alt100: number; t: number }): void => {
+    if (![a.lat, a.lon, b.lat, b.lon, a.t, b.t].every(Number.isFinite) || haversineKm(a.lat, a.lon, b.lat, b.lon) < 1) return;
+    let prev = { lat: a.lat, lon: a.lon, alt100: a.alt100, t: a.t };
+    for (let k = 1; k < BRIDGE_POINTS; k++) {
+      const u = k / (BRIDGE_POINTS - 1);
+      const [lat, lon] = interpolateGreatCircle(a.lat, a.lon, b.lat, b.lon, u);
+      const cur = { lat, lon, alt100: a.alt100 + (b.alt100 - a.alt100) * u, t: a.t + (b.t - a.t) * u };
+      push(
+        latLonToVec3(prev.lat, prev.lon, altitudeRadius(prev.alt100) + ARC_BASE_LIFT),
+        latLonToVec3(cur.lat, cur.lon, altitudeRadius(cur.alt100) + ARC_BASE_LIFT),
+        prev.t, cur.t, f.colorIdx ?? f.regionIdx, 0, fi, 0, 0, prev.alt100, cur.alt100,
+      );
+      prev = cur;
+    }
+  };
+
   m.flights.forEach((f, fi) => {
     const n = f.t.length;
+    if (opts.bridge !== false) {
+      // 1) a coverage gap: the plane is joined from the last sample before it to the first after it
+      for (let i = 0; i + 1 < n; i++) {
+        if (!isBreak(f, i)) continue;
+        bridgeArc(f, fi, { lat: f.lat[i], lon: f.lon[i], alt100: f.alt[i], t: f.t[i] }, { lat: f.lat[i + 1], lon: f.lon[i + 1], alt100: f.alt[i + 1], t: f.t[i + 1] });
+      }
+      // 2) the ends: from the origin airport to the first sample (a flight that took off before it was watched), and from the last sample to
+      // the destination airport (a flight that landed after the last sample): with a known route no flight goes without its line
+      const pl = f.planned;
+      if (pl && n > 0 && [pl.fromLat, pl.fromLon, pl.toLat, pl.toLon].every(Number.isFinite)) {
+        const km0 = haversineKm(pl.fromLat, pl.fromLon, f.lat[0], f.lon[0]);
+        if (km0 > BRIDGE_MIN_KM) {
+          const span = (km0 / BRIDGE_KMH) * 3600;
+          bridgeArc(f, fi, { lat: pl.fromLat, lon: pl.fromLon, alt100: 0, t: f.t[0] - span }, { lat: f.lat[0], lon: f.lon[0], alt100: f.alt[0], t: f.t[0] });
+        }
+        const L = n - 1;
+        const km1 = haversineKm(pl.toLat, pl.toLon, f.lat[L], f.lon[L]);
+        if (f.status === "LANDED" && km1 > BRIDGE_MIN_KM) {
+          const span = (km1 / BRIDGE_KMH) * 3600;
+          bridgeArc(f, fi, { lat: f.lat[L], lon: f.lon[L], alt100: f.alt[L], t: f.t[L] }, { lat: pl.toLat, lon: pl.toLon, alt100: 0, t: f.t[L] + span });
+        }
+      }
+    }
     // observed runs, split at coverage gaps
     let i0 = 0;
     for (let i = 0; i < n; i++) {
@@ -236,7 +283,7 @@ export interface Arcs {
   dispose(): void;
 }
 
-export function createArcs(m: GlobeModel, opts: { planned?: boolean } = {}): Arcs {
+export function createArcs(m: GlobeModel, opts: { planned?: boolean; bridge?: boolean } = {}): Arcs {
   const buf = buildArcBuffers(m, opts); // art:corridors
   const geometry = new InstancedBufferGeometry();
   geometry.setIndex([0, 1, 2, 2, 1, 3]);

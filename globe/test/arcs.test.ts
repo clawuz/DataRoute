@@ -59,7 +59,7 @@ describe("isBreak gap branch", () => {
 });
 
 describe("buildArcBuffers", () => {
-  const b = buildArcBuffers(model);
+  const b = buildArcBuffers(model, { bridge: false });
   const kinds = Array.from({ length: b.count }, (_, i) => b.info[i * 4 + 1]);
 
   it("observed runs skip the gap; planned arc is added only for routed flights", () => {
@@ -71,7 +71,7 @@ describe("buildArcBuffers", () => {
   });
 
   it("planned:false skips planned instances and keeps observed ones", () => {
-    const np = buildArcBuffers(model, { planned: false });
+    const np = buildArcBuffers(model, { planned: false, bridge: false });
     const k2 = Array.from({ length: np.count }, (_, i) => np.info[i * 4 + 1]);
     expect(k2.filter((k) => k === 1)).toHaveLength(0);
     expect(k2.filter((k) => k === 0)).toHaveLength(kinds.filter((k) => k === 0).length);
@@ -117,7 +117,7 @@ describe("buildArcBuffers", () => {
 
 describe("createArcs", () => {
   it("is a double-sided, depth-tested additive instanced mesh", () => {
-    const a = createArcs(model);
+    const a = createArcs(model, { bridge: false });
     const m = a.mesh.material as ShaderMaterial;
     expect(m.side).toBe(DoubleSide);
     expect(m.depthTest).toBe(true);
@@ -134,15 +134,52 @@ describe("createArcs", () => {
 describe("hardening", () => {
   it("skips planned arcs for <1 km or non-finite routes", () => {
     const m = buildGlobeModel(makeDay({ flights: [flight({ from: "IST", to: "JFK", s: [[0, 1, 1, 1]] })] }));
-    const base = buildArcBuffers(m).count;
+    const base = buildArcBuffers(m, { bridge: false }).count;
     expect(base).toBe(47);
     const near = { ...m, flights: [{ ...m.flights[0], planned: { ...m.flights[0].planned!, distKm: 0.5 } }] };
-    expect(buildArcBuffers(near).count).toBe(0);
+    expect(buildArcBuffers(near, { bridge: false }).count).toBe(0);
     const nan = { ...m, flights: [{ ...m.flights[0], planned: { ...m.flights[0].planned!, toLat: NaN } }] };
-    expect(buildArcBuffers(nan).count).toBe(0);
+    expect(buildArcBuffers(nan, { bridge: false }).count).toBe(0);
   });
   it("altitudeRadius treats NaN/undefined as 0", () => {
     expect(altitudeRadius(NaN)).toBe(1);
     expect(altitudeRadius(undefined as unknown as number)).toBe(1);
+  });
+});
+
+describe("bridges: no line is cut or missing", () => {
+  const without = buildArcBuffers(model, { bridge: false });
+  const withB = buildArcBuffers(model);
+  it("a coverage gap is closed: segments run from the last sample before the gap to the first after it", () => {
+    expect(withB.count).toBeGreaterThan(without.count);
+    const first = model.flights[0];
+    // the gap of the first flight: t 240 → 4900 (relative to dep); times of the new segments span it without a hole
+    const gapFrom = first.t[2];
+    const gapTo = first.t[3];
+    const ts: [number, number][] = [];
+    for (let i = 0; i < withB.count; i++) {
+      if (withB.info[i * 4 + 2] !== 0 || withB.info[i * 4 + 1] !== 0) continue; // flight 0, observed kind
+      const [a, b] = [withB.t[i * 2], withB.t[i * 2 + 1]];
+      if (a >= gapFrom - 1e-3 && b <= gapTo + 1e-3) ts.push([a, b]);
+    }
+    ts.sort((x, y) => x[0] - y[0]);
+    expect(ts.length).toBeGreaterThan(5);
+    expect(ts[0][0]).toBeCloseTo(gapFrom, 3);
+    expect(ts[ts.length - 1][1]).toBeCloseTo(gapTo, 3);
+    for (let k = 1; k < ts.length; k++) expect(ts[k][0]).toBeCloseTo(ts[k - 1][1], 3);
+  });
+  it("a landed flight whose track stops far from its airports is joined to them; a flight of no known route and no gap gets nothing added", () => {
+    const m = buildGlobeModel(
+      makeDay({
+        flights: [
+          // took off before it was watched (the first sample is mid-air) and lost contact before the end of the line: IST → JFK
+          flight({ id: "z", from: "IST", to: "JFK", region: "AME", dep: FROM + 100, arr: FROM + 40000, end: "LANDED", s: [[0, 300, 50, 10], [200, 300, 51, 0], [400, 300, 52, -10]] }),
+          flight({ id: "y", region: "UNK", dep: FROM + 200, arr: FROM + 500, end: "LAST_CONTACT", s: [[0, 200, 10, 10], [120, 200, 10.5, 10.5]] }),
+        ],
+      }),
+    );
+    const none = buildArcBuffers(m, { planned: false, bridge: false }).count;
+    const all = buildArcBuffers(m, { planned: false }).count;
+    expect(all - none).toBe(2 * 13); // a head bridge and a tail bridge of 13 segments; the unrouted flight adds none
   });
 });
