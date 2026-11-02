@@ -21,7 +21,6 @@ import { createRouteSound, type RouteSound, type SoundFocus, type SoundInfo } fr
 import { createDayTrack, type DayTrack, type TrackNote } from "../audio/day-track"; // art:track
 import { dailyFlag, resolveDailyTrack } from "../audio/daily-track"; // art:track — dormant: nothing is requested unless the flag is on
 import { bestRoute, ranksOf, type Ranks } from "../audio/route-fit"; // art:track
-import { assignDay, type DayFlight } from "../audio/day-assign";
 import { eventsBetween, farOf } from "../audio/score"; // art:sound
 import type { SkyFlight } from "../audio/lines"; // art:sound
 import { routeKey } from "../audio/theory"; // art:sound
@@ -81,8 +80,6 @@ export interface GlobeControllerDeps {
   clock?: () => number;
   /** starting art switches when the visitor has stored none (the new link opens with the aurora on) */
   artDefaults?: { aurora?: boolean };
-  /** the personal site: in the replay the recorded notes are planned against the flights of the last 24 hours (every flight gets a note of its own) */
-  planNotesToDay?: boolean;
 }
 
 export interface GlobeController {
@@ -127,7 +124,6 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let musicFade = 1;
   const clock = d.clock ?? (() => performance.now() / 1000); // art:sound
   let trackActive = false; // art:track — the recorded track of the day plays instead of the generative music
-  let dayPlan: { model: GlobeModel; data: object; map: ReturnType<typeof assignDay> } | null = null; // the personal site: the whole recording against the flights of the last 24 hours
   let trackRanks: { data: object; ranks: Ranks } | null = null; // art:track — length/duration ranks of the loaded track
   const recentRoutes = new Map<string, number>(); // art:track — LIVE: the route that last played a note of the recording
   let lastSky: SkyFlight[] = []; // art:track
@@ -422,8 +418,6 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       sound.setGenerative(!track.data());
       track.setGain((0.4 + 0.6 * intensityNow()) * musicFade); // the recorded audio rises and falls with the traffic of the hour
       const live = mode !== "REPLAY";
-      // the personal site plays the recording against the flights of the last 24 hours: every flight has a note of its own, a long note for a
-      // long route (day-assign.ts); the recording was made for another day
       const remap = live
         ? (n: TrackNote): TrackNote | null => {
             const td = track.data();
@@ -432,20 +426,6 @@ export function createController(d: GlobeControllerDeps): GlobeController {
             if (!f) return null;
             recentRoutes.set(f.key, clock());
             return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
-          }
-        : d.planNotesToDay
-        ? (n: TrackNote): TrackNote | null => {
-            const td = track.data();
-            if (!td) return null;
-            if (!dayPlan || dayPlan.model !== model || dayPlan.data !== td) {
-              const m = model!;
-              const flights: DayFlight[] = m.flights
-                .filter((f) => f.from && f.to && f.planned && m.span > 0)
-                .map((f) => ({ id: f.id, key: routeKey(f.from, f.to, f.id), dep: f.dep / m.span, end: f.end / m.span, km: f.planned!.distKm }));
-              dayPlan = { model: m, data: td, map: assignDay(td.notes, td.duration, flights) };
-            }
-            const f = dayPlan.map.get(n);
-            return f ? { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4) } : null;
           }
         : undefined;
       track.update(model.span > 0 ? cur / model.span : 0, want && !(follow ? follow.clock.paused : cycle.paused), live || !!follow, remap);

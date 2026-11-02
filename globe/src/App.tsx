@@ -94,7 +94,6 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
         reducedMotion,
         search, // art:core
         artDefaults: params.get("personal") === "1" || import.meta.env.VITE_PERSONAL === "1" ? { aurora: true } : undefined,
-        planNotesToDay: params.get("personal") === "1" || import.meta.env.VITE_PERSONAL === "1", // the replay's notes are planned against the last 24 hours of flights
         noteBus, // art:sound
         onLabels: labelBus.emit,
         nowMs: () => Date.now(),

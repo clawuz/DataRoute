@@ -53,7 +53,7 @@ export function ranksOf(notes: TrackNote[], lenQ: number[] | undefined): Ranks {
  * The live route that fits a note best: its pitch class matches the route's colour, its register follows the flight level
  * and (with `ranks`) a long note goes to a long route, a short one to a short route.
  */
-export function bestRoute(n: TrackNote, sky: SkyFlight[], recent: Map<string, number>, at: number, rest = 1.2, ranks?: Ranks, wDur = W_DUR): SkyFlight | null {
+export function bestRoute(n: TrackNote, sky: SkyFlight[], recent: Map<string, number>, at: number, rest = 1.2, ranks?: Ranks): SkyFlight | null {
   let best: { f: SkyFlight; score: number } | null = null;
   for (const f of sky) {
     if (!ROUTE_RE.test(f.key)) continue;
@@ -62,7 +62,7 @@ export function bestRoute(n: TrackNote, sky: SkyFlight[], recent: Map<string, nu
     let score = pcDist(pcOfRoute(f.key), n.p % 12) + (Math.abs(regP - n.p) / 12) * 0.6;
     if (ranks) {
       const km = routeKm(f);
-      score += wDur * (km === null ? 0.25 : Math.abs(ranks.len(km) - ranks.dur(n.d)));
+      score += W_DUR * (km === null ? 0.25 : Math.abs(ranks.len(km) - ranks.dur(n.d)));
     }
     if (!best || score < best.score) best = { f, score };
   }
