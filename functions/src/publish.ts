@@ -2,6 +2,7 @@ import type { DayAirport, DayFile, DaySource, DayStatus, Flight, Sample, Tracked
 import { typeName } from "./aircraft-names.js";
 import type { FleetInfo } from "./fleet.js";
 import { haversineKm, initialBearing } from "./geo.js";
+import { inferRoute } from "./infer-route.js";
 import { resolveEndpoint } from "./regions.js";
 import { WINDOW, endOf } from "./tracker.js";
 
@@ -69,7 +70,18 @@ function toFlight(f: TrackedFlight, now: number, info?: FleetInfo): Flight {
   return out;
 }
 
-export function buildDayFile(state: TrackerState, now: number, status: DayStatus, source: DaySource, info?: FleetInfo): DayFile {
+/**
+ * The route a flight is published with: the one its own track shows when the track shows both ends (a flight that took off and landed while
+ * it was watched), else the one the route service gave. The service answers by CALLSIGN, and a callsign is flown again on other legs and
+ * days: against the tracks of one day it named another leg for most of the flights that could be compared (infer-route.ts).
+ */
+function withInferredRoute(f: TrackedFlight): TrackedFlight {
+  const r = inferRoute(f);
+  return r ? { ...f, route: r } : f;
+}
+
+export function buildDayFile(state0: TrackerState, now: number, status: DayStatus, source: DaySource, info?: FleetInfo): DayFile {
+  const state: TrackerState = { ...state0, flights: state0.flights.map(withInferredRoute) };
   const destinations = new Set<string>();
   const countries = new Set<string>();
   let km = 0;
