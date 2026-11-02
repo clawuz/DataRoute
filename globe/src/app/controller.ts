@@ -80,8 +80,6 @@ export interface GlobeControllerDeps {
   clock?: () => number;
   /** starting art switches when the visitor has stored none (the new link opens with the aurora on) */
   artDefaults?: { aurora?: boolean };
-  /** the day's data as the screen should show it (the personal site shows the hub's flights only); the payload itself is not changed */
-  filterDay?: (day: DayFile) => DayFile;
 }
 
 export interface GlobeController {
@@ -420,13 +418,11 @@ export function createController(d: GlobeControllerDeps): GlobeController {
       sound.setGenerative(!track.data());
       track.setGain((0.4 + 0.6 * intensityNow()) * musicFade); // the recorded audio rises and falls with the traffic of the hour
       const live = mode !== "REPLAY";
-      // the personal site (it has a data filter) hands the notes to today's flights in the replay too: the recording was made for another
-      // day, and a fixed note plan would light the same routes on every visit
-      const remap = live || d.filterDay
+      const remap = live
         ? (n: TrackNote): TrackNote | null => {
             const td = track.data();
             if (td && trackRanks?.data !== td) trackRanks = { data: td, ranks: ranksOf(td.notes, td.lenQ) };
-            const f = bestRoute(n, lastSky, recentRoutes, clock(), d.filterDay ? 1.2 + Math.random() * 3 : 1.2, trackRanks?.ranks); // (the personal site: a different rest for every note, so a visit does not repeat the last one)
+            const f = bestRoute(n, lastSky, recentRoutes, clock(), 1.2, trackRanks?.ranks);
             if (!f) return null;
             recentRoutes.set(f.key, clock());
             return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
@@ -455,8 +451,7 @@ export function createController(d: GlobeControllerDeps): GlobeController {
     if (d.onLabels && model && !disposed) d.onLabels(computeLabels());
   });
 
-  const onData = (raw: DayFile) => {
-    const day = d.filterDay ? d.filterDay(raw) : raw;
+  const onData = (day: DayFile) => {
     const prev = model;
     // ignore equal/older payloads (cached or stale responses)
     if (prev && !(day.generatedAt > prev.generatedAt)) return;
