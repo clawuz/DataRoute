@@ -426,7 +426,10 @@ export function createController(d: GlobeControllerDeps): GlobeController {
         ? (n: TrackNote): TrackNote | null => {
             const td = track.data();
             if (td && trackRanks?.data !== td) trackRanks = { data: td, ranks: ranksOf(td.notes, td.lenQ) };
-            const f = bestRoute(n, lastSky, recentRoutes, clock(), d.filterDay ? 1.2 + Math.random() * 3 : 1.2, trackRanks?.ranks); // (the personal site: a different rest for every note, so a visit does not repeat the last one)
+            // (the personal site: a short, different rest for every note, so a visit does not repeat the last one; when every route of the sky is
+            // resting, the best fit lights anyway: a note always lights a route)
+            const rest = d.filterDay ? 0.4 + Math.random() * 1.2 : 1.2;
+            const f = bestRoute(n, lastSky, recentRoutes, clock(), rest, trackRanks?.ranks) ?? (d.filterDay ? bestRoute(n, lastSky, recentRoutes, clock(), 0, trackRanks?.ranks) : null);
             if (!f) return null;
             recentRoutes.set(f.key, clock());
             return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
