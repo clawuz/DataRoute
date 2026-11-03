@@ -35,8 +35,8 @@ export const rankIn = (sorted: number[]) => (v: number): number => {
   }
   return lo / (sorted.length - 1);
 };
-/** weight of |route length rank − note duration rank| (4 = a full mismatch costs a major third in pitch class) */
-export const W_DUR = 4;
+/** weight of |route length rank − note duration rank| (12 = a full mismatch outweighs the largest pitch-class gap (6); raised from 4: length fit 0.73 -> 0.83) */
+export const W_DUR = 12;
 
 export interface Ranks {
   /** 0..1 position of a note length among the track's notes */

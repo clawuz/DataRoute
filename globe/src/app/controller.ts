@@ -127,6 +127,8 @@ export function createController(d: GlobeControllerDeps): GlobeController {
   let trackRanks: { data: object; ranks: Ranks } | null = null; // art:track — length/duration ranks of the loaded track
   const recentRoutes = new Map<string, number>(); // art:track — LIVE: the route that last played a note of the recording
   let lastSky: SkyFlight[] = []; // art:track
+  const replayRecent = new Map<string, number>(); // art:track — REPLAY: replay second at which a route last played a note
+  let replaySky: { model: GlobeModel; at: number; sky: SkyFlight[] } | null = null; // art:track — flights in the air near the note's moment
   let airRange: { model: GlobeModel; lo: number; hi: number; curve: number[] } | null = null; // art:track — the day's own quietest/busiest airborne counts
   const intensityNow = (): number => { // art:track — 0..1 between the quietest and busiest hour of the day
     if (!model) return 0.5;
@@ -429,7 +431,20 @@ export function createController(d: GlobeControllerDeps): GlobeController {
             recentRoutes.set(f.key, clock());
             return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
           }
-        : undefined;
+        : (n: TrackNote): TrackNote | null => { // REPLAY: the note goes to a flight that is in the air at the day moment the note sounds
+            const td = track.data();
+            const m = model;
+            if (!td || !m || td.duration <= 0) return n;
+            if (trackRanks?.data !== td) trackRanks = { data: td, ranks: ranksOf(td.notes, td.lenQ) };
+            const at = Math.min(1, Math.max(0, n.t / td.duration)) * m.span; // replay seconds of the note
+            const rest = (1.2 * m.span) / td.duration; // the same pause between two notes of a route as in LIVE, in day seconds
+            for (const [k, t] of replayRecent) if (t > at) replayRecent.delete(k); // the playhead went back (seek / loop)
+            const rs = replaySky?.model === m && Math.abs(replaySky.at - at) <= 120 ? replaySky : (replaySky = { model: m, at, sky: skyFlights(m, at) });
+            const f = bestRoute(n, rs.sky, replayRecent, at, rest, trackRanks.ranks);
+            if (!f) return null;
+            replayRecent.set(f.key, at);
+            return { ...n, k: f.key, from: f.key.slice(0, 3), to: f.key.slice(4), alt: f.alt100 * 100 };
+          };
       track.update(model.span > 0 ? cur / model.span : 0, want && !(follow ? follow.clock.paused : cycle.paused), live || !!follow, remap);
     }
     if (model) { // art:sound

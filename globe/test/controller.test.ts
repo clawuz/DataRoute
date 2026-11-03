@@ -6,6 +6,7 @@ import { createStore } from "@web/hud/store";
 import type { GlobeEngine, GlobeFrameInput } from "../src/scene/engine";
 import type { RouteSound } from "../src/audio/engine";
 import { createNoteBus, type NoteBus, type NoteEvent } from "../src/audio/notes-bus";
+import type { DayTrack, TrackNote } from "../src/audio/day-track";
 import { istanbulHour } from "../src/audio/form";
 import type { SkyFlight } from "../src/audio/lines";
 import type { RegionName } from "../src/audio/theory";
@@ -27,7 +28,7 @@ const airborne = (end: "AIRBORNE" | "LANDED", arr: number | null) =>
     now: { gs: 480, trk: 300 },
   });
 
-function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string; noteBus?: NoteBus; clock?: () => number } = {}) {
+function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; now?: { ms: number }; onLabels?: (l: AirportLabel[]) => void; sound?: RouteSound; viewportWidth?: () => number; search?: string; noteBus?: NoteBus; clock?: () => number; track?: DayTrack } = {}) {
   let frameFn: ((dt: number) => GlobeFrameInput) | null = null;
   let afterRender: (() => void) | null = null;
   const engine: GlobeEngine = {
@@ -86,6 +87,7 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     search: opts.search,
     noteBus: opts.noteBus,
     clock: opts.clock,
+    track: opts.track,
     fetch: (async () => new Response(JSON.stringify(days[Math.min(call++, days.length - 1)]))) as unknown as typeof fetch,
   });
   return {
@@ -338,6 +340,28 @@ describe("globe controller", () => {
     const after = h.frame(0.1).cur;
     // 11 s of the replay have passed (480 s of flight time per second): the globe is well ahead of where it was, not frozen at `before`
     expect(after).toBeGreaterThan(before + 10 * 480 * 0.5);
+    h.c.dispose();
+  });
+
+  it("in REPLAY a note of the recording goes to a flight that is in the air at that moment of the day, not to the recorded route", async () => {
+    const seen: (TrackNote | null)[] = [];
+    const note: TrackNote = { t: 90, d: 1, p: 64, v: 0.5, k: "DXB-IST", from: "IST", to: "DXB", alt: 30000 };
+    const track: DayTrack = {
+      setEnabled: () => {}, ready: () => true, loaded: () => true, unlock: () => {}, setGain: () => {}, finished: () => false, dispose: () => {},
+      data: () => ({ duration: 180, notes: [note] }),
+      update: (_f, _p, _free, remap) => { if (remap) seen.push(remap(note)); },
+    };
+    const day = dayAt(G1, [flight({
+      id: "x", tk: "TK-x", from: "IST", to: "JFK", region: "AME", dep: FROM + 40000, arr: FROM + 52000, end: "LANDED",
+      s: [[0, 300, 41, 29], [600, 370, 45, 20], [11000, 370, 55, -20]],
+    })]);
+    const h = setup({ days: [day], track, search: "?sound=1" });
+    await flush();
+    h.c.onKey("r");
+    for (let i = 0; i < 20; i++) h.frame(0.5);
+    const got = seen.filter((n): n is TrackNote => n !== null);
+    expect(got.length).toBeGreaterThan(0);
+    for (const n of got) expect(n.k).not.toBe("DXB-IST");
     h.c.dispose();
   });
 
