@@ -46,6 +46,8 @@ function setup(opts: { fixture?: boolean; days?: ReturnType<typeof makeDay>[]; n
     pick: vi.fn(() => 0),
     screenOf: () => ({ x: 100, y: 200, visible: true }),
     dragBy: vi.fn(),
+    zoomFollow: vi.fn(),
+    resetFollowView: vi.fn(),
     camMode: () => "GLOBE" as const,
     setAfterRender: (fn) => {
       afterRender = fn;

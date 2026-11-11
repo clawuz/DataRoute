@@ -8,7 +8,7 @@ import { earthRotationRad, sunDirection } from "../astro";
 import { SMOOTH_SEC, blendPose, followWeight, initCam, smoothDampVec, stepCam, type CamMode, type CamState, type Damped, type Pose } from "../camera/follow-rig";
 import { easeAbsTime, type TimeEase } from "../camera/time-ease";
 import { newGlobeLook } from "./look";
-import { chaseFor, headingFor } from "../camera/follow-pose";
+import { chaseFor, clampOrbit, defaultOrbit, headingFor, orbitFor, type Orbit } from "../camera/follow-pose";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { IDLE_YAW_RATE, PITCH_LIMIT, RIG_DISTANCE, dragRig, initRig, initialYaw, releaseRig, rigPosition, stepRig, type RigState } from "../camera/globe-rig";
 import { altitudeRadius, latLonToVec3, type Vec3 } from "../geo3d/vec";
@@ -56,6 +56,10 @@ export interface GlobeEngine {
   pick(x: number, y: number, cur: number): number;
   screenOf(lat: number, lon: number, alt100?: number): ScreenPoint;
   dragBy(dxPx: number, dyPx: number, dtSec: number): void;
+  /** while a flight is followed: moves the camera in toward the aeroplane (delta < 0) or out (delta > 0) */
+  zoomFollow(delta: number): void;
+  /** back to the camera behind the aeroplane */
+  resetFollowView(): void;
   endDrag(): void;
   camMode(): CamMode;
   setAfterRender(fn: (() => void) | null): void;
@@ -105,6 +109,7 @@ export interface GlobeEngine {
 }
 
 const DRAG_RAD_PER_PX = 0.0045;
+const ORBIT_SMOOTH_SEC = 0.12;
 /** the personal globe's few routes are drawn against a live-like busiest corridor of this many flights */
 const PERSONAL_CORRIDOR_REF = 24;
 
@@ -245,6 +250,7 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   let wasFollowing = false;
   let chasePos: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
   let chaseTgt: Damped = { p: [0, 0, 0], v: [0, 0, 0] };
+  let orbit: Orbit | null = null; // free view round the followed aeroplane (null = the chase camera behind it)
   let followKey: string | number = -2; // flight identity (id, else index) the damped chase state was initialised for (-2 = none)
   let lastChase: { pos: Vec3; target: Vec3 } | null = null; // Earth-fixed
   let afterRender: (() => void) | null = null;
@@ -349,21 +355,24 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
     earthGroup.updateMatrixWorld();
 
     if (fol) {
-      const pose = chaseFor(posAt(fol.flight), fol.u);
+      const pose = (orbit ? orbitFor(posAt(fol.flight), fol.u, orbit) : null) ?? chaseFor(posAt(fol.flight), fol.u);
       if (pose) {
         const key = fol.id ?? fol.flight;
         if (followKey !== key) {
+          orbit = null;
           chasePos = { p: pose.pos, v: [0, 0, 0] };
           chaseTgt = { p: pose.target, v: [0, 0, 0] };
           followKey = key;
         } else {
-          chasePos = smoothDampVec(chasePos, pose.pos, SMOOTH_SEC, dt);
-          chaseTgt = smoothDampVec(chaseTgt, pose.target, SMOOTH_SEC, dt);
+          const smooth = orbit ? ORBIT_SMOOTH_SEC : SMOOTH_SEC; // the free view keeps the aeroplane in the centre: it is not let to lag behind
+          chasePos = smoothDampVec(chasePos, pose.pos, smooth, dt);
+          chaseTgt = smoothDampVec(chaseTgt, pose.target, smooth, dt);
         }
         lastChase = { pos: chasePos.p, target: chaseTgt.p };
       }
     } else if (cam.mode === "GLOBE") {
       followKey = -2;
+      orbit = null;
     }
 
     const rp = rigPosition(rig, rigDist);
@@ -759,9 +768,21 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       afterRender = fn;
     },
     dragBy(dx, dy, dt) {
-      if (cam.mode === "FOLLOW" || cam.mode === "TO_FOLLOW") return;
+      if (cam.mode === "FOLLOW" || cam.mode === "TO_FOLLOW") {
+        const o = orbit ?? defaultOrbit();
+        orbit = clampOrbit({ ...o, yaw: o.yaw - dx * DRAG_RAD_PER_PX, pitch: o.pitch + dy * DRAG_RAD_PER_PX });
+        return;
+      }
       lastDragMove = performance.now();
       rig = dragRig(rig, -dx * DRAG_RAD_PER_PX, dy * DRAG_RAD_PER_PX, dt);
+    },
+    zoomFollow(delta) {
+      if (cam.mode !== "FOLLOW") return;
+      const o = orbit ?? defaultOrbit();
+      orbit = clampOrbit({ ...o, dist: o.dist * Math.exp(Math.max(-200, Math.min(200, delta)) * 0.0015) });
+    },
+    resetFollowView() {
+      orbit = null;
     },
     endDrag() {
       // a pause before release must not fling the globe with the last move's velocity

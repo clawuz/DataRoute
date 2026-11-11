@@ -1,3 +1,4 @@
+import { createPinch } from "../app/pinch";
 import { Intro } from "./Intro";
 import { Eq } from "../hud/Eq";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -127,22 +128,39 @@ export function Experience({ selection, onBack }: Props) {
 
     // drag to turn the globe (the card and the video take whatever angle is on screen)
     let drag: { x: number; y: number; t: number } | null = null;
+    const pinch = createPinch();
     const down = (e: PointerEvent) => {
+      pinch.down(e.pointerId, e.clientX, e.clientY);
       canvas.setPointerCapture?.(e.pointerId);
       drag = { x: e.clientX, y: e.clientY, t: performance.now() };
     };
     const move = (e: PointerEvent) => {
+      const spread = pinch.move(e.pointerId, e.clientX, e.clientY);
+      if (spread !== null) { // two fingers: spreading moves the camera in toward the followed aeroplane
+        engine.zoomFollow(-spread * 2);
+        drag = null;
+        return;
+      }
       if (!drag) return;
       const t = performance.now();
       engine.dragBy(e.clientX - drag.x, e.clientY - drag.y, (t - drag.t) / 1000);
       drag = { x: e.clientX, y: e.clientY, t };
     };
     const up = (e: PointerEvent) => {
+      pinch.up(e.pointerId);
       if (!drag) return;
       drag = null;
       engine.endDrag();
       canvas.releasePointerCapture?.(e.pointerId);
     };
+    const wheel = (e: WheelEvent) => {
+      if (engine.camMode() !== "FOLLOW") return;
+      e.preventDefault();
+      engine.zoomFollow(e.deltaY);
+    };
+    const dbl = () => engine.resetFollowView();
+    canvas.addEventListener("wheel", wheel, { passive: false });
+    canvas.addEventListener("dblclick", dbl);
     canvas.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -185,6 +203,8 @@ export function Experience({ selection, onBack }: Props) {
     }
 
     return () => {
+      canvas.removeEventListener("wheel", wheel);
+      canvas.removeEventListener("dblclick", dbl);
       canvas.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
