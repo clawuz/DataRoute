@@ -1,6 +1,6 @@
 import type { Effects } from "../app/art";
 import { BloomEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
-import { Box3, DoubleSide, MeshStandardMaterial, AmbientLight, DirectionalLight, Euler, Group, Quaternion, LinearSRGBColorSpace, Matrix4, Mesh, MeshLambertMaterial, NoColorSpace, PerspectiveCamera, RepeatWrapping, Scene, TextureLoader, type Texture, Vector3, WebGLRenderer } from "three";
+import { Box3, DoubleSide, MeshStandardMaterial, AmbientLight, DirectionalLight, Euler, Group, HemisphereLight, MeshPhongMaterial, Quaternion, LinearSRGBColorSpace, Matrix4, Mesh, MeshLambertMaterial, NoColorSpace, PerspectiveCamera, RepeatWrapping, Scene, TextureLoader, type Texture, Vector3, WebGLRenderer } from "three";
 import { TUNNEL_PERIOD, advance } from "@web/render/clocks";
 import type { ScreenPoint } from "@web/render/picking";
 import { LEVELS, initQuality, updateQuality } from "@web/render/quality";
@@ -219,6 +219,10 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
   const PLANE_LEN = 0.05; // in Earth radii: far bigger than a real aeroplane, so it can be seen from the chase camera
   const planeSun = new DirectionalLight(0xffffff, 2.2);
   const planeAmb = new AmbientLight(0xffffff, 2.7);
+  const planeGear: Mesh[] = []; // the 500th model's landing gear (down below 3,000 ft, up above)
+  let gearShown = true;
+  let planeHemi: HemisphereLight | null = null; // the 500th model's sky / ground light: its 'up' follows the aeroplane's local up
+  const hemiUp = new Vector3();
   const bx = new Vector3(), by = new Vector3(), bz = new Vector3(), bm = new Matrix4();
   earthGroup.add(earth.mesh);
   earthGroup.add(planeGroup);
@@ -455,6 +459,26 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         planeHidden = fol.flight;
       } else if (!planeTest) planeGroup.visible = false;
     } else if (!planeTest) planeGroup.visible = false;
+    if (planeGear.length) { // gear down on the ground and in the first and last climb / descent, up in the cruise
+      let down = true;
+      if (fol && !planeTest) {
+        const gf = model?.flights[fol.flight];
+        if (gf) {
+          const ghi = gf.status === "AIRBORNE" ? gf.lastT + EXTRAPOLATE_MAX_SEC : gf.end;
+          const gh = headState(gf, Math.min(Math.max(fol.u, gf.t[0]), ghi));
+          if (gh && Number.isFinite(gh.alt100)) down = gh.alt100 < 30;
+        }
+      }
+      if (down !== gearShown) {
+        gearShown = down;
+        for (const g of planeGear) g.visible = down;
+      }
+    }
+    if (planeHemi) { // up for the sky light: away from the Earth's centre at the aeroplane (in ?planetest the camera's up)
+      if (planeTest) hemiUp.copy(camera.up);
+      else planeGroup.getWorldPosition(hemiUp).normalize();
+      planeHemi.position.copy(hemiUp);
+    }
     heads.setHidden(planeHidden);
     airports?.setNow(rel(f.nowSec));
 
@@ -691,6 +715,14 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
       if (!url) { planeLoaded = false; planeGroup.clear(); return; }
       if (planeLoaded) return;
       planeLoaded = true; // asked for: not twice
+      // the 500th-aircraft model is lit like a real aeroplane: sky above, a darker ground below (grey belly and wing undersides), a lower sun and a little shine
+      const richPlane = url.includes("500th");
+      if (richPlane) {
+        planeAmb.intensity = 0.5;
+        planeSun.intensity = 1.7;
+        planeHemi = new HemisphereLight(0xeaf1ff, 0x4a5368, 2.0);
+        scene.add(planeHemi);
+      }
       // the model is fetched and built after the opening film (its pictures go to the graphics card at once: a stall in the film otherwise)
       void Promise.resolve().then(() => hiResGate).then(() => new GLTFLoader().load(url, (gltf) => {
         if (disposed) return;
@@ -698,6 +730,17 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
         const box = new Box3().setFromObject(gltf.scene);
         const size = box.getSize(new Vector3());
         const centre = box.getCenter(new Vector3());
+        if (richPlane) { // landing gear = the low parts under the fuselage (not the engines, which are further out)
+          planeGear.length = 0;
+          gltf.scene.updateMatrixWorld(true);
+          gltf.scene.traverse((o) => {
+            const g = o as Mesh;
+            if (!g.isMesh) return;
+            const gb = new Box3().setFromObject(g);
+            const gc = gb.getCenter(new Vector3());
+            if (gc.y < 0.5 && Math.abs(gc.x) < 1.3) planeGear.push(g);
+          });
+        }
         const k = 1 / Math.max(1e-6, size.z);
         gltf.scene.scale.setScalar(k);
         gltf.scene.position.set(-centre.x * k, -centre.y * k, -centre.z * k);
@@ -707,7 +750,9 @@ export function createGlobeEngine(canvas: HTMLCanvasElement, opts: GlobeEngineOp
           m.frustumCulled = false;
           const old = m.material as MeshStandardMaterial;
           if (old.map) old.map.colorSpace = NoColorSpace; // the pictures are used as drawn, like the Earth pictures
-          m.material = new MeshLambertMaterial({ map: old.map ?? null, color: old.color, side: DoubleSide, transparent: old.transparent, opacity: old.opacity, alphaTest: old.alphaTest });
+          m.material = richPlane
+            ? new MeshPhongMaterial({ map: old.map ?? null, color: old.color, side: DoubleSide, transparent: old.transparent, opacity: old.opacity, alphaTest: old.alphaTest, shininess: 38, specular: 0x2a2f3a })
+            : new MeshLambertMaterial({ map: old.map ?? null, color: old.color, side: DoubleSide, transparent: old.transparent, opacity: old.opacity, alphaTest: old.alphaTest });
         });
         planeGroup.clear();
         planeGroup.add(gltf.scene);
