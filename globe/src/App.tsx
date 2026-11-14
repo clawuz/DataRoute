@@ -75,7 +75,7 @@ function LiveApp({ onExit, onMake }: { onExit?: () => void; onMake?: () => void 
     if (import.meta.env.VITE_PERSONAL === "1" || params.get("personal") === "1") {
       engine.setSpaceDim(0.8, false);
       engine.setLandscapeLower(-0.07); // the title is at the left now: the globe sits higher
-      engine.setPlaneModel(params.get("plane") === "500" ? "/models/a350-500th.glb" : "/models/a350.glb"); // the followed flight is an aeroplane, not a dot (?plane=500: the 500th-aircraft paint)
+      engine.setPlaneModel(params.get("plane") === "classic" ? "/models/a350.glb" : "/models/a350-500th.glb"); // the followed flight is an aeroplane, not a dot (the 500th-aircraft paint; ?plane=classic: the first model)
       setExtraColors(ROUTE_RGB); // the arcs: a route is red, white, blue or grey, like its line in the music box
       engine.setSkyBlue(true); // the sky: a blue picture of the Milky Way
       engine.setNight(params.get("sun") !== "real"); // the sun glare sits behind the globe at the upper left, as before; the day / night blend has its own (staged) sun
